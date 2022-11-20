@@ -85,6 +85,12 @@ void Routing::handleMessage(cMessage *msg)
 
     if (destAddr == myAddress) {
         EV << "local delivery of packet " << pk->getName() << endl;
+        RoutingTable::iterator it = rtable.find(pk->getSrcAddr());
+        if (it != rtable.end()) {
+             int outGateIndex = (*it).second;
+             pk->addPar("outGateIndex");
+             pk->par("outGateIndex") = outGateIndex;
+        }
         send(pk, "localOut");
         emit(outputIfSignal, -1);  // -1: local
         return;

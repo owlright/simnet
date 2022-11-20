@@ -25,10 +25,15 @@ class App : public cSimpleModule
   private:
     // configuration
     int myAddress;
+    long packetCount;
     std::vector<int> destAddresses;
     cPar *sendIATime;
     cPar *packetLengthBytes;
-
+    int ACK = 0;
+    int DATA = 1;
+private:
+    typedef std::map<int, long> FlowSeqTable;
+    FlowSeqTable fstable;
     // state
     cMessage *generatePacket = nullptr;
     long pkCounter;
@@ -56,14 +61,16 @@ App::~App()
 void App::initialize()
 {
     myAddress = par("address");
+    // packetCount = par("packetCount");
     packetLengthBytes = &par("packetLength");
     sendIATime = &par("sendIaTime");  // volatile parameter
     pkCounter = 0;
     ackCounter = 0;
+
     WATCH(pkCounter);
     WATCH(ackCounter);
     WATCH(myAddress);
-
+    WATCH_MAP(fstable);
     const char *destAddressesPar = par("destAddresses");
     cStringTokenizer tokenizer(destAddressesPar);
     const char *token;
@@ -93,38 +100,54 @@ void App::handleMessage(cMessage *msg)
 
         Packet *pk = new Packet(pkname);
         pk->setByteLength(packetLengthBytes->intValue());
-        pk->setKind(intuniform(0, 7));
+        pk->setKind(DATA);
+        pk->setSeq(pkCounter-1);
         pk->setSrcAddr(myAddress);
         pk->setDestAddr(destAddress);
         send(pk, "out");
 
-        scheduleAt(simTime() + sendIATime->doubleValue(), generatePacket);
-        if (hasGUI())
-            getParentModule()->bubble("Generating packet...");
+        // scheduleAt(simTime() + sendIATime->doubleValue(), generatePacket);
+        // if (hasGUI())
+        //     getParentModule()->bubble("Generating packet...");
     }
     else {
         // Handle incoming packet
         Packet *pk = check_and_cast<Packet *>(msg);
+
         EV << "received packet " << pk->getName() << " after " << pk->getHopCount() << "hops" << endl;
         emit(endToEndDelaySignal, simTime() - pk->getCreationTime());
         emit(hopCountSignal, pk->getHopCount());
         emit(sourceAddressSignal, pk->getSrcAddr());
         int senderAddr = pk->getSrcAddr();
-        delete pk;
+        short packetKind = pk->getKind();
+
         if (hasGUI())
             getParentModule()->bubble("Arrived!");
 
         char pkname[40];
-        if (senderAddr!=myAddress) {
+        if (packetKind == DATA & senderAddr != myAddress) {
+            int outPortIndex = pk->par("outGateIndex");
+            double rate = getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
+            EV << pk->getName() <<"comes from port " <<outPortIndex << "channelrate is " << rate<<endl;
             sprintf(pkname, "ack-%d-to-%d-#%ld", myAddress, senderAddr, ackCounter++);
             Packet *ack = new Packet(pkname);
             ack->setByteLength(packetLengthBytes->intValue());
-            ack->setKind(intuniform(0, 7));
+            ack->setKind(ACK);
+            ack->setAckSeq(ackCounter-1);
             ack->setSrcAddr(myAddress);
             ack->setDestAddr(senderAddr);
+            auto it = fstable.find(senderAddr);
+            if (it != fstable.end()) {
+                fstable[senderAddr] = it->second + 1;
+            }
+            else {
+                fstable[senderAddr] = 1;
+            }
+
             if (hasGUI())
                 getParentModule()->bubble("Generating ack packet...");
             send(ack, "out");
+            delete pk;
        }
     }
 }
