@@ -16,11 +16,11 @@
 #include "Packet_m.h"
 
 using namespace omnetpp;
-struct flowItem {
+struct FlowItem {
     bool isDirectionIn; // in or out
     long seq; // the packet sequence has been confirmed by now
 } ;
-std::ostream& operator<<(std::ostream& os, const flowItem& fl)
+std::ostream& operator<<(std::ostream& os, const FlowItem& fl)
 {
     std::string direction = fl.isDirectionIn ? "in" : "out";
     os << "direction = " << direction  << "  flow_seq =" << fl.seq; // no endl!
@@ -43,7 +43,7 @@ class App : public cSimpleModule
     int ACK = 0;
     int DATA = 1;
 private:
-    std::map<int, flowItem*> ftable;
+    std::map<int, FlowItem*> ftable;
     // state
     cMessage *generatePacket = nullptr;
     int pkCounter;
@@ -124,7 +124,7 @@ void App::handleMessage(cMessage *msg)
         pk->setSrcAddr(myAddress);
         pk->setDestAddr(destAddress);
         send(pk, "out");
-        ftable[myAddress] = new flowItem();
+        ftable[myAddress] = new FlowItem();
         ftable[myAddress]->isDirectionIn = false;
         ftable[myAddress]->seq = 0;
         EV << *ftable[myAddress] << endl;
@@ -161,7 +161,7 @@ void App::handleMessage(cMessage *msg)
             }
             else {
                 // deal with the first data packet
-                ftable[senderAddr] = new flowItem();
+                ftable[senderAddr] = new FlowItem();
                 ftable[senderAddr]->isDirectionIn = true;
                 ftable[senderAddr]->seq = pkseq + 1;
             }
