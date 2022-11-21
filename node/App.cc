@@ -20,6 +20,12 @@ struct flowItem {
     bool isDirectionIn; // in or out
     long seq; // the packet sequence has been confirmed by now
 } ;
+std::ostream& operator<<(std::ostream& os, const flowItem& fl)
+{
+    std::string direction = fl.isDirectionIn ? "in" : "out";
+    os << "direction = " << direction  << "  flow_seq =" << fl.seq; // no endl!
+    return os;
+}
 /**
  * Generates traffic for the network.
  */
@@ -37,8 +43,7 @@ class App : public cSimpleModule
     int ACK = 0;
     int DATA = 1;
 private:
-    typedef std::map<int, flowItem*> FlowTable;
-    FlowTable ftable;
+    std::map<int, flowItem*> ftable;
     // state
     cMessage *generatePacket = nullptr;
     int pkCounter;
@@ -81,7 +86,8 @@ void App::initialize()
 
     WATCH(pkCounter);
     WATCH(myAddress);
-    WATCH_MAP(ftable);
+    WATCH_VECTOR(destAddresses);
+    WATCH_PTRMAP(ftable);
     const char *destAddressesPar = par("destAddresses");
     cStringTokenizer tokenizer(destAddressesPar);
     const char *token;
@@ -121,6 +127,7 @@ void App::handleMessage(cMessage *msg)
         ftable[myAddress] = new flowItem();
         ftable[myAddress]->isDirectionIn = false;
         ftable[myAddress]->seq = 0;
+        EV << *ftable[myAddress] << endl;
         // scheduleAt(simTime() + sendIATime->doubleValue(), generatePacket);
         // if (hasGUI())
         //     getParentModule()->bubble("Generating packet...");
