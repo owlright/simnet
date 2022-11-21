@@ -232,22 +232,22 @@ void Packet::setHopCount(int hopCount)
     this->hopCount = hopCount;
 }
 
-int Packet::getSeq() const
+long Packet::getSeq() const
 {
     return this->seq;
 }
 
-void Packet::setSeq(int seq)
+void Packet::setSeq(long seq)
 {
     this->seq = seq;
 }
 
-int Packet::getAckSeq() const
+long Packet::getAckSeq() const
 {
     return this->ackSeq;
 }
 
-void Packet::setAckSeq(int ackSeq)
+void Packet::setAckSeq(long ackSeq)
 {
     this->ackSeq = ackSeq;
 }
@@ -391,8 +391,8 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "int",    // FIELD_srcAddr
         "int",    // FIELD_destAddr
         "int",    // FIELD_hopCount
-        "int",    // FIELD_seq
-        "int",    // FIELD_ackSeq
+        "long",    // FIELD_seq
+        "long",    // FIELD_ackSeq
     };
     return (field >= 0 && field < 5) ? fieldTypeStrings[field] : nullptr;
 }
@@ -555,8 +555,8 @@ omnetpp::cValue PacketDescriptor::getFieldValue(omnetpp::any_ptr object, int fie
         case FIELD_srcAddr: return pp->getSrcAddr();
         case FIELD_destAddr: return pp->getDestAddr();
         case FIELD_hopCount: return pp->getHopCount();
-        case FIELD_seq: return pp->getSeq();
-        case FIELD_ackSeq: return pp->getAckSeq();
+        case FIELD_seq: return (omnetpp::intval_t)(pp->getSeq());
+        case FIELD_ackSeq: return (omnetpp::intval_t)(pp->getAckSeq());
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'Packet' as cValue -- field index out of range?", field);
     }
 }
@@ -576,8 +576,8 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
         case FIELD_srcAddr: pp->setSrcAddr(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_destAddr: pp->setDestAddr(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_hopCount: pp->setHopCount(omnetpp::checked_int_cast<int>(value.intValue())); break;
-        case FIELD_seq: pp->setSeq(omnetpp::checked_int_cast<int>(value.intValue())); break;
-        case FIELD_ackSeq: pp->setAckSeq(omnetpp::checked_int_cast<int>(value.intValue())); break;
+        case FIELD_seq: pp->setSeq(omnetpp::checked_int_cast<long>(value.intValue())); break;
+        case FIELD_ackSeq: pp->setAckSeq(omnetpp::checked_int_cast<long>(value.intValue())); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
     }
 }

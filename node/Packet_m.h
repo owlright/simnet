@@ -28,8 +28,8 @@ class Packet;
  *     int srcAddr \@packetData;
  *     int destAddr \@packetData;
  *     int hopCount \@packetData;
- *     int seq \@packetData;
- *     int ackSeq \@packetData;
+ *     long seq \@packetData;
+ *     long ackSeq \@packetData;
  * }
  * </pre>
  */
@@ -39,8 +39,8 @@ class Packet : public ::omnetpp::cPacket
     int srcAddr = 0;
     int destAddr = 0;
     int hopCount = 0;
-    int seq = 0;
-    int ackSeq = 0;
+    long seq = 0;
+    long ackSeq = 0;
 
   private:
     void copy(const Packet& other);
@@ -66,11 +66,11 @@ class Packet : public ::omnetpp::cPacket
     virtual int getHopCount() const;
     virtual void setHopCount(int hopCount);
 
-    virtual int getSeq() const;
-    virtual void setSeq(int seq);
+    virtual long getSeq() const;
+    virtual void setSeq(long seq);
 
-    virtual int getAckSeq() const;
-    virtual void setAckSeq(int ackSeq);
+    virtual long getAckSeq() const;
+    virtual void setAckSeq(long ackSeq);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Packet& obj) {obj.parsimPack(b);}

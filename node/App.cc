@@ -16,7 +16,10 @@
 #include "Packet_m.h"
 
 using namespace omnetpp;
-
+struct flowItem {
+    bool isDirectionIn; // in or out
+    long seq; // the packet sequence has been confirmed by now
+} ;
 /**
  * Generates traffic for the network.
  */
@@ -32,12 +35,13 @@ class App : public cSimpleModule
     int ACK = 0;
     int DATA = 1;
 private:
-    typedef std::map<int, long> FlowSeqTable;
-    FlowSeqTable fstable;
+    typedef std::map<int, flowItem*> FlowTable;
+    FlowTable ftable;
     // state
     cMessage *generatePacket = nullptr;
     long pkCounter;
-    long ackCounter;
+    long ack;
+    long seq;
     // signals
     simsignal_t endToEndDelaySignal;
     simsignal_t hopCountSignal;
@@ -65,12 +69,11 @@ void App::initialize()
     packetLengthBytes = &par("packetLength");
     sendIATime = &par("sendIaTime");  // volatile parameter
     pkCounter = 0;
-    ackCounter = 0;
+    seq = 0;
 
     WATCH(pkCounter);
-    WATCH(ackCounter);
     WATCH(myAddress);
-    WATCH_MAP(fstable);
+    WATCH_MAP(ftable);
     const char *destAddressesPar = par("destAddresses");
     cStringTokenizer tokenizer(destAddressesPar);
     const char *token;
@@ -95,7 +98,7 @@ void App::handleMessage(cMessage *msg)
         int destAddress = destAddresses[intuniform(0, destAddresses.size()-1)];
 
         char pkname[40];
-        sprintf(pkname, "pk-%d-to-%d-#%ld", myAddress, destAddress, pkCounter++);
+        sprintf(pkname, "pk-%d-to-%d-#%ld", myAddress, destAddress, seq);
         EV << "generating packet " << pkname << endl;
 
         Packet *pk = new Packet(pkname);
@@ -105,7 +108,9 @@ void App::handleMessage(cMessage *msg)
         pk->setSrcAddr(myAddress);
         pk->setDestAddr(destAddress);
         send(pk, "out");
-
+        ftable[myAddress] = new flowItem();
+        ftable[myAddress]->isDirectionIn = false;
+        ftable[myAddress]->seq = 0;
         // scheduleAt(simTime() + sendIATime->doubleValue(), generatePacket);
         // if (hasGUI())
         //     getParentModule()->bubble("Generating packet...");
@@ -113,41 +118,59 @@ void App::handleMessage(cMessage *msg)
     else {
         // Handle incoming packet
         Packet *pk = check_and_cast<Packet *>(msg);
-
         EV << "received packet " << pk->getName() << " after " << pk->getHopCount() << "hops" << endl;
         emit(endToEndDelaySignal, simTime() - pk->getCreationTime());
         emit(hopCountSignal, pk->getHopCount());
         emit(sourceAddressSignal, pk->getSrcAddr());
         int senderAddr = pk->getSrcAddr();
         short packetKind = pk->getKind();
-
+        if (senderAddr==myAddress) { // the packet send from myself
+            delete pk;
+            return;
+        }
         if (hasGUI())
             getParentModule()->bubble("Arrived!");
 
         char pkname[40];
-        if (packetKind == DATA & senderAddr != myAddress) {
+        if (packetKind == DATA) {
             int outPortIndex = pk->par("outGateIndex");
             double rate = getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
-            EV << pk->getName() <<"comes from port " <<outPortIndex << "channelrate is " << rate<<endl;
-            sprintf(pkname, "ack-%d-to-%d-#%ld", myAddress, senderAddr, ackCounter++);
-            Packet *ack = new Packet(pkname);
-            ack->setByteLength(packetLengthBytes->intValue());
-            ack->setKind(ACK);
-            ack->setAckSeq(ackCounter-1);
-            ack->setSrcAddr(myAddress);
-            ack->setDestAddr(senderAddr);
-            auto it = fstable.find(senderAddr);
-            if (it != fstable.end()) {
-                fstable[senderAddr] = it->second + 1;
+            EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
+            auto pkseq = pk->getSeq();
+            auto it = ftable.find(senderAddr);
+            if (it != ftable.end()) {
+                if (it->second->seq <= pkseq)
+                    it->second->seq = pkseq + 1; // ask for next packet
             }
             else {
-                fstable[senderAddr] = 1;
+                // deal with the first data packet
+                ftable[senderAddr] = new flowItem();
+                ftable[senderAddr]->isDirectionIn = true;
+                ftable[senderAddr]->seq = pkseq + 1;
             }
+
+            sprintf(pkname, "Ack-%d-to-%d-#%ld", myAddress, senderAddr, ftable[senderAddr]->seq);
+            Packet *ackpk = new Packet(pkname);
+            ackpk->setByteLength(packetLengthBytes->intValue());
+            ackpk->setKind(ACK);
+            ackpk->setAckSeq(ftable[senderAddr]->seq);
+            ackpk->setSrcAddr(myAddress);
+            ackpk->setDestAddr(senderAddr);
 
             if (hasGUI())
                 getParentModule()->bubble("Generating ack packet...");
-            send(ack, "out");
+            send(ackpk, "out");
             delete pk;
+       }
+       else if (packetKind == ACK) {
+            auto pkseq = pk->getSeq();
+            auto it = ftable.find(myAddress);
+            if (it->second->seq <= pkseq) {
+                it->second->seq = pkseq + 1; // ask for next packet
+            }
+            else {
+
+            }
        }
     }
 }
