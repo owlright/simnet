@@ -24,7 +24,7 @@ class Routing : public cSimpleModule
 {
   private:
     int myAddress;
-
+    bool isSwitch;
     typedef std::map<int, int> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
 
@@ -41,10 +41,12 @@ Define_Module(Routing);
 void Routing::initialize()
 {
     myAddress = getParentModule()->par("address");
-
     dropSignal = registerSignal("drop");
     outputIfSignal = registerSignal("outputIf");
-
+    std::string appType = getParentModule()->par("nodeType");
+    isSwitch = appType == "Switch";
+    if (isSwitch)
+        EV << "this node is a switch, should not receive packets from app." << endl;
     //
     // Brute force approach -- every node does topology discovery on its own,
     // and finds routes to all other nodes independently, at the beginning

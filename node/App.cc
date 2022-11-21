@@ -28,7 +28,9 @@ class App : public cSimpleModule
   private:
     // configuration
     int myAddress;
-    long packetCount;
+    int packetTotalCount;
+    int packetLossCounter;
+    bool disableSending;
     std::vector<int> destAddresses;
     cPar *sendIATime;
     cPar *packetLengthBytes;
@@ -39,7 +41,7 @@ private:
     FlowTable ftable;
     // state
     cMessage *generatePacket = nullptr;
-    long pkCounter;
+    int pkCounter;
     long ack;
     long seq;
     // signals
@@ -65,11 +67,17 @@ App::~App()
 void App::initialize()
 {
     myAddress = par("address");
-    // packetCount = par("packetCount");
+    packetTotalCount = par("packetTotalCount");
     packetLengthBytes = &par("packetLength");
     sendIATime = &par("sendIaTime");  // volatile parameter
+    packetLossCounter = 0;
     pkCounter = 0;
     seq = 0;
+
+    std::string appType = getParentModule()->par("nodeType");
+    disableSending = appType == "Switch" || appType == "Sink";
+    if (disableSending)
+        EV << "node type is "<< appType << " disable generating packets." << endl;
 
     WATCH(pkCounter);
     WATCH(myAddress);
@@ -82,9 +90,10 @@ void App::initialize()
 
     if (destAddresses.size() == 0)
         throw cRuntimeError("At least one address must be specified in the destAddresses parameter!");
-
-    generatePacket = new cMessage("nextPacket");
-    scheduleAt(sendIATime->doubleValue(), generatePacket);
+    if (!disableSending) {
+        generatePacket = new cMessage("nextPacket");
+        scheduleAt(sendIATime->doubleValue(), generatePacket);
+    }
 
     endToEndDelaySignal = registerSignal("endToEndDelay");
     hopCountSignal = registerSignal("hopCount");
@@ -99,6 +108,7 @@ void App::handleMessage(cMessage *msg)
 
         char pkname[40];
         sprintf(pkname, "pk-%d-to-%d-#%ld", myAddress, destAddress, seq);
+        pkCounter++;
         EV << "generating packet " << pkname << endl;
 
         Packet *pk = new Packet(pkname);
@@ -151,7 +161,7 @@ void App::handleMessage(cMessage *msg)
 
             sprintf(pkname, "Ack-%d-to-%d-#%ld", myAddress, senderAddr, ftable[senderAddr]->seq);
             Packet *ackpk = new Packet(pkname);
-            ackpk->setByteLength(packetLengthBytes->intValue());
+            ackpk->setByteLength(1);
             ackpk->setKind(ACK);
             ackpk->setAckSeq(ftable[senderAddr]->seq);
             ackpk->setSrcAddr(myAddress);
@@ -163,14 +173,30 @@ void App::handleMessage(cMessage *msg)
             delete pk;
        }
        else if (packetKind == ACK) {
-            auto pkseq = pk->getSeq();
-            auto it = ftable.find(myAddress);
-            if (it->second->seq <= pkseq) {
-                it->second->seq = pkseq + 1; // ask for next packet
+            if (pkCounter-packetLossCounter < packetTotalCount) {
+                auto pkAckSeq = pk->getAckSeq();
+                auto it = ftable.find(myAddress);
+                assert(!it->second->isDirectionIn); // the flow must start with this app.
+                if (pkAckSeq == it->second->seq + 1) {
+                    it->second->seq++;
+                    pkCounter++;
+                }
+                else {
+                    packetLossCounter++;
+                }
+                char pkname[40];
+                sprintf(pkname, "pk-%d-to-%d-#%ld", myAddress, senderAddr, it->second->seq);
+                Packet *npk = new Packet(pkname);
+                npk->setByteLength(packetLengthBytes->intValue());
+                npk->setKind(DATA);
+                npk->setSeq(it->second->seq);
+                npk->setSrcAddr(myAddress);
+                npk->setDestAddr(senderAddr);
+                if (hasGUI())
+                    getParentModule()->bubble("Generating next data packet...");
+                send(npk, "out");
             }
-            else {
-
-            }
+            delete pk;
        }
     }
 }

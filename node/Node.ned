@@ -19,6 +19,7 @@ module Node
     parameters:
         int address;
         string appType;
+        string nodeType=default("");
         @display("i=misc/node_vs,gold");
     gates:
         inout port[];
