@@ -1,15 +1,20 @@
 #include "socket.h"
+// void
+// Socket::SetSendCb(Callback f)
+// {
+//     Send=f;
+// }
 void
-Socket::SetSendCb(Callback f)
+Socket::SetApp(App* const app)
 {
-    Send=f;
+    m_app = app;
 }
 Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
 {
     m_cong = new TcpReno();
     m_addr = src;
-    SetInitialCwnd(initCwnd);
-    SetInitialSSThresh(initSSThresh);
+    m_tcb->m_initialCwnd = initCwnd;
+    m_tcb->m_ssThresh = initSSThresh;
 }
 
 uint32_t
@@ -25,7 +30,7 @@ void
 Socket::SendData(int packets, int packetBytes)
 {
     char pkname[40];
-    sprintf(pkname, "pk-%d-to-%d-#%ld", m_addr, m_destAddress, 1);
+    sprintf(pkname, "pk-%d-to-%d-#%d", m_addr, m_destAddress, 1);
     EV << "generating packet and build socket" << pkname << endl;
     Packet *pk = new Packet(pkname);
     pk->setByteLength(packetBytes);
@@ -33,7 +38,7 @@ Socket::SendData(int packets, int packetBytes)
     pk->setSeq(1);
     pk->setSrcAddr(m_addr);
     pk->setDestAddr(m_destAddress);
-    // Send(pk, "out", -1);
+    // m_app->send(pk, "out", -1);
     // auto availableWindow = AvailableWindow();
     // if (availableWindow > 0) {
     //     // send the packet

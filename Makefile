@@ -36,6 +36,8 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 OBJS = \
     $O/builder/netbuilder.o \
     $O/node/App.o \
+		$O/node/socket.o \
+		$O/node/tcp-reno.o \
     $O/node/BurstyApp.o \
     $O/node/L2Queue.o \
     $O/node/Routing.o \
