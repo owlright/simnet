@@ -19,16 +19,19 @@ public:
     void ProcessData(Packet* pk);
     void SetApp(cSimpleModule* const app );
     // void SetSendCb(Callback f);
-
+    // void SetFlowSize(int packets, int packetBytes);
     int GetDestAddr() const;
 public:
     explicit Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh);
     ~Socket();
 private:
     uint32_t AvailableWindow() const;
+    void Send();
     // void SetInitialCwnd(uint32_t cwnd);
     // void SetInitialSSThresh(uint32_t cwnd);
 private:
+    int packetNumber;
+    int packetBytes;
     // Callback Send = nullptr;
     cSimpleModule* m_app = nullptr;
     //dest address

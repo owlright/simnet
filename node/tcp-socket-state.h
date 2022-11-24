@@ -5,7 +5,7 @@
 #include <omnetpp.h>
 using namespace omnetpp;
 
-class TcpSocketState : public cObject
+class TcpSocketState
 {
 public:
     /**
@@ -46,7 +46,8 @@ public:
         CA_EVENT_DELAYED_ACK,     //!< Delayed ack is sent
         CA_EVENT_NON_DELAYED_ACK, //!< Non-delayed ack is sent
     } TcpCAEvent_t;
-    uint32_t m_initialCwnd;
+    uint32_t m_seq{0};
+    uint32_t m_initialCwnd{INT32_MAX};
     uint32_t m_cWnd{0}; //!< Congestion window
     uint32_t m_ssThresh{0}; //!< Slow start threshold
     // Segment

@@ -232,22 +232,22 @@ void Packet::setHopCount(int hopCount)
     this->hopCount = hopCount;
 }
 
-long Packet::getSeq() const
+unsigned int Packet::getSeq() const
 {
     return this->seq;
 }
 
-void Packet::setSeq(long seq)
+void Packet::setSeq(unsigned int seq)
 {
     this->seq = seq;
 }
 
-long Packet::getAckSeq() const
+unsigned int Packet::getAckSeq() const
 {
     return this->ackSeq;
 }
 
-void Packet::setAckSeq(long ackSeq)
+void Packet::setAckSeq(unsigned int ackSeq)
 {
     this->ackSeq = ackSeq;
 }
@@ -391,8 +391,8 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "int",    // FIELD_srcAddr
         "int",    // FIELD_destAddr
         "int",    // FIELD_hopCount
-        "long",    // FIELD_seq
-        "long",    // FIELD_ackSeq
+        "unsigned int",    // FIELD_seq
+        "unsigned int",    // FIELD_ackSeq
     };
     return (field >= 0 && field < 5) ? fieldTypeStrings[field] : nullptr;
 }
@@ -515,8 +515,8 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
         case FIELD_srcAddr: return long2string(pp->getSrcAddr());
         case FIELD_destAddr: return long2string(pp->getDestAddr());
         case FIELD_hopCount: return long2string(pp->getHopCount());
-        case FIELD_seq: return long2string(pp->getSeq());
-        case FIELD_ackSeq: return long2string(pp->getAckSeq());
+        case FIELD_seq: return ulong2string(pp->getSeq());
+        case FIELD_ackSeq: return ulong2string(pp->getAckSeq());
         default: return "";
     }
 }
@@ -536,8 +536,8 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
         case FIELD_srcAddr: pp->setSrcAddr(string2long(value)); break;
         case FIELD_destAddr: pp->setDestAddr(string2long(value)); break;
         case FIELD_hopCount: pp->setHopCount(string2long(value)); break;
-        case FIELD_seq: pp->setSeq(string2long(value)); break;
-        case FIELD_ackSeq: pp->setAckSeq(string2long(value)); break;
+        case FIELD_seq: pp->setSeq(string2ulong(value)); break;
+        case FIELD_ackSeq: pp->setAckSeq(string2ulong(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
     }
 }
@@ -576,8 +576,8 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
         case FIELD_srcAddr: pp->setSrcAddr(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_destAddr: pp->setDestAddr(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_hopCount: pp->setHopCount(omnetpp::checked_int_cast<int>(value.intValue())); break;
-        case FIELD_seq: pp->setSeq(omnetpp::checked_int_cast<long>(value.intValue())); break;
-        case FIELD_ackSeq: pp->setAckSeq(omnetpp::checked_int_cast<long>(value.intValue())); break;
+        case FIELD_seq: pp->setSeq(omnetpp::checked_int_cast<unsigned int>(value.intValue())); break;
+        case FIELD_ackSeq: pp->setAckSeq(omnetpp::checked_int_cast<unsigned int>(value.intValue())); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
     }
 }

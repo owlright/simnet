@@ -9,6 +9,7 @@ Socket::SetApp(cSimpleModule* const app)
 {
     m_app = app;
 }
+
 Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
 {
     m_cong = new TcpReno();
@@ -37,22 +38,30 @@ Socket::AvailableWindow() const
 void
 Socket::SendData(int packets, int packetBytes)
 {
-    char pkname[40];
-    sprintf(pkname, "pk-%d-to-%d-#%ld", m_addr, m_destAddress, (long) 1);
-    EV << "generating packet and build socket " << pkname << endl;
-    Packet *pk = new Packet(pkname);
-    pk->setByteLength(packetBytes);
-    pk->setKind(1); // 1 is data
-    pk->setSeq(1);
-    pk->setSrcAddr(m_addr);
-    pk->setDestAddr(m_destAddress);
-    m_app->send(pk, "out");
+    this->packetNumber = packets;
+    this->packetBytes = packetBytes;
+    Send();
     // auto availableWindow = AvailableWindow();
     // if (availableWindow > 0) {
     //     // send the packet
 
     // }
     // UpdateRttHistory(seq, sz, isRetransmission);
+}
+
+void
+Socket::Send()
+{
+    char pkname[40];
+    sprintf(pkname, "pk-%d-to-%d-seq%u ", m_addr, m_destAddress, m_tcb->m_seq);
+    EV << "sending data packet " << pkname << endl;
+    Packet *pk = new Packet(pkname);
+    pk->setByteLength(packetBytes);
+    pk->setKind(1); // 1 is data
+    pk->setSeq(m_tcb->m_seq);
+    pk->setSrcAddr(m_addr);
+    pk->setDestAddr(m_destAddress);
+    m_app->send(pk, "out");
 }
 // void
 // Socket::ReceieveAck(Packet*)
@@ -65,7 +74,12 @@ void
 Socket::ProcessAck(Packet* pk)
 {
     EV << "received ack packet " << pk->getName() << endl;
+    assert(pk->getAckSeq() == m_tcb->m_seq + 1);
+    m_tcb->m_seq++;
     delete pk;
+
+    Send();
+
 }
 
 void
@@ -75,16 +89,17 @@ Socket::ProcessData(Packet* pk)
     int outPortIndex = pk->par("outGateIndex");
     double rate = m_app->getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
     EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
-    char pkname[40];
     auto pkSeq = pk->getSeq();
-    sprintf(pkname, "Ack-%d-to-%d-#%ld", m_addr, m_destAddress, pkSeq);
+
+    char pkname[40];
+    sprintf(pkname, "Ack-%d-to-%d-ackseq%u ", m_addr, m_destAddress, pkSeq+1);
     Packet *ackpk = new Packet(pkname);
-    EV << pk->getName() << ackpk->getName() << endl;
-    ackpk->setByteLength(1);
+    ackpk->setByteLength(1); // ack packet size
     ackpk->setKind(0);
-    ackpk->setAckSeq(pkSeq);
+    ackpk->setAckSeq(pkSeq+1); // want next packet
     ackpk->setSrcAddr(m_addr);
     ackpk->setDestAddr(m_destAddress);
+    EV << ackpk->getName() << endl;
     m_app->send(ackpk, "out");
     delete pk;
 }

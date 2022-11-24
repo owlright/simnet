@@ -105,7 +105,7 @@ void App::handleMessage(cMessage *msg)
         // Handle incoming packet
         // data packet
         Packet *pk = check_and_cast<Packet *>(msg);
-        EV << "received packet " << pk->getName() << " after " << pk->getHopCount() << "hops" << endl;
+        // EV << "received packet " << pk->getName() << " after " << pk->getHopCount() << "hops" << endl;
         int senderAddr = pk->getSrcAddr();
         short packetKind = pk->getKind();
         if (senderAddr == myAddress) { // the packet send from myself
@@ -128,7 +128,7 @@ void App::handleMessage(cMessage *msg)
             getParentModule()->bubble("Arrived!");
 
         if (socketsTable.find(senderAddr) == socketsTable.end()) {
-            socketsTable[senderAddr] = new Socket(senderAddr, myAddress, 1, UINT32_MAX);
+            socketsTable[senderAddr] = new Socket(myAddress, senderAddr, 1, UINT32_MAX);
             socketsTable[senderAddr]->SetApp(this);
         }
 
