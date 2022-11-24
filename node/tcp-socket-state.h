@@ -47,6 +47,7 @@ public:
         CA_EVENT_NON_DELAYED_ACK, //!< Non-delayed ack is sent
     } TcpCAEvent_t;
     uint32_t m_seq{0};
+    uint32_t m_ackedSeq{0};
     uint32_t m_initialCwnd{INT32_MAX};
     uint32_t m_cWnd{0}; //!< Congestion window
     uint32_t m_ssThresh{0}; //!< Slow start threshold

@@ -16,7 +16,8 @@ Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
     m_tcb = new TcpSocketState();
     m_addr = src;
     m_destAddress = dest;
-    m_tcb->m_initialCwnd = initCwnd;
+    // m_tcb->m_initialCwnd = initCwnd;
+    m_tcb->m_cWnd = initCwnd;
     m_tcb->m_ssThresh = initSSThresh;
 }
 
@@ -53,15 +54,22 @@ void
 Socket::Send()
 {
     char pkname[40];
-    sprintf(pkname, "pk-%d-to-%d-seq%u ", m_addr, m_destAddress, m_tcb->m_seq);
-    EV << "sending data packet " << pkname << endl;
-    Packet *pk = new Packet(pkname);
-    pk->setByteLength(packetBytes);
-    pk->setKind(1); // 1 is data
-    pk->setSeq(m_tcb->m_seq);
-    pk->setSrcAddr(m_addr);
-    pk->setDestAddr(m_destAddress);
-    m_app->send(pk, "out");
+    uint32_t nextSeq;
+    Packet *pk = nullptr;
+    while (AvailableWindow() > 0) {
+        nextSeq = m_tcb->m_seq;
+        sprintf(pkname, "pk-%d-to-%d-seq%u ", m_addr, m_destAddress, nextSeq);
+        EV << "sending data packet " << pkname << endl;
+        pk = new Packet(pkname);
+        pk->setByteLength(packetBytes);
+        pk->setKind(1); // 1 is data
+        pk->setSeq(nextSeq);
+        pk->setSrcAddr(m_addr);
+        pk->setDestAddr(m_destAddress);
+        m_app->send(pk, "out");
+        m_tcb->m_sentSize++;
+        m_tcb->m_seq++;
+    }
 }
 // void
 // Socket::ReceieveAck(Packet*)
@@ -74,12 +82,14 @@ void
 Socket::ProcessAck(Packet* pk)
 {
     EV << "received ack packet " << pk->getName() << endl;
-    assert(pk->getAckSeq() == m_tcb->m_seq + 1);
-    m_tcb->m_seq++;
+    // assert(pk->getAckSeq() == m_tcb->m_seq + 1);
+    m_tcb->m_ackedSeq = pk->getAckSeq();
+    if (m_tcb->m_seq <= m_tcb->m_ackedSeq) {
+        m_tcb->m_cWnd++;
+        Send();
+    }
+    m_tcb->m_acked++;
     delete pk;
-
-    Send();
-
 }
 
 void
