@@ -1,23 +1,23 @@
 #ifdef _MSC_VER
 #pragma warning(disable:4786)
 #endif
-
+#pragma once
 #include <omnetpp.h>
 #include "Packet_m.h"
 #include "tcp-socket-state.h"
 #include "tcp-reno.h"
-#include <functional>
+
 using namespace omnetpp;
-typedef std::function<void(cMessage*, const char *, int)> Callback;
+// typedef std::function<void(cMessage*, const char *, int)> Callback;
 // typedef void (*SendFunCb)(cSimpleModule* app, cMessage *msg, const char *gatename, int gateindex);
-class App;
+
 class Socket : public cObject {
 public:
     void SendData(int packets, int packetBytes);
     // void ReceieveAck(Packet*);
     void ProcessAck(Packet* pk);
     void ProcessData(Packet* pk);
-    void SetApp(App* const app );
+    void SetApp(cSimpleModule* const app );
     // void SetSendCb(Callback f);
 
     int GetDestAddr() const;
@@ -29,8 +29,8 @@ private:
     // void SetInitialCwnd(uint32_t cwnd);
     // void SetInitialSSThresh(uint32_t cwnd);
 private:
-    Callback Send = nullptr;
-    App* m_app = nullptr;
+    // Callback Send = nullptr;
+    cSimpleModule* m_app = nullptr;
     //dest address
     int m_addr;
     int m_destAddress;

@@ -11,12 +11,7 @@
 #pragma warning(disable:4786)
 #endif
 
-#include <vector>
-#include <omnetpp.h>
-#include "Packet_m.h"
-#include "socket.h"
-#include <functional>
-using namespace omnetpp;
+#include "App.h"
 // struct FlowItem {
 //     bool isDirectionIn; // in or out
 //     long seq; // the packet sequence has been confirmed by now
@@ -27,48 +22,6 @@ using namespace omnetpp;
 //     os << "direction = " << direction  << "  flow_seq =" << fl.seq; // no endl!
 //     return os;
 // }
-
-
-
-/**
- * Generates traffic for the network.
- */
-class App : public cSimpleModule
-{
-public:
-    int GetMyAddr() const;
-  private:
-    // configuration
-    int myAddress;
-    int packetTotalCount;
-    int packetLossCounter;
-    bool disableSending;
-    std::vector<int> destAddresses;
-    cPar *sendIATime;
-    cPar *packetLengthBytes;
-    // Socket* m_socket;
-    //packet type
-    // int ACK = 0;
-    // int DATA = 1;
-private:
-    std::map<int, Socket*> socketsTable;
-    // state
-    cMessage *generatePacket = nullptr;
-    int pkCounter;
-    long ack;
-    long seq;
-    // signals
-    simsignal_t endToEndDelaySignal;
-    simsignal_t hopCountSignal;
-    simsignal_t sourceAddressSignal;
-
-  public:
-    virtual ~App();
-
-private:
-    virtual void initialize() override;
-    virtual void handleMessage(cMessage *msg) override;
-};
 
 Define_Module(App);
 int
@@ -132,7 +85,7 @@ void App::handleMessage(cMessage *msg)
         int destAddress = destAddresses[intuniform(0, destAddresses.size()-1)];
         pkCounter++;
         socketsTable[destAddress] = new Socket(myAddress, destAddress, 1, UINT32_MAX);
-        socketsTable[destAddress]->SetSendCb(std::bind(&cSimpleModule::send, this, std::placeholders::_1, std::placeholders::_2, -1));
+        // socketsTable[destAddress]->SetSendCb(std::bind(&cSimpleModule::send, this, std::placeholders::_1, std::placeholders::_2, -1));
         socketsTable[destAddress]->SendData(packetTotalCount, packetLengthBytes->intValue());
         // Packet *pk = new Packet(pkname);
         // pk->setByteLength(packetLengthBytes->intValue());

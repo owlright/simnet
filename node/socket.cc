@@ -5,7 +5,7 @@
 //     Send=f;
 // }
 void
-Socket::SetApp(App* const app)
+Socket::SetApp(cSimpleModule* const app)
 {
     m_app = app;
 }
@@ -38,7 +38,7 @@ Socket::SendData(int packets, int packetBytes)
     pk->setSeq(1);
     pk->setSrcAddr(m_addr);
     pk->setDestAddr(m_destAddress);
-    // m_app->send(pk, "out", -1);
+    m_app->send(pk, "out", -1);
     // auto availableWindow = AvailableWindow();
     // if (availableWindow > 0) {
     //     // send the packet
