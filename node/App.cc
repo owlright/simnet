@@ -44,6 +44,7 @@ void App::initialize()
 
 
     myAddress = par("address");
+    destAddress = par("destAddress");
     packetTotalCount = par("packetTotalCount");
     packetLengthBytes = &par("packetLength");
     sendIATime = &par("sendIaTime");  // volatile parameter
@@ -58,6 +59,7 @@ void App::initialize()
 
     WATCH(pkCounter);
     WATCH(myAddress);
+    WATCH(destAddress);
     WATCH_VECTOR(destAddresses);
     WATCH_PTRMAP(socketsTable);
     const char *destAddressesPar = par("destAddresses");
@@ -82,9 +84,10 @@ void App::handleMessage(cMessage *msg)
 {
     if (msg == generatePacket) {
         // Sending packet
-        int destAddress = destAddresses[intuniform(0, destAddresses.size()-1)];
+        // int destAddress = destAddresses[intuniform(0, destAddresses.size()-1)];
         pkCounter++;
         socketsTable[destAddress] = new Socket(myAddress, destAddress, 1, UINT32_MAX);
+        socketsTable[destAddress]->SetApp(this);
         // socketsTable[destAddress]->SetSendCb(std::bind(&cSimpleModule::send, this, std::placeholders::_1, std::placeholders::_2, -1));
         socketsTable[destAddress]->SendData(packetTotalCount, packetLengthBytes->intValue());
         // Packet *pk = new Packet(pkname);

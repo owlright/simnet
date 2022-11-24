@@ -23,7 +23,7 @@ public:
     int GetDestAddr() const;
 public:
     explicit Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh);
-    ~Socket(){delete m_cong;}
+    ~Socket();
 private:
     uint32_t AvailableWindow() const;
     // void SetInitialCwnd(uint32_t cwnd);
@@ -35,8 +35,8 @@ private:
     int m_addr;
     int m_destAddress;
     //congestion control algo
-    TcpReno* m_cong;
+    TcpReno* m_cong = nullptr;
     // Transmission control block
-    TcpSocketState* m_tcb;
+    TcpSocketState* m_tcb = nullptr;
 };
 

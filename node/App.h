@@ -23,6 +23,7 @@ public:
     int packetLossCounter;
     bool disableSending;
     std::vector<int> destAddresses;
+    int destAddress;
     cPar *sendIATime;
     cPar *packetLengthBytes;
     // Socket* m_socket;
