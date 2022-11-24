@@ -22,7 +22,7 @@ public:
     // void SetFlowSize(int packets, int packetBytes);
     int GetDestAddr() const;
 public:
-    explicit Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh);
+    explicit Socket(int src, int dest, uint32_t initCwnd=1, uint32_t initSSThresh=INT32_MAX);
     ~Socket();
 private:
     uint32_t AvailableWindow() const;
