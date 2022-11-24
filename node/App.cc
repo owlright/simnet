@@ -127,7 +127,11 @@ void App::handleMessage(cMessage *msg)
         if (hasGUI())
             getParentModule()->bubble("Arrived!");
 
-    //     char pkname[40];
+        if (socketsTable.find(senderAddr) == socketsTable.end()) {
+            socketsTable[senderAddr] = new Socket(senderAddr, myAddress, 1, UINT32_MAX);
+            socketsTable[senderAddr]->SetApp(this);
+        }
+
         if (packetKind == 1) {
     //         int outPortIndex = pk->par("outGateIndex");
     //         double rate = getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
@@ -155,7 +159,6 @@ void App::handleMessage(cMessage *msg)
     //         delete pk;
        }
        else if (packetKind == 0) {
-        assert(socketsTable.find(senderAddr) != socketsTable.end());
         socketsTable[senderAddr]->ProcessAck(pk);
     //         if (pkCounter-packetLossCounter < packetTotalCount) {
     //             auto pkAckSeq = pk->getAckSeq();

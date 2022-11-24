@@ -64,8 +64,8 @@ Socket::SendData(int packets, int packetBytes)
 void
 Socket::ProcessAck(Packet* pk)
 {
-    delete pk;
     EV << "received ack packet " << pk->getName() << endl;
+    delete pk;
 }
 
 void
