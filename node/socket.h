@@ -27,6 +27,7 @@ public:
 private:
     uint32_t AvailableWindow() const;
     void Send();
+    void Retransmit(uint32_t seq);
     // void SetInitialCwnd(uint32_t cwnd);
     // void SetInitialSSThresh(uint32_t cwnd);
 private:

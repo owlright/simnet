@@ -42,12 +42,6 @@ Socket::SendData(int packets, int packetBytes)
     this->packetNumber = packets;
     this->packetBytes = packetBytes;
     Send();
-    // auto availableWindow = AvailableWindow();
-    // if (availableWindow > 0) {
-    //     // send the packet
-
-    // }
-    // UpdateRttHistory(seq, sz, isRetransmission);
 }
 
 void
@@ -58,7 +52,7 @@ Socket::Send()
     Packet *pk = nullptr;
     while (AvailableWindow() > 0 && m_tcb->m_sentSize < packetNumber) {
         nextSeq = m_tcb->m_seq;
-        sprintf(pkname, "pk-%d-to-%d-seq%u ", m_addr, m_destAddress, nextSeq);
+        sprintf(pkname, "DATA-%d-to-%d-seq%u ", m_addr, m_destAddress, nextSeq);
         EV << "sending data packet " << pkname << endl;
         pk = new Packet(pkname);
         pk->setByteLength(packetBytes);
@@ -68,15 +62,24 @@ Socket::Send()
         pk->setDestAddr(m_destAddress);
         m_app->send(pk, "out");
         m_tcb->m_sentSize++;
-        m_tcb->m_seq++;
+        m_tcb->m_seq++; // next packet seq
     }
 }
-// void
-// Socket::ReceieveAck(Packet*)
-// {
-//     // m_cong->CwndEvent(m_tcb, );
-//     // m_cong->CongControl();
-// }
+
+void
+Socket::Retransmit(uint32_t seq)
+{
+    char pkname[40];
+    sprintf(pkname, "DATA-%d-to-%d-seq%u ", m_addr, m_destAddress, seq);
+    EV << "sending retransmitted data packet " << pkname << endl;
+    Packet *pk = new Packet(pkname);
+    pk->setByteLength(packetBytes);
+    pk->setKind(1); // 1 is data
+    pk->setSeq(seq);
+    pk->setSrcAddr(m_addr);
+    pk->setDestAddr(m_destAddress);
+    m_app->send(pk, "out");
+}
 
 void
 Socket::ProcessAck(Packet* pk)
@@ -84,11 +87,17 @@ Socket::ProcessAck(Packet* pk)
     EV << "received ack packet " << pk->getName() << endl;
     // assert(pk->getAckSeq() == m_tcb->m_seq + 1);
     m_tcb->m_ackedSeq = pk->getAckSeq();
-    if (m_tcb->m_seq <= m_tcb->m_ackedSeq) {
-        m_tcb->m_cWnd++;
+    if (m_tcb->m_ackedSeq <= m_tcb->m_seq) {
+        m_tcb->m_acked++;
+        if (m_tcb->m_seq == m_tcb->m_ackedSeq) { // ask exactly what I want to send
+            m_tcb->m_cWnd++;
+        }
         Send();
     }
-    m_tcb->m_acked++;
+    else {
+        Retransmit(m_tcb->m_ackedSeq);
+    }
+
     delete pk;
 }
 
@@ -100,19 +109,24 @@ Socket::ProcessData(Packet* pk)
     double rate = m_app->getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
     EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
     auto pkSeq = pk->getSeq();
+    if (pkSeq == m_tcb->m_ackSeq) {
+        m_tcb->m_seq = pkSeq;
+        m_tcb->m_ackSeq = pkSeq + 1;
+    }
 
     char pkname[40];
-    sprintf(pkname, "Ack-%d-to-%d-ackseq%u ", m_addr, m_destAddress, pkSeq+1);
+    sprintf(pkname, "ACK-%d-to-%d-ack%u ", m_addr, m_destAddress, m_tcb->m_ackSeq);
     Packet *ackpk = new Packet(pkname);
-    ackpk->setByteLength(1); // ack packet size
+    ackpk->setByteLength(10); // ack packet size
     ackpk->setKind(0);
-    ackpk->setAckSeq(pkSeq+1); // want next packet
+    ackpk->setAckSeq(m_tcb->m_ackSeq); // want next packet
     ackpk->setSrcAddr(m_addr);
     ackpk->setDestAddr(m_destAddress);
     EV << ackpk->getName() << endl;
     m_app->send(ackpk, "out");
     delete pk;
 }
+
 int
 Socket::GetDestAddr() const{
     return this->m_destAddress;
