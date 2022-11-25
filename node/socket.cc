@@ -62,7 +62,7 @@ Socket::Send()
         pk->setDestAddr(m_destAddress);
         m_app->send(pk, "out");
         m_tcb->m_sentSize++;
-        m_tcb->m_seq++; // next packet seq
+        m_tcb->m_seq++; // ! next packet seq
     }
 }
 
@@ -87,14 +87,14 @@ Socket::ProcessAck(Packet* pk)
     EV << "received ack packet " << pk->getName() << endl;
     // assert(pk->getAckSeq() == m_tcb->m_seq + 1);
     m_tcb->m_ackedSeq = pk->getAckSeq();
-    if (m_tcb->m_ackedSeq <= m_tcb->m_seq) {
+    if (m_tcb->m_ackedSeq + 1 <= m_tcb->m_seq) {
         m_tcb->m_acked++;
-        if (m_tcb->m_seq == m_tcb->m_ackedSeq) { // ask exactly what I want to send
+        if (m_tcb->m_ackedSeq + 1 == m_tcb->m_seq) { // ask exactly what I want to send
             m_tcb->m_cWnd++;
         }
         Send();
     }
-    else {
+    else { //! the code below should not be triggered
         Retransmit(m_tcb->m_ackedSeq);
     }
 
@@ -109,9 +109,9 @@ Socket::ProcessData(Packet* pk)
     double rate = m_app->getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
     EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
     auto pkSeq = pk->getSeq();
-    if (pkSeq == m_tcb->m_ackSeq) {
-        m_tcb->m_seq = pkSeq;
-        m_tcb->m_ackSeq = pkSeq + 1;
+    if (pkSeq == m_tcb->m_ackSeq + 1) {
+        // m_tcb->m_seq = pkSeq;
+        m_tcb->m_ackSeq = pkSeq;
     }
 
     char pkname[40];
@@ -119,7 +119,8 @@ Socket::ProcessData(Packet* pk)
     Packet *ackpk = new Packet(pkname);
     ackpk->setByteLength(10); // ack packet size
     ackpk->setKind(0);
-    ackpk->setAckSeq(m_tcb->m_ackSeq); // want next packet
+    ackpk->setSeq(-1); // this is ack packet no data seq
+    ackpk->setAckSeq(m_tcb->m_ackSeq); // ack current packet seq, the sender will send next seq
     ackpk->setSrcAddr(m_addr);
     ackpk->setDestAddr(m_destAddress);
     EV << ackpk->getName() << endl;
