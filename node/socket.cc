@@ -56,7 +56,7 @@ Socket::Send()
     char pkname[40];
     uint32_t nextSeq;
     Packet *pk = nullptr;
-    while (AvailableWindow() > 0) {
+    while (AvailableWindow() > 0 && m_tcb->m_sentSize < packetNumber) {
         nextSeq = m_tcb->m_seq;
         sprintf(pkname, "pk-%d-to-%d-seq%u ", m_addr, m_destAddress, nextSeq);
         EV << "sending data packet " << pkname << endl;
