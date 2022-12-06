@@ -47,10 +47,9 @@ void App::initialize()
     pkCounter = 0;
     seq = 0;
 
-    std::string appType = getParentModule()->par("nodeType");
-    disableSending = appType == "Switch" || appType == "Sink";
+    disableSending = myAddress==destAddress;
     if (disableSending)
-        EV << "node type is "<< appType << " disable generating packets." << endl;
+        EV << "destation is my self, this is a sink node, so disable generating packets." << endl;
 
     WATCH(pkCounter);
     WATCH(myAddress);
@@ -60,11 +59,12 @@ void App::initialize()
     const char *destAddressesPar = par("destAddresses");
     cStringTokenizer tokenizer(destAddressesPar);
     const char *token;
-    while ((token = tokenizer.nextToken()) != nullptr)
-        destAddresses.push_back(atoi(token));
+    //! not use multiple destinations by now.
+    // while ((token = tokenizer.nextToken()) != nullptr)
+    //     destAddresses.push_back(atoi(token));
 
-    if (destAddresses.size() == 0)
-        throw cRuntimeError("At least one address must be specified in the destAddresses parameter!");
+    // if (destAddresses.size() == 0)
+    //     throw cRuntimeError("At least one address must be specified in the destAddresses parameter!");
     if (!disableSending) {
         generatePacket = new cMessage("nextPacket");
         scheduleAt(sendIATime->doubleValue(), generatePacket);

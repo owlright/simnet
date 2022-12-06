@@ -19,7 +19,7 @@ module Node
     parameters:
         int address;
         string appType;
-        string nodeType=default("");
+        bool isSwitch=default(false);
         @display("i=misc/node_vs,gold");
     gates:
         inout port[];
