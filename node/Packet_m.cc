@@ -180,6 +180,7 @@ void Packet::copy(const Packet& other)
     this->hopCount = other.hopCount;
     this->seq = other.seq;
     this->ackSeq = other.ackSeq;
+    this->ECN = other.ECN;
 }
 
 void Packet::parsimPack(omnetpp::cCommBuffer *b) const
@@ -190,6 +191,7 @@ void Packet::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->hopCount);
     doParsimPacking(b,this->seq);
     doParsimPacking(b,this->ackSeq);
+    doParsimPacking(b,this->ECN);
 }
 
 void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -200,6 +202,7 @@ void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->hopCount);
     doParsimUnpacking(b,this->seq);
     doParsimUnpacking(b,this->ackSeq);
+    doParsimUnpacking(b,this->ECN);
 }
 
 int Packet::getSrcAddr() const
@@ -252,6 +255,16 @@ void Packet::setAckSeq(unsigned int ackSeq)
     this->ackSeq = ackSeq;
 }
 
+bool Packet::getECN() const
+{
+    return this->ECN;
+}
+
+void Packet::setECN(bool ECN)
+{
+    this->ECN = ECN;
+}
+
 class PacketDescriptor : public omnetpp::cClassDescriptor
 {
   private:
@@ -262,6 +275,7 @@ class PacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_hopCount,
         FIELD_seq,
         FIELD_ackSeq,
+        FIELD_ECN,
     };
   public:
     PacketDescriptor();
@@ -328,7 +342,7 @@ const char *PacketDescriptor::getProperty(const char *propertyName) const
 int PacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 5+base->getFieldCount() : 5;
+    return base ? 6+base->getFieldCount() : 6;
 }
 
 unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
@@ -345,8 +359,9 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_hopCount
         FD_ISEDITABLE,    // FIELD_seq
         FD_ISEDITABLE,    // FIELD_ackSeq
+        FD_ISEDITABLE,    // FIELD_ECN
     };
-    return (field >= 0 && field < 5) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 6) ? fieldTypeFlags[field] : 0;
 }
 
 const char *PacketDescriptor::getFieldName(int field) const
@@ -363,8 +378,9 @@ const char *PacketDescriptor::getFieldName(int field) const
         "hopCount",
         "seq",
         "ackSeq",
+        "ECN",
     };
-    return (field >= 0 && field < 5) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 6) ? fieldNames[field] : nullptr;
 }
 
 int PacketDescriptor::findField(const char *fieldName) const
@@ -376,6 +392,7 @@ int PacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "hopCount") == 0) return baseIndex + 2;
     if (strcmp(fieldName, "seq") == 0) return baseIndex + 3;
     if (strcmp(fieldName, "ackSeq") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 5;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -393,8 +410,9 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "int",    // FIELD_hopCount
         "unsigned int",    // FIELD_seq
         "unsigned int",    // FIELD_ackSeq
+        "bool",    // FIELD_ECN
     };
-    return (field >= 0 && field < 5) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 6) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **PacketDescriptor::getFieldPropertyNames(int field) const
@@ -426,6 +444,10 @@ const char **PacketDescriptor::getFieldPropertyNames(int field) const
             static const char *names[] = { "packetData",  nullptr };
             return names;
         }
+        case FIELD_ECN: {
+            static const char *names[] = { "packetData",  nullptr };
+            return names;
+        }
         default: return nullptr;
     }
 }
@@ -452,6 +474,9 @@ const char *PacketDescriptor::getFieldProperty(int field, const char *propertyNa
             if (!strcmp(propertyName, "packetData")) return "";
             return nullptr;
         case FIELD_ackSeq:
+            if (!strcmp(propertyName, "packetData")) return "";
+            return nullptr;
+        case FIELD_ECN:
             if (!strcmp(propertyName, "packetData")) return "";
             return nullptr;
         default: return nullptr;
@@ -517,6 +542,7 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
         case FIELD_hopCount: return long2string(pp->getHopCount());
         case FIELD_seq: return ulong2string(pp->getSeq());
         case FIELD_ackSeq: return ulong2string(pp->getAckSeq());
+        case FIELD_ECN: return bool2string(pp->getECN());
         default: return "";
     }
 }
@@ -538,6 +564,7 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
         case FIELD_hopCount: pp->setHopCount(string2long(value)); break;
         case FIELD_seq: pp->setSeq(string2ulong(value)); break;
         case FIELD_ackSeq: pp->setAckSeq(string2ulong(value)); break;
+        case FIELD_ECN: pp->setECN(string2bool(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
     }
 }
@@ -557,6 +584,7 @@ omnetpp::cValue PacketDescriptor::getFieldValue(omnetpp::any_ptr object, int fie
         case FIELD_hopCount: return pp->getHopCount();
         case FIELD_seq: return (omnetpp::intval_t)(pp->getSeq());
         case FIELD_ackSeq: return (omnetpp::intval_t)(pp->getAckSeq());
+        case FIELD_ECN: return pp->getECN();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'Packet' as cValue -- field index out of range?", field);
     }
 }
@@ -578,6 +606,7 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
         case FIELD_hopCount: pp->setHopCount(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_seq: pp->setSeq(omnetpp::checked_int_cast<unsigned int>(value.intValue())); break;
         case FIELD_ackSeq: pp->setAckSeq(omnetpp::checked_int_cast<unsigned int>(value.intValue())); break;
+        case FIELD_ECN: pp->setECN(value.boolValue()); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
     }
 }

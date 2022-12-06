@@ -18,5 +18,6 @@ packet Packet
     int hopCount @packetData;
     unsigned int seq @packetData;
     unsigned int ackSeq @packetData;
+    bool ECN @packetData;
 }
 
