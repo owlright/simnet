@@ -30,6 +30,7 @@ class Packet;
  *     int hopCount \@packetData;
  *     unsigned int seq \@packetData;
  *     unsigned int ackSeq \@packetData;
+ *     bool ECN \@packetData;
  * }
  * </pre>
  */
@@ -41,6 +42,7 @@ class Packet : public ::omnetpp::cPacket
     int hopCount = 0;
     unsigned int seq = 0;
     unsigned int ackSeq = 0;
+    bool ECN = false;
 
   private:
     void copy(const Packet& other);
@@ -71,6 +73,9 @@ class Packet : public ::omnetpp::cPacket
 
     virtual unsigned int getAckSeq() const;
     virtual void setAckSeq(unsigned int ackSeq);
+
+    virtual bool getECN() const;
+    virtual void setECN(bool ECN);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Packet& obj) {obj.parsimPack(b);}
