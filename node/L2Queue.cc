@@ -117,16 +117,17 @@ void L2Queue::handleMessage(cMessage *msg)
                 // ! Do not drop here, just set ecn flag
                 getParentModule()->bubble("overflow!");
                 Packet *pk = check_and_cast<Packet *>(msg);
-                EV << "Received " << pk << " set ecn flag\n";
-                pk->setECN(true);
-
+                if (pk->getKind() == 1) { // only tag the data packet
+                    EV << "Received " << pk << " set ecn flag\n";
+                    pk->setECN(true);
+                }
             }
-            else {
+            // else {
                 EV << "Received " << msg << " but transmitter busy: queueing up\n";
                 msg->setTimestamp();
                 queue.insert(msg);
                 emit(qlenSignal, queue.getLength());
-            }
+            // }
         }
         else {
             // We are idle, so we can start transmitting right away.
