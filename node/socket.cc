@@ -68,7 +68,7 @@ Socket::Send()
 }
 
 void
-Socket::Retransmit(uint32_t seq)
+Socket::Retransmit(uint32_t seq) // ! this function is not ready, do not use
 {
     char pkname[40];
     sprintf(pkname, "DATA-%d-to-%d-seq%u ", m_addr, m_destAddress, seq);
@@ -89,14 +89,20 @@ Socket::ProcessAck(Packet* pk)
     // assert(pk->getAckSeq() == m_tcb->m_seq + 1);
 
     if (m_tcb->m_ackedSeq + 1 <= m_tcb->m_seq) {
-        // m_tcb->m_acked++;
-        // if (m_tcb->m_ackedSeq + 1 == m_tcb->m_seq) { // ask exactly what I want to send
-        //     m_tcb->m_cWnd++;
-        // }
-        m_tcb->m_acked += pk->getAckSeq() - m_tcb->m_ackedSeq;
+        m_tcb->m_acked += 1;
         m_tcb->m_ackedSeq = pk->getAckSeq();
-        if (m_tcb->m_ackedSeq + 1 <= m_tcb->m_seq) {
-            m_tcb->m_cWnd++;
+        m_tcb->m_cWnd++;
+        EV_INFO << "Current window: "<< m_tcb->m_cWnd <<" Inflight packets: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
+        if (pk->getECN()) {
+            EV << "Congestion happened, half the window" << endl;
+            if ((m_tcb->m_cWnd)>>1 == 0 ) {
+                EV << "window too small" << endl;
+                m_tcb->m_cWnd = 1;
+            }
+            else {
+                m_tcb->m_cWnd = m_tcb->m_cWnd >> 1;
+            }
+            EV << "After half the window: " << m_tcb->m_cWnd << endl;
         }
         Send();
     }
@@ -116,11 +122,7 @@ Socket::ProcessData(Packet* pk)
     double rate = m_app->getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
     EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
     auto pkSeq = pk->getSeq();
-    // if (pkSeq == m_tcb->m_ackSeq + 1) {
-    //     // m_tcb->m_seq = pkSeq;
-    //     m_tcb->m_ackSeq = pkSeq;
-    // }
-    m_tcb->m_ackSeq = pkSeq; // ! just ack this packet
+    m_tcb->m_ackSeq = pkSeq; // ! just ack this packet, do not +1
 
     char pkname[40];
     sprintf(pkname, "ACK-%d-to-%d-ack%u ", m_addr, m_destAddress, m_tcb->m_ackSeq);
@@ -131,6 +133,10 @@ Socket::ProcessData(Packet* pk)
     ackpk->setAckSeq(m_tcb->m_ackSeq); // ack current packet seq, the sender will send next seq
     ackpk->setSrcAddr(m_addr);
     ackpk->setDestAddr(m_destAddress);
+    if (pk->getECN()) {
+        EV << "detect congestion!" <<endl;
+        ackpk->setECN(true);
+    }
     EV << ackpk->getName() << endl;
     m_app->send(ackpk, "out");
     delete pk;

@@ -18,7 +18,7 @@ simple App like IApp
         int address;  // local node address
         int packetTotalCount; // total sending packets
         int destAddress; //
-        string destAddresses;  // destination addresses
+        string destAddresses=default("");  // destination addresses
         volatile double sendIaTime @unit(s) = default(exponential(1s)); // time between generating packets
         volatile int packetLength @unit(byte);  // length of one message (fixed! no "volatile" modifier)
         @display("i=block/browser");
