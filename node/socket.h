@@ -11,7 +11,7 @@ using namespace omnetpp;
 // typedef std::function<void(cMessage*, const char *, int)> Callback;
 // typedef void (*SendFunCb)(cSimpleModule* app, cMessage *msg, const char *gatename, int gateindex);
 
-class Socket : public cObject {
+class Socket : public cModule {
 public:
     void SendData(int packets, int packetBytes);
     // void ReceieveAck(Packet*);
@@ -28,6 +28,7 @@ private:
     uint32_t AvailableWindow() const;
     void Send();
     void Retransmit(uint32_t seq);
+    simsignal_t packetsSentCountSignal;
     // void SetInitialCwnd(uint32_t cwnd);
     // void SetInitialSSThresh(uint32_t cwnd);
 private:

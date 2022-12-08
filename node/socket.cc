@@ -19,6 +19,7 @@ Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
     // m_tcb->m_initialCwnd = initCwnd;
     m_tcb->m_cWnd = initCwnd;
     m_tcb->m_ssThresh = initSSThresh;
+    packetsSentCountSignal = registerSignal("packetsSentCount");
 }
 
 Socket::~Socket()
