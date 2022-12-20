@@ -91,10 +91,10 @@ void App::handleMessage(cMessage *msg)
         // EV << "received packet " << pk->getName() << " after " << pk->getHopCount() << "hops" << endl;
         int senderAddr = pk->getSrcAddr();
         short packetKind = pk->getKind();
-        if (senderAddr == myAddress) { // ignore the packet send from myself
-            delete pk;
-            return;
-        }
+        // if (senderAddr == myAddress) { // ignore the packet send from myself
+        //     delete pk;
+        //     return;
+        // }
 
         if (hasGUI())
             getParentModule()->bubble("Arrived!");

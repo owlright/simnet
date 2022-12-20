@@ -9,13 +9,15 @@ network Net2
         channel C extends DatarateChannel
         {
             delay = 5ms;
-            datarate = 1Mbps;
+            datarate = 10kbps;
         }
     submodules:
-        rte[2]: Node {
+        rte[4]: Node {
             address = index;
         }
     connections:
         rte[1].port++ <--> C <--> rte[0].port++;
+        rte[2].port++ <--> C <--> rte[0].port++;
+        rte[3].port++ <--> C <--> rte[0].port++;
 }
 
