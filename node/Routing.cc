@@ -30,6 +30,7 @@ class Routing : public cSimpleModule
 
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
+    simsignal_t outputPacketSignal;
 
   protected:
     virtual void initialize() override;
@@ -43,7 +44,7 @@ void Routing::initialize()
     myAddress = getParentModule()->par("address");
     dropSignal = registerSignal("drop");
     outputIfSignal = registerSignal("outputIf");
-
+    outputPacketSignal = registerSignal("outputPacket");
     //
     // Brute force approach -- every node does topology discovery on its own,
     // and finds routes to all other nodes independently, at the beginning
@@ -107,7 +108,7 @@ void Routing::handleMessage(cMessage *msg)
     EV << "forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
     pk->setHopCount(pk->getHopCount()+1);
     emit(outputIfSignal, outGateIndex);
-
+    emit(outputPacketSignal, pk);
     send(pk, "out", outGateIndex);
 }
 
