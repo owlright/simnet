@@ -94,21 +94,34 @@ Socket::ProcessAck(Packet* pk)
         m_tcb->m_ackedSeq = pk->getAckSeq();
         m_tcb->m_cWnd++;
         EV_INFO << "Current window: "<< m_tcb->m_cWnd <<" Inflight packets: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
-        if (pk->getECN()) {
-            EV << "Congestion happened, half the window" << endl;
-            if ((m_tcb->m_cWnd)>>1 == 0 ) {
-                EV << "window too small" << endl;
-                m_tcb->m_cWnd = 1;
+
+        if (m_tcb->m_ackedSeq >= m_tcb->m_seq) {
+            // ! after receive a rtt bytes, then deal with congestion window
+            if (m_tcb->m_congState == TcpSocketState::CA_CWR) {
+                EV << "Congestion happened, half the window" << endl; // very native control
+                if ((m_tcb->m_cWnd)>>1 == 0 ) {
+                    EV << "window too small" << endl;
+                    m_tcb->m_cWnd = 1;
+                } else {
+                    m_tcb->m_cWnd = m_tcb->m_cWnd >> 1;
+                }
+                EV << "After half the window: " << m_tcb->m_cWnd << endl;
+                m_tcb->m_congState = TcpSocketState::CA_OPEN; // reset state to normal
             }
-            else {
-                m_tcb->m_cWnd = m_tcb->m_cWnd >> 1;
-            }
-            EV << "After half the window: " << m_tcb->m_cWnd << endl;
+            m_tcb->m_ackedBytesEcn = 0;
         }
+
+        if (pk->getECN()) {
+            m_tcb->m_congState = TcpSocketState::CA_CWR;
+            m_tcb->m_ackedBytesEcn += pk->getByteLength();
+        }
+
         Send();
         cwnd.record(m_tcb->m_cWnd);
     }
-    else { //! the code below should not be triggered
+    else {
+        //! there is no packet loss in the simulation
+        //! the code below should never be triggered
         assert(false);
         Retransmit(m_tcb->m_ackedSeq);
     }
