@@ -12,6 +12,8 @@ using namespace omnetpp;
 // typedef void (*SendFunCb)(cSimpleModule* app, cMessage *msg, const char *gatename, int gateindex);
 
 class Socket : public cModule {
+protected:
+    cOutVector cwnd;
 public:
     void SendData(int packets, int packetBytes);
     // void ReceieveAck(Packet*);
@@ -28,7 +30,7 @@ private:
     uint32_t AvailableWindow() const;
     void Send();
     void Retransmit(uint32_t seq);
-    simsignal_t packetsSentCountSignal;
+    // simsignal_t packetsSentCountSignal;
     // void SetInitialCwnd(uint32_t cwnd);
     // void SetInitialSSThresh(uint32_t cwnd);
 private:

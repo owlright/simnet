@@ -19,7 +19,8 @@ Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
     // m_tcb->m_initialCwnd = initCwnd;
     m_tcb->m_cWnd = initCwnd;
     m_tcb->m_ssThresh = initSSThresh;
-    packetsSentCountSignal = registerSignal("packetsSentCount");
+    // packetsSentCountSignal = registerSignal("packetsSentCount");
+    cwnd.setName("congestion window");
 }
 
 Socket::~Socket()
@@ -105,6 +106,7 @@ Socket::ProcessAck(Packet* pk)
             EV << "After half the window: " << m_tcb->m_cWnd << endl;
         }
         Send();
+        cwnd.record(m_tcb->m_cWnd);
     }
     else { //! the code below should not be triggered
         assert(false);
