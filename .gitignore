@@ -1,6 +1,7 @@
 *.exe
 *.anf
 .cmdenv-log
+.qtenvrc
 out/
 results/
 .vscode/
