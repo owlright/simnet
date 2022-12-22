@@ -4,14 +4,15 @@
 
 #include <omnetpp.h>
 #include "tcp-socket-state.h"
+#include "tcp-congestion-ops.h"
 using namespace omnetpp;
 
-class TcpReno {
+class TcpReno : public TcpCongestionOps{
 public:
-    void IncreaseWindow(TcpSocketState* tcb, uint32_t segmentsAcked);
-    uint32_t GetSsThresh(const TcpSocketState* tcb, uint32_t bytesInFlight);
-    void CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState);
-    void PktsAcked();
+    void IncreaseWindow(TcpSocketState* tcb, uint32_t segmentsAcked) override;
+    uint32_t GetSsThresh(const TcpSocketState* tcb, uint32_t bytesInFlight) override;
+    void CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState) override;
+    void PktsAcked(TcpSocketState* tcb) override;
 private:
     /**
      * Slow start phase handler

@@ -5,7 +5,7 @@
 #include <omnetpp.h>
 #include "Packet_m.h"
 #include "tcp-socket-state.h"
-#include "tcp-reno.h"
+#include "tcp-congestion-ops.h"
 
 using namespace omnetpp;
 // typedef std::function<void(cMessage*, const char *, int)> Callback;
@@ -42,7 +42,7 @@ private:
     int m_addr;
     int m_destAddress;
     //congestion control algo
-    TcpReno* m_cong = nullptr;
+    TcpCongestionOps* m_cong = nullptr;
     // Transmission control block
     TcpSocketState* m_tcb = nullptr;
 };

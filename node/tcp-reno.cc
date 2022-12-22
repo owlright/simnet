@@ -75,3 +75,15 @@ TcpReno::GetSsThresh(const TcpSocketState* state, uint32_t bytesInFlight)
     // In Linux, it is written as:  return max(tp->snd_cwnd >> 1U, 2U);
     return std::max<uint32_t>(2 * state->m_segmentSize, state->m_cWnd / 2);
 }
+
+void
+TcpReno::CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState)
+{
+
+}
+
+void
+TcpReno::PktsAcked(TcpSocketState *tcb)
+{
+    
+}
