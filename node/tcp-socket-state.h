@@ -47,11 +47,13 @@ public:
         CA_EVENT_NON_DELAYED_ACK, //!< Non-delayed ack is sent
     } TcpCAEvent_t;
     uint32_t m_seq{0}; // current data packet seq
-    uint32_t m_ackedSeq{0}; // packet seq has already been acked by now
+    uint32_t m_lastAckedSeq{0}; // packet seq has already been acked by now
     uint32_t m_ackSeq{0}; // ack seq
     uint32_t m_initialCwnd{INT32_MAX};
     uint32_t m_cWnd{0}; //!< Congestion window
     uint32_t m_ssThresh{0}; //!< Slow start threshold
+    uint32_t m_nextWinBeg{0}; //!< Right edge during last RTT
+    uint32_t m_obWnd{0}; //! observe window
     // Segment
     uint32_t m_segmentSize{0};          //!< Segment size
     uint32_t m_acked{0}; // acked packets number

@@ -20,6 +20,8 @@ Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
     m_tcb->m_cWnd = initCwnd;
     m_tcb->m_ssThresh = initSSThresh;
     m_tcb->m_congState = TcpSocketState::CA_OPEN;
+    m_tcb->m_nextWinBeg = m_tcb->m_cWnd; // ! set the first window right edge
+    m_tcb->m_obWnd = m_tcb->m_cWnd;
     // packetsSentCountSignal = registerSignal("packetsSentCount");
     cwnd.setName("congestion window");
 }
@@ -88,39 +90,45 @@ void
 Socket::ProcessAck(Packet* pk)
 {
     EV << "received ack packet " << pk->getName() << endl;
-    // assert(pk->getAckSeq() == m_tcb->m_seq + 1);
-    EV_WARN << "acked: " << m_tcb->m_ackedSeq << " current seq: "<< m_tcb->m_seq << endl;
-    if (m_tcb->m_ackedSeq + 1 < m_tcb->m_seq) {
-        if (pk->getECN()) {
-            m_tcb->m_congState = TcpSocketState::CA_CWR;
-            m_tcb->m_ackedBytesEcn += pk->getByteLength();
-        }
+    EV << "Current window: "<< m_tcb->m_cWnd <<" Inflight packets: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
+    EV << "acked: " << pk->getAckSeq() << " current seq: "<< m_tcb->m_seq << endl;
+    m_tcb->m_acked += 1;
+    m_tcb->m_cWnd++;
+    auto ackSeq = pk->getAckSeq();
+    assert(ackSeq + 1 <= m_tcb->m_seq); // ! can't receive a ack no bigger than have sent
+    assert (ackSeq == m_tcb->m_lastAckedSeq + 1); // ! no packet loss during simulation
+    if (pk->getECN()) {
+        m_tcb->m_congState = TcpSocketState::CA_CWR;
+        m_tcb->m_ackedBytesEcn += pk->getByteLength();
     }
-    else if (m_tcb->m_ackedSeq + 1 == m_tcb->m_seq) {
-        // ! after receive a rtt bytes, then deal with congestion window
-        EV << "packets has already sent: "<< m_tcb->m_sentSize << endl;
+
+    if (ackSeq + 1 >= m_tcb->m_nextWinBeg) { // ! after receive a rtt bytes
+        // EV << "packets has already sent: "<< m_tcb->m_sentSize << endl;
         if (m_tcb->m_congState == TcpSocketState::CA_CWR) {
-            EV << "Congestion happened, half the window" << endl; // very native control
+            EV_WARN << "Observe Window: " << m_tcb->m_obWnd << endl;
+            EV_WARN << "Congestion happened, half the window" << endl; // very native control
             if ((m_tcb->m_cWnd)>>1 == 0 ) {
-                EV << "window too small" << endl;
+                EV_WARN << "window too small" << endl;
                 m_tcb->m_cWnd = 1;
             } else {
                 m_tcb->m_cWnd = m_tcb->m_cWnd >> 1;
             }
-            EV << "After half the window: " << m_tcb->m_cWnd << endl;
+            EV_WARN << "After half the window: " << m_tcb->m_cWnd << endl;
+            EV_WARN << "Receive congestion bytes: " << m_tcb->m_ackedBytesEcn<<endl;
+            // ! reset state
+            m_tcb->m_obWnd = m_tcb->m_seq - m_tcb->m_nextWinBeg;
             m_tcb->m_congState = TcpSocketState::CA_OPEN; // reset state to normal
+            m_tcb->m_nextWinBeg = m_tcb->m_seq;
+            m_tcb->m_ackedBytesEcn = 0;
         }
-        m_tcb->m_ackedBytesEcn = 0;
+
+
     }
-    else {
-        assert(false);
-    }
-    m_tcb->m_acked += 1;
-    m_tcb->m_ackedSeq = pk->getAckSeq();
-    m_tcb->m_cWnd++;
-    EV << "Current window: "<< m_tcb->m_cWnd <<" Inflight packets: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
+
+
+    m_tcb->m_lastAckedSeq = ackSeq;
     Send();
-    cwnd.record(m_tcb->m_cWnd);
+    cwnd.record(m_tcb->m_cWnd); // todo: for debug use only, should change Socket to a SimpleModule and use singals
     delete pk;
 }
 
