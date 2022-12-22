@@ -8,8 +8,8 @@ network Net2
     types:
         channel C extends DatarateChannel
         {
-            delay = 1us;
-            datarate = 1Mbps;
+            delay = 1ms;
+            datarate = 200kbps;
         }
     submodules:
         rte[4]: Node {
