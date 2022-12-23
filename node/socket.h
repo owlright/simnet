@@ -15,11 +15,21 @@ class Socket : public cModule {
 protected:
     cOutVector cwnd;
 public:
+    typedef enum
+    {
+        ACK,
+        DATA,
+        LAST
+    } PacketType;
+public:
     void SendData(int packets, int packetBytes);
-    // void ReceieveAck(Packet*);
+    void ReceivedAck(Packet* pk);
     void ProcessAck(Packet* pk);
-    void ProcessData(Packet* pk);
+    void ReceivedData(Packet* pk);
+    void SendEchoAck(uint32_t ackno, bool detectECN);
     void SetApp(cSimpleModule* const app );
+    // void EnterCwr();
+    void Recv(Packet* pk);
     // void SetSendCb(Callback f);
     // void SetFlowSize(int packets, int packetBytes);
     int GetDestAddr() const;
@@ -29,7 +39,7 @@ public:
 private:
     uint32_t AvailableWindow() const;
     void Send();
-    void Retransmit(uint32_t seq);
+    // void Retransmit(uint32_t seq);
     // simsignal_t packetsSentCountSignal;
     // void SetInitialCwnd(uint32_t cwnd);
     // void SetInitialSSThresh(uint32_t cwnd);

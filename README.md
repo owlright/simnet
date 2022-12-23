@@ -5,6 +5,7 @@ So what this project does is implement different congestion algorithms.
 
 ## Notice
 - No packet loss
+- Socket only supports Simplex Communication
 
 ## Why not use INET?
 If we just need to test the congestion control algorithms, most INET codes are useless to us.

@@ -90,7 +90,7 @@ void App::handleMessage(cMessage *msg)
         Packet *pk = check_and_cast<Packet *>(msg);
         // EV << "received packet " << pk->getName() << " after " << pk->getHopCount() << "hops" << endl;
         int senderAddr = pk->getSrcAddr();
-        short packetKind = pk->getKind();
+        // short packetKind = pk->getKind();
         // if (senderAddr == myAddress) { // ignore the packet send from myself
         //     delete pk;
         //     return;
@@ -103,13 +103,15 @@ void App::handleMessage(cMessage *msg)
             socketsTable[senderAddr] = new Socket(myAddress, senderAddr);
             socketsTable[senderAddr]->SetApp(this);
         }
-
-        if (packetKind == 1) { // data packet
-            socketsTable[senderAddr]->ProcessData(pk);
-        }
-        else if (packetKind == 0) { // ack packet
-            socketsTable[senderAddr]->ProcessAck(pk);
-        }
+        socketsTable[senderAddr]->Recv(pk);
+        delete pk;
+        pk=nullptr;
+        // if (packetKind == 1) { // data packet
+        //     socketsTable[senderAddr]->ProcessData(pk);
+        // }
+        // else if (packetKind == 0) { // ack packet
+        //     socketsTable[senderAddr]->ProcessAck(pk);
+        // }
     }
 }
 
