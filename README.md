@@ -5,6 +5,7 @@ So what this project does is implement different congestion algorithms.
 
 ## Notice
 - No packet loss
+- No handling of package disorder
 - Socket only supports Simplex Communication
 
 ## Why not use INET?

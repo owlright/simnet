@@ -24,7 +24,7 @@ public:
 public:
     void SendData(int packets, int packetBytes);
     void ReceivedAck(Packet* pk);
-    void ProcessAck(Packet* pk);
+    void ProcessAck(const uint32_t& ackNumber);
     void ReceivedData(Packet* pk);
     void SendEchoAck(uint32_t ackno, bool detectECN);
     void SetApp(cSimpleModule* const app );
@@ -38,7 +38,7 @@ public:
     ~Socket();
 private:
     uint32_t AvailableWindow() const;
-    void Send();
+    void SendPendingData();
     // void Retransmit(uint32_t seq);
     // simsignal_t packetsSentCountSignal;
     // void SetInitialCwnd(uint32_t cwnd);

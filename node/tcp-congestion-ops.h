@@ -45,7 +45,7 @@ public:
      * \param tcb internal congestion state
      * \param segmentsAcked count of segments acked
      */
-    virtual void IncreaseWindow(TcpSocketState* tcb, uint32_t segmentsAcked) = 0;
+    virtual void IncreaseWindow(TcpSocketState* tcb) = 0;
 
     /**
      * \brief Timing information on received ACK
@@ -59,7 +59,7 @@ public:
      * \param segmentsAcked count of segments acked
      * \param rtt last rtt
      */
-    virtual void PktsAcked(TcpSocketState* tcb) = 0;
+    virtual void PktsAcked(TcpSocketState* tcb) {};
 
     /**
      * \brief Trigger events/calculations on occurrence of congestion window event

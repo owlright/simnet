@@ -51,7 +51,7 @@ public:
     uint32_t m_ackSeq{0}; // ack seq
     uint32_t m_initialCwnd{INT32_MAX};
     uint32_t m_cWnd{0}; //!< Congestion window
-    uint32_t m_ssThresh{0}; //!< Slow start threshold
+    uint32_t m_ssThresh{UINT32_MAX}; //!< Slow start threshold
     uint32_t m_nextWinBeg{0}; //!< Right edge during last RTT
     uint32_t m_obWnd{0}; //! observe window
     // Segment

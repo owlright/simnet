@@ -47,11 +47,11 @@ Socket::SendData(int packets, int packetBytes)
 {
     this->packetNumber = packets;
     this->packetBytes = packetBytes;
-    Send();
+    SendPendingData();
 }
 
 void
-Socket::Send()
+Socket::SendPendingData()
 {
     char pkname[40];
     uint32_t nextSeq;
@@ -68,7 +68,7 @@ Socket::Send()
         pk->setDestAddr(m_destAddress);
         m_app->send(pk, "out");
         m_tcb->m_sentSize++;
-        m_tcb->m_seq++; // ! next packet seq
+        m_tcb->m_seq++; // ! After the loop m_seq is the next packet seq
     }
 }
 
@@ -100,36 +100,55 @@ Socket::Recv(Packet* pk)
     else if (packetKind == PacketType::ACK) { // ack packet
         ReceivedAck(pk);
     }
+    else {
+        assert(false);
+    }
 }
 
 void
 Socket::ReceivedAck(Packet* pk)
 {
     auto ackSeq = pk->getAckSeq();
-    assert(ackSeq + 1 <= m_tcb->m_seq); // ! can't receive a ack no bigger than have sent
+    assert(ackSeq + 1 <= m_tcb->m_seq); // ! impossible to receive a ack bigger than have sent
     EV << "received ack packet " << pk->getName() << endl;
     EV << "Current window: "<< m_tcb->m_cWnd <<" Inflight packets: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
     EV << "acked: " << ackSeq << " current seq: "<< m_tcb->m_seq << endl;
     assert (ackSeq == m_tcb->m_lastAckedSeq + 1); // ! no packet loss during simulation
     if (pk->getECN()) {
+        EV << "Received ECN" << endl;
         if (m_tcb->m_congState != TcpSocketState::CA_CWR) {
+            m_tcb->m_ssThresh = m_cong->GetSsThresh(m_tcb, 0);
+            m_tcb->m_cWnd = m_tcb->m_ssThresh;
             m_tcb->m_congState = TcpSocketState::CA_CWR;
-            m_tcb->m_ssThresh = m_cong->GetSsThresh(m_tcb, 0); // todo bytesinFight
+            // m_recover;
+
         }
 
-        m_tcb->m_ackedBytesEcn += pk->getByteLength();
+        // m_tcb->m_ackedBytesEcn += pk->getByteLength();
     }
-    ProcessAck(pk);
+    ProcessAck(ackSeq);
+    SendPendingData();
 }
 
 void
-Socket::ProcessAck(Packet* pk)
+Socket::ProcessAck(const uint32_t& ackNumber)
 {
     m_tcb->m_lastAckedSeq++;
     m_tcb->m_acked += 1;
-    m_cong->PktsAcked(m_tcb); // todo, update ecn calculation here
-    m_cong->IncreaseWindow(m_tcb);
-    // if (ackSeq + 1 >= m_tcb->m_nextWinBeg) { // ! after receive a rtt bytes
+    // ! ask exactly the next window begin packet
+    // ! which means after now we have received a rtt bytes
+    // ! we update anything at the end of a congestion window
+    if (ackNumber + 1 == m_tcb->m_nextWinBeg) {
+        if (m_tcb->m_congState == TcpSocketState::CA_CWR) {
+            m_cong->PktsAcked(m_tcb); // todo, update ecn calculation here
+        }
+        else {
+            m_cong->IncreaseWindow(m_tcb);
+        }
+    }
+    cwnd.record(m_tcb->m_cWnd); // todo: for debug use only, should change Socket to a SimpleModule and use singals
+
+    // if (ackSeq + 1 >= m_tcb->m_nextWinBeg) {
     //     // EV << "packets has already sent: "<< m_tcb->m_sentSize << endl;
     //     if (m_tcb->m_congState == TcpSocketState::CA_CWR) {
     //         EV_WARN << "Observe Window: " << m_tcb->m_obWnd << endl;
@@ -154,8 +173,8 @@ Socket::ProcessAck(Packet* pk)
 
 
     // m_tcb->m_lastAckedSeq = ackSeq;
-    Send();
-    cwnd.record(m_tcb->m_cWnd); // todo: for debug use only, should change Socket to a SimpleModule and use singals
+
+
 }
 
 void
