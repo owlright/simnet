@@ -46,13 +46,13 @@ public:
         CA_EVENT_DELAYED_ACK,     //!< Delayed ack is sent
         CA_EVENT_NON_DELAYED_ACK, //!< Non-delayed ack is sent
     } TcpCAEvent_t;
-    uint32_t m_seq{0}; // current data packet seq
+    // uint32_t m_seq{0}; // current data packet seq
     uint32_t m_lastAckedSeq{0}; // packet seq has already been acked by now
     uint32_t m_ackSeq{0}; // ack seq
     uint32_t m_initialCwnd{INT32_MAX};
-    uint32_t m_cWnd{0}; //!< Congestion window
+    uint32_t m_cWnd{0}; // * Congestion window
     uint32_t m_ssThresh{UINT32_MAX}; //!< Slow start threshold
-    uint32_t m_nextWinBeg{0}; //!< Right edge during last RTT
+    uint32_t m_nextTxSequence{0}; //!< Next seqnum to be sent (SND.NXT)
     uint32_t m_obWnd{0}; //! observe window
     // Segment
     uint32_t m_segmentSize{0};          //!< Segment size
@@ -61,6 +61,6 @@ public:
     uint32_t m_retrans{0};
     uint32_t m_sentSize{0}; // sent packets number
     uint32_t m_bytesInFlight{0}; // sent - acked
-    uint32_t m_ackedBytesEcn{0};
+    // uint32_t m_ackedBytesEcn{0};
     TcpCongState_t m_congState{CA_OPEN}; //!< State in the Congestion state machine
 };

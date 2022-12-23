@@ -1,17 +1,49 @@
 #include "tcp-reno.h"
+
+void
+TcpReno::Init(TcpSocketState* tcb)
+{
+    obcWnd.setName("observe window");
+}
+
+void
+TcpReno::PktsAcked(TcpSocketState* tcb)
+{
+    EV << "======" << __FUNCTION__ << "======" << endl;
+    if (tcb->m_congState == TcpSocketState::CA_CWR) {
+        m_ackedBytesEcn += 1;
+    }
+
+    if (m_nextSeqFlag == false)
+    {
+        EV << "Set the first time m_nextSeq=" << tcb->m_nextTxSequence << endl;
+        m_nextSeq = tcb->m_nextTxSequence;
+        m_nextSeqFlag = true;
+    }
+    if (tcb->m_lastAckedSeq == m_nextSeq)
+    {
+        EV << " Last window size: " << tcb->m_nextTxSequence - m_nextSeq << endl;
+        obcWnd.record(tcb->m_nextTxSequence - m_nextSeq);
+        //todo calc the ecn ratio here
+        //..
+        m_nextSeq = tcb->m_nextTxSequence;
+        m_ackedBytesEcn = 0;
+    }
+}
+
 void
 TcpReno::IncreaseWindow(TcpSocketState* tcb)
 {
+    EV << "======" << __FUNCTION__ << "======" << endl;
     // Linux tcp_in_slow_start() condition
     if (tcb->m_cWnd < tcb->m_ssThresh)
     {
-        EV_DEBUG << "In slow start, m_cWnd " << tcb->m_cWnd << " m_ssThresh " << tcb->m_ssThresh << endl;
+        EV << "In slow start, m_cWnd " << tcb->m_cWnd << " m_ssThresh " << tcb->m_ssThresh << endl;
         SlowStart(tcb);
     }
     else
     {
-        EV_DEBUG  << "In cong. avoidance, m_cWnd " << tcb->m_cWnd << " m_ssThresh "
-                                                   << tcb->m_ssThresh;
+        EV  << "In cong. avoidance, m_cWnd: " << tcb->m_cWnd << " m_ssThresh: "<< tcb->m_ssThresh << endl;
         CongestionAvoidance(tcb);
     }
 }
@@ -20,7 +52,7 @@ void
 TcpReno::SlowStart(TcpSocketState* tcb)
 {
     tcb->m_cWnd = std::min(tcb->m_cWnd + 1, tcb->m_ssThresh);
-    EV << "In SlowStart, updated to cwnd " << tcb->m_cWnd << " ssthresh " << tcb->m_ssThresh << endl;
+    EV << "After slow start, m_cWnd " << tcb->m_cWnd << " m_ssThresh " << tcb->m_ssThresh << endl;
 }
 
 void
@@ -63,7 +95,6 @@ TcpReno::GetSsThresh(const TcpSocketState* tcb, uint32_t bytesInFlight)
     // NS_LOG_FUNCTION(this << state << bytesInFlight);
 
     // In Linux, it is written as:  return max(tp->snd_cwnd >> 1U, 2U);
-    EV_WARN << "Congestion happened, half the window" << endl; // very native control
     if ((tcb->m_cWnd)>>1 == 0 ) {
         EV_WARN << "window too small" << endl;
         return 1;

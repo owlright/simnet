@@ -12,8 +12,6 @@ using namespace omnetpp;
 // typedef void (*SendFunCb)(cSimpleModule* app, cMessage *msg, const char *gatename, int gateindex);
 
 class Socket : public cModule {
-protected:
-    cOutVector cwnd;
 public:
     typedef enum
     {
@@ -37,6 +35,7 @@ public:
     explicit Socket(int src, int dest, uint32_t initCwnd=1, uint32_t initSSThresh=INT32_MAX);
     ~Socket();
 private:
+    cOutVector cWnd;
     uint32_t AvailableWindow() const;
     void SendPendingData();
     // void Retransmit(uint32_t seq);
@@ -55,5 +54,6 @@ private:
     TcpCongestionOps* m_cong = nullptr;
     // Transmission control block
     TcpSocketState* m_tcb = nullptr;
+
 };
 
