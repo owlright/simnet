@@ -9,7 +9,7 @@ network Net4
         channel C extends DatarateChannel
         {
             delay = 1ms;
-            datarate = 1kbps;
+            datarate = 200kbps;
         }
     submodules:
         rte[4]: Node {
@@ -18,6 +18,6 @@ network Net4
     connections:
         rte[1].port++ <--> C <--> rte[0].port++;
         rte[2].port++ <--> C <--> rte[0].port++;
-        rte[0].port++ <--> C <--> rte[3].port++;
+        rte[3].port++ <--> C <--> rte[0].port++;
 }
 
