@@ -18,8 +18,8 @@ module Node
 {
     parameters:
         int address;
+        int destAddress;
         string appType;
-        bool isSwitch=default(false);
         @display("i=misc/node_vs,gold");
     gates:
         inout port[];
@@ -27,6 +27,7 @@ module Node
         app: <appType> like IApp {
             parameters:
                 address = parent.address;
+                destAddress = parent.destAddress;
                 @display("p=140,60");
         }
         routing: Routing {

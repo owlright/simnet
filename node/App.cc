@@ -46,10 +46,10 @@ void App::initialize()
     packetLossCounter = 0;
     pkCounter = 0;
     seq = 0;
-
+    EV << "me: "<< myAddress << " sink: " << destAddress << endl;
     disableSending = myAddress==destAddress;
     if (disableSending)
-        EV << "destation is my self, this is a sink node, so disable generating packets." << endl;
+        EV << "receiver is myself" << endl;
 
     WATCH(pkCounter);
     WATCH(myAddress);
