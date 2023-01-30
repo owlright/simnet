@@ -35,10 +35,11 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 # Object files for local .cc, .msg and .sm files
 OBJS = \
     $O/builder/netbuilder.o \
-		$O/common/ResultFilters.o \
+	$O/common/ResultFilters.o \
     $O/node/App.o \
     $O/node/socket.o \
     $O/node/tcp-reno.o \
+	$O/node/tcp-dctcp.o \
     $O/node/BurstyApp.o \
     $O/node/L2Queue.o \
     $O/node/Routing.o \

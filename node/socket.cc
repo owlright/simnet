@@ -130,8 +130,7 @@ Socket::ProcessAck(const uint32_t& ackNumber)
     EV << "cWnd: "<< m_tcb->m_cWnd <<" inflight: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
     m_cong->PktsAcked(m_tcb); // todo, update ecn calculation here
     m_cong->IncreaseWindow(m_tcb);
-    cWnd.record(m_tcb->m_cWnd);
-    // todo: for debug use only, should change Socket to a SimpleModule and use singals in the future
+    cWnd.record(m_tcb->m_cWnd); // todo: for debug use only, should change Socket to a SimpleModule and use singals in the future
 
 }
 

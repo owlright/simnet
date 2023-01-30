@@ -1,37 +1,6 @@
 #include "tcp-reno.h"
 
 void
-TcpReno::Init(TcpSocketState* tcb)
-{
-    obcWnd.setName("observe window");
-}
-
-void
-TcpReno::PktsAcked(TcpSocketState* tcb)
-{
-    EV << "======" << __FUNCTION__ << "======" << endl;
-    if (tcb->m_congState == TcpSocketState::CA_CWR) {
-        m_ackedBytesEcn += 1;
-    }
-
-    if (m_nextSeqFlag == false)
-    {
-        EV << "Set the first time m_nextSeq=" << tcb->m_nextTxSequence << endl;
-        m_nextSeq = tcb->m_nextTxSequence;
-        m_nextSeqFlag = true;
-    }
-    if (tcb->m_lastAckedSeq == m_nextSeq)
-    {
-        EV << " Last window size: " << tcb->m_nextTxSequence - m_nextSeq << endl;
-        obcWnd.record(tcb->m_nextTxSequence - m_nextSeq);
-        //todo calc the ecn ratio here
-        //..
-        m_nextSeq = tcb->m_nextTxSequence;
-        m_ackedBytesEcn = 0;
-    }
-}
-
-void
 TcpReno::IncreaseWindow(TcpSocketState* tcb)
 {
     EV << "======" << __FUNCTION__ << "======" << endl;
@@ -48,11 +17,12 @@ TcpReno::IncreaseWindow(TcpSocketState* tcb)
     }
 }
 
-void
+uint32_t
 TcpReno::SlowStart(TcpSocketState* tcb)
 {
     tcb->m_cWnd = std::min(tcb->m_cWnd + 1, tcb->m_ssThresh);
     EV << "After slow start, m_cWnd " << tcb->m_cWnd << " m_ssThresh " << tcb->m_ssThresh << endl;
+    return 1;
 }
 
 void

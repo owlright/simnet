@@ -59,7 +59,10 @@ public:
      * \param segmentsAcked count of segments acked
      * \param rtt last rtt
      */
-    virtual void PktsAcked(TcpSocketState* tcb) {};
+    virtual void PktsAcked(TcpSocketState* tcb)
+    {
+        //do noting here
+    };
 
     /**
      * \brief Trigger events/calculations on occurrence of congestion window event
