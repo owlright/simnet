@@ -21,6 +21,7 @@ class L2Queue : public cSimpleModule
 {
   private:
     intval_t frameCapacity;
+    intval_t ecnThreshold;
 
     cQueue queue;
     cMessage *endTransmissionEvent = nullptr;
@@ -59,6 +60,7 @@ void L2Queue::initialize()
         gate("line$i")->setDeliverImmediately(true);
 
     frameCapacity = par("frameCapacity");
+    ecnThreshold = par("ecnThreshold");
 
     qlenSignal = registerSignal("qlen");
     busySignal = registerSignal("busy");
@@ -109,12 +111,8 @@ void L2Queue::handleMessage(cMessage *msg)
     }
     else {  // arrived on gate "in"
         if (endTransmissionEvent->isScheduled()) {
-            // We are currently busy, so just queue up the packet.
-            if (frameCapacity && queue.getLength() >= frameCapacity) {
-                // // EV << "Received " << msg << " but transmitter busy and queue full: discarding\n";
-                emit(dropSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());
-                // // delete msg;
-                // ! Do not drop here, just set ecn flag
+            if (ecnThreshold && queue.getLength() >= frameCapacity)
+            {
                 getParentModule()->bubble("overflow!");
                 Packet *pk = check_and_cast<Packet *>(msg);
                 EV << "Received " << pk << " set ecn flag\n";
@@ -132,6 +130,7 @@ void L2Queue::handleMessage(cMessage *msg)
                 queue.insert(msg);
                 emit(qlenSignal, queue.getLength());
             }
+
         }
         else {
             // We are idle, so we can start transmitting right away.
