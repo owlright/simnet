@@ -119,7 +119,12 @@ void L2Queue::handleMessage(cMessage *msg)
                 Packet *pk = check_and_cast<Packet *>(msg);
                 EV << "Received " << pk << " set ecn flag\n";
                 pk->setECN(true);
-
+            }
+            // We are currently busy, so just queue up the packet.
+            if (frameCapacity && queue.getLength() >= frameCapacity) {
+                EV << "Received " << msg << " but transmitter busy and queue full: discarding\n";
+                emit(dropSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());
+                delete msg;
             }
             else {
                 EV << "Received " << msg << " but transmitter busy: queueing up\n";
