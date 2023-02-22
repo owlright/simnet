@@ -13,9 +13,15 @@ public:
     void PktsAcked(TcpSocketState* tcb) override;
     void CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState) override;
     virtual void Init(TcpSocketState* tcb [[maybe_unused]]) override;
+    void Reset(TcpSocketState* tcb);
+    
 private:
     cOutVector obcWnd; //! observe window
     uint32_t m_nextSeq;//!< TCP sequence number threshold for beginning a new observation window
     bool m_nextSeqFlag{false};
-    uint32_t m_ackedBytesEcn{0};
+    uint32_t m_ackedPacketsEcn{0};
+
+    uint32_t m_ackedPacketsTotal{0};
+    double m_alpha;
+    double m_g;
 };
