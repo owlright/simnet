@@ -1,5 +1,5 @@
 #include "socket.h"
-#include "tcp-reno.h"
+#include "tcp-dctcp.h"
 // void
 // Socket::SetSendCb(Callback f)
 // {
@@ -13,7 +13,7 @@ Socket::SetApp(cSimpleModule* const app)
 
 Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
 {
-    m_cong = new TcpReno(); // todo should be defined by user
+    m_cong = new TcpDctcp(); // todo should be defined by user
     m_tcb = new TcpSocketState();
     m_addr = src;
     m_destAddress = dest;
