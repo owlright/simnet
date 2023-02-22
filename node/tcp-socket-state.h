@@ -61,6 +61,5 @@ public:
     uint32_t m_retrans{0};
     uint32_t m_sentSize{0}; // sent packets number
     uint32_t m_bytesInFlight{0}; // sent - acked
-    // uint32_t m_ackedBytesEcn{0};
     TcpCongState_t m_congState{CA_OPEN}; //!< State in the Congestion state machine
 };
