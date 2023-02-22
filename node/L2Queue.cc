@@ -121,12 +121,12 @@ void L2Queue::handleMessage(cMessage *msg)
                 pk->setECN(true);
 
             }
-            // else {
+            else {
                 EV << "Received " << msg << " but transmitter busy: queueing up\n";
                 msg->setTimestamp();
                 queue.insert(msg);
                 emit(qlenSignal, queue.getLength());
-            // }
+            }
         }
         else {
             // We are idle, so we can start transmitting right away.
