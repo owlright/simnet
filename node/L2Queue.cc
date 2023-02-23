@@ -111,11 +111,13 @@ void L2Queue::handleMessage(cMessage *msg)
     }
     else {  // arrived on gate "in"
         if (endTransmissionEvent->isScheduled()) {
-            if (ecnThreshold && queue.getLength() >= frameCapacity)
+            if (ecnThreshold && queue.getLength() >= ecnThreshold)
             {
                 getParentModule()->bubble("overflow!");
                 Packet *pk = check_and_cast<Packet *>(msg);
-                EV << "Received " << pk << " set ecn flag\n";
+                EV << "Received " << pk << endl;
+                EV << "Current queue length " << queue.getLength()
+                    << " and ECN threshold is " << ecnThreshold <<". Mark ECN!\n";
                 pk->setECN(true);
             }
             // We are currently busy, so just queue up the packet.
