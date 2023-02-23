@@ -18,7 +18,6 @@ module Node
 {
     parameters:
         int address;
-        int destAddress;
         string appType;
         @display("i=misc/node_vs,gold");
     gates:
@@ -27,7 +26,6 @@ module Node
         app: <appType> like IApp {
             parameters:
                 address = parent.address;
-                destAddress = parent.destAddress;
                 @display("p=140,60");
         }
         routing: Routing {
