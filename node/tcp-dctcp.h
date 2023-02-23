@@ -14,7 +14,8 @@ public:
     void CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState) override;
     virtual void Init(TcpSocketState* tcb [[maybe_unused]]) override;
     void Reset(TcpSocketState* tcb);
-    
+
+    TcpDctcp();
 private:
     cOutVector obcWnd; //! observe window
     uint32_t m_nextSeq;//!< TCP sequence number threshold for beginning a new observation window
