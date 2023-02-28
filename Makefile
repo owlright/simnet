@@ -38,6 +38,7 @@ OBJS = \
     $O/common/ResultFilters.o \
     $O/node/App.o \
     $O/node/BurstyApp.o \
+    $O/node/Controller.o \
     $O/node/L2Queue.o \
     $O/node/Routing.o \
     $O/node/socket.o \

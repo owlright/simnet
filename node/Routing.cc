@@ -14,7 +14,7 @@
 #include <map>
 #include <omnetpp.h>
 #include "Packet_m.h"
-
+#include "../common/Defs.h"
 using namespace omnetpp;
 
 /**
@@ -33,13 +33,14 @@ class Routing : public cSimpleModule
     simsignal_t outputPacketSignal;
 
   protected:
-    virtual void initialize() override;
+    virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
 };
 
 Define_Module(Routing);
 
-void Routing::initialize()
+void Routing::initialize(int stage)
 {
     myAddress = getParentModule()->par("address");
     dropSignal = registerSignal("drop");
@@ -51,10 +52,14 @@ void Routing::initialize()
     // of the simulation. This could be improved: (1) central routing database,
     // (2) on-demand route calculation
     //
+    if (stage == 1) {
+
+
     cTopology *topo = new cTopology("topo");
 
     std::vector<std::string> nedTypes;
     nedTypes.push_back(getParentModule()->getNedTypeName());
+    EV << getParentModule()->getNedTypeName() << endl;
     topo->extractByNedTypeName(nedTypes);
     EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
 
@@ -75,7 +80,7 @@ void Routing::initialize()
         rtable[address] = gateIndex;
         EV << "  towards address " << address << " gateIndex is " << gateIndex << endl;
     }
-    delete topo;
+    delete topo; }
 }
 
 void Routing::handleMessage(cMessage *msg)
