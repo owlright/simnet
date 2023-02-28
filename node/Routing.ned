@@ -15,6 +15,7 @@ package node;
 simple Routing
 {
     parameters:
+        string globalController;
         @display("i=block/switch");
         @signal[drop](type="long");
         @signal[outputIf](type="long");
