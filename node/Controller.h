@@ -11,10 +11,8 @@ public:
     virtual ~Controller();
 private:
     cTopology *topo;
-    typedef std::map<int, std::vector<intval_t>> AggrSendersTable;
-    typedef std::map<int, intval_t> AggrTargetTable;
-    AggrSendersTable aggrSendersTable;
-    AggrTargetTable aggrTargetTable;
+    std::map<int, int> aggrNumber;
+    std::map<int, int> aggRouterIndex;
 
 protected:
     virtual void initialize(int stage) override;

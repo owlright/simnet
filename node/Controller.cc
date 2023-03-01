@@ -47,15 +47,17 @@ void Controller::initialize(int stage)
         topo->extractByNedTypeName(nedTypes);
         EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
         // ! parse aggr group info
-        auto aggrgroup = check_and_cast<cValueArray*>(par("aggrgroup").objectValue());
+        auto aggrouter = check_and_cast<cValueArray*>(par("aggrouter").objectValue())->asIntVector();
+        auto sendersNumber = check_and_cast<cValueArray*>(par("aggrgroup").objectValue())->asIntVector();
         auto targets = check_and_cast<cValueArray*>(par("targets").objectValue())->asIntVector();
-        if (aggrgroup->size() != targets.size()) {
+        if (sendersNumber.size() != targets.size() || sendersNumber.size() != aggrouter.size()) {
             throw cRuntimeError("sender group number is not equal to targets");
         }
-        for (int i = 0; i < aggrgroup->size(); i++) {
-            auto senders = check_and_cast<cValueArray*> (aggrgroup->get(i).objectValue())->asIntVector();
-            aggrSendersTable[i] = std::move(senders); // ? if this right?
-            EV << "Group "<< i << " Senders:" << aggrSendersTable[i] << " Target:"<<targets.at(i) << endl;
+        for (int i = 0; i < targets.size(); i++) {
+            auto root = targets.at(i);
+            aggRouterIndex[root] = aggrouter.at(i);
+            aggrNumber[root] = sendersNumber.at(i);
+            EV << "group "<< root << " has " << aggrNumber[root] << " senders. aggr at "<< aggRouterIndex[root] << endl;
         }
 
     }
