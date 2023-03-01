@@ -45,5 +45,14 @@ void Controller::initialize(int stage)
         nedTypes.push_back(getParentModule()->getSubmodule("terminal", 0)->getNedTypeName());
         topo->extractByNedTypeName(nedTypes);
         EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
+        auto routes = par("routes").objectValue();
+        auto tmp = check_and_cast<cValueArray*>(routes);
+        for (int i = 0; i < tmp->size(); i++) {
+            auto dict = check_and_cast<cValueMap*> (tmp->get(i).objectValue());
+            if (dict->containsKey("sources")) {
+                std::cout << dict->get("sources").stringValue() << endl;
+            }
+        }
+
     }
 }
