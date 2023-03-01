@@ -2,9 +2,12 @@ package networks;
 
 import node.Node;
 import ned.DatarateChannel;
-
+import node.Controller;
 network Net4
 {
+    parameters:
+        string globalController = fullName()+".controller";
+
     types:
         channel C extends DatarateChannel
         {
@@ -12,12 +15,16 @@ network Net4
             datarate = 10Mbps;
         }
     submodules:
-        rte[4]: Node {
+        terminal[4]: Node {
             address = index;
+            globalController = parent.globalController;
+        }
+        controller: Controller {
+            @display("p=125,18;is=s");
         }
     connections:
-        rte[1].port++ <--> C <--> rte[0].port++;
-        rte[2].port++ <--> C <--> rte[0].port++;
-        rte[3].port++ <--> C <--> rte[0].port++;
+        terminal[1].port++ <--> C <--> terminal[0].port++;
+        terminal[2].port++ <--> C <--> terminal[0].port++;
+        terminal[3].port++ <--> C <--> terminal[0].port++;
 }
 

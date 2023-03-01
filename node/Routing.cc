@@ -15,6 +15,8 @@
 #include <omnetpp.h>
 #include "Packet_m.h"
 #include "../common/Defs.h"
+#include "../common/ModuleAccess.h"
+#include "Controller.h"
 using namespace omnetpp;
 
 /**
@@ -22,17 +24,20 @@ using namespace omnetpp;
  */
 class Routing : public cSimpleModule
 {
-  private:
+private:
     int myAddress;
     bool isSwitch;
     typedef std::map<int, int> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
-
+    opp_component_ptr<Controller> controller;
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
     simsignal_t outputPacketSignal;
 
-  protected:
+private:
+    int getRouteGateIndex(int address);
+
+protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
@@ -42,45 +47,34 @@ Define_Module(Routing);
 
 void Routing::initialize(int stage)
 {
-    myAddress = getParentModule()->par("address");
-    dropSignal = registerSignal("drop");
-    outputIfSignal = registerSignal("outputIf");
-    outputPacketSignal = registerSignal("outputPacket");
-    //
-    // Brute force approach -- every node does topology discovery on its own,
-    // and finds routes to all other nodes independently, at the beginning
-    // of the simulation. This could be improved: (1) central routing database,
-    // (2) on-demand route calculation
-    //
-    if (stage == 1) {
 
-
-    cTopology *topo = new cTopology("topo");
-
-    std::vector<std::string> nedTypes;
-    nedTypes.push_back(getParentModule()->getNedTypeName());
-    EV << getParentModule()->getNedTypeName() << endl;
-    topo->extractByNedTypeName(nedTypes);
-    EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
-
-    cTopology::Node *thisNode = topo->getNodeFor(getParentModule());
-
-    // find and store next hops
-    for (int i = 0; i < topo->getNumNodes(); i++) {
-        if (topo->getNode(i) == thisNode)
-            continue;  // skip ourselves
-        topo->calculateUnweightedSingleShortestPathsTo(topo->getNode(i));
-
-        if (thisNode->getNumPaths() == 0)
-            continue;  // not connected
-
-        cGate *parentModuleGate = thisNode->getPath(0)->getLocalGate();
-        int gateIndex = parentModuleGate->getIndex();
-        int address = topo->getNode(i)->getModule()->par("address");
-        rtable[address] = gateIndex;
-        EV << "  towards address " << address << " gateIndex is " << gateIndex << endl;
+    if (stage == 0) {
+        myAddress = getParentModule()->par("address");
+        dropSignal = registerSignal("drop");
+        outputIfSignal = registerSignal("outputIf");
+        outputPacketSignal = registerSignal("outputPacket");
+        WATCH_MAP(rtable);
     }
-    delete topo; }
+    if (stage == 1) {
+        controller = getModuleFromPar<Controller>(par("globalController"), this);
+        assert(controller != nullptr);
+    }
+}
+
+int Routing::getRouteGateIndex(int address)
+{
+    RoutingTable::iterator it = rtable.find(address);
+    if (it != rtable.end()) {
+        int outGateIndex = (*it).second;
+        return outGateIndex;
+    }
+    else {
+        int outGateIndex = controller->getRoute(this->getParentModule(), address);
+        if (outGateIndex != -1) {
+            rtable[address] = outGateIndex;
+        }
+        return outGateIndex;
+    }
 }
 
 void Routing::handleMessage(cMessage *msg)
@@ -89,27 +83,24 @@ void Routing::handleMessage(cMessage *msg)
     int destAddr = pk->getDestAddr();
 
     if (destAddr == myAddress) {
+        int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
         EV << "local delivery of packet " << pk->getName() << endl;
-        RoutingTable::iterator it = rtable.find(pk->getSrcAddr());
-        if (it != rtable.end()) {
-             int outGateIndex = (*it).second;
-             pk->addPar("outGateIndex");
-             pk->par("outGateIndex") = outGateIndex;
-        }
+        pk->addPar("outGateIndex"); // todo its very bad to add par here.
+        pk->par("outGateIndex") = outGateIndex;
         send(pk, "localOut");
         emit(outputIfSignal, -1);  // -1: local
         return;
     }
-
-    RoutingTable::iterator it = rtable.find(destAddr);
-    if (it == rtable.end()) {
+    int outGateIndex = getRouteGateIndex(destAddr);
+    // RoutingTable::iterator it = rtable.find(destAddr);
+    if (outGateIndex == -1) {
         EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
         emit(dropSignal, (intval_t)pk->getByteLength());
         delete pk;
         return;
     }
 
-    int outGateIndex = (*it).second;
+    // int outGateIndex = (*it).second;
     EV << "forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
     pk->setHopCount(pk->getHopCount()+1);
     emit(outputIfSignal, outGateIndex);

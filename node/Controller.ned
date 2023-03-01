@@ -18,5 +18,6 @@ package node;
 simple Controller
 {
     parameters:
+        string name=fullName();
         @display("i=block/cogwheel");
 }

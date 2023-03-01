@@ -19,6 +19,7 @@ module Node
     parameters:
         int address;
         string appType;
+        string globalController;
         @display("i=misc/node_vs,gold");
     gates:
         inout port[];
@@ -30,6 +31,7 @@ module Node
         }
         routing: Routing {
             parameters:
+                globalController = parent.globalController;
                 @display("p=140,130");
             gates:
                 in[sizeof(parent.port)];
