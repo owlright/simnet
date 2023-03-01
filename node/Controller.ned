@@ -4,8 +4,7 @@ simple Controller
 {
     parameters:
         string name=fullName();
-        object routes = [
-            { sources: "2,3", target: "1" },
-            ];
+        object aggrgroup = [[1, 2],[2, 3]];
+        object targets = [3, 1];
         @display("i=block/cogwheel");
 }
