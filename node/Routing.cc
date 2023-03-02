@@ -33,9 +33,12 @@ private:
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
     simsignal_t outputPacketSignal;
+    std::map<int, Packet*> aggrPacket;
+    std::map<int, int> aggrCounter;
 
 private:
     int getRouteGateIndex(int address);
+    int getAggrNum(int destAddress);
 
 protected:
     virtual void initialize(int stage) override;
@@ -77,6 +80,11 @@ int Routing::getRouteGateIndex(int address)
     }
 }
 
+int Routing::getAggrNum(int destAddress)
+{
+    return controller->getGroupAggrNum(destAddress, this->getParentModule()->getIndex());
+}
+
 void Routing::handleMessage(cMessage *msg)
 {
     Packet *pk = check_and_cast<Packet *>(msg);
@@ -101,10 +109,32 @@ void Routing::handleMessage(cMessage *msg)
     }
 
     // int outGateIndex = (*it).second;
-    EV << "forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-    pk->setHopCount(pk->getHopCount()+1);
-    emit(outputIfSignal, outGateIndex);
-    emit(outputPacketSignal, pk);
-    send(pk, "out", outGateIndex);
+    EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
+    if (getAggrNum(destAddr) != -1) {
+        EV << "Aggregating group " << destAddr << " with " << getAggrNum(destAddr) << " flows." << endl;
+        if (aggrCounter.find(destAddr)==aggrCounter.end()) {
+            aggrCounter[destAddr] = getAggrNum(destAddr) - 1;
+            aggrPacket[destAddr] = pk;
+        }
+        else {
+            delete pk;
+            aggrCounter[destAddr] -= 1;
+        }
+        EV << "left " << aggrCounter[destAddr] << std::endl;
+        if (aggrCounter[destAddr] == 0) {
+            auto pk = aggrPacket[destAddr];
+            pk->setHopCount(pk->getHopCount()+1);
+            emit(outputIfSignal, outGateIndex);
+            emit(outputPacketSignal, pk);
+            send(pk, "out", outGateIndex);
+        }
+    }
+    else {
+        pk->setHopCount(pk->getHopCount()+1);
+        emit(outputIfSignal, outGateIndex);
+        emit(outputPacketSignal, pk);
+        send(pk, "out", outGateIndex);
+    }
+
 }
 
