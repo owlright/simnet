@@ -24,6 +24,19 @@ int Controller::getRoute(cModule* from, int to)
   return -1;
 }
 
+int Controller::getGroupAggrNum(int groupid, int routerid)
+{
+
+    if (aggrNumberOnRouter.find(groupid)!=aggrNumberOnRouter.end()) {
+        auto numOnRouter = aggrNumberOnRouter[groupid];
+        if (numOnRouter.find(routerid)!=numOnRouter.end()) {
+            return numOnRouter[routerid];
+        }
+        return -1; // groupid exists but not on routerid
+    }
+    return -1; // groupid not exists
+}
+
 Controller::Controller()
 {
   // TODO Auto-generated constructor stub
@@ -55,9 +68,8 @@ void Controller::initialize(int stage)
         }
         for (int i = 0; i < targets.size(); i++) {
             auto root = targets.at(i);
-            aggRouterIndex[root] = aggrouter.at(i);
-            aggrNumber[root] = sendersNumber.at(i);
-            EV << "group "<< root << " has " << aggrNumber[root] << " senders. aggr at "<< aggRouterIndex[root] << endl;
+            aggrNumberOnRouter[root].insert(std::make_pair(aggrouter.at(i), sendersNumber.at(i)));
+            EV << "group "<< root << " has " << sendersNumber.at(i) << " senders. aggr on "<< aggrouter.at(i) << endl;
         }
 
     }

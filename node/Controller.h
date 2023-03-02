@@ -7,12 +7,12 @@ using namespace omnetpp;
 class Controller: public omnetpp::cSimpleModule {
 public:
     int getRoute(cModule* from, int to);
+    int getGroupAggrNum(int groupid, int routerid);
     Controller();
     virtual ~Controller();
 private:
     cTopology *topo;
-    std::map<int, int> aggrNumber;
-    std::map<int, int> aggRouterIndex;
+    std::map<int, std::map<int,int> > aggrNumberOnRouter;
 
 protected:
     virtual void initialize(int stage) override;
