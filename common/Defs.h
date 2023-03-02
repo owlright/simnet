@@ -3,6 +3,11 @@
 
 #define NUM_INIT_STAGES 3
 
-
+typedef enum
+{
+    ACK,
+    DATA,
+    LAST
+} PacketType;
 
 #endif /* COMMON_DEFS_H_ */

@@ -6,19 +6,19 @@
 #include "Packet_m.h"
 #include "tcp-socket-state.h"
 #include "tcp-congestion-ops.h"
-
+#include "../common/Defs.h"
 using namespace omnetpp;
 // typedef std::function<void(cMessage*, const char *, int)> Callback;
 // typedef void (*SendFunCb)(cSimpleModule* app, cMessage *msg, const char *gatename, int gateindex);
 
 class Socket : public cModule {
 public:
-    typedef enum
-    {
-        ACK,
-        DATA,
-        LAST
-    } PacketType;
+    // typedef enum
+    // {
+    //     ACK,
+    //     DATA,
+    //     LAST
+    // } PacketType;
 public:
     void SendData(int packets, int packetBytes);
     void ReceivedAck(Packet* pk);
