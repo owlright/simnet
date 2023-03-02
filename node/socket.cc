@@ -73,6 +73,7 @@ Socket::SendPendingData()
         pk->setSeq(nextSeq);
         pk->setSrcAddr(m_addr);
         pk->setDestAddr(m_destAddress);
+        pk->setGroupAddr(m_groupAddr);
         m_app->send(pk, "out");
         m_tcb->m_sentSize++;
         m_tcb->m_nextTxSequence++; // ! After the loop m_nextTxSequence is the next packet seq
@@ -149,12 +150,11 @@ Socket::ReceivedData(Packet* pk)
     EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
     auto pkSeq = pk->getSeq();
     m_tcb->m_ackSeq = pkSeq; // ! just ack this packet, do not +1
-    SendEchoAck(pkSeq, pk->getECN());
-    // delete pk; // packet should never deleted by socket
+    SendEchoAck(pkSeq, pk->getECN(), pk->getGroupAddr());
 }
 
 void
-Socket::SendEchoAck(uint32_t ackno, bool detectECN) {
+Socket::SendEchoAck(uint32_t ackno, bool detectECN, int groupid) {
     char pkname[40];
     sprintf(pkname, "ACK-%d-to-%d-ack%u ", m_addr, m_destAddress, m_tcb->m_ackSeq);
     Packet *ackpk = new Packet(pkname);
@@ -167,6 +167,9 @@ Socket::SendEchoAck(uint32_t ackno, bool detectECN) {
     if (detectECN) { // tell receiver congestion happened
         EV << "detect congestion!" <<endl;
         ackpk->setECN(true);
+    }
+    if (groupid!=-1) {
+        ackpk->setGroupAddr(groupid);
     }
     EV << ackpk->getName() << endl;
     m_app->send(ackpk, "out");

@@ -24,7 +24,7 @@ public:
     void ReceivedAck(Packet* pk);
     void ProcessAck(const uint32_t& ackNumber);
     void ReceivedData(Packet* pk);
-    void SendEchoAck(uint32_t ackno, bool detectECN);
+    void SendEchoAck(uint32_t ackno, bool detectECN, int groupid);
     void SetApp(cSimpleModule* const app );
     // void EnterCwr();
     void Recv(Packet* pk);
