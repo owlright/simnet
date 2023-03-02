@@ -27,9 +27,9 @@ Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
 
 }
 
-Socket::Socket(int src, int dest, int group)
+Socket::Socket(int src, int dest, int group):
+        Socket(src, dest)
 {
-    Socket(src, dest);
     m_groupAddr = group;
 }
 
