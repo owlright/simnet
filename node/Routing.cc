@@ -29,6 +29,8 @@ private:
     bool isSwitch;
     typedef std::map<int, int> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
+    typedef std::map<int, std::vector<int> > AggrRoutingTable;
+    AggrRoutingTable aggrtable;
     opp_component_ptr<Controller> controller;
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
@@ -89,6 +91,7 @@ void Routing::handleMessage(cMessage *msg)
 {
     Packet *pk = check_and_cast<Packet *>(msg);
     int destAddr = pk->getDestAddr();
+    int groupAddr = pk->getGroupAddr();
 
     if (destAddr == myAddress) {
         int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
@@ -110,24 +113,42 @@ void Routing::handleMessage(cMessage *msg)
 
     // int outGateIndex = (*it).second;
     EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-    if (getAggrNum(destAddr) != -1) {
-        EV << "Aggregating group " << destAddr << " with " << getAggrNum(destAddr) << " flows." << endl;
-        if (aggrCounter.find(destAddr)==aggrCounter.end()) {
-            aggrCounter[destAddr] = getAggrNum(destAddr) - 1;
-            aggrPacket[destAddr] = pk;
+
+    if (getAggrNum(groupAddr) != -1) { // ! Deal with Aggregation here
+        if (pk->getKind()==PacketType::DATA) {
+            EV << "Aggregating group " << groupAddr << " left " << getAggrNum(groupAddr) - 1 << " flows." << endl;
+            //! update the reverse routing entry
+            aggrtable[groupAddr].push_back(getRouteGateIndex(pk->getSrcAddr()));
+            if (aggrCounter.find(groupAddr) == aggrCounter.end()) { // ! the first packet
+                aggrCounter[groupAddr] = getAggrNum(groupAddr) - 1;
+                aggrPacket[groupAddr] = pk;
+            } else { // the following packets
+                delete pk;
+                aggrCounter[groupAddr] -= 1;
+            }
+
+            if (aggrCounter[groupAddr] == 0) { // all packets aggregated
+                auto pk = aggrPacket[groupAddr];
+                pk->setHopCount(pk->getHopCount()+1); // todo how to count hop
+                emit(outputIfSignal, outGateIndex);
+                emit(outputPacketSignal, pk);
+                send(pk, "out", outGateIndex);
+            }
+        } else if (pk->getKind()==PacketType::ACK) {
+            // find entries and broadcast it
+            auto broadcastGateIndexes = aggrtable[groupAddr];
+            for (auto i = 0; i < broadcastGateIndexes.size() - 1; i++) {
+                send(pk->dup(), broadcastGateIndexes[i]);
+            }
+            send(pk, broadcastGateIndexes.back());
+        } else {
+            throw cRuntimeError("Unkonwn packet type!");
         }
-        else {
-            delete pk;
-            aggrCounter[destAddr] -= 1;
-        }
-        EV << "left " << aggrCounter[destAddr] << std::endl;
-        if (aggrCounter[destAddr] == 0) {
-            auto pk = aggrPacket[destAddr];
-            pk->setHopCount(pk->getHopCount()+1);
-            emit(outputIfSignal, outGateIndex);
-            emit(outputPacketSignal, pk);
-            send(pk, "out", outGateIndex);
-        }
+
+
+
+
+
     }
     else {
         pk->setHopCount(pk->getHopCount()+1);
