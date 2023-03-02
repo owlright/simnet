@@ -15,6 +15,7 @@
 #include <omnetpp.h>
 #include "Packet_m.h"
 #include "../common/Defs.h"
+#include "../common/Print.h"
 #include "../common/ModuleAccess.h"
 #include "Controller.h"
 using namespace omnetpp;
@@ -112,13 +113,13 @@ void Routing::handleMessage(cMessage *msg)
     }
 
     // int outGateIndex = (*it).second;
-    EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
+
 
     if (getAggrNum(groupAddr) != -1) { // ! Deal with Aggregation here
         if (pk->getKind()==PacketType::DATA) {
             EV << "Aggregating group " << groupAddr << " left " << getAggrNum(groupAddr) - 1 << " flows." << endl;
             //! update the reverse routing entry
-            aggrtable[groupAddr].push_back(getRouteGateIndex(pk->getSrcAddr()));
+            aggrtable[groupAddr].push_back(pk->getSrcAddr());
             if (aggrCounter.find(groupAddr) == aggrCounter.end()) { // ! the first packet
                 aggrCounter[groupAddr] = getAggrNum(groupAddr) - 1;
                 aggrPacket[groupAddr] = pk;
@@ -136,21 +137,22 @@ void Routing::handleMessage(cMessage *msg)
             }
         } else if (pk->getKind()==PacketType::ACK) {
             // find entries and broadcast it
-            auto broadcastGateIndexes = aggrtable[groupAddr];
-            for (auto i = 0; i < broadcastGateIndexes.size() - 1; i++) {
-                send(pk->dup(), broadcastGateIndexes[i]);
+            auto broadcastAddresses = aggrtable[groupAddr];
+            for (auto i = 0; i < broadcastAddresses.size(); i++) {
+                int outGateIndex = getRouteGateIndex(broadcastAddresses[i]);
+                EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
+                pk->setDestAddr(broadcastAddresses[i]);
+                send(pk->dup(), "out", outGateIndex);
             }
-            send(pk, broadcastGateIndexes.back());
+            delete pk;
+//            EV << "Forwarding packet " << pk->getName() << " on gate index " << broadcastGateIndexes.back()<< endl;
+//            send(pk, broadcastGateIndexes.back());
         } else {
             throw cRuntimeError("Unkonwn packet type!");
         }
-
-
-
-
-
     }
     else {
+        EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
         pk->setHopCount(pk->getHopCount()+1);
         emit(outputIfSignal, outGateIndex);
         emit(outputPacketSignal, pk);
