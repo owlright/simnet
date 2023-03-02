@@ -81,7 +81,7 @@ void App::handleMessage(cMessage *msg)
         // Sending packet
         // int destAddress = destAddresses[intuniform(0, destAddresses.size()-1)];
         pkCounter++;
-        socketsTable[destAddress] = new Socket(myAddress, destAddress);
+        socketsTable[destAddress] = new Socket(myAddress, destAddress, destAddress);// ! dest addr is also group addr for now
         socketsTable[destAddress]->SetApp(this);
         socketsTable[destAddress]->SendData(packetTotalCount, packetLengthBytes->intValue());
     }

@@ -33,6 +33,7 @@ public:
     int GetDestAddr() const;
 public:
     explicit Socket(int src, int dest, uint32_t initCwnd=1, uint32_t initSSThresh=INT32_MAX);
+    explicit Socket(int src, int dest, int group);
     ~Socket();
 private:
     cOutVector cWnd;
@@ -50,6 +51,7 @@ private:
     //dest address
     int m_addr;
     int m_destAddress;
+    int m_groupAddr;
     //congestion control algo
     TcpCongestionOps* m_cong = nullptr;
     // Transmission control block

@@ -16,6 +16,7 @@ simple App like IApp
 {
     parameters:
         int address;  // local node address
+        int groupAddress = this.destAddress; // broadcast addr
         int packetTotalCount; // total sending packets
         int destAddress = default(-1); //
         string destAddresses=default("");  // destination addresses

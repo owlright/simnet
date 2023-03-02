@@ -27,6 +27,12 @@ Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
 
 }
 
+Socket::Socket(int src, int dest, int group)
+{
+    Socket(src, dest);
+    m_groupAddr = group;
+}
+
 Socket::~Socket()
 {
     delete m_cong;
@@ -53,7 +59,7 @@ Socket::SendData(int packets, int packetBytes)
 void
 Socket::SendPendingData()
 {
-    EV << "======" << __FUNCTION__ << "======" << endl;
+    // EV << "======" << __FUNCTION__ << "======" << endl;
     char pkname[40];
     uint32_t nextSeq;
     Packet *pk = nullptr;
@@ -94,7 +100,7 @@ Socket::Recv(Packet* pk)
 void
 Socket::ReceivedAck(Packet* pk)
 {
-    EV << "======" << __FUNCTION__ << "======" << endl;
+    // EV << "======" << __FUNCTION__ << "======" << endl;
     auto ackSeq = pk->getAckSeq();
     assert(ackSeq + 1 <= m_tcb->m_nextTxSequence); // ! impossible to receive a ack bigger than have sent
     // EV << "received ack packet " << pk->getName() << endl;
@@ -112,7 +118,7 @@ Socket::ReceivedAck(Packet* pk)
         }
         else
         {
-            m_tcb->m_congState = TcpSocketState::CA_OPEN;
+            m_tcb->m_congState = TcpSocketState::CA_OPEN; // once no ecn received
         }
 
     }
@@ -124,7 +130,7 @@ Socket::ReceivedAck(Packet* pk)
 void
 Socket::ProcessAck(const uint32_t& ackNumber)
 {
-    EV << "======" << __FUNCTION__ << "======" << endl;
+    // EV << "======" << __FUNCTION__ << "======" << endl;
     m_tcb->m_lastAckedSeq = ackNumber;
     m_tcb->m_acked += 1;
     EV << "cWnd: "<< m_tcb->m_cWnd <<" inflight: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
