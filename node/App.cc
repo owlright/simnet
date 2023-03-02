@@ -100,7 +100,7 @@ void App::handleMessage(cMessage *msg)
             getParentModule()->bubble("Arrived!");
 
         if (socketsTable.find(senderAddr) == socketsTable.end()) {
-            socketsTable[senderAddr] = new Socket(myAddress, senderAddr);
+            socketsTable[senderAddr] = new Socket(myAddress, senderAddr, -1);
             socketsTable[senderAddr]->SetApp(this);
         }
         socketsTable[senderAddr]->Recv(pk);
