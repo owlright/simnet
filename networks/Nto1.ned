@@ -3,7 +3,7 @@ package networks;
 import node.Node;
 import ned.DatarateChannel;
 import node.Controller;
-network Net4
+network Nto1
 {
     parameters:
         string globalController = fullName()+".controller";
