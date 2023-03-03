@@ -127,7 +127,7 @@ void Routing::handleMessage(cMessage *msg)
 
     if (getAggrNum(groupAddr) != -1) { // ! Deal with Aggregation here
         if (pk->getKind()==PacketType::DATA) {
-            EV << "Aggregating group " << groupAddr << " left " << getAggrNum(groupAddr) - 1 << " flows." << endl;
+
             //! update the reverse routing entry
             if (aggrtable[groupAddr].size() < getAggrNum(groupAddr)) {
                 aggrtable[groupAddr].push_back(pk->getSrcAddr());
@@ -156,6 +156,7 @@ void Routing::handleMessage(cMessage *msg)
                 aggrPacket[groupAddr] = nullptr;
             }
         } else if (pk->getKind()==PacketType::ACK) {
+            EV << "ACK to group " << groupAddr << " arrive." << endl;
             // find entries and broadcast it
             auto broadcastAddresses = aggrtable[groupAddr];
             for (auto i = 0; i < broadcastAddresses.size(); i++) {
