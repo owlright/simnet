@@ -46,10 +46,9 @@ void App::initialize()
     packetLossCounter = 0;
     pkCounter = 0;
     seq = 0;
-    EV << "me: "<< myAddress << " sink: " << destAddress << endl;
-    disableSending = myAddress==destAddress;
+    disableSending = (destAddress==-1);
     if (disableSending)
-        EV << "receiver is myself" << endl;
+        EV << myAddress << " don't send packets." << endl;
 
     WATCH(pkCounter);
     WATCH(myAddress);
