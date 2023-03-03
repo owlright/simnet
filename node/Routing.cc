@@ -150,9 +150,13 @@ void Routing::handleMessage(cMessage *msg)
             auto broadcastAddresses = aggrtable[groupAddr];
             for (auto i = 0; i < broadcastAddresses.size(); i++) {
                 int outGateIndex = getRouteGateIndex(broadcastAddresses[i]);
-                EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
                 pk->setDestAddr(broadcastAddresses[i]);
-                send(pk->dup(), "out", outGateIndex);
+                auto packet = pk->dup();
+                char pkname[40];
+                sprintf(pkname, "ACK-%d-to-%d-ack%u ", packet->getSrcAddr(), broadcastAddresses[i], packet->getAckSeq());
+                pk->setName(pkname);
+                EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
+                send(packet, "out", outGateIndex);
             }
             delete pk;
 //            EV << "Forwarding packet " << pk->getName() << " on gate index " << broadcastGateIndexes.back()<< endl;
