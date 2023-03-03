@@ -134,7 +134,11 @@ void Routing::handleMessage(cMessage *msg)
                 aggrCounter[groupAddr] = getAggrNum(groupAddr) - 1;
                 aggrPacket[groupAddr] = pk;
             } else { // the following packets
-                delete pk;
+                if (aggrPacket[groupAddr] == nullptr) {
+                    aggrPacket[groupAddr] = pk;
+                } else {//the first packet of the following rounds
+                    delete pk;
+                }
                 aggrCounter[groupAddr] -= 1;
             }
 
