@@ -7,6 +7,7 @@ network Net4
 {
     parameters:
         string globalController = fullName()+".controller";
+        int numberOfSenders = default(2);
 
     types:
         channel C extends DatarateChannel
@@ -15,7 +16,7 @@ network Net4
             datarate = 10Mbps;
         }
     submodules:
-        terminal[4]: Node {
+        terminal[numberOfSenders+2]: Node {
             address = index;
             globalController = parent.globalController;
         }
@@ -24,7 +25,9 @@ network Net4
         }
     connections:
         terminal[1].port++ <--> C <--> terminal[0].port++;
-        terminal[2].port++ <--> C <--> terminal[0].port++;
-        terminal[3].port++ <--> C <--> terminal[0].port++;
+        for i=0..numberOfSenders-1 {
+        	terminal[i+2].port++ <--> C <--> terminal[0].port++;
+//        	terminal[i].port++ <--> C <--> terminal[0].port++;
+        }
 }
 
