@@ -144,6 +144,8 @@ void Routing::handleMessage(cMessage *msg)
                 emit(outputIfSignal, outGateIndex);
                 emit(outputPacketSignal, pk);
                 send(pk, "out", outGateIndex);
+                aggrCounter[groupAddr] = getAggrNum(groupAddr);
+                aggrPacket[groupAddr] = nullptr;
             }
         } else if (pk->getKind()==PacketType::ACK) {
             // find entries and broadcast it
