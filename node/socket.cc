@@ -107,7 +107,7 @@ Socket::ReceivedAck(Packet* pk)
     // EV << "received ack packet " << pk->getName() << endl;
 
     EV << " ackNumber: " << ackSeq << " next seq: "<< m_tcb->m_nextTxSequence << endl;
-    assert (ackSeq == m_tcb->m_lastAckedSeq + 1); // ! no packet loss during simulation
+    assert (ackSeq + 1 == m_tcb->m_nextTxSequence); // ! no packet loss during simulation
     if (pk->getECN())
     {
         EV << "Received ECN" << endl;
@@ -144,7 +144,7 @@ Socket::ProcessAck(const uint32_t& ackNumber)
 void
 Socket::ReceivedData(Packet* pk)
 {
-    assert(m_addr==pk->getSrcAddr());
+    assert(m_addr==pk->getDestAddr());
     int outPortIndex = pk->par("outGateIndex");
     double rate = m_app->getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
     EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
