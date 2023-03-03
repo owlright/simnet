@@ -38,6 +38,7 @@ private:
     simsignal_t outputPacketSignal;
     std::map<int, Packet*> aggrPacket;
     std::map<int, int> aggrCounter;
+    std::map<int, int> aggrNumber;
 
 private:
     int getRouteGateIndex(int address);
@@ -85,7 +86,16 @@ int Routing::getRouteGateIndex(int address)
 
 int Routing::getAggrNum(int destAddress)
 {
-    return controller->getGroupAggrNum(destAddress, this->getParentModule()->getIndex());
+    auto it = aggrNumber.find(destAddress);
+    if (it != aggrNumber.end()) {
+        return (*it).second;
+    } else {
+        int number = controller->getGroupAggrNum(destAddress, this->getParentModule()->getIndex());
+        if (number != -1) {
+            aggrNumber[destAddress] = number;
+        }
+        return number;
+    }
 }
 
 void Routing::handleMessage(cMessage *msg)
