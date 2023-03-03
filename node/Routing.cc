@@ -129,9 +129,13 @@ void Routing::handleMessage(cMessage *msg)
         if (pk->getKind()==PacketType::DATA) {
             EV << "Aggregating group " << groupAddr << " left " << getAggrNum(groupAddr) - 1 << " flows." << endl;
             //! update the reverse routing entry
-            aggrtable[groupAddr].push_back(pk->getSrcAddr());
-            if (aggrCounter.find(groupAddr) == aggrCounter.end()) { // ! the first packet
-                aggrCounter[groupAddr] = getAggrNum(groupAddr) - 1;
+            if (aggrtable[groupAddr].size() < getAggrNum(groupAddr)) {
+                aggrtable[groupAddr].push_back(pk->getSrcAddr());
+                EV << "Group senders: " << aggrtable[groupAddr] << endl;
+            }
+            if (aggrCounter.find(groupAddr) == aggrCounter.end()) { // ! the first packet of the first round
+                EV << "Aggregating group " << groupAddr << " with " << getAggrNum(groupAddr) << " flows." << endl;
+                aggrCounter[groupAddr] = getAggrNum(groupAddr) - 1; // except the already arrived packet
                 aggrPacket[groupAddr] = pk;
             } else { // the following packets
                 if (aggrPacket[groupAddr] == nullptr) {
