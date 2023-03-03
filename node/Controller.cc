@@ -26,7 +26,7 @@ int Controller::getRoute(cModule* from, int to)
 
 int Controller::getGroupAggrNum(int groupid, int routerid)
 {
-
+    EV << COLOR(bgB::green) << "Query from router " << routerid << " for group " << groupid << END;
     if (aggrNumberOnRouter.find(groupid)!=aggrNumberOnRouter.end()) {
         auto numOnRouter = aggrNumberOnRouter[groupid];
         if (numOnRouter.find(routerid)!=numOnRouter.end()) {
