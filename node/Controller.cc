@@ -56,20 +56,26 @@ void Controller::initialize(int stage)
         }
         this->topo = new cTopology("topo");
         std::vector<std::string> nedTypes;
-        nedTypes.push_back(getParentModule()->getSubmodule("terminal", 0)->getNedTypeName());
+        nedTypes.push_back(getParentModule()->getSubmodule("terminal", 0)->getNedTypeName());//todo nodename should not be fixed
         topo->extractByNedTypeName(nedTypes);
         EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
         // ! parse aggr group info
-        auto aggrouter = check_and_cast<cValueArray*>(par("aggrouter").objectValue())->asIntVector();
-        auto sendersNumber = check_and_cast<cValueArray*>(par("aggrgroup").objectValue())->asIntVector();
+        auto groupAggRouter = check_and_cast<cValueArray*>(par("aggrouter").objectValue());
+        auto numberOfGroup = groupAggRouter->size();
+        EV << "There are " << numberOfGroup << " groups." << endl;
+        auto groupAggrNumber = check_and_cast<cValueArray*>(par("aggrnumber").objectValue());
         auto targets = check_and_cast<cValueArray*>(par("targets").objectValue())->asIntVector();
-        if (sendersNumber.size() != targets.size() || sendersNumber.size() != aggrouter.size()) {
-            throw cRuntimeError("sender group number is not equal to targets");
+
+        if (groupAggrNumber->size()!=numberOfGroup||targets.size()!=numberOfGroup) {
+            throw cRuntimeError("number of aggr group is not equal.");
         }
-        for (int i = 0; i < targets.size(); i++) {
-            auto root = targets.at(i);
-            aggrNumberOnRouter[root].insert(std::make_pair(aggrouter.at(i), sendersNumber.at(i)));
-            EV << "group "<< root << " has " << sendersNumber.at(i) << " senders. aggr on "<< aggrouter.at(i) << endl;
+
+        for (int i = 0; i < numberOfGroup; i++) {
+            auto aggrRouter = check_and_cast<cValueArray*>( (groupAggRouter->get(i)).objectValue() )->asIntVector(); //todo this is too tedious!
+            auto aggrNumber = check_and_cast<cValueArray*>( (groupAggrNumber->get(i)).objectValue() )->asIntVector();
+            auto root = targets[i];
+            aggrNumberOnRouter[root].insert(std::make_pair(aggrRouter[i], aggrNumber[i]));
+            EV << "group "<< root << " aggregate on "<< aggrRouter << endl;
         }
 
     }

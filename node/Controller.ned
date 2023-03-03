@@ -4,8 +4,8 @@ simple Controller
 {
     parameters:
         string name=fullName();
-        object aggrouter = [0];
-        object aggrgroup = [2];
-        object targets = [1];
+        object aggrouter = default([[0]]);
+        object aggrnumber = default([[2]]);
+        object targets = default([1]);
         @display("i=block/cogwheel");
 }
