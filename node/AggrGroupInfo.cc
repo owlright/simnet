@@ -35,9 +35,8 @@ Packet* AggrGroupInfo::aggrPacket(int seq, Packet *pk)
 
 void AggrGroupInfo::reset(int seq)
 {
-    packets[seq] = nullptr;
-    counter[seq] = numberOfChidren;
-    rounds[seq] += 1;
+    packets.erase(seq);
+    counter.erase(seq);
 }
 
 void AggrGroupInfo::insertChildNode(int address)
