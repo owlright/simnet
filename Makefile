@@ -37,6 +37,7 @@ OBJS = \
     $O/builder/netbuilder.o \
     $O/common/ResultFilters.o \
     $O/node/App.o \
+    $O/node/Buffer.o \
     $O/node/BurstyApp.o \
     $O/node/Controller.o \
     $O/node/L2Queue.o \

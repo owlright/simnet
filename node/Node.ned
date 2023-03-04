@@ -18,6 +18,7 @@ module Node
 {
     parameters:
         int address;
+        bool hasBuffer = default(false);
         string appType;
         string globalController;
         @display("i=misc/node_vs,gold");
