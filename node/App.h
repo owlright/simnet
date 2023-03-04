@@ -27,17 +27,12 @@ public:
     int destAddress;
     cPar *sendIATime;
     cPar *packetLengthBytes;
-    // Socket* m_socket;
-    //packet type
-    // int ACK = 0;
-    // int DATA = 1;
+
 private:
     std::map<int, Socket*> socketsTable;
     // state
     cMessage *generatePacket = nullptr;
     int pkCounter;
-    long ack;
-    long seq;
     // signals
     simsignal_t endToEndDelaySignal;
     simsignal_t hopCountSignal;

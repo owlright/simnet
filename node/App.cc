@@ -46,7 +46,6 @@ void App::initialize()
     sendIATime = &par("sendIaTime");  // volatile parameter
     packetLossCounter = 0;
     pkCounter = 0;
-    seq = 0;
     disableSending = (destAddress==-1);
     if (disableSending)
         EV << myAddress << " don't send packets." << endl;
@@ -56,9 +55,9 @@ void App::initialize()
     WATCH(destAddress);
     WATCH_VECTOR(destAddresses);
     WATCH_PTRMAP(socketsTable);
-    const char *destAddressesPar = par("destAddresses");
-    cStringTokenizer tokenizer(destAddressesPar);
-    const char *token;
+//    const char *destAddressesPar = par("destAddresses");
+//    cStringTokenizer tokenizer(destAddressesPar);
+//    const char *token;
     //! not use multiple destinations by now.
     // while ((token = tokenizer.nextToken()) != nullptr)
     //     destAddresses.push_back(atoi(token));
