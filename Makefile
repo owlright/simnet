@@ -36,6 +36,7 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 OBJS = \
     $O/builder/netbuilder.o \
     $O/common/ResultFilters.o \
+    $O/node/AggrGroupInfo.o \
     $O/node/App.o \
     $O/node/Buffer.o \
     $O/node/BurstyApp.o \

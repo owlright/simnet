@@ -18,6 +18,7 @@
 #include "../common/Print.h"
 #include "../common/ModuleAccess.h"
 #include "Controller.h"
+#include "AggrGroupInfo.h"
 using namespace omnetpp;
 
 /**
@@ -27,11 +28,11 @@ class Routing : public cSimpleModule
 {
 private:
     int myAddress;
-    bool isSwitch;
     typedef std::map<int, int> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
     typedef std::map<int, std::vector<int> > AggrRoutingTable;
     AggrRoutingTable aggrChildren;
+    std::map<int, AggrGroupInfo*> aggrGroupTable;
     opp_component_ptr<Controller> controller;
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
@@ -102,6 +103,7 @@ void Routing::handleMessage(cMessage *msg)
     int destAddr = pk->getDestAddr();
     int groupAddr = pk->getGroupAddr();
 
+    // ! Deal with unicast packet
     if (getAggrNum(groupAddr) == -1) {
         if (destAddr == myAddress) {
             int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
@@ -124,54 +126,49 @@ void Routing::handleMessage(cMessage *msg)
         emit(outputIfSignal, outGateIndex);
         emit(outputPacketSignal, pk);
         send(pk, "out", outGateIndex);
-        return;
+        return; // ! do not forget to return here
     }
-
 
     // ! Deal with Aggregation here
     if (pk->getKind()==PacketType::DATA) {
-        //! update the reverse routing entry
-        if (aggrChildren[groupAddr].size() < getAggrNum(groupAddr)) {
-            aggrChildren[groupAddr].push_back(pk->getSrcAddr());
-            EV << "Group senders: " << aggrChildren[groupAddr] << endl;
-        }
-
-        if (aggrCounter.find(groupAddr) == aggrCounter.end()) { // ! the first packet of the first round
+        auto seq = pk->getSeq();
+        if (aggrGroupTable.find(groupAddr)==aggrGroupTable.end()) {
+            // ! the first packet of the first round
             EV << "Aggregating group " << groupAddr << " with " << getAggrNum(groupAddr) << " flows." << endl;
-            aggrCounter[groupAddr] = getAggrNum(groupAddr) - 1; // except the already arrived packet
-            aggrPacket[groupAddr] = pk;
-        } else { // the packets of following rounds
-            if (aggrPacket[groupAddr] == nullptr) { // ! the first packet of the second round
-                aggrPacket[groupAddr] = pk;
-            } else { //the first packet of the following rounds
-                delete pk;
-            }
-            aggrCounter[groupAddr] -= 1;
+            aggrGroupTable[groupAddr] = new AggrGroupInfo(groupAddr, getAggrNum(groupAddr));
         }
 
-        if (aggrCounter[groupAddr] == 0) { // all packets aggregated
+        if (aggrGroupTable[groupAddr]->getRoundsOrSetDefault(seq) == 0) { // ! the first round
+            // ! only the first round update the children
+            aggrGroupTable[groupAddr]->insertChildNode(pk->getSrcAddr());
+        }
+        // * everything is updated in aggrPacket, when a round finish, return the aggr packet
+        auto aggpacket = aggrGroupTable[groupAddr]->aggrPacket(seq, pk);
+        if (aggpacket != nullptr) { // ! all packets are aggregated
             int outGateIndex = getRouteGateIndex(destAddr);
-            auto pk = aggrPacket[groupAddr];
-            pk->setSrcAddr(myAddress);
-            pk->setHopCount(pk->getHopCount()+1); // todo how to count hop
+            aggpacket->setSrcAddr(myAddress);
+            aggpacket->setHopCount(aggpacket->getHopCount()+1); // todo how to count hop
             emit(outputIfSignal, outGateIndex);
-            emit(outputPacketSignal, pk);
-            send(pk, "out", outGateIndex);
-            aggrCounter[groupAddr] = getAggrNum(groupAddr);
-            aggrPacket[groupAddr] = nullptr;
+            emit(outputPacketSignal, aggpacket);
+            send(aggpacket, "out", outGateIndex);
+            aggrGroupTable[groupAddr]->reset(seq);
         }
     } else if (pk->getKind()==PacketType::ACK) {
+        auto seq = pk->getAckSeq();
         EV << "ACK to group " << groupAddr << " arrive." << endl;
         // find entries and broadcast it
-        auto broadcastAddresses = aggrChildren[groupAddr];
-        for (auto i = 0; i < broadcastAddresses.size(); i++) {
-            int outGateIndex = getRouteGateIndex(broadcastAddresses[i]);
-            pk->setDestAddr(broadcastAddresses[i]);
+        auto childrenAddresses = aggrGroupTable.at(groupAddr)->getChildren();
+        for (auto& addr : childrenAddresses ) {
+            int outGateIndex = getRouteGateIndex(addr);
+            pk->setDestAddr(addr);
+
             auto packet = pk->dup();
             char pkname[40];
-            sprintf(pkname, "ACK-%d-to-%d-ack%u ", packet->getSrcAddr(), broadcastAddresses[i], packet->getAckSeq());
+            sprintf(pkname, "ACK-%d-to-%d-ack%u ", packet->getSrcAddr(), addr, packet->getAckSeq());
             pk->setName(pkname);
             EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
+            emit(outputIfSignal, outGateIndex);
+            emit(outputPacketSignal, packet);
             send(packet, "out", outGateIndex);
         }
         delete pk;
