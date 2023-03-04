@@ -74,8 +74,14 @@ void Controller::initialize(int stage)
             auto aggrRouter = check_and_cast<cValueArray*>( (groupAggRouter->get(i)).objectValue() )->asIntVector(); //todo this is too tedious!
             auto aggrNumber = check_and_cast<cValueArray*>( (groupAggrNumber->get(i)).objectValue() )->asIntVector();
             auto root = targets[i];
-            aggrNumberOnRouter[root].insert(std::make_pair(aggrRouter[i], aggrNumber[i]));
-            EV << "group "<< root << " aggregate on "<< aggrRouter << endl;
+//            aggrNumberOnRouter[root][aggrRouter[i]] = aggrNumber[i];
+            EV << "group "<< root << " aggregate on "<< aggrRouter << " with number: " << aggrNumber << endl;
+            auto numberOfRouter = aggrRouter.size();
+            if (numberOfRouter != aggrNumber.size())
+                throw cRuntimeError("router number and aggr number not match!");
+            for (int j = 0; j < numberOfRouter; j++) {
+                aggrNumberOnRouter[root][aggrRouter[j]] = aggrNumber[j];
+            }
         }
 
     }
