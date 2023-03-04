@@ -12,7 +12,7 @@ public:
     virtual ~Controller();
 private:
     cTopology *topo;
-    std::map<int, std::map<int,int> > aggrNumberOnRouter;
+    std::map<int, std::map<int,int> > aggrNumberOnRouter; // groupaddr-routeraddr-numberOfAggr
 
 protected:
     virtual void initialize(int stage) override;
