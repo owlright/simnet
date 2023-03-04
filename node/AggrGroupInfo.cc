@@ -13,6 +13,11 @@ Packet *AggrGroupInfo::getAggrPacket(int seq) const
     return packets.at(seq);
 }
 
+bool AggrGroupInfo::isChildrenFull() const
+{
+    return children.size() == numberOfChidren;
+}
+
 Packet* AggrGroupInfo::aggrPacket(int seq, Packet *pk)
 {
     if (packets.find(seq) == packets.end()) { // first packet of a round
@@ -35,18 +40,9 @@ void AggrGroupInfo::reset(int seq)
     rounds[seq] += 1;
 }
 
-int AggrGroupInfo::getRoundsOrSetDefault(int seq, int value)
-{
-    if (rounds.find(seq) == rounds.end()) {
-        rounds[seq] = 0;
-    }
-    return getRounds(seq);
-}
-
-
 void AggrGroupInfo::insertChildNode(int address)
 {
-    if (children.size() < numberOfChidren) {
-        children.push_back(address);
-    }
+
+    children.push_back(address);
+
 }

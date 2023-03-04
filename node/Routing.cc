@@ -137,13 +137,12 @@ void Routing::handleMessage(cMessage *msg)
             EV << "Aggregating group " << groupAddr << " with " << getAggrNum(groupAddr) << " flows." << endl;
             aggrGroupTable[groupAddr] = new AggrGroupInfo(groupAddr, getAggrNum(groupAddr));
         }
-
-        if (aggrGroupTable[groupAddr]->getRoundsOrSetDefault(seq) == 0) { // ! the first round
-            // ! only the first round update the children
-            aggrGroupTable[groupAddr]->insertChildNode(pk->getSrcAddr());
+        auto aggrGroup = aggrGroupTable.at(groupAddr);
+        if (!aggrGroup->isChildrenFull()) {
+            aggrGroup->insertChildNode(pk->getSrcAddr());
         }
         // * everything is updated in aggrPacket, when a round finish, return the aggr packet
-        auto aggpacket = aggrGroupTable[groupAddr]->aggrPacket(seq, pk);
+        auto aggpacket = aggrGroup->aggrPacket(seq, pk);
         if (aggpacket != nullptr) { // ! all packets are aggregated
             int outGateIndex = getRouteGateIndex(destAddr);
             aggpacket->setSrcAddr(myAddress);
@@ -151,7 +150,7 @@ void Routing::handleMessage(cMessage *msg)
             emit(outputIfSignal, outGateIndex);
             emit(outputPacketSignal, aggpacket);
             send(aggpacket, "out", outGateIndex);
-            aggrGroupTable[groupAddr]->reset(seq);
+            aggrGroup->reset(seq);
         }
     } else if (pk->getKind()==PacketType::ACK) {
         auto seq = pk->getAckSeq();

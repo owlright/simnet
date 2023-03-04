@@ -8,13 +8,11 @@ private:
     std::vector<int> children;
     std::map<int, Packet*> packets;
     std::map<int, int> counter;
-    std::map<int, int> rounds;
 
 public:
     explicit AggrGroupInfo(int groupid, int number);
     Packet* getAggrPacket(int seq) const;
-    int getRoundsOrSetDefault(int seq, int defaultvalue=0);
-    int getRounds(int seq) const {return rounds.at(seq);};
+    bool isChildrenFull() const;
     const std::vector<int>& getChildren() const {return children;};
     Packet* aggrPacket(int seq, Packet* pk);
     void reset(int seq);
