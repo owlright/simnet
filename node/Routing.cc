@@ -31,7 +31,7 @@ private:
     typedef std::map<int, int> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
     typedef std::map<int, std::vector<int> > AggrRoutingTable;
-    AggrRoutingTable aggrtable;
+    AggrRoutingTable aggrChildren;
     opp_component_ptr<Controller> controller;
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
@@ -131,9 +131,9 @@ void Routing::handleMessage(cMessage *msg)
     // ! Deal with Aggregation here
     if (pk->getKind()==PacketType::DATA) {
         //! update the reverse routing entry
-        if (aggrtable[groupAddr].size() < getAggrNum(groupAddr)) {
-            aggrtable[groupAddr].push_back(pk->getSrcAddr());
-            EV << "Group senders: " << aggrtable[groupAddr] << endl;
+        if (aggrChildren[groupAddr].size() < getAggrNum(groupAddr)) {
+            aggrChildren[groupAddr].push_back(pk->getSrcAddr());
+            EV << "Group senders: " << aggrChildren[groupAddr] << endl;
         }
 
         if (aggrCounter.find(groupAddr) == aggrCounter.end()) { // ! the first packet of the first round
@@ -163,7 +163,7 @@ void Routing::handleMessage(cMessage *msg)
     } else if (pk->getKind()==PacketType::ACK) {
         EV << "ACK to group " << groupAddr << " arrive." << endl;
         // find entries and broadcast it
-        auto broadcastAddresses = aggrtable[groupAddr];
+        auto broadcastAddresses = aggrChildren[groupAddr];
         for (auto i = 0; i < broadcastAddresses.size(); i++) {
             int outGateIndex = getRouteGateIndex(broadcastAddresses[i]);
             pk->setDestAddr(broadcastAddresses[i]);
