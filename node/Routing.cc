@@ -91,9 +91,7 @@ int Routing::getAggrNum(int destAddress)
         return (*it).second;
     } else {
         int number = controller->getGroupAggrNum(destAddress, this->getParentModule()->getIndex());
-        if (number != -1) {
-            aggrNumber[destAddress] = number;
-        }
+        aggrNumber[destAddress] = number; // if number is -1, means this router doesn't serve this group.
         return number;
     }
 }
@@ -104,7 +102,7 @@ void Routing::handleMessage(cMessage *msg)
     int destAddr = pk->getDestAddr();
     int groupAddr = pk->getGroupAddr();
 
-    if (destAddr == myAddress) {
+    if (destAddr == myAddress and getAggrNum(groupAddr) == -1) {
         int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
         EV << "local delivery of packet " << pk->getName() << endl;
         pk->addPar("outGateIndex"); // todo its very bad to add par here.
@@ -114,15 +112,12 @@ void Routing::handleMessage(cMessage *msg)
         return;
     }
     int outGateIndex = getRouteGateIndex(destAddr);
-    // RoutingTable::iterator it = rtable.find(destAddr);
-    if (outGateIndex == -1) {
-        EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
-        emit(dropSignal, (intval_t)pk->getByteLength());
-        delete pk;
-        return;
-    }
-
-    // int outGateIndex = (*it).second;
+//    if (outGateIndex == -1) {
+//        EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
+//        emit(dropSignal, (intval_t)pk->getByteLength());
+//        delete pk;
+//        return;
+//    }
 
 
     if (getAggrNum(groupAddr) != -1) { // ! Deal with Aggregation here
@@ -148,6 +143,7 @@ void Routing::handleMessage(cMessage *msg)
 
             if (aggrCounter[groupAddr] == 0) { // all packets aggregated
                 auto pk = aggrPacket[groupAddr];
+                pk->setSrcAddr(myAddress);
                 pk->setHopCount(pk->getHopCount()+1); // todo how to count hop
                 emit(outputIfSignal, outGateIndex);
                 emit(outputPacketSignal, pk);
