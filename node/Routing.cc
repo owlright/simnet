@@ -102,83 +102,83 @@ void Routing::handleMessage(cMessage *msg)
     int destAddr = pk->getDestAddr();
     int groupAddr = pk->getGroupAddr();
 
-    if (destAddr == myAddress and getAggrNum(groupAddr) == -1) {
-        int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
-        EV << "local delivery of packet " << pk->getName() << endl;
-        pk->addPar("outGateIndex"); // todo its very bad to add par here.
-        pk->par("outGateIndex") = outGateIndex;
-        send(pk, "localOut");
-        emit(outputIfSignal, -1);  // -1: local
-        return;
-    }
-    int outGateIndex = getRouteGateIndex(destAddr);
-//    if (outGateIndex == -1) {
-//        EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
-//        emit(dropSignal, (intval_t)pk->getByteLength());
-//        delete pk;
-//        return;
-//    }
-
-
-    if (getAggrNum(groupAddr) != -1) { // ! Deal with Aggregation here
-        if (pk->getKind()==PacketType::DATA) {
-
-            //! update the reverse routing entry
-            if (aggrtable[groupAddr].size() < getAggrNum(groupAddr)) {
-                aggrtable[groupAddr].push_back(pk->getSrcAddr());
-                EV << "Group senders: " << aggrtable[groupAddr] << endl;
-            }
-            if (aggrCounter.find(groupAddr) == aggrCounter.end()) { // ! the first packet of the first round
-                EV << "Aggregating group " << groupAddr << " with " << getAggrNum(groupAddr) << " flows." << endl;
-                aggrCounter[groupAddr] = getAggrNum(groupAddr) - 1; // except the already arrived packet
-                aggrPacket[groupAddr] = pk;
-            } else { // the following packets
-                if (aggrPacket[groupAddr] == nullptr) {
-                    aggrPacket[groupAddr] = pk;
-                } else {//the first packet of the following rounds
-                    delete pk;
-                }
-                aggrCounter[groupAddr] -= 1;
-            }
-
-            if (aggrCounter[groupAddr] == 0) { // all packets aggregated
-                auto pk = aggrPacket[groupAddr];
-                pk->setSrcAddr(myAddress);
-                pk->setHopCount(pk->getHopCount()+1); // todo how to count hop
-                emit(outputIfSignal, outGateIndex);
-                emit(outputPacketSignal, pk);
-                send(pk, "out", outGateIndex);
-                aggrCounter[groupAddr] = getAggrNum(groupAddr);
-                aggrPacket[groupAddr] = nullptr;
-            }
-        } else if (pk->getKind()==PacketType::ACK) {
-            EV << "ACK to group " << groupAddr << " arrive." << endl;
-            // find entries and broadcast it
-            auto broadcastAddresses = aggrtable[groupAddr];
-            for (auto i = 0; i < broadcastAddresses.size(); i++) {
-                int outGateIndex = getRouteGateIndex(broadcastAddresses[i]);
-                pk->setDestAddr(broadcastAddresses[i]);
-                auto packet = pk->dup();
-                char pkname[40];
-                sprintf(pkname, "ACK-%d-to-%d-ack%u ", packet->getSrcAddr(), broadcastAddresses[i], packet->getAckSeq());
-                pk->setName(pkname);
-                EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-                send(packet, "out", outGateIndex);
-            }
-            delete pk;
-//            EV << "Forwarding packet " << pk->getName() << " on gate index " << broadcastGateIndexes.back()<< endl;
-//            send(pk, broadcastGateIndexes.back());
-        } else {
-            throw cRuntimeError("Unkonwn packet type!");
+    if (getAggrNum(groupAddr) == -1) {
+        if (destAddr == myAddress) {
+            int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
+            EV << "local delivery of packet " << pk->getName() << endl;
+            pk->addPar("outGateIndex"); // todo its very bad to add par here.
+            pk->par("outGateIndex") = outGateIndex;
+            send(pk, "localOut");
+            emit(outputIfSignal, -1);  // -1: local
+            return;
         }
-    }
-    else {
+        int outGateIndex = getRouteGateIndex(destAddr);
+        if (outGateIndex == -1) {
+            EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
+            emit(dropSignal, (intval_t)pk->getByteLength());
+            delete pk;
+            return;
+        }
         EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
         pk->setHopCount(pk->getHopCount()+1);
         emit(outputIfSignal, outGateIndex);
         emit(outputPacketSignal, pk);
         send(pk, "out", outGateIndex);
+        return;
     }
+
+
+    // ! Deal with Aggregation here
+    if (pk->getKind()==PacketType::DATA) {
+        //! update the reverse routing entry
+        if (aggrtable[groupAddr].size() < getAggrNum(groupAddr)) {
+            aggrtable[groupAddr].push_back(pk->getSrcAddr());
+            EV << "Group senders: " << aggrtable[groupAddr] << endl;
+        }
+
+        if (aggrCounter.find(groupAddr) == aggrCounter.end()) { // ! the first packet of the first round
+            EV << "Aggregating group " << groupAddr << " with " << getAggrNum(groupAddr) << " flows." << endl;
+            aggrCounter[groupAddr] = getAggrNum(groupAddr) - 1; // except the already arrived packet
+            aggrPacket[groupAddr] = pk;
+        } else { // the packets of following rounds
+            if (aggrPacket[groupAddr] == nullptr) { // ! the first packet of the second round
+                aggrPacket[groupAddr] = pk;
+            } else { //the first packet of the following rounds
+                delete pk;
+            }
+            aggrCounter[groupAddr] -= 1;
+        }
+
+        if (aggrCounter[groupAddr] == 0) { // all packets aggregated
+            int outGateIndex = getRouteGateIndex(destAddr);
+            auto pk = aggrPacket[groupAddr];
+            pk->setSrcAddr(myAddress);
+            pk->setHopCount(pk->getHopCount()+1); // todo how to count hop
+            emit(outputIfSignal, outGateIndex);
+            emit(outputPacketSignal, pk);
+            send(pk, "out", outGateIndex);
+            aggrCounter[groupAddr] = getAggrNum(groupAddr);
+            aggrPacket[groupAddr] = nullptr;
+        }
+    } else if (pk->getKind()==PacketType::ACK) {
+        EV << "ACK to group " << groupAddr << " arrive." << endl;
+        // find entries and broadcast it
+        auto broadcastAddresses = aggrtable[groupAddr];
+        for (auto i = 0; i < broadcastAddresses.size(); i++) {
+            int outGateIndex = getRouteGateIndex(broadcastAddresses[i]);
+            pk->setDestAddr(broadcastAddresses[i]);
+            auto packet = pk->dup();
+            char pkname[40];
+            sprintf(pkname, "ACK-%d-to-%d-ack%u ", packet->getSrcAddr(), broadcastAddresses[i], packet->getAckSeq());
+            pk->setName(pkname);
+            EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
+            send(packet, "out", outGateIndex);
+        }
+        delete pk;
+    } else {
+        throw cRuntimeError("Unkonwn packet type!");
+    }
+
 
 }
 
