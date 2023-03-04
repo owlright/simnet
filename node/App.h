@@ -19,6 +19,7 @@ public:
   private:
     // configuration
     int myAddress;
+    int groupAddress;
     int packetTotalCount;
     int packetLossCounter;
     bool disableSending;

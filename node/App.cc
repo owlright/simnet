@@ -40,6 +40,7 @@ void App::initialize()
 {
     myAddress = par("address");
     destAddress = par("destAddress");
+    groupAddress = par("groupAddress");
     packetTotalCount = par("packetTotalCount");
     packetLengthBytes = &par("packetLength");
     sendIATime = &par("sendIaTime");  // volatile parameter
@@ -80,7 +81,7 @@ void App::handleMessage(cMessage *msg)
         // Sending packet
         // int destAddress = destAddresses[intuniform(0, destAddresses.size()-1)];
         pkCounter++;
-        socketsTable[destAddress] = new Socket(myAddress, destAddress, destAddress);// ! dest addr is also group addr for now
+        socketsTable[destAddress] = new Socket(myAddress, destAddress, groupAddress);
         socketsTable[destAddress]->SetApp(this);
         socketsTable[destAddress]->SendData(packetTotalCount, packetLengthBytes->intValue());
     }
