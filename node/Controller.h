@@ -2,6 +2,7 @@
 #define NODE_CONTROLLER_H_
 
 #include <omnetpp/csimplemodule.h>
+#include "..\common\Defs.h"
 using namespace omnetpp;
 
 class Controller: public omnetpp::cSimpleModule {
@@ -23,6 +24,7 @@ private:
 
 protected:
     virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     virtual void handleMessage(cMessage *msg) override { throw cRuntimeError("this module doesn't handle messages, it runs only in initialize()"); }
 };
 

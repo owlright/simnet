@@ -66,7 +66,7 @@ Controller::~Controller() {
 
 void Controller::initialize(int stage)
 {
-    if (stage == 0) {
+    if (stage == Stage::INITSTAGE_LOCAL) {
         EV_INFO << "network intialization." << endl;
         if (getParentModule()->getSubmoduleVectorSize("terminal") <= 0) {
             throw cRuntimeError("The network has no nodes");

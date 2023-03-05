@@ -12,6 +12,7 @@
 #endif
 
 #include "App.h"
+#include "..\common\Defs.h"
 // struct FlowItem {
 //     bool isDirectionIn; // in or out
 //     long seq; // the packet sequence has been confirmed by now
@@ -36,25 +37,38 @@ App::~App()
     }
 }
 
-void App::initialize()
+void App::initialize(int stage)
 {
-    myAddress = par("address");
-    destAddress = par("destAddress");
-    groupAddress = par("groupAddress");
-    packetTotalCount = par("packetTotalCount");
-    packetLengthBytes = &par("packetLength");
-    sendIATime = &par("sendIaTime");  // volatile parameter
-    packetLossCounter = 0;
-    pkCounter = 0;
-    disableSending = (destAddress==-1);
-    if (disableSending)
-        EV << myAddress << " don't send packets." << endl;
+    if (stage == Stage::INITSTAGE_LOCAL) {
+        myAddress = par("address");
+        destAddress = par("destAddress");
+        groupAddress = par("groupAddress");
+        packetTotalCount = par("packetTotalCount");
+        packetLengthBytes = &par("packetLength");
+        sendIATime = &par("sendIaTime");  // volatile parameter
+        packetLossCounter = 0;
+        pkCounter = 0;
+        disableSending = (destAddress==-1);
+        WATCH(pkCounter);
+        WATCH(myAddress);
+        WATCH(destAddress);
+        WATCH_VECTOR(destAddresses);
+        WATCH_PTRMAP(socketsTable);
+        endToEndDelaySignal = registerSignal("endToEndDelay");
+        hopCountSignal = registerSignal("hopCount");
+        sourceAddressSignal = registerSignal("sourceAddress");
 
-    WATCH(pkCounter);
-    WATCH(myAddress);
-    WATCH(destAddress);
-    WATCH_VECTOR(destAddresses);
-    WATCH_PTRMAP(socketsTable);
+        if (disableSending) {
+            EV << myAddress << " don't send packets." << endl;
+        }
+        if (!disableSending) {
+            generatePacket = new cMessage("nextPacket");
+            scheduleAt(sendIATime->doubleValue(), generatePacket);
+        }
+    }
+
+
+
 //    const char *destAddressesPar = par("destAddresses");
 //    cStringTokenizer tokenizer(destAddressesPar);
 //    const char *token;
@@ -64,14 +78,9 @@ void App::initialize()
 
     // if (destAddresses.size() == 0)
     //     throw cRuntimeError("At least one address must be specified in the destAddresses parameter!");
-    if (!disableSending) {
-        generatePacket = new cMessage("nextPacket");
-        scheduleAt(sendIATime->doubleValue(), generatePacket);
-    }
 
-    endToEndDelaySignal = registerSignal("endToEndDelay");
-    hopCountSignal = registerSignal("hopCount");
-    sourceAddressSignal = registerSignal("sourceAddress");
+
+
 }
 
 void App::handleMessage(cMessage *msg)
