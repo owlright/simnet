@@ -42,6 +42,9 @@ private:
     std::map<int, int> aggrNumber;
 
 private:
+    bool isAggrGroup(int address) const;
+    AggrGroupInfo* getAggrGroup(int address) const;
+    AggrGroupInfo* getOrAddGroup(int address);
     int getRouteGateIndex(int address);
     int getAggrNum(int destAddress);
 
@@ -97,6 +100,24 @@ int Routing::getAggrNum(int destAddress)
     }
 }
 
+bool Routing::isAggrGroup(int address) const
+{
+    return aggrGroupTable.find(address)!=aggrGroupTable.end();
+}
+
+AggrGroupInfo* Routing::getOrAddGroup(int address) {
+    if (!isAggrGroup(address)) {// ! the first packet of the first round
+        EV << "Aggregating group " << address << " with " << getAggrNum(address) << " flows." << endl;
+        aggrGroupTable[address] = new AggrGroupInfo(address, getAggrNum(address));
+    }
+
+   return getAggrGroup(address);
+}
+
+AggrGroupInfo* Routing::getAggrGroup(int address) const {
+    return aggrGroupTable.at(address);
+}
+
 void Routing::handleMessage(cMessage *msg)
 {
     Packet *pk = check_and_cast<Packet *>(msg);
@@ -104,7 +125,7 @@ void Routing::handleMessage(cMessage *msg)
     int groupAddr = pk->getGroupAddr();
 
     // ! Deal with unicast packet
-    if (getAggrNum(groupAddr) == -1) {
+    if (! isAggrGroup(groupAddr)) {
         if (destAddr == myAddress) {
             int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
             EV << "local delivery of packet " << pk->getName() << endl;
@@ -129,19 +150,15 @@ void Routing::handleMessage(cMessage *msg)
         return; // ! do not forget to return here
     }
 
-    // ! Deal with Aggregation here
+    // ! Deal with aggr packet here
+    auto aggrGroup = getOrAddGroup(groupAddr);
+
     if (pk->getKind()==PacketType::DATA) {
         auto seq = pk->getSeq();
-        if (aggrGroupTable.find(groupAddr)==aggrGroupTable.end()) {
-            // ! the first packet of the first round
-            EV << "Aggregating group " << groupAddr << " with " << getAggrNum(groupAddr) << " flows." << endl;
-            aggrGroupTable[groupAddr] = new AggrGroupInfo(groupAddr, getAggrNum(groupAddr));
-        }
-        auto aggrGroup = aggrGroupTable.at(groupAddr);
         if (!aggrGroup->isChildrenFull()) {
             aggrGroup->insertChildNode(pk->getSrcAddr());
         }
-        // * everything is updated in aggrPacket, when a round finish, return the aggr packet
+        // * everything is updated in aggrPacket(), when a round finish, return the aggr packet
         auto aggpacket = aggrGroup->aggrPacket(seq, pk);
         if (aggpacket != nullptr) { // ! all packets are aggregated
             int outGateIndex = getRouteGateIndex(destAddr);
@@ -154,9 +171,10 @@ void Routing::handleMessage(cMessage *msg)
         }
     } else if (pk->getKind()==PacketType::ACK) {
         auto seq = pk->getAckSeq();
+        aggrGroup->reset(seq); // release (key,value) for seq
         EV << "ACK to group " << groupAddr << " arrive." << endl;
         // find entries and broadcast it
-        auto childrenAddresses = aggrGroupTable.at(groupAddr)->getChildren();
+        auto childrenAddresses = aggrGroup->getChildren();
         for (auto& addr : childrenAddresses ) {
             int outGateIndex = getRouteGateIndex(addr);
             pk->setDestAddr(addr);
