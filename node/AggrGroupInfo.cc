@@ -1,8 +1,9 @@
 #include "AggrGroupInfo.h"
 
-AggrGroupInfo::AggrGroupInfo(int groupid, int number) {
+AggrGroupInfo::AggrGroupInfo(int groupid, int number, int buffer) {
     this->groupid = groupid;
     numberOfChidren = number;
+    bufferSize = buffer;
 }
 
 const Packet *AggrGroupInfo::getAggrPacket(int seq) const

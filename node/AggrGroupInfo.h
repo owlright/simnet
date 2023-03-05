@@ -11,7 +11,7 @@ private:
     int bufferSize{0};
 
 public:
-    explicit AggrGroupInfo(int groupid, int number);
+    explicit AggrGroupInfo(int groupid, int number, int buffer);
     const Packet* getAggrPacket(int seq) const;
     bool isChildrenFull() const;
     const std::vector<int>& getChildren() const {return children;};
