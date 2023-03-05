@@ -5,7 +5,7 @@ AggrGroupInfo::AggrGroupInfo(int groupid, int number) {
     numberOfChidren = number;
 }
 
-Packet *AggrGroupInfo::getAggrPacket(int seq) const
+const Packet *AggrGroupInfo::getAggrPacket(int seq) const
 {
     if (packets.find(seq)==packets.end()) {
         return nullptr;
@@ -20,6 +20,9 @@ bool AggrGroupInfo::isChildrenFull() const
 
 Packet* AggrGroupInfo::aggrPacket(int seq, Packet *pk)
 {
+    if (packets.size() == bufferSize) {
+        return pk; // ! no space to store packets
+    }
     if (packets.find(seq) == packets.end()) { // first packet of a round
         packets[seq] = pk->dup();
         counter[seq] = numberOfChidren;

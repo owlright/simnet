@@ -8,10 +8,11 @@ private:
     std::vector<int> children;
     std::map<int, Packet*> packets;
     std::map<int, int> counter;
+    int bufferSize{0};
 
 public:
     explicit AggrGroupInfo(int groupid, int number);
-    Packet* getAggrPacket(int seq) const;
+    const Packet* getAggrPacket(int seq) const;
     bool isChildrenFull() const;
     const std::vector<int>& getChildren() const {return children;};
     Packet* aggrPacket(int seq, Packet* pk);
