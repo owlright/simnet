@@ -42,11 +42,10 @@ private:
     // std::map<int, int> aggrNumber;
 
 private:
-    bool isAggrGroup(int address) const;
+    bool isAggrGroupAdded(int address) const;
     AggrGroupInfo* getAggrGroup(int address) const;
     AggrGroupInfo* getOrAddGroup(int address);
     int getRouteGateIndex(int address);
-    int getAggrNum(int destAddress);
 
 protected:
     virtual void initialize(int stage) override;
@@ -88,27 +87,18 @@ int Routing::getRouteGateIndex(int address)
     }
 }
 
-int Routing::getAggrNum(int destAddress)
-{
-    auto it = aggrNumber.find(destAddress);
-    if (it != aggrNumber.end()) {
-        return (*it).second;
-    } else {
-        int number = controller->getGroupAggrNum(destAddress, this->getParentModule()->getIndex());
-        aggrNumber[destAddress] = number; // if number is -1, means this router doesn't serve this group.
-        return number;
-    }
-}
-
-bool Routing::isAggrGroup(int address) const
+bool Routing::isAggrGroupAdded(int address) const
 {
     return aggrGroupTable.find(address)!=aggrGroupTable.end();
 }
 
 AggrGroupInfo* Routing::getOrAddGroup(int address) {
-    if (!isAggrGroup(address)) {// ! the first packet of the first round
-        EV << "Aggregating group " << address << " with " << getAggrNum(address) << " flows." << endl;
-        aggrGroupTable[address] = new AggrGroupInfo(address, getAggrNum(address));
+    if (!isAggrGroupAdded(address)) {// ! the first packet of the first round
+        auto numberOfChildren = controller->getGroupAggrNum(address, myAddress);
+        auto bufferSize = controller->getGroupAggrBuffer(address, myAddress);
+        aggrGroupTable[address] = new AggrGroupInfo(address, numberOfChildren, bufferSize);
+        EV << "Aggregating group " << address << " with " << numberOfChildren << " children." << endl;
+
     }
 
    return getAggrGroup(address);
@@ -125,7 +115,7 @@ void Routing::handleMessage(cMessage *msg)
     int groupAddr = pk->getGroupAddr();
 
     // ! Deal with unicast packet
-    if (! isAggrGroup(groupAddr)) {
+    if (! isAggrGroupAdded(groupAddr)) {
         if (destAddr == myAddress) {
             int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
             EV << "local delivery of packet " << pk->getName() << endl;
