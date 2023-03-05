@@ -167,7 +167,6 @@ void Routing::handleMessage(cMessage *msg)
             emit(outputIfSignal, outGateIndex);
             emit(outputPacketSignal, aggpacket);
             send(aggpacket, "out", outGateIndex);
-            aggrGroup->reset(seq);
         }
     } else if (pk->getKind()==PacketType::ACK) {
         auto seq = pk->getAckSeq();
