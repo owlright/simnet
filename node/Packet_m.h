@@ -28,6 +28,7 @@ class Packet;
  *     int srcAddr \@packetData;
  *     int destAddr \@packetData;
  *     int groupAddr \@packetData;
+ *     int aggrCounter \@packetData;
  *     int hopCount \@packetData;
  *     unsigned int seq \@packetData;
  *     unsigned int ackSeq \@packetData;
@@ -41,6 +42,7 @@ class Packet : public ::omnetpp::cPacket
     int srcAddr = 0;
     int destAddr = 0;
     int groupAddr = 0;
+    int aggrCounter = 0;
     int hopCount = 0;
     unsigned int seq = 0;
     unsigned int ackSeq = 0;
@@ -69,6 +71,9 @@ class Packet : public ::omnetpp::cPacket
 
     virtual int getGroupAddr() const;
     virtual void setGroupAddr(int groupAddr);
+
+    virtual int getAggrCounter() const;
+    virtual void setAggrCounter(int aggrCounter);
 
     virtual int getHopCount() const;
     virtual void setHopCount(int hopCount);

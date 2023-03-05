@@ -74,6 +74,7 @@ Socket::SendPendingData()
         pk->setSrcAddr(m_addr);
         pk->setDestAddr(m_destAddress);
         pk->setGroupAddr(m_groupAddr);
+        pk->setAggrCounter(1);
         m_app->send(pk, "out");
         m_tcb->m_sentSize++;
         m_tcb->m_nextTxSequence++; // ! After the loop m_nextTxSequence is the next packet seq

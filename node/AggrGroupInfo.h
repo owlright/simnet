@@ -8,6 +8,7 @@ private:
     std::vector<int> children;
     std::map<int, Packet*> packets;
     std::map<int, int> counter;
+    std::map<int, int> senderCounter;
     int bufferSize{0};
 
 public:

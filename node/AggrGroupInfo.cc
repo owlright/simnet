@@ -27,12 +27,16 @@ Packet* AggrGroupInfo::aggrPacket(int seq, Packet *pk)
         }
         packets[seq] = pk->dup();
         counter[seq] = 0;
+        senderCounter[seq] = 0;
     }
-    // deal with the rest packets, just delete here
+    // deal with the rest packets
+    senderCounter[seq] += pk->getAggrCounter();
     delete pk;
     counter[seq]++;
     if (counter[seq] == numberOfChidren) { // ! all packets are aggregated
-        return packets.at(seq);
+        auto packet = packets.at(seq);
+        packet->setAggrCounter(senderCounter.at(seq));
+        return packet;
     }
     return nullptr;
 }
@@ -41,6 +45,7 @@ void AggrGroupInfo::reset(int seq)
 {
     packets.erase(seq);
     counter.erase(seq);
+    senderCounter.erase(seq);
 }
 
 void AggrGroupInfo::insertChildNode(int address)

@@ -16,6 +16,7 @@ packet Packet
     int srcAddr @packetData;
     int destAddr @packetData;
     int groupAddr @packetData;
+    int aggrCounter @packetData;
     int hopCount @packetData;
     unsigned int seq @packetData;
     unsigned int ackSeq @packetData;
