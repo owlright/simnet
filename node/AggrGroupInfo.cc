@@ -21,10 +21,10 @@ bool AggrGroupInfo::isChildrenFull() const
 
 Packet* AggrGroupInfo::aggrPacket(int seq, Packet *pk)
 {
-    if (packets.size() == bufferSize) {
-        return pk; // ! no space to store packets
-    }
     if (packets.find(seq) == packets.end()) { // first packet of a round
+        if (packets.size() == bufferSize) {
+            return pk; // ! no space just return
+        }
         packets[seq] = pk->dup();
         counter[seq] = numberOfChidren;
     }
