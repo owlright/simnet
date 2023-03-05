@@ -24,17 +24,27 @@ int Controller::getRoute(cModule* from, int to)
   return -1;
 }
 
-int Controller::getGroupAggrNum(int groupid, int routerid)
+int Controller::getGroupInfo(int groupid, int routerid, const aggrGroupOnRouterTable& table) const
 {
-    EV << COLOR(bgB::green) << "Query from router " << routerid << " for group " << groupid << END;
-    if (aggrNumberOnRouter.find(groupid)!=aggrNumberOnRouter.end()) {
-        auto numOnRouter = aggrNumberOnRouter[groupid];
-        if (numOnRouter.find(routerid)!=numOnRouter.end()) {
-            return numOnRouter[routerid];
+    EV << COLOR(bgB::green) << "Router " << routerid << " for group " << groupid << END;
+    if (table.find(groupid)!=table.end()) {
+        auto infoOnRouter = table.at(groupid);
+        if (infoOnRouter.find(routerid)!=infoOnRouter.end()) {
+            return infoOnRouter.at(routerid);
         }
         return -1; // groupid exists but not on routerid
     }
-    return -1; // groupid not exists
+    return -1; // groupid exists but not on routerid
+}
+
+int Controller::getGroupAggrNum(int groupid, int routerid) const
+{
+    return getGroupInfo(groupid, routerid, aggrNumberOnRouter);
+}
+
+int Controller::getGroupAggrBuffer(int groupid, int routerid) const
+{
+    return getGroupInfo(groupid, routerid, aggrBufferOnRouter);
 }
 
 Controller::Controller()
@@ -64,15 +74,17 @@ void Controller::initialize(int stage)
         auto numberOfGroup = groupAggRouter->size();
         EV << "There are " << numberOfGroup << " groups." << endl;
         auto groupAggrNumber = check_and_cast<cValueArray*>(par("aggrnumber").objectValue());
+        auto groupAggrBuffer = check_and_cast<cValueArray*>(par("aggrbuffer").objectValue());
         auto targets = check_and_cast<cValueArray*>(par("targets").objectValue())->asIntVector();
 
-        if (groupAggrNumber->size()!=numberOfGroup||targets.size()!=numberOfGroup) {
+        if (groupAggrNumber->size()!=numberOfGroup||targets.size()!=numberOfGroup||groupAggrBuffer->size()!=numberOfGroup) {
             throw cRuntimeError("number of aggr group is not equal.");
         }
 
         for (int i = 0; i < numberOfGroup; i++) {
             auto aggrRouter = check_and_cast<cValueArray*>( (groupAggRouter->get(i)).objectValue() )->asIntVector(); //todo this is too tedious!
             auto aggrNumber = check_and_cast<cValueArray*>( (groupAggrNumber->get(i)).objectValue() )->asIntVector();
+            auto aggrBuffer = check_and_cast<cValueArray*>( (groupAggrBuffer->get(i)).objectValue() )->asIntVector();
             auto root = targets[i];
 //            aggrNumberOnRouter[root][aggrRouter[i]] = aggrNumber[i];
             EV << "group "<< root << " aggregate on "<< aggrRouter << " with number: " << aggrNumber << endl;
@@ -81,6 +93,7 @@ void Controller::initialize(int stage)
                 throw cRuntimeError("router number and aggr number not match!");
             for (int j = 0; j < numberOfRouter; j++) {
                 aggrNumberOnRouter[root][aggrRouter[j]] = aggrNumber[j];
+                aggrBufferOnRouter[root][aggrRouter[j]] = aggrBuffer[j];
             }
         }
 

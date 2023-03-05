@@ -5,14 +5,20 @@
 using namespace omnetpp;
 
 class Controller: public omnetpp::cSimpleModule {
+private:
+    typedef std::map<int, std::map<int,int> > aggrGroupOnRouterTable;
 public:
     int getRoute(cModule* from, int to);
-    int getGroupAggrNum(int groupid, int routerid);
+    int getGroupInfo(int groupid, int routerid, const aggrGroupOnRouterTable& table) const;
+    int getGroupAggrNum(int groupid, int routerid) const;
+    int getGroupAggrBuffer(int groupid, int routerid) const;
     Controller();
     virtual ~Controller();
 private:
     cTopology *topo;
-    std::map<int, std::map<int,int> > aggrNumberOnRouter; // groupaddr-routeraddr-numberOfAggr
+
+    aggrGroupOnRouterTable aggrNumberOnRouter; // groupaddr-routeraddr-numberOfAggr
+    aggrGroupOnRouterTable aggrBufferOnRouter; // groupaddr-routeraddr-numberOfAggr
 
 protected:
     virtual void initialize(int stage) override;
