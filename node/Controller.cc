@@ -47,6 +47,17 @@ int Controller::getGroupAggrBuffer(int groupid, int routerid) const
     return getGroupInfo(groupid, routerid, aggrBufferOnRouter);
 }
 
+int Controller::getAggrSendersNum(int groupid) const
+{
+    return aggrgroup.at(groupid).size();
+}
+
+void Controller::updateAggrGroup(int groupid, int senderAddr)
+{
+    EV << COLOR(bgB::green) << "Register " << groupid << " by node " << senderAddr << END;
+    aggrgroup[groupid].push_back(senderAddr);
+}
+
 bool Controller::isAggrGroupOnRouter(int groupid, int routerid) const
 {
     if (aggrBufferOnRouter.find(groupid)==aggrBufferOnRouter.end()) return false;
@@ -111,6 +122,12 @@ void Controller::initialize(int stage)
                 aggrNumberOnRouter[root][aggrRouter[j]] = aggrNumber[j];
                 aggrBufferOnRouter[root][aggrRouter[j]] = aggrBuffer[j];
             }
+        }
+
+    }
+    if (stage == Stage::INITSTAGE_CONTROLL) {
+        for (const auto& entry: aggrgroup) {
+            EV << COLOR(bgB::green) << "group:" << entry.first <<" senders:" << entry.second << END;
         }
 
     }

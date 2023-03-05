@@ -13,6 +13,8 @@
 
 #include "App.h"
 #include "..\common\Defs.h"
+#include "Controller.h"
+#include "..\common\ModuleAccess.h"
 // struct FlowItem {
 //     bool isDirectionIn; // in or out
 //     long seq; // the packet sequence has been confirmed by now
@@ -64,6 +66,12 @@ void App::initialize(int stage)
         if (!disableSending) {
             generatePacket = new cMessage("nextPacket");
             scheduleAt(sendIATime->doubleValue(), generatePacket);
+        }
+    }
+    if (stage == Stage::INITSTAGE_REPORT) {
+        if (!disableSending && groupAddress != -1) {
+            auto controller = getModuleFromPar<Controller>(this->getParentModule()->par("globalController"), this->getParentModule());
+            controller->updateAggrGroup(groupAddress, myAddress);
         }
     }
 

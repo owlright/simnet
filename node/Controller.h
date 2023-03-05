@@ -13,12 +13,15 @@ public:
     int getGroupInfo(int groupid, int routerid, const aggrGroupOnRouterTable& table) const;
     int getGroupAggrNum(int groupid, int routerid) const;
     int getGroupAggrBuffer(int groupid, int routerid) const;
+    int getAggrSendersNum(int groupid) const;
+    void updateAggrGroup(int groupid, int senderAddr);
     bool isAggrGroupOnRouter(int groupid, int routerid) const;
     Controller();
     virtual ~Controller();
 private:
     cTopology *topo;
     std::map<int, cModule const *> nodeMap;
+    std::map<int, std::vector<int>> aggrgroup;
     aggrGroupOnRouterTable aggrNumberOnRouter; // groupaddr-routeraddr-numberOfAggr
     aggrGroupOnRouterTable aggrBufferOnRouter; // groupaddr-routeraddr-numberOfAggr
 private:
