@@ -12,6 +12,7 @@ public:
     int getGroupInfo(int groupid, int routerid, const aggrGroupOnRouterTable& table) const;
     int getGroupAggrNum(int groupid, int routerid) const;
     int getGroupAggrBuffer(int groupid, int routerid) const;
+    bool isAggrGroupOnRouter(int groupid, int routerid) const;
     Controller();
     virtual ~Controller();
 private:

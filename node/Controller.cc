@@ -47,6 +47,13 @@ int Controller::getGroupAggrBuffer(int groupid, int routerid) const
     return getGroupInfo(groupid, routerid, aggrBufferOnRouter);
 }
 
+bool Controller::isAggrGroupOnRouter(int groupid, int routerid) const
+{
+    if (aggrBufferOnRouter.find(groupid)==aggrBufferOnRouter.end()) return false;
+    if (aggrBufferOnRouter.at(groupid).find(routerid)==aggrBufferOnRouter.at(groupid).end()) return false;
+    return true;
+}
+
 Controller::Controller()
 {
   // TODO Auto-generated constructor stub

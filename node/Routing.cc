@@ -43,6 +43,7 @@ private:
 
 private:
     bool isAggrGroupAdded(int address) const;
+    bool isAggrGroup(int address) const;
     AggrGroupInfo* getAggrGroup(int address) const;
     AggrGroupInfo* getOrAddGroup(int address);
     int getRouteGateIndex(int address);
@@ -92,6 +93,11 @@ bool Routing::isAggrGroupAdded(int address) const
     return aggrGroupTable.find(address)!=aggrGroupTable.end();
 }
 
+bool Routing::isAggrGroup(int address) const
+{
+    return controller->isAggrGroupOnRouter(address, myAddress);
+}
+
 AggrGroupInfo* Routing::getOrAddGroup(int address) {
     if (!isAggrGroupAdded(address)) {// ! the first packet of the first round
         auto numberOfChildren = controller->getGroupAggrNum(address, myAddress);
@@ -115,7 +121,7 @@ void Routing::handleMessage(cMessage *msg)
     int groupAddr = pk->getGroupAddr();
 
     // ! Deal with unicast packet
-    if (! isAggrGroupAdded(groupAddr)) {
+    if (! isAggrGroup(groupAddr)) {
         if (destAddr == myAddress) {
             int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
             EV << "local delivery of packet " << pk->getName() << endl;
