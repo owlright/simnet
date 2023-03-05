@@ -3,7 +3,7 @@
 #include "..\common\Print.h"
 Define_Module(Controller);
 
-int Controller::getRoute(cModule* from, int to)
+int Controller::getRoute(cModule* from, int to) const
 {
     cTopology::Node *fromNode = topo->getNodeFor(from);
 
@@ -11,7 +11,7 @@ int Controller::getRoute(cModule* from, int to)
     for (int i = 0; i < topo->getNumNodes(); i++) {
         if (topo->getNode(i) == fromNode)
             continue;  // skip ourselves
-        int address = topo->getNode(i)->getModule()->par("address");
+        int address = nodeMap.at(i)->par("address");
         if (address == to) {
             topo->calculateUnweightedSingleShortestPathsTo(topo->getNode(i));
             if (fromNode->getNumPaths() > 0) {

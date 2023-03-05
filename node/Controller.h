@@ -9,7 +9,7 @@ class Controller: public omnetpp::cSimpleModule {
 private:
     typedef std::map<int, std::map<int,int> > aggrGroupOnRouterTable;
 public:
-    int getRoute(cModule* from, int to);
+    int getRoute(cModule* from, int to) const;
     int getGroupInfo(int groupid, int routerid, const aggrGroupOnRouterTable& table) const;
     int getGroupAggrNum(int groupid, int routerid) const;
     int getGroupAggrBuffer(int groupid, int routerid) const;
