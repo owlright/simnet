@@ -37,9 +37,9 @@ private:
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
     simsignal_t outputPacketSignal;
-    std::map<int, Packet*> aggrPacket;
-    std::map<int, int> aggrCounter;
-    std::map<int, int> aggrNumber;
+    // std::map<int, Packet*> aggrPacket;
+    // std::map<int, int> aggrCounter;
+    // std::map<int, int> aggrNumber;
 
 private:
     bool isAggrGroup(int address) const;
