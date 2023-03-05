@@ -26,12 +26,12 @@ Packet* AggrGroupInfo::aggrPacket(int seq, Packet *pk)
             return pk; // ! no space just return
         }
         packets[seq] = pk->dup();
-        counter[seq] = numberOfChidren;
+        counter[seq] = 0;
     }
     // deal with the rest packets, just delete here
     delete pk;
-    counter[seq]--;
-    if (counter[seq] == 0) { // ! all packets are aggregated
+    counter[seq]++;
+    if (counter[seq] == numberOfChidren) { // ! all packets are aggregated
         return packets.at(seq);
     }
     return nullptr;
