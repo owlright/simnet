@@ -18,10 +18,11 @@ public:
     virtual ~Controller();
 private:
     cTopology *topo;
-
+    std::map<int, cModule const *> nodeMap;
     aggrGroupOnRouterTable aggrNumberOnRouter; // groupaddr-routeraddr-numberOfAggr
     aggrGroupOnRouterTable aggrBufferOnRouter; // groupaddr-routeraddr-numberOfAggr
-
+private:
+    void setNodes(const cTopology *topo);
 protected:
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }

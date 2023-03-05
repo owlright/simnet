@@ -64,6 +64,14 @@ Controller::~Controller() {
     delete topo;
 }
 
+void Controller::setNodes(const cTopology *topo)
+{
+    for (int i = 0; i < topo->getNumNodes(); i++) {
+        int address = topo->getNode(i)->getModule()->par("address");
+        nodeMap[address] = topo->getNode(i)->getModule();
+    }
+}
+
 void Controller::initialize(int stage)
 {
     if (stage == Stage::INITSTAGE_LOCAL) {
@@ -76,6 +84,7 @@ void Controller::initialize(int stage)
         nedTypes.push_back(getParentModule()->getSubmodule("terminal", 0)->getNedTypeName());//todo nodename should not be fixed
         topo->extractByNedTypeName(nedTypes);
         EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
+        setNodes(topo);
         // ! parse aggr group info
         auto groupAggRouter = check_and_cast<cValueArray*>(par("aggrouter").objectValue());
         auto numberOfGroup = groupAggRouter->size();
