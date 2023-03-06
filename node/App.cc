@@ -34,9 +34,6 @@ App::GetMyAddr() const {
 App::~App()
 {
     cancelAndDelete(generatePacket);
-    for (auto it = socketsTable.begin(); it != socketsTable.end(); it++) {
-        delete it->second;
-    }
 }
 
 void App::initialize(int stage)
@@ -51,11 +48,11 @@ void App::initialize(int stage)
         packetLossCounter = 0;
         pkCounter = 0;
         disableSending = (destAddress==-1);
+        socket = (Socket*)(getSubmodule("socket"));
         WATCH(pkCounter);
         WATCH(myAddress);
         WATCH(destAddress);
         WATCH_VECTOR(destAddresses);
-        WATCH_PTRMAP(socketsTable);
         endToEndDelaySignal = registerSignal("endToEndDelay");
         hopCountSignal = registerSignal("hopCount");
         sourceAddressSignal = registerSignal("sourceAddress");
@@ -103,9 +100,8 @@ void App::handleMessage(cMessage *msg)
         // Sending packet
         // int destAddress = destAddresses[intuniform(0, destAddresses.size()-1)];
         pkCounter++;
-        socketsTable[destAddress] = new Socket(myAddress, destAddress, groupAddress);
-        socketsTable[destAddress]->SetApp(this);
-        socketsTable[destAddress]->SendData(packetTotalCount, packetLengthBytes->intValue());
+        socket->Init(this, myAddress, destAddress, groupAddress);
+        socket->SendData(packetTotalCount, packetLengthBytes->intValue());
     }
     else {
         // Handle incoming packet
@@ -121,14 +117,14 @@ void App::handleMessage(cMessage *msg)
         if (hasGUI())
             getParentModule()->bubble("Arrived!");
 
-        if (socketsTable.find(senderAddr) == socketsTable.end()) {
-            socketsTable[senderAddr] = new Socket(myAddress, senderAddr, -1);
-            socketsTable[senderAddr]->SetApp(this);
-            socketsTable[senderAddr]->SetSendersNum(groupSenders);
+        if (socket->GetLocalAddr()==-1) {
+            socket->Init(this, myAddress, senderAddr);
+            socket->SetSendersNum(groupSenders);
         }
-        socketsTable[senderAddr]->Recv(pk);
+
+        socket->Recv(pk);
         delete pk;
-        pk=nullptr;
+
         // if (packetKind == 1) { // data packet
         //     socketsTable[senderAddr]->ProcessData(pk);
         // }

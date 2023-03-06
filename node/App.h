@@ -30,7 +30,8 @@ public:
     cPar *packetLengthBytes;
 
 private:
-    std::map<int, Socket*> socketsTable;
+//    std::map<int, Socket*> socketsTable;
+    Socket* socket = nullptr;
     // state
     cMessage *generatePacket = nullptr;
     int pkCounter;
