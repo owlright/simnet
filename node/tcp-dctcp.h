@@ -17,7 +17,7 @@ public:
 
     TcpDctcp();
 private:
-    cOutVector obcWnd; //! observe window
+//    cOutVector obcWnd; //! observe window
     uint32_t m_nextSeq;//!< TCP sequence number threshold for beginning a new observation window
     bool m_nextSeqFlag{false};
     uint32_t m_ackedPacketsEcn{0};

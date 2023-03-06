@@ -15,7 +15,7 @@ TcpDctcp::TcpDctcp()
 void
 TcpDctcp::Init(TcpSocketState* tcb)
 {
-    obcWnd.setName("observe window");
+//    obcWnd.setName("observe window");
 }
 
 void
@@ -49,7 +49,7 @@ TcpDctcp::PktsAcked(TcpSocketState* tcb)
     if (tcb->m_lastAckedSeq >= m_nextSeq)
     {
         EV << " Last window size: " << tcb->m_nextTxSequence - m_nextSeq << endl;
-        obcWnd.record(tcb->m_nextTxSequence - m_nextSeq);
+//        obcWnd.record(tcb->m_nextTxSequence - m_nextSeq);
         double packetsECN = 0.0;
         if (m_ackedPacketsTotal > 0)
         {
