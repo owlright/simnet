@@ -26,6 +26,7 @@ public:
     void ReceivedData(Packet* pk);
     void SendEchoAck(uint32_t ackno, bool detectECN, int groupid);
     void SetApp(cSimpleModule* const app );
+    void SetSendersNum(int number);
     // void EnterCwr();
     void Recv(Packet* pk);
     // void SetSendCb(Callback f);
@@ -52,6 +53,8 @@ private:
     int m_addr;
     int m_destAddress;
     int m_groupAddr;
+    int m_sendersNum;
+    std::map<int, int> m_sendersCounter; // seq-sendersCounter
     //congestion control algo
     TcpCongestionOps* m_cong = nullptr;
     // Transmission control block

@@ -11,12 +11,18 @@ Socket::SetApp(cSimpleModule* const app)
     m_app = app;
 }
 
+void Socket::SetSendersNum(int number)
+{
+    m_sendersNum = number;
+}
+
 Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
 {
     m_cong = new TcpDctcp(); // todo should be defined by user
     m_tcb = new TcpSocketState();
     m_addr = src;
     m_destAddress = dest;
+    m_sendersNum = 1; // just one receiver
     // m_tcb->m_initialCwnd = initCwnd;
     m_tcb->m_cWnd = initCwnd;
     m_tcb->m_ssThresh = initSSThresh;
@@ -151,7 +157,17 @@ Socket::ReceivedData(Packet* pk)
     EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
     auto pkSeq = pk->getSeq();
     m_tcb->m_ackSeq = pkSeq; // ! just ack this packet, do not +1
-    SendEchoAck(pkSeq, pk->getECN(), pk->getGroupAddr());
+    if (m_sendersCounter.find(pkSeq)==m_sendersCounter.end())
+        m_sendersCounter[pkSeq] = 0;
+    m_sendersCounter.at(pkSeq) += pk->getAggrCounter();
+    if (m_sendersCounter.at(pkSeq)==m_sendersNum) {
+        EV << "all packets of " << pkSeq << " are received" << endl;
+        SendEchoAck(pkSeq, pk->getECN(), pk->getGroupAddr());
+    }
+    else {
+        EV << "packet " << pkSeq << " still has " << m_sendersNum - m_sendersCounter.at(pkSeq) << " packets left" << endl;
+    }
+
 }
 
 void

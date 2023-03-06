@@ -1,8 +1,13 @@
 #ifndef COMMON_DEFS_H_
 #define COMMON_DEFS_H_
 
-#define NUM_INIT_STAGES 3
-
+typedef enum
+{
+    INITSTAGE_LOCAL,
+    INITSTAGE_REPORT,
+    INITSTAGE_CONTROLL,
+    NUM_INIT_STAGES
+} Stage;
 typedef enum
 {
     ACK,

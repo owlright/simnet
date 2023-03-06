@@ -3,7 +3,7 @@
 #include "..\common\Print.h"
 Define_Module(Controller);
 
-int Controller::getRoute(cModule* from, int to)
+int Controller::getRoute(cModule* from, int to) const
 {
     cTopology::Node *fromNode = topo->getNodeFor(from);
 
@@ -11,7 +11,7 @@ int Controller::getRoute(cModule* from, int to)
     for (int i = 0; i < topo->getNumNodes(); i++) {
         if (topo->getNode(i) == fromNode)
             continue;  // skip ourselves
-        int address = topo->getNode(i)->getModule()->par("address");
+        int address = nodeMap.at(i)->par("address");
         if (address == to) {
             topo->calculateUnweightedSingleShortestPathsTo(topo->getNode(i));
             if (fromNode->getNumPaths() > 0) {
@@ -47,11 +47,27 @@ int Controller::getGroupAggrBuffer(int groupid, int routerid) const
     return getGroupInfo(groupid, routerid, aggrBufferOnRouter);
 }
 
+int Controller::getAggrSendersNum(int groupid) const
+{
+    return aggrgroup.at(groupid).size();
+}
+
+void Controller::updateAggrGroup(int groupid, int senderAddr)
+{
+    EV << COLOR(bgB::green) << "Register " << groupid << " by node " << senderAddr << END;
+    aggrgroup[groupid].push_back(senderAddr);
+}
+
 bool Controller::isAggrGroupOnRouter(int groupid, int routerid) const
 {
     if (aggrBufferOnRouter.find(groupid)==aggrBufferOnRouter.end()) return false;
     if (aggrBufferOnRouter.at(groupid).find(routerid)==aggrBufferOnRouter.at(groupid).end()) return false;
     return true;
+}
+
+bool Controller::isGroupTarget(int myAddress) const
+{
+    return aggrgroup.find(myAddress) != aggrgroup.end();
 }
 
 Controller::Controller()
@@ -64,9 +80,17 @@ Controller::~Controller() {
     delete topo;
 }
 
+void Controller::setNodes(const cTopology *topo)
+{
+    for (int i = 0; i < topo->getNumNodes(); i++) {
+        int address = topo->getNode(i)->getModule()->par("address");
+        nodeMap[address] = topo->getNode(i)->getModule();
+    }
+}
+
 void Controller::initialize(int stage)
 {
-    if (stage == 0) {
+    if (stage == Stage::INITSTAGE_LOCAL) {
         EV_INFO << "network intialization." << endl;
         if (getParentModule()->getSubmoduleVectorSize("terminal") <= 0) {
             throw cRuntimeError("The network has no nodes");
@@ -76,6 +100,7 @@ void Controller::initialize(int stage)
         nedTypes.push_back(getParentModule()->getSubmodule("terminal", 0)->getNedTypeName());//todo nodename should not be fixed
         topo->extractByNedTypeName(nedTypes);
         EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
+        setNodes(topo);
         // ! parse aggr group info
         auto groupAggRouter = check_and_cast<cValueArray*>(par("aggrouter").objectValue());
         auto numberOfGroup = groupAggRouter->size();
@@ -102,6 +127,12 @@ void Controller::initialize(int stage)
                 aggrNumberOnRouter[root][aggrRouter[j]] = aggrNumber[j];
                 aggrBufferOnRouter[root][aggrRouter[j]] = aggrBuffer[j];
             }
+        }
+
+    }
+    if (stage == Stage::INITSTAGE_CONTROLL) {
+        for (const auto& entry: aggrgroup) {
+            EV << COLOR(bgB::green) << "group:" << entry.first <<" senders:" << entry.second << END;
         }
 
     }
