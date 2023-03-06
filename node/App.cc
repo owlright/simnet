@@ -124,6 +124,7 @@ void App::handleMessage(cMessage *msg)
         if (socketsTable.find(senderAddr) == socketsTable.end()) {
             socketsTable[senderAddr] = new Socket(myAddress, senderAddr, -1);
             socketsTable[senderAddr]->SetApp(this);
+            socketsTable[senderAddr]->SetSendersNum(groupSenders);
         }
         socketsTable[senderAddr]->Recv(pk);
         delete pk;
