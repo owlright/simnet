@@ -1,10 +1,5 @@
 #include "socket.h"
 #include "tcp-dctcp.h"
-// void
-// Socket::SetSendCb(Callback f)
-// {
-//     Send=f;
-// }
 void
 Socket::SetApp(cSimpleModule* const app)
 {
@@ -65,7 +60,6 @@ Socket::SendData(int packets, int packetBytes)
 void
 Socket::SendPendingData()
 {
-    // EV << "======" << __FUNCTION__ << "======" << endl;
     char pkname[40];
     uint32_t nextSeq;
     Packet *pk = nullptr;
@@ -108,7 +102,6 @@ Socket::Recv(Packet* pk)
 void
 Socket::ReceivedAck(Packet* pk)
 {
-    // EV << "======" << __FUNCTION__ << "======" << endl;
     auto ackSeq = pk->getAckSeq();
     assert(ackSeq + 1 <= m_tcb->m_nextTxSequence); // ! impossible to receive a ack bigger than have sent
     // EV << "received ack packet " << pk->getName() << endl;
