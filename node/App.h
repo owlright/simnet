@@ -20,6 +20,7 @@ public:
     // configuration
     int myAddress;
     int groupAddress;
+    int groupSenders{1};
     int packetTotalCount;
     int packetLossCounter;
     bool disableSending;

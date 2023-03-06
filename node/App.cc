@@ -74,7 +74,13 @@ void App::initialize(int stage)
             controller->updateAggrGroup(groupAddress, myAddress);
         }
     }
-
+    if (stage == Stage::INITSTAGE_CONTROLL) {
+        auto controller = getModuleFromPar<Controller>(this->getParentModule()->par("globalController"), this->getParentModule());
+        if (controller->isGroupTarget(myAddress)) {
+            groupSenders = controller->getAggrSendersNum(myAddress);
+            EV << "node "<< myAddress << " have " << groupSenders << " senders" << endl;
+        };
+    }
 
 
 //    const char *destAddressesPar = par("destAddresses");

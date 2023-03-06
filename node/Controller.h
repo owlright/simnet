@@ -16,6 +16,7 @@ public:
     int getAggrSendersNum(int groupid) const;
     void updateAggrGroup(int groupid, int senderAddr);
     bool isAggrGroupOnRouter(int groupid, int routerid) const;
+    bool isGroupTarget(int myAddress) const;
     Controller();
     virtual ~Controller();
 private:

@@ -65,6 +65,11 @@ bool Controller::isAggrGroupOnRouter(int groupid, int routerid) const
     return true;
 }
 
+bool Controller::isGroupTarget(int myAddress) const
+{
+    return aggrgroup.find(myAddress) != aggrgroup.end();
+}
+
 Controller::Controller()
 {
   // TODO Auto-generated constructor stub
