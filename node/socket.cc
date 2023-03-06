@@ -1,39 +1,40 @@
 #include "socket.h"
 #include "tcp-dctcp.h"
-void
-Socket::SetApp(cSimpleModule* const app)
-{
-    m_app = app;
-}
+Define_Module(Socket);
+
+// void
+// Socket::SetApp(cSimpleModule* const app)
+// {
+//     m_app = app;
+// }
 
 void Socket::SetSendersNum(int number)
 {
     m_sendersNum = number;
 }
 
-Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
-{
-    m_cong = new TcpDctcp(); // todo should be defined by user
-    m_tcb = new TcpSocketState();
-    m_addr = src;
-    m_destAddress = dest;
-    m_sendersNum = 1; // just one receiver
-    // m_tcb->m_initialCwnd = initCwnd;
-    m_tcb->m_cWnd = initCwnd;
-    m_tcb->m_ssThresh = initSSThresh;
-    m_tcb->m_congState = TcpSocketState::CA_OPEN;
-    m_tcb->m_obWnd = m_tcb->m_cWnd;
-    cWnd.setName("congestion window");
-    // packetsSentCountSignal = registerSignal("packetsSentCount");
+// Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
+// {
+//     m_cong = new TcpDctcp(); // todo should be defined by user
+//     m_tcb = new TcpSocketState();
+//     m_addr = src;
+//     m_destAddress = dest;
+//     m_sendersNum = 1; // just one receiver
+//     // m_tcb->m_initialCwnd = initCwnd;
+//     m_tcb->m_cWnd = initCwnd;
+//     m_tcb->m_ssThresh = initSSThresh;
+//     m_tcb->m_congState = TcpSocketState::CA_OPEN;
+//     m_tcb->m_obWnd = m_tcb->m_cWnd;
+//     cWnd.setName("congestion window");
+//     // packetsSentCountSignal = registerSignal("packetsSentCount");
 
-}
+// }
 
-Socket::Socket(int src, int dest, int group):
-        Socket(src, dest)
-{
-    m_groupAddr = group;
-}
-
+// Socket::Socket(int src, int dest, int group):
+//         Socket(src, dest)
+// {
+//     m_groupAddr = group;
+// }
 Socket::~Socket()
 {
     delete m_cong;
@@ -188,6 +189,33 @@ Socket::SendEchoAck(uint32_t ackno, bool detectECN, int groupid) {
 int
 Socket::GetDestAddr() const{
     return this->m_destAddress;
+}
+
+int Socket::GetLocalAddr() const
+{
+    return this->m_addr;
+}
+
+void Socket::initialize(int stage)
+{
+
+}
+
+void Socket::Init(cSimpleModule* app, int src, int dest, int group, uint32_t initCwnd, uint32_t initSSThresh)
+{
+    m_app = app;
+    m_addr = src;
+    m_destAddress = dest;
+    m_groupAddr = group;
+    m_sendersNum = 1;
+
+    m_cong = new TcpDctcp(); // todo should be defined by user
+    m_tcb = new TcpSocketState();
+    m_tcb->m_cWnd = initCwnd;
+    m_tcb->m_ssThresh = initSSThresh;
+    m_tcb->m_congState = TcpSocketState::CA_OPEN;
+    m_tcb->m_obWnd = m_tcb->m_cWnd;
+    cWnd.setName("congestion window");
 }
 
 std::ostream& operator<<(std::ostream& os, const Socket& socket)
