@@ -11,26 +11,24 @@ using namespace omnetpp;
 
 class Socket : public cSimpleModule {
 public:
-    void SendData(int packets, int packetBytes);
-    void ReceivedAck(Packet* pk);
-    void ProcessAck(const uint32_t& ackNumber);
-    void ReceivedData(Packet* pk);
-    void SendEchoAck(uint32_t ackno, bool detectECN, int groupid);
+    void Send(int packets, int packetBytes);
     void SetSendersNum(int number);
-    void Recv(Packet* pk);
-
-public:
     void Bind(int srcaddr, int destaddr, int groupaddr);
     int GetDestAddr() const;
     int GetLocalAddr() const;
 
-public:
-    ~Socket();
-
 private:
-    uint32_t AvailableWindow() const;
+    // process incoming packet
+    void Recv(Packet* pk);
+    void ReceivedData(Packet* pk);
+    void ReceivedAck(Packet* pk);
+    // send packet
     void SendPendingData();
-    void SetLocalAddr(int address);
+    void SendAck(uint32_t ackno, bool detectECN);
+    // help function
+    uint32_t AvailableWindow() const;
+    void SetPacketCommonField(Packet* pk) const;
+
 
 private:
     int packetNumber{0};
@@ -44,6 +42,9 @@ private:
     std::map<int, int> m_sendersCounter; // seq-sendersCounter
     TcpCongestionOps* m_cong = nullptr; //congestion control algo
     TcpSocketState* m_tcb = nullptr; // Transmission control block
+
+public:
+    virtual ~Socket();
 
 protected:
     virtual void initialize(int stage) override;

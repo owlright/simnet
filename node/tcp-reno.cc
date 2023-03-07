@@ -3,7 +3,7 @@ Define_Module(TcpReno);
 void
 TcpReno::IncreaseWindow(TcpSocketState* tcb)
 {
-    EV << "======" << __FUNCTION__ << "======" << endl;
+    // EV << "======" << __FUNCTION__ << "======" << endl;
     // Linux tcp_in_slow_start() condition
     if (tcb->m_cWnd < tcb->m_ssThresh)
     {

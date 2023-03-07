@@ -72,7 +72,7 @@ void App::handleMessage(cMessage *msg)
     if (msg == generatePacket) {
         // Sending packet
         ASSERT(socket!=nullptr);
-        socket->SendData(packetTotalCount, packetLengthBytes->intValue());
+        socket->Send(packetTotalCount, packetLengthBytes->intValue());
         return;
     }
     if (msg->arrivedOn("socketIn")) {
