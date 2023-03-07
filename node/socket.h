@@ -18,16 +18,19 @@ public:
     void SendEchoAck(uint32_t ackno, bool detectECN, int groupid);
     void SetSendersNum(int number);
     void Recv(Packet* pk);
+
+public:
+    void Bind(int srcaddr, int destaddr, int groupaddr);
     int GetDestAddr() const;
     int GetLocalAddr() const;
 
 public:
-    void Init(int src, int dest, int group=-1, uint32_t initCwnd=1, uint32_t initSSThresh=INT32_MAX);
     ~Socket();
 
 private:
     uint32_t AvailableWindow() const;
     void SendPendingData();
+    void SetLocalAddr(int address);
 
 private:
     int packetNumber{0};

@@ -157,8 +157,15 @@ Socket::SendEchoAck(uint32_t ackno, bool detectECN, int groupid) {
 
 }
 
-int
-Socket::GetDestAddr() const{
+void Socket::Bind(int srcaddr, int destaddr, int groupaddr)
+{
+    m_addr = srcaddr;
+    m_destAddress = destaddr;
+    m_groupAddr = groupaddr;
+}
+
+int Socket::GetDestAddr() const
+{
     return this->m_destAddress;
 }
 
@@ -172,20 +179,11 @@ void Socket::initialize(int stage)
     if (stage == Stage::INITSTAGE_LOCAL) {
         m_cong = (TcpCongestionOps*)(getSubmodule("cong"));
         m_tcb = new TcpSocketState();
+        m_tcb->m_cWnd = 1;
+        m_tcb->m_ssThresh = UINT32_MAX;
+        m_tcb->m_congState = TcpSocketState::CA_OPEN;
+        m_tcb->m_obWnd = m_tcb->m_cWnd;
     }
-}
-
-void Socket::Init(int src, int dest, int group, uint32_t initCwnd, uint32_t initSSThresh)
-{
-    m_addr = src;
-    m_destAddress = dest;
-    m_groupAddr = group;
-    m_sendersNum = 1;
-
-    m_tcb->m_cWnd = initCwnd;
-    m_tcb->m_ssThresh = initSSThresh;
-    m_tcb->m_congState = TcpSocketState::CA_OPEN;
-    m_tcb->m_obWnd = m_tcb->m_cWnd;
 }
 
 void Socket::handleMessage(cMessage *msg)
