@@ -7,24 +7,20 @@
 #include <omnetpp.h>
 #include "Packet_m.h"
 #include "socket.h"
-// #include <functional>
 using namespace omnetpp;
 /**
  * Generates traffic for the network.
  */
 class App : public cSimpleModule
 {
-public:
-    int GetMyAddr() const;
   private:
     // configuration
     int myAddress;
     int groupAddress;
     int groupSenders{1};
     int packetTotalCount;
-    int packetLossCounter;
     bool disableSending;
-    std::vector<int> destAddresses;
+
     int destAddress;
     cPar *sendIATime;
     cPar *packetLengthBytes;
@@ -34,11 +30,9 @@ private:
     Socket* socket = nullptr;
     // state
     cMessage *generatePacket = nullptr;
-    int pkCounter;
+
     // signals
     simsignal_t endToEndDelaySignal;
-    simsignal_t hopCountSignal;
-    simsignal_t sourceAddressSignal;
 
   public:
     virtual ~App();

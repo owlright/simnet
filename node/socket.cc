@@ -2,39 +2,11 @@
 #include "tcp-dctcp.h"
 Define_Module(Socket);
 
-// void
-// Socket::SetApp(cSimpleModule* const app)
-// {
-//     m_app = app;
-// }
-
 void Socket::SetSendersNum(int number)
 {
     m_sendersNum = number;
 }
 
-// Socket::Socket(int src, int dest, uint32_t initCwnd, uint32_t initSSThresh)
-// {
-//     m_cong = new TcpDctcp(); // todo should be defined by user
-//     m_tcb = new TcpSocketState();
-//     m_addr = src;
-//     m_destAddress = dest;
-//     m_sendersNum = 1; // just one receiver
-//     // m_tcb->m_initialCwnd = initCwnd;
-//     m_tcb->m_cWnd = initCwnd;
-//     m_tcb->m_ssThresh = initSSThresh;
-//     m_tcb->m_congState = TcpSocketState::CA_OPEN;
-//     m_tcb->m_obWnd = m_tcb->m_cWnd;
-//     cWnd.setName("congestion window");
-//     // packetsSentCountSignal = registerSignal("packetsSentCount");
-
-// }
-
-// Socket::Socket(int src, int dest, int group):
-//         Socket(src, dest)
-// {
-//     m_groupAddr = group;
-// }
 Socket::~Socket()
 {
     // delete m_cong;
@@ -77,7 +49,6 @@ Socket::SendPendingData()
         pk->setDestAddr(m_destAddress);
         pk->setGroupAddr(m_groupAddr);
         pk->setAggrCounter(1);
-        // m_app->send(pk, "out");
         send(pk, "out");
         m_tcb->m_sentSize++;
         m_tcb->m_nextTxSequence++; // ! After the loop m_nextTxSequence is the next packet seq
@@ -136,13 +107,11 @@ Socket::ReceivedAck(Packet* pk)
 void
 Socket::ProcessAck(const uint32_t& ackNumber)
 {
-    // EV << "======" << __FUNCTION__ << "======" << endl;
     m_tcb->m_lastAckedSeq = ackNumber;
     m_tcb->m_acked += 1;
     EV << "cWnd: "<< m_tcb->m_cWnd <<" inflight: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
     m_cong->PktsAcked(m_tcb); // todo, update ecn calculation here
     m_cong->IncreaseWindow(m_tcb);
-//    cWnd.record(m_tcb->m_cWnd); // todo: for debug use only, should change Socket to a SimpleModule and use singals in the future
 
 }
 
@@ -150,9 +119,6 @@ void
 Socket::ReceivedData(Packet* pk)
 {
     ASSERT(m_addr==pk->getDestAddr());
-//    int outPortIndex = pk->par("outGateIndex");
-    // double rate = m_app->getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
-    // EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
     auto pkSeq = pk->getSeq();
     m_tcb->m_ackSeq = pkSeq; // ! just ack this packet, do not +1
     if (m_sendersCounter.find(pkSeq)==m_sendersCounter.end())
@@ -188,7 +154,7 @@ Socket::SendEchoAck(uint32_t ackno, bool detectECN, int groupid) {
     }
     EV << ackpk->getName() << endl;
     send(ackpk, "out");
-    // m_app->send(ackpk, "out");
+
 }
 
 int
@@ -211,19 +177,15 @@ void Socket::initialize(int stage)
 
 void Socket::Init(int src, int dest, int group, uint32_t initCwnd, uint32_t initSSThresh)
 {
-    // m_app = app;
     m_addr = src;
     m_destAddress = dest;
     m_groupAddr = group;
     m_sendersNum = 1;
 
-//    m_cong = new TcpDctcp(); // todo should be defined by user
-
     m_tcb->m_cWnd = initCwnd;
     m_tcb->m_ssThresh = initSSThresh;
     m_tcb->m_congState = TcpSocketState::CA_OPEN;
     m_tcb->m_obWnd = m_tcb->m_cWnd;
-//    cWnd.setName("congestion window");
 }
 
 void Socket::handleMessage(cMessage *msg)

@@ -15,22 +15,9 @@
 #include "..\common\Defs.h"
 #include "Controller.h"
 #include "..\common\ModuleAccess.h"
-// struct FlowItem {
-//     bool isDirectionIn; // in or out
-//     long seq; // the packet sequence has been confirmed by now
-// } ;
-// std::ostream& operator<<(std::ostream& os, const FlowItem& fl)
-// {
-//     std::string direction = fl.isDirectionIn ? "in" : "out";
-//     os << "direction = " << direction  << "  flow_seq =" << fl.seq; // no endl!
-//     return os;
-// }
 
 Define_Module(App);
-int
-App::GetMyAddr() const {
-    return this->myAddress;
-}
+
 App::~App()
 {
     cancelAndDelete(generatePacket);
@@ -45,17 +32,14 @@ void App::initialize(int stage)
         packetTotalCount = par("packetTotalCount");
         packetLengthBytes = &par("packetLength");
         sendIATime = &par("sendIaTime");  // volatile parameter
-        packetLossCounter = 0;
-        pkCounter = 0;
+
         disableSending = (destAddress==-1);
         socket = (Socket*)(getSubmodule("socket"));
-        WATCH(pkCounter);
+
         WATCH(myAddress);
         WATCH(destAddress);
-        WATCH_VECTOR(destAddresses);
+
         endToEndDelaySignal = registerSignal("endToEndDelay");
-        hopCountSignal = registerSignal("hopCount");
-        sourceAddressSignal = registerSignal("sourceAddress");
 
         if (disableSending) {
             EV << myAddress << " don't send packets." << endl;
@@ -77,22 +61,9 @@ void App::initialize(int stage)
             groupSenders = controller->getAggrSendersNum(myAddress);
             EV << "node "<< myAddress << " have " << groupSenders << " senders" << endl;
         };
-        socket->Init(myAddress, destAddress, groupAddress);
+        socket->Bind(myAddress, destAddress, groupAddress);
         socket->SetSendersNum(groupSenders);
     }
-
-
-//    const char *destAddressesPar = par("destAddresses");
-//    cStringTokenizer tokenizer(destAddressesPar);
-//    const char *token;
-    //! not use multiple destinations by now.
-    // while ((token = tokenizer.nextToken()) != nullptr)
-    //     destAddresses.push_back(atoi(token));
-
-    // if (destAddresses.size() == 0)
-    //     throw cRuntimeError("At least one address must be specified in the destAddresses parameter!");
-
-
 
 }
 
@@ -100,38 +71,17 @@ void App::handleMessage(cMessage *msg)
 {
     if (msg == generatePacket) {
         // Sending packet
-        // int destAddress = destAddresses[intuniform(0, destAddresses.size()-1)];
-        pkCounter++;
-        socket->Init(myAddress, destAddress, groupAddress);
+        ASSERT(socket!=nullptr);
         socket->SendData(packetTotalCount, packetLengthBytes->intValue());
         return;
     }
     if (msg->arrivedOn("socketIn")) {
         // Handle incoming packet
         Packet *pk = check_and_cast<Packet *>(msg);
-        // EV << "received packet " << pk->getName() << " after " << pk->getHopCount() << "hops" << endl;
-        int senderAddr = pk->getSrcAddr();
-        // short packetKind = pk->getKind();
-        // if (senderAddr == myAddress) { // ignore the packet send from myself
-        //     delete pk;
-        //     return;
-        // }
 
         if (hasGUI())
             getParentModule()->bubble("Arrived!");
 
-        if (socket->GetLocalAddr()==-1) { // ! receive a ACK packet
-
-        }
-
-        // socket->Recv(pk);
-        delete pk;
-
-        // if (packetKind == 1) { // data packet
-        //     socketsTable[senderAddr]->ProcessData(pk);
-        // }
-        // else if (packetKind == 0) { // ack packet
-        //     socketsTable[senderAddr]->ProcessAck(pk);
-        // }
+        delete pk; // do nothing
     }
 }
