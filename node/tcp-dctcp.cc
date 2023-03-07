@@ -1,16 +1,24 @@
 #include "tcp-dctcp.h"
-
-TcpDctcp::TcpDctcp()
-    : TcpReno(),
-    m_alpha(1.0),
-    m_g(0.0625),
-    m_ackedPacketsEcn(0),
-    m_ackedPacketsTotal(0),
-    m_nextSeq(0),
-    m_nextSeqFlag(false)
+Define_Module(TcpDctcp);
+void TcpDctcp::initialize(int stage)
 {
-
+    if (stage==INITSTAGE_LOCAL) {
+        m_alpha = par("alpha");
+        m_g = par("g");
+    }
 }
+
+// TcpDctcp::TcpDctcp()
+//     : TcpReno(),
+//     m_alpha(1.0),
+//     m_g(0.0625),
+//     m_ackedPacketsEcn(0),
+//     m_ackedPacketsTotal(0),
+//     m_nextSeq(0),
+//     m_nextSeqFlag(false)
+// {
+
+// }
 
 void
 TcpDctcp::Init(TcpSocketState* tcb)

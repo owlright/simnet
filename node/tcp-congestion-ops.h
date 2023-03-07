@@ -3,7 +3,8 @@
 #endif
 #pragma once
 #include "tcp-socket-state.h"
-class TcpCongestionOps
+#include "../common/Defs.h"
+class TcpCongestionOps : public cSimpleModule
 {
 public:
 
@@ -83,5 +84,8 @@ public:
     /* hook for packet ack accounting (optional) */
     //     void (*pkts_acked)(struct sock *sk, u32 ext, int *attr, union tcp_cc_info *info);
 
-
+protected:
+    virtual void initialize(int stage) override{};
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void handleMessage(cMessage *msg) override { throw cRuntimeError("this module doesn't handle messages, it runs only in initialize()"); }
 };

@@ -1,5 +1,5 @@
 #include "tcp-reno.h"
-
+Define_Module(TcpReno);
 void
 TcpReno::IncreaseWindow(TcpSocketState* tcb)
 {

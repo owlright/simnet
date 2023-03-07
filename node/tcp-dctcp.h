@@ -4,6 +4,7 @@
 
 #include <omnetpp.h>
 #include "tcp-reno.h"
+#include "../common/Defs.h"
 using namespace omnetpp;
 
 class TcpDctcp : public TcpReno {
@@ -15,14 +16,17 @@ public:
     virtual void Init(TcpSocketState* tcb [[maybe_unused]]) override;
     void Reset(TcpSocketState* tcb);
 
-    TcpDctcp();
+    // TcpDctcp();
 private:
 //    cOutVector obcWnd; //! observe window
-    uint32_t m_nextSeq;//!< TCP sequence number threshold for beginning a new observation window
+    uint32_t m_nextSeq{0};//!< TCP sequence number threshold for beginning a new observation window
     bool m_nextSeqFlag{false};
     uint32_t m_ackedPacketsEcn{0};
 
     uint32_t m_ackedPacketsTotal{0};
     double m_alpha;
     double m_g;
+
+protected:
+    virtual void initialize(int stage) override;
 };
