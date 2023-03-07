@@ -77,6 +77,8 @@ void App::initialize(int stage)
             groupSenders = controller->getAggrSendersNum(myAddress);
             EV << "node "<< myAddress << " have " << groupSenders << " senders" << endl;
         };
+        socket->Init(myAddress, destAddress, groupAddress);
+        socket->SetSendersNum(groupSenders);
     }
 
 
@@ -100,10 +102,11 @@ void App::handleMessage(cMessage *msg)
         // Sending packet
         // int destAddress = destAddresses[intuniform(0, destAddresses.size()-1)];
         pkCounter++;
-        socket->Init(this, myAddress, destAddress, groupAddress);
+        socket->Init(myAddress, destAddress, groupAddress);
         socket->SendData(packetTotalCount, packetLengthBytes->intValue());
+        return;
     }
-    else {
+    if (msg->arrivedOn("socketIn")) {
         // Handle incoming packet
         Packet *pk = check_and_cast<Packet *>(msg);
         // EV << "received packet " << pk->getName() << " after " << pk->getHopCount() << "hops" << endl;
@@ -117,12 +120,11 @@ void App::handleMessage(cMessage *msg)
         if (hasGUI())
             getParentModule()->bubble("Arrived!");
 
-        if (socket->GetLocalAddr()==-1) {
-            socket->Init(this, myAddress, senderAddr);
-            socket->SetSendersNum(groupSenders);
+        if (socket->GetLocalAddr()==-1) { // ! receive a ACK packet
+
         }
 
-        socket->Recv(pk);
+        // socket->Recv(pk);
         delete pk;
 
         // if (packetKind == 1) { // data packet
@@ -133,4 +135,3 @@ void App::handleMessage(cMessage *msg)
         // }
     }
 }
-

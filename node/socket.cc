@@ -37,7 +37,7 @@ void Socket::SetSendersNum(int number)
 // }
 Socket::~Socket()
 {
-    delete m_cong;
+    // delete m_cong;
     delete m_tcb;
 }
 
@@ -53,6 +53,7 @@ Socket::AvailableWindow() const
 void
 Socket::SendData(int packets, int packetBytes)
 {
+    Enter_Method_Silent();
     this->packetNumber = packets;
     this->packetBytes = packetBytes;
     SendPendingData();
@@ -76,7 +77,8 @@ Socket::SendPendingData()
         pk->setDestAddr(m_destAddress);
         pk->setGroupAddr(m_groupAddr);
         pk->setAggrCounter(1);
-        m_app->send(pk, "out");
+        // m_app->send(pk, "out");
+        send(pk, "out");
         m_tcb->m_sentSize++;
         m_tcb->m_nextTxSequence++; // ! After the loop m_nextTxSequence is the next packet seq
     }
@@ -88,6 +90,8 @@ Socket::SendPendingData()
 void
 Socket::Recv(Packet* pk)
 {
+    m_destAddress = pk->getSrcAddr();
+    m_groupAddr = pk->getGroupAddr();
     auto packetKind = pk->getKind();
     if (packetKind == PacketType::DATA) { // data packet
         ReceivedData(pk);
@@ -138,17 +142,17 @@ Socket::ProcessAck(const uint32_t& ackNumber)
     EV << "cWnd: "<< m_tcb->m_cWnd <<" inflight: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
     m_cong->PktsAcked(m_tcb); // todo, update ecn calculation here
     m_cong->IncreaseWindow(m_tcb);
-    cWnd.record(m_tcb->m_cWnd); // todo: for debug use only, should change Socket to a SimpleModule and use singals in the future
+//    cWnd.record(m_tcb->m_cWnd); // todo: for debug use only, should change Socket to a SimpleModule and use singals in the future
 
 }
 
 void
 Socket::ReceivedData(Packet* pk)
 {
-    assert(m_addr==pk->getDestAddr());
-    int outPortIndex = pk->par("outGateIndex");
-    double rate = m_app->getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
-    EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
+    ASSERT(m_addr==pk->getDestAddr());
+//    int outPortIndex = pk->par("outGateIndex");
+    // double rate = m_app->getParentModule()->gate("port$o", outPortIndex)->getChannel()->par("datarate");
+    // EV << pk->getName() <<"comes from port " << outPortIndex << " channelrate is " << rate <<endl;
     auto pkSeq = pk->getSeq();
     m_tcb->m_ackSeq = pkSeq; // ! just ack this packet, do not +1
     if (m_sendersCounter.find(pkSeq)==m_sendersCounter.end())
@@ -183,7 +187,8 @@ Socket::SendEchoAck(uint32_t ackno, bool detectECN, int groupid) {
         ackpk->setGroupAddr(groupid);
     }
     EV << ackpk->getName() << endl;
-    m_app->send(ackpk, "out");
+    send(ackpk, "out");
+    // m_app->send(ackpk, "out");
 }
 
 int
@@ -198,24 +203,33 @@ int Socket::GetLocalAddr() const
 
 void Socket::initialize(int stage)
 {
-
+    if (stage == Stage::INITSTAGE_LOCAL) {
+        m_cong = (TcpCongestionOps*)(getSubmodule("cong"));
+        m_tcb = new TcpSocketState();
+    }
 }
 
-void Socket::Init(cSimpleModule* app, int src, int dest, int group, uint32_t initCwnd, uint32_t initSSThresh)
+void Socket::Init(int src, int dest, int group, uint32_t initCwnd, uint32_t initSSThresh)
 {
-    m_app = app;
+    // m_app = app;
     m_addr = src;
     m_destAddress = dest;
     m_groupAddr = group;
     m_sendersNum = 1;
 
-    m_cong = new TcpDctcp(); // todo should be defined by user
-    m_tcb = new TcpSocketState();
+//    m_cong = new TcpDctcp(); // todo should be defined by user
+
     m_tcb->m_cWnd = initCwnd;
     m_tcb->m_ssThresh = initSSThresh;
     m_tcb->m_congState = TcpSocketState::CA_OPEN;
     m_tcb->m_obWnd = m_tcb->m_cWnd;
-    cWnd.setName("congestion window");
+//    cWnd.setName("congestion window");
+}
+
+void Socket::handleMessage(cMessage *msg)
+{
+    Recv(check_and_cast<Packet*>(msg));
+    sendDirect(msg, getParentModule(), "socketIn");
 }
 
 std::ostream& operator<<(std::ostream& os, const Socket& socket)

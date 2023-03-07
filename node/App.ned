@@ -33,10 +33,15 @@ module App like IApp
 
     gates:
         input in;
-        output out;    
-   
+        output out;
+        input socketIn @directIn;
+
     submodules:
-        socket: Socket {}
-}
+        socket: Socket;
+    
+    connections:
+        in --> socket.in; 
+		out <-- socket.out;
+ }
 
 

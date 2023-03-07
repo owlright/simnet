@@ -19,7 +19,11 @@ module Socket {
     parameters:
         @class("Socket");
     	@display("i=block/layer");
-
+    	
+	gates:
+	    input in;
+	    output out;
+	    
 	submodules:
 	    cong:<default("Dctcp")> like Cong;
 }

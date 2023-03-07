@@ -25,7 +25,7 @@ public:
 public:
     // explicit Socket(int src, int dest, uint32_t initCwnd=1, uint32_t initSSThresh=INT32_MAX);
     // explicit Socket(int src, int dest, int group);
-    void Init(cSimpleModule* app, int src, int dest, int group=-1, uint32_t initCwnd=1, uint32_t initSSThresh=INT32_MAX);
+    void Init(int src, int dest, int group=-1, uint32_t initCwnd=1, uint32_t initSSThresh=INT32_MAX);
     ~Socket();
 
 private:
@@ -37,7 +37,7 @@ private:
     int packetNumber{0};
     int packetBytes{0};
     // Callback Send = nullptr;
-    cSimpleModule* m_app = nullptr;
+    // cSimpleModule* m_app = nullptr;
     //dest address
     int m_addr{-1};
     int m_destAddress{-1};
@@ -52,6 +52,7 @@ private:
 protected:
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
-    virtual void handleMessage(cMessage *msg) override { throw cRuntimeError("this module doesn't handle messages, it runs only in initialize()"); }
+    virtual void handleMessage(cMessage *msg) override;
+    // virtual void handleMessage(cMessage *msg) override { throw cRuntimeError("this module doesn't handle messages, it runs only in initialize()"); }
 };
 
