@@ -12,9 +12,9 @@
 #endif
 
 #include "App.h"
-#include "..\common\Defs.h"
+#include "../common/Defs.h"
 #include "Controller.h"
-#include "..\common\ModuleAccess.h"
+#include "../common/ModuleAccess.h"
 
 Define_Module(App);
 

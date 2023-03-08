@@ -2,7 +2,7 @@
 #define NODE_CONTROLLER_H_
 
 #include <omnetpp/csimplemodule.h>
-#include "..\common\Defs.h"
+#include "../common/Defs.h"
 using namespace omnetpp;
 
 class Controller: public omnetpp::cSimpleModule {

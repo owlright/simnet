@@ -1,6 +1,6 @@
 #include <omnetpp.h>
 #include "Controller.h"
-#include "..\common\Print.h"
+#include "../common/Print.h"
 Define_Module(Controller);
 
 int Controller::getRoute(cModule* from, int to) const
