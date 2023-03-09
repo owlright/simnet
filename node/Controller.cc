@@ -5,13 +5,13 @@ Define_Module(Controller);
 
 int Controller::getRoute(cModule* from, int to) const
 {
+    Enter_Method_Silent();
     cTopology::Node *fromNode = topo->getNodeFor(from);
-
 
     for (int i = 0; i < topo->getNumNodes(); i++) {
         if (topo->getNode(i) == fromNode)
             continue;  // skip ourselves
-        int address = nodeMap.at(i)->par("address");
+        int address = nodeMap.at(i);
         if (address == to) {
             topo->calculateUnweightedSingleShortestPathsTo(topo->getNode(i));
             if (fromNode->getNumPaths() > 0) {
@@ -82,9 +82,10 @@ Controller::~Controller() {
 
 void Controller::setNodes(const cTopology *topo)
 {
+    nodeMap.reserve(topo->getNumNodes());
     for (int i = 0; i < topo->getNumNodes(); i++) {
         int address = topo->getNode(i)->getModule()->par("address");
-        nodeMap[address] = topo->getNode(i)->getModule();
+        nodeMap.push_back(address);
     }
 }
 
@@ -92,13 +93,14 @@ void Controller::initialize(int stage)
 {
     if (stage == Stage::INITSTAGE_LOCAL) {
         EV_INFO << "network intialization." << endl;
-        if (getParentModule()->getSubmoduleVectorSize("terminal") <= 0) {
-            throw cRuntimeError("The network has no nodes");
-        }
+//        if (getParentModule()->getSubmoduleVectorSize("terminal") <= 0) {
+//            throw cRuntimeError("The network has no nodes");
+//        }
         this->topo = new cTopology("topo");
-        std::vector<std::string> nedTypes;
-        nedTypes.push_back(getParentModule()->getSubmodule("terminal", 0)->getNedTypeName());//todo nodename should not be fixed
-        topo->extractByNedTypeName(nedTypes);
+//        std::vector<std::string> nedTypes;
+//        nedTypes.push_back(getParentModule()->getSubmodule("terminal", 0)->getNedTypeName());//todo nodename should not be fixed
+//        topo->extractByNedTypeName(nedTypes);
+        topo->extractByProperty("node");
         EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
         setNodes(topo);
         // ! parse aggr group info

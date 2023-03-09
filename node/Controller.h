@@ -21,7 +21,7 @@ public:
     virtual ~Controller();
 private:
     cTopology *topo;
-    std::map<int, cModule const *> nodeMap;
+    std::vector<int> nodeMap;
     std::map<int, std::vector<int>> aggrgroup;
     aggrGroupOnRouterTable aggrNumberOnRouter; // groupaddr-routeraddr-numberOfAggr
     aggrGroupOnRouterTable aggrBufferOnRouter; // groupaddr-routeraddr-numberOfAggr
