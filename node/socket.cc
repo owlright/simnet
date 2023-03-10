@@ -12,7 +12,7 @@ void Socket::initialize(int stage)
         m_tcb->m_congState = TcpSocketState::CA_OPEN;
         m_tcb->m_obWnd = m_tcb->m_cWnd;
         cwndSignal = registerSignal("cwnd");
-        emit(m_tcb->m_cWnd, cwndSignal);
+        emit(cwndSignal, m_tcb->m_cWnd);
     }
 }
 
@@ -87,7 +87,9 @@ Socket::SendPendingData()
         m_tcb->m_sentSize++;
         m_tcb->m_nextTxSequence++; // ! After the loop m_nextTxSequence is the next packet seq
     }
-    m_tcb->m_highTxMark = m_tcb->m_nextTxSequence - 1;
+    if (m_tcb->m_congState == TcpSocketState::CA_OPEN) {
+        m_tcb->m_highTxMark = m_tcb->m_nextTxSequence - 1;
+    }
     EV << "cWnd: " << m_tcb->m_cWnd
        << " total unAck: "<< m_tcb->m_highTxMark - m_tcb->m_lastAckedSeq
        << " next seq: " << m_tcb->m_nextTxSequence << endl;
@@ -118,18 +120,21 @@ Socket::ReceivedAck(Packet* pk)
     auto ackNumber = pk->getAckSeq();
     ASSERT(ackNumber + 1 <= m_tcb->m_nextTxSequence); // ! impossible to receive a ack bigger than have sent
     EV << " ackNumber: " << ackNumber << " next seq: "<< m_tcb->m_nextTxSequence << endl;
-    if (m_tcb->m_congState == TcpSocketState::CA_CWR && ackNumber == m_tcb->m_lastAckedSeq) {
-        m_tcb->m_congState = TcpSocketState::CA_OPEN;
+    if (m_tcb->m_congState == TcpSocketState::CA_CWR && ackNumber == m_tcb->m_highTxMark) {
+        m_tcb->m_congState = TcpSocketState::CA_OPEN; // a window of data is finished
+//        m_cong->IncreaseWindow(m_tcb);
+//        emit(cwndSignal, m_tcb->m_cWnd);
     }
 
-    //
     if (pk->getECN()) {
+        EV << pk->getName() << "is labeled ECN" << endl;
         m_tcb->m_ecnState = TcpSocketState::ECN_ECE_RCVD;
         // Sender should reduce the Congestion Window as a response to receiver's
         // ECN Echo notification only once per window
         if (m_tcb->m_congState != TcpSocketState::CA_CWR) {
             m_tcb->m_ssThresh = m_cong->GetSsThresh(m_tcb, 0);
             EV << "Reduce ssThresh to " << m_tcb->m_ssThresh << endl;
+//            m_cong->IncreaseWindow(m_tcb);
         }
         m_tcb->m_congState = TcpSocketState::CA_CWR;
     }
@@ -141,7 +146,7 @@ Socket::ReceivedAck(Packet* pk)
     if (m_tcb->m_congState == TcpSocketState::CA_OPEN) {
         m_cong->IncreaseWindow(m_tcb);
     }
-
+    emit(cwndSignal, m_tcb->m_cWnd);
     m_tcb->m_lastAckedSeq = ackNumber;
     m_tcb->m_acked += 1;
     EV << "cWnd: "<< m_tcb->m_cWnd <<" inflight: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
