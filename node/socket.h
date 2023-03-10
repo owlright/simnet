@@ -29,6 +29,7 @@ private:
     uint32_t AvailableWindow() const;
     void SetPacketCommonField(Packet* pk) const;
 
+    simsignal_t cwndSignal;
 
 private:
     int packetNumber{0};

@@ -19,7 +19,8 @@ module Socket {
     parameters:
         @class("Socket");
     	@display("i=block/layer");
-    	
+    	@signal[cwnd](type="long");
+        @statistic[cwnd](title="congestion window";record=vector;interpolationmode=none);
 	gates:
 	    input in;
 	    output out;

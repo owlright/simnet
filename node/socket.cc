@@ -11,6 +11,8 @@ void Socket::initialize(int stage)
         m_tcb->m_ssThresh = UINT32_MAX;
         m_tcb->m_congState = TcpSocketState::CA_OPEN;
         m_tcb->m_obWnd = m_tcb->m_cWnd;
+        cwndSignal = registerSignal("cwnd");
+        emit(m_tcb->m_cWnd, cwndSignal);
     }
 }
 
