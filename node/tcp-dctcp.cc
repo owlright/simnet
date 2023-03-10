@@ -39,13 +39,14 @@ TcpDctcp::Reset(TcpSocketState* tcb)
 uint32_t
 TcpDctcp::GetSsThresh(const TcpSocketState* tcb, uint32_t bytesInFlight)
 {
-    return static_cast<uint32_t>((1 - m_alpha / 2.0) * tcb->m_cWnd);
+    return static_cast<uint32_t>((1.0 - m_alpha / 2.0) * tcb->m_cWnd);
 }
 
 void
 TcpDctcp::PktsAcked(TcpSocketState* tcb)
 {
-    EV << "======" << __FUNCTION__ << "======" << endl;
+    Enter_Method("dctcp");
+    m_ackedPacketsTotal += 1;
     if (tcb->m_ecnState == TcpSocketState::ECN_ECE_RCVD) {
         m_ackedPacketsEcn += 1;
     }
