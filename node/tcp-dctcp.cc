@@ -5,6 +5,8 @@ void TcpDctcp::initialize(int stage)
     if (stage==INITSTAGE_LOCAL) {
         m_alpha = par("alpha");
         m_g = par("g");
+        alphaSignal = registerSignal("alpha");
+        packetsECNSignal = registerSignal("packetsECN");
     }
 }
 
@@ -50,13 +52,14 @@ TcpDctcp::PktsAcked(TcpSocketState* tcb)
 
     if (m_nextSeqFlag == false)
     {
-        EV << "Set the first time m_nextSeq=" << tcb->m_nextTxSequence << endl;
+        // EV << "Set the first time m_nextSeq=" << tcb->m_nextTxSequence << endl;
         m_nextSeq = tcb->m_nextTxSequence;
         m_nextSeqFlag = true;
     }
-    if (tcb->m_lastAckedSeq >= m_nextSeq)
+    if (tcb->m_lastAckedSeq >= m_nextSeq) // update every window
     {
-        EV << " Last window size: " << tcb->m_nextTxSequence - m_nextSeq << endl;
+        EV << " Last watch window size: " << tcb->m_nextTxSequence - m_nextSeq
+            << " with " << m_ackedPacketsEcn << "packets labeled" <<endl;
 //        obcWnd.record(tcb->m_nextTxSequence - m_nextSeq);
         double packetsECN = 0.0;
         if (m_ackedPacketsTotal > 0)
@@ -64,8 +67,8 @@ TcpDctcp::PktsAcked(TcpSocketState* tcb)
             packetsECN = static_cast<double>(m_ackedPacketsEcn * 1.0 / m_ackedPacketsTotal);
         }
         m_alpha = (1.0 - m_g) * m_alpha + m_g * packetsECN;
-        m_nextSeq = tcb->m_nextTxSequence;
-        m_ackedPacketsEcn = 0;
+        emit(alphaSignal, m_alpha);
+        emit(packetsECNSignal, packetsECN);
         Reset(tcb);
     }
 }

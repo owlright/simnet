@@ -27,6 +27,9 @@ private:
     double m_alpha;
     double m_g;
 
+    simsignal_t alphaSignal;
+    simsignal_t packetsECNSignal;
+
 protected:
     virtual void initialize(int stage) override;
 };
