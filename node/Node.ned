@@ -25,7 +25,7 @@ module Node
     gates:
         inout port[];
     submodules:
-        app: <appType> like IApp {
+        app: App {
             parameters:
                 address = parent.address;
                 @display("p=140,60");
