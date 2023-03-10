@@ -30,9 +30,9 @@ void App::initialize(int stage)
         destAddress = par("destAddress");
         groupAddress = par("groupAddress");
         packetTotalCount = par("packetTotalCount");
-        packetLengthBytes = &par("packetLength");
-        sendIATime = &par("sendIaTime");  // volatile parameter
-
+        packetLengthBytes = par("packetLength");
+        startTime = par("startTime");
+        // flowInterval = &par("flowInterval"); // volatile parameter
         disableSending = (destAddress==-1);
         socket = (Socket*)(getSubmodule("socket"));
 
@@ -46,20 +46,20 @@ void App::initialize(int stage)
         }
         if (!disableSending) {
             generatePacket = new cMessage("nextPacket");
-            scheduleAt(sendIATime->doubleValue(), generatePacket);
+            scheduleAt(startTime, generatePacket);
         }
     }
     if (stage == Stage::INITSTAGE_REPORT) {
         if (!disableSending && groupAddress != -1) {
             auto controller = getModuleFromPar<Controller>(this->getParentModule()->par("globalController"), this->getParentModule());
-            controller->updateAggrGroup(groupAddress, myAddress);
+            controller->updateAggrGroup(groupAddress, myAddress); // report this node is a sender
         }
     }
     if (stage == Stage::INITSTAGE_CONTROLL) {
         auto controller = getModuleFromPar<Controller>(this->getParentModule()->par("globalController"), this->getParentModule());
         if (controller->isGroupTarget(myAddress)) {
             groupSenders = controller->getAggrSendersNum(myAddress);
-            EV << "node "<< myAddress << " have " << groupSenders << " senders" << endl;
+            EV << "node "<< myAddress << " is group target and have " << groupSenders << " senders" << endl;
         };
         socket->Bind(myAddress, destAddress, groupAddress);
         socket->SetSendersNum(groupSenders);
@@ -72,7 +72,7 @@ void App::handleMessage(cMessage *msg)
     if (msg == generatePacket) {
         // Sending packet
         ASSERT(socket!=nullptr);
-        socket->Send(packetTotalCount, packetLengthBytes->intValue());
+        socket->Send(packetTotalCount, packetLengthBytes);
         return;
     }
     if (msg->arrivedOn("socketIn")) {

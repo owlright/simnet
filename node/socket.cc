@@ -17,7 +17,7 @@ void Socket::initialize(int stage)
 void Socket::handleMessage(cMessage *msg)
 {
     Recv(check_and_cast<Packet*>(msg));
-    sendDirect(msg, getParentModule(), "socketIn");
+    sendDirect(msg, getParentModule(), "socketIn"); // send to App
 }
 
 void Socket::SetSendersNum(int number)
@@ -74,7 +74,7 @@ Socket::SendPendingData()
 {
     char pkname[40];
     Packet* datapk = nullptr;
-    while (AvailableWindow() > 0 && m_tcb->m_sentSize < packetNumber) {
+    while (AvailableWindow() > 0 && m_tcb->m_sentSize != packetNumber) {  // use != not < here because I want if packetNumber is -1, the socket keep sending packets
         auto nextSeq = m_tcb->m_nextTxSequence;
         sprintf(pkname, "DATA-%d-to-%d-seq%u ", m_addr, m_destAddress, nextSeq);
         datapk = new Packet(pkname);
@@ -94,7 +94,9 @@ void
 Socket::Recv(Packet* pk)
 {
     m_destAddress = pk->getSrcAddr();
-    m_groupAddr = pk->getGroupAddr();
+    // do some check
+    ASSERT(m_addr == pk->getDestAddr());
+    ASSERT(m_groupAddr == pk->getGroupAddr());
     auto packetKind = pk->getKind();
     if (packetKind == PacketType::DATA) { // data packet
         ReceivedData(pk);
@@ -103,7 +105,7 @@ Socket::Recv(Packet* pk)
         ReceivedAck(pk);
     }
     else {
-        assert(false);
+        ASSERT(false);
     }
 }
 
@@ -139,20 +141,26 @@ Socket::ReceivedAck(Packet* pk)
 void
 Socket::ReceivedData(Packet* pk)
 {
-    ASSERT(m_addr==pk->getDestAddr());
     auto pkSeq = pk->getSeq();
     m_tcb->m_ackSeq = pkSeq; // ! just ack this packet, do not +1
-    // the first packet
-    if (m_sendersCounter.find(pkSeq)==m_sendersCounter.end())
-        m_sendersCounter[pkSeq] = 0;
+    if (m_groupAddr != -1) {
+        // the first packet
+        if (m_sendersCounter.find(pkSeq)==m_sendersCounter.end())
+            m_sendersCounter[pkSeq] = 0;
 
-    m_sendersCounter.at(pkSeq) += pk->getAggrCounter();
-    if (m_sendersCounter.at(pkSeq)==m_sendersNum) { // ! check if all packets about seq arrive
-        EV << "packet" << pkSeq << " are received" << endl;
-        SendAck(pkSeq, pk->getECN());
+        m_sendersCounter.at(pkSeq) += pk->getAggrCounter();
+        if (m_sendersCounter.at(pkSeq)==m_sendersNum) { // ! check if all packets about seq arrive
+            EV << "packet" << pkSeq << " are received" << endl;
+            m_sendersCounter.erase(pkSeq); // reset the counter
+            SendAck(pkSeq, pk->getECN());
+        }
+        else {
+            EV << "packet " << pkSeq << " still has " << m_sendersNum - m_sendersCounter.at(pkSeq) << " packets left" << endl;
+        }
     }
     else {
-        EV << "packet " << pkSeq << " still has " << m_sendersNum - m_sendersCounter.at(pkSeq) << " packets left" << endl;
+        EV << "packet" << pkSeq << " are received" << endl;
+        SendAck(pkSeq, pk->getECN()); // if this packet is labeled ECN just send it back let sender konw
     }
 
 }

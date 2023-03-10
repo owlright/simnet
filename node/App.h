@@ -16,14 +16,15 @@ class App : public cSimpleModule
   private:
     // configuration
     int myAddress;
+    int destAddress;
     int groupAddress;
     int groupSenders{1};
     int packetTotalCount;
     bool disableSending;
+    int packetLengthBytes;
+    double startTime;
+    // cPar *flowInterval;
 
-    int destAddress;
-    cPar *sendIATime;
-    cPar *packetLengthBytes;
 
 private:
 //    std::map<int, Socket*> socketsTable;

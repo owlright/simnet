@@ -16,12 +16,12 @@ module App like IApp
 {
     parameters:
         int address;  // local node address
-        int groupAddress = default(this.destAddress); // broadcast addr
-        int packetTotalCount; // total sending packets
+        int groupAddress = default(-1); // broadcast addr
+        int packetTotalCount = default(-1); // total sending packets, 0 means initify
         int destAddress = default(-1); //
-        string destAddresses=default("");  // destination addresses
-        volatile double sendIaTime @unit(s) = default(exponential(1s)); // time between generating packets
-        volatile int packetLength @unit(byte);  // length of one message (fixed! no "volatile" modifier)
+		double startTime @unit(s) = default(0s);
+//        volatile double flowInterval @unit(s) = default(exponential(1s)); // time between generating flows
+        int packetLength @unit(byte) = default(1500B);  // length of one message (fixed! no "volatile" modifier)
         @class(App);
         @display("i=block/browser");
         @signal[endToEndDelay](type="simtime_t");
