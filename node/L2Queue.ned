@@ -33,12 +33,14 @@ simple L2Queue
         @display("i=block/queue;q=queue");
         @signal[qlen](type="long");
         @signal[busy](type="bool");
+        @signal[congestion](type="long");
         @signal[queueingTime](type="simtime_t");
         @signal[drop](type="long");
         @signal[txBytes](type="long");
         @signal[rxBytes](type="long");
-        @statistic[qlen](title="queue length";record=vector?,timeavg,max;interpolationmode=sample-hold);
+        @statistic[qlen](title="queue length";record=vector,max;interpolationmode=none);
         @statistic[busy](title="server busy state";record=vector?,timeavg;interpolationmode=sample-hold);
+        @statistic[congestion](title="congestion happend";record=vector;interpolationmode=sample-hold);
         @statistic[queueingTime](title="queueing time at dequeue";unit=s;interpolationmode=none);
         @statistic[drop](title="dropped packet byte length";unit=bytes;record=vector?,count,sum;interpolationmode=none);
         @statistic[txBytes](title="transmitting packet byte length";unit=bytes;record=vector?,count,sum,histogram;interpolationmode=none);

@@ -33,6 +33,7 @@ class L2Queue : public cSimpleModule
     simsignal_t dropSignal;
     simsignal_t txBytesSignal;
     simsignal_t rxBytesSignal;
+    simsignal_t congestionSignal;
 
   public:
     virtual ~L2Queue();
@@ -68,7 +69,7 @@ void L2Queue::initialize()
     dropSignal = registerSignal("drop");
     txBytesSignal = registerSignal("txBytes");
     rxBytesSignal = registerSignal("rxBytes");
-
+    congestionSignal = registerSignal("congestion");
     emit(qlenSignal, queue.getLength());
     emit(busySignal, false);
     isBusy = false;
@@ -111,7 +112,7 @@ void L2Queue::handleMessage(cMessage *msg)
     }
     else {  // arrived on gate "in"
         if (endTransmissionEvent->isScheduled()) {
-            if (ecnThreshold && queue.getLength() >= ecnThreshold)
+            if (ecnThreshold > 0 && queue.getLength() >= ecnThreshold)
             {
                 getParentModule()->bubble("overflow!");
                 Packet *pk = check_and_cast<Packet *>(msg);
@@ -119,6 +120,10 @@ void L2Queue::handleMessage(cMessage *msg)
                 EV << "Current queue length " << queue.getLength()
                     << " and ECN threshold is " << ecnThreshold <<". Mark ECN!\n";
                 pk->setECN(true);
+                }
+            }
+            else {
+                emit(congestionSignal, 0);
             }
             // We are currently busy, so just queue up the packet.
             if (frameCapacity && queue.getLength() >= frameCapacity) {
@@ -130,7 +135,7 @@ void L2Queue::handleMessage(cMessage *msg)
                 EV << "Received " << msg << " but transmitter busy: queueing up\n";
                 msg->setTimestamp();
                 queue.insert(msg);
-                emit(qlenSignal, queue.getLength());
+//                emit(qlenSignal, queue.getLength());
             }
 
         }
