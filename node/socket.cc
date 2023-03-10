@@ -82,13 +82,14 @@ Socket::SendPendingData()
         datapk = new Packet(pkname);
         datapk->setKind(PacketType::DATA);
         SetPacketCommonField(datapk);
-        EV << "sending data packet " << datapk << endl;
+        EV << "sending data packet " << datapk->getName() << endl;
         send(datapk, "out");
         m_tcb->m_sentSize++;
         m_tcb->m_nextTxSequence++; // ! After the loop m_nextTxSequence is the next packet seq
     }
+    m_tcb->m_highTxMark = m_tcb->m_nextTxSequence - 1;
     EV << "cWnd: " << m_tcb->m_cWnd
-       << " total unAck: "<< m_tcb->m_sentSize - m_tcb->m_acked
+       << " total unAck: "<< m_tcb->m_highTxMark - m_tcb->m_lastAckedSeq
        << " next seq: " << m_tcb->m_nextTxSequence << endl;
 }
 
@@ -114,29 +115,40 @@ Socket::Recv(Packet* pk)
 void
 Socket::ReceivedAck(Packet* pk)
 {
-    auto ackSeq = pk->getAckSeq();
-    ASSERT(ackSeq + 1 <= m_tcb->m_nextTxSequence); // ! impossible to receive a ack bigger than have sent
-    EV << " ackNumber: " << ackSeq << " next seq: "<< m_tcb->m_nextTxSequence << endl;
-
-    if (pk->getECN())
-    {
-        if (m_tcb->m_congState != TcpSocketState::CA_CWR) {
-            EV << "Congestion happened, half the window" << endl;
-            m_tcb->m_ssThresh = m_cong->GetSsThresh(m_tcb, 0); //todo bytesInflight not used
-            m_tcb->m_cWnd = m_tcb->m_ssThresh;
-            m_tcb->m_congState = TcpSocketState::CA_CWR;
-        }
-        else
-        {
-            m_tcb->m_congState = TcpSocketState::CA_OPEN; // once no ecn received
-        }
-
+    auto ackNumber = pk->getAckSeq();
+    ASSERT(ackNumber + 1 <= m_tcb->m_nextTxSequence); // ! impossible to receive a ack bigger than have sent
+    EV << " ackNumber: " << ackNumber << " next seq: "<< m_tcb->m_nextTxSequence << endl;
+    if (m_tcb->m_congState == TcpSocketState::CA_CWR && ackNumber == m_tcb->m_lastAckedSeq) {
+        m_tcb->m_congState = TcpSocketState::CA_OPEN;
     }
-    m_tcb->m_lastAckedSeq = ackSeq;
+
+    //
+    if (pk->getECN()) {
+        m_tcb->m_ecnState = TcpSocketState::ECN_ECE_RCVD;
+        // Sender should reduce the Congestion Window as a response to receiver's
+        // ECN Echo notification only once per window
+        if (m_tcb->m_congState != TcpSocketState::CA_CWR) {
+            m_tcb->m_ssThresh = m_cong->GetSsThresh(m_tcb, 0);
+            EV << "Reduce ssThresh to " << m_tcb->m_ssThresh << endl;
+        }
+        m_tcb->m_congState = TcpSocketState::CA_CWR;
+    }
+    else {
+        m_tcb->m_ecnState = TcpSocketState::ECN_IDLE;
+    }
+
+    m_cong->PktsAcked(m_tcb);
+    if (m_tcb->m_congState == TcpSocketState::CA_OPEN) {
+        m_cong->IncreaseWindow(m_tcb);
+    }
+
+    m_tcb->m_lastAckedSeq = ackNumber;
     m_tcb->m_acked += 1;
     EV << "cWnd: "<< m_tcb->m_cWnd <<" inflight: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
-    m_cong->PktsAcked(m_tcb); // todo, update ecn calculation here
-    m_cong->IncreaseWindow(m_tcb);
+
+//    if (m_tcb->m_congState == TcpSocketState::CA_OPEN) {
+//        m_cong->IncreaseWindow(m_tcb);
+//    }
     SendPendingData();
 }
 
