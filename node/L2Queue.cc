@@ -11,6 +11,7 @@
 #include <string.h>
 #include <omnetpp.h>
 #include "Packet_m.h"
+#include "../common/Defs.h"
 using namespace omnetpp;
 
 /**
@@ -114,12 +115,13 @@ void L2Queue::handleMessage(cMessage *msg)
         if (endTransmissionEvent->isScheduled()) {
             if (ecnThreshold > 0 && queue.getLength() >= ecnThreshold)
             {
-                getParentModule()->bubble("overflow!");
                 Packet *pk = check_and_cast<Packet *>(msg);
-                EV << "Received " << pk << endl;
-                EV << "Current queue length " << queue.getLength()
-                    << " and ECN threshold is " << ecnThreshold <<". Mark ECN!\n";
-                pk->setECN(true);
+                if (pk->getKind()==PacketType::DATA) { // ! only set data packet TODO:should label by queue bytes
+                    getParentModule()->bubble("congestion!");
+                    emit(congestionSignal, ecnThreshold);
+                    EV << "Current queue length " << queue.getLength()
+                        << " and ECN threshold is " << ecnThreshold <<". Mark ECN!\n";
+                    pk->setECN(true);
                 }
             }
             else {
