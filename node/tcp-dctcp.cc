@@ -46,7 +46,7 @@ void
 TcpDctcp::PktsAcked(TcpSocketState* tcb)
 {
     EV << "======" << __FUNCTION__ << "======" << endl;
-    if (tcb->m_congState == TcpSocketState::CA_CWR) {
+    if (tcb->m_ecnState == TcpSocketState::ECN_ECE_RCVD) {
         m_ackedPacketsEcn += 1;
     }
 

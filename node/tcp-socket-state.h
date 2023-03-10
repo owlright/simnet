@@ -37,6 +37,18 @@ public:
 
     typedef enum
     {
+        ECN_DISABLED = 0, //!< ECN disabled traffic
+        ECN_IDLE, //!< ECN is enabled  but currently there is no action pertaining to ECE or CWR to
+                  //!< be taken
+        ECN_CE_RCVD,     //!< Last packet received had CE bit set in IP header
+        ECN_SENDING_ECE, //!< Receiver sends an ACK with ECE bit set in TCP header
+        ECN_ECE_RCVD,    //!< Last ACK received had ECE bit set in TCP header
+        ECN_CWR_SENT //!< Sender has reduced the congestion window, and sent a packet with CWR bit
+                     //!< set in TCP header. This state is used for tracing.
+    } EcnState_t;
+
+    typedef enum
+    {
         CA_EVENT_TX_START,        //!< first transmit when no packets in flight
         CA_EVENT_CWND_RESTART,    //!< congestion window restart. Not triggered
         CA_EVENT_COMPLETE_CWR,    //!< end of congestion recovery
@@ -62,4 +74,5 @@ public:
     uint32_t m_sentSize{0}; // sent packets number
     uint32_t m_bytesInFlight{0}; // sent - acked
     TcpCongState_t m_congState{CA_OPEN}; //!< State in the Congestion state machine
+    EcnState_t m_ecnState{ECN_IDLE};
 };
