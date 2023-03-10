@@ -60,6 +60,7 @@ public:
     } TcpCAEvent_t;
     // uint32_t m_seq{0}; // current data packet seq
     uint32_t m_lastAckedSeq{0}; // packet seq has already been acked by now
+    uint32_t m_highTxMark{0};
     uint32_t m_ackSeq{0}; // ack seq
     uint32_t m_initialCwnd{INT32_MAX};
     uint32_t m_cWnd{0}; // * Congestion window
