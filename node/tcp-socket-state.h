@@ -60,7 +60,6 @@ public:
     } TcpCAEvent_t;
     // uint32_t m_seq{0}; // current data packet seq
     uint32_t m_lastAckedSeq{0}; // packet seq has already been acked by now
-    uint32_t m_highTxMark{0};
     uint32_t m_ackSeq{0}; // ack seq
     uint32_t m_initialCwnd{INT32_MAX};
     uint32_t m_cWnd{0}; // * Congestion window
@@ -72,7 +71,7 @@ public:
     uint32_t m_acked{0}; // acked packets number
     uint32_t m_lost{0};
     uint32_t m_retrans{0};
-    uint32_t m_sentSize{0}; // sent packets number
+    uint32_t m_sent{0}; // sent packets number
     uint32_t m_bytesInFlight{0}; // sent - acked
     TcpCongState_t m_congState{CA_OPEN}; //!< State in the Congestion state machine
     EcnState_t m_ecnState{ECN_IDLE};

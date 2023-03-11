@@ -36,7 +36,7 @@ uint32_t
 Socket::AvailableWindow() const
 {
     uint32_t win = m_tcb->m_cWnd;
-    uint32_t inflight = m_tcb->m_sentSize - m_tcb->m_acked + m_tcb->m_retrans;
+    uint32_t inflight = m_tcb->m_sent - m_tcb->m_acked + m_tcb->m_retrans;
     m_tcb->m_bytesInFlight = inflight;
     return (inflight > win) ? 0 : win - inflight;
 }
@@ -76,7 +76,7 @@ Socket::SendPendingData()
 {
     char pkname[40];
     Packet* datapk = nullptr;
-    while (AvailableWindow() > 0 && m_tcb->m_sentSize != packetNumber) {  // use != not < here because I want if packetNumber is -1, the socket keep sending packets
+    while (AvailableWindow() > 0 && m_tcb->m_sent != packetNumber) {  // use != not < here because I want if packetNumber is -1, the socket keep sending packets
         auto nextSeq = m_tcb->m_nextTxSequence;
         sprintf(pkname, "DATA-%d-to-%d-seq%u ", m_addr, m_destAddress, nextSeq);
         datapk = new Packet(pkname);
@@ -84,14 +84,14 @@ Socket::SendPendingData()
         SetPacketCommonField(datapk);
         EV << "sending data packet " << datapk->getName() << endl;
         send(datapk, "out");
-        m_tcb->m_sentSize++;
+        m_tcb->m_sent++;
         m_tcb->m_nextTxSequence++; // ! After the loop m_nextTxSequence is the next packet seq
     }
     if (m_tcb->m_congState == TcpSocketState::CA_OPEN) {
         m_tcb->m_highTxMark = m_tcb->m_nextTxSequence - 1;
     }
     EV << "cWnd: " << m_tcb->m_cWnd
-       << " total unAck: "<< m_tcb->m_highTxMark - m_tcb->m_lastAckedSeq
+       << " total unAck: "<< m_tcb->m_sent - m_tcb->m_lastAckedSeq
        << " next seq: " << m_tcb->m_nextTxSequence << endl;
 }
 
@@ -149,11 +149,7 @@ Socket::ReceivedAck(Packet* pk)
     emit(cwndSignal, m_tcb->m_cWnd);
     m_tcb->m_lastAckedSeq = ackNumber;
     m_tcb->m_acked += 1;
-    EV << "cWnd: "<< m_tcb->m_cWnd <<" inflight: "<< m_tcb->m_sentSize -  m_tcb->m_acked << endl;
-
-//    if (m_tcb->m_congState == TcpSocketState::CA_OPEN) {
-//        m_cong->IncreaseWindow(m_tcb);
-//    }
+    EV << "cWnd: "<< m_tcb->m_cWnd <<" inflight: "<< m_tcb->m_sent -  m_tcb->m_acked << endl;
     SendPendingData();
 }
 
