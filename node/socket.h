@@ -34,6 +34,7 @@ private:
 private:
     int packetNumber{0};
     int packetBytes{0};
+    int m_recover;
 
     //addresses
     int m_addr{-1};

@@ -87,9 +87,7 @@ Socket::SendPendingData()
         m_tcb->m_sent++;
         m_tcb->m_nextTxSequence++; // ! After the loop m_nextTxSequence is the next packet seq
     }
-    if (m_tcb->m_congState == TcpSocketState::CA_OPEN) {
-        m_tcb->m_highTxMark = m_tcb->m_nextTxSequence - 1;
-    }
+
     EV << "cWnd: " << m_tcb->m_cWnd
        << " total unAck: "<< m_tcb->m_sent - m_tcb->m_lastAckedSeq
        << " next seq: " << m_tcb->m_nextTxSequence << endl;
@@ -120,10 +118,10 @@ Socket::ReceivedAck(Packet* pk)
     auto ackNumber = pk->getAckSeq();
     ASSERT(ackNumber + 1 <= m_tcb->m_nextTxSequence); // ! impossible to receive a ack bigger than have sent
     EV << " ackNumber: " << ackNumber << " next seq: "<< m_tcb->m_nextTxSequence << endl;
-    if (m_tcb->m_congState == TcpSocketState::CA_CWR && ackNumber == m_tcb->m_highTxMark) {
-        m_tcb->m_congState = TcpSocketState::CA_OPEN; // a window of data is finished
-//        m_cong->IncreaseWindow(m_tcb);
-//        emit(cwndSignal, m_tcb->m_cWnd);
+    if (m_tcb->m_congState != TcpSocketState::CA_OPEN && ackNumber == m_recover) {
+        // Recovery is over after the window exceeds m_recover
+        // (although it may be re-entered below if ECE is still set)
+        m_tcb->m_congState = TcpSocketState::CA_OPEN;
     }
 
     if (pk->getECN()) {
@@ -132,20 +130,25 @@ Socket::ReceivedAck(Packet* pk)
         // Sender should reduce the Congestion Window as a response to receiver's
         // ECN Echo notification only once per window
         if (m_tcb->m_congState != TcpSocketState::CA_CWR) {
-            m_tcb->m_ssThresh = m_cong->GetSsThresh(m_tcb, 0);
-            EV << "Reduce ssThresh to " << m_tcb->m_ssThresh << endl;
-//            m_cong->IncreaseWindow(m_tcb);
+            m_tcb->m_ssThresh = m_cong->GetSsThresh(m_tcb, 0); // let cong deside new ssthresh
+            m_tcb->m_cWnd = m_tcb->m_ssThresh; // enter recovery
+            EV << "Reduce ssThresh and cwnd to " << m_tcb->m_cWnd << endl;
+            // CWR state will be exited when the ack exceeds the m_recover variable.
+            m_recover = m_tcb->m_nextTxSequence - 1; // current max pk seq sent
+            EV << "ssThresh will not be updated until packet " << m_recover << " is received" << endl;
+            m_tcb->m_congState = TcpSocketState::CA_CWR;
         }
-        m_tcb->m_congState = TcpSocketState::CA_CWR;
     }
     else {
         m_tcb->m_ecnState = TcpSocketState::ECN_IDLE;
     }
 
+    // Process ackNumber
     m_cong->PktsAcked(m_tcb);
-    if (m_tcb->m_congState == TcpSocketState::CA_OPEN) {
+    if (m_tcb->m_congState == TcpSocketState::CA_OPEN) { // no congestion happened
         m_cong->IncreaseWindow(m_tcb);
     }
+
     emit(cwndSignal, m_tcb->m_cWnd);
     m_tcb->m_lastAckedSeq = ackNumber;
     m_tcb->m_acked += 1;
