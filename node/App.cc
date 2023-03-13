@@ -59,8 +59,10 @@ void App::initialize(int stage)
         auto controller = getModuleFromPar<Controller>(this->getParentModule()->par("globalController"), this->getParentModule());
         if (controller->isGroupTarget(myAddress)) {
             groupSenders = controller->getAggrSendersNum(myAddress);
+            groupAddress = myAddress;
             EV << "node "<< myAddress << " is group target and have " << groupSenders << " senders" << endl;
         };
+
         socket->Bind(myAddress, destAddress, groupAddress);
         socket->SetSendersNum(groupSenders);
     }
