@@ -52,6 +52,7 @@ protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual void refreshDisplay() const override;
 };
 
 Define_Module(Routing);
@@ -121,7 +122,7 @@ void Routing::handleMessage(cMessage *msg)
     int groupAddr = pk->getGroupAddr();
 
     // ! Deal with unicast packet
-    if (! isAggrGroup(groupAddr)) {
+    if (!isAggrGroup(groupAddr)) {
         if (destAddr == myAddress) {
             int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
             EV << "local delivery of packet " << pk->getName() << endl;
@@ -191,3 +192,9 @@ void Routing::handleMessage(cMessage *msg)
 
 }
 
+void Routing::refreshDisplay() const
+{
+    char buf[20];
+    sprintf(buf, "%d", myAddress);
+    getParentModule()->getDisplayString().setTagArg("t", 0, buf);
+}
