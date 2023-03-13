@@ -65,7 +65,7 @@ public:
     uint32_t m_cWnd{0}; // * Congestion window
     uint32_t m_ssThresh{UINT32_MAX}; //!< Slow start threshold
     uint32_t m_nextTxSequence{0}; //!< Next seqnum to be sent (SND.NXT)
-    uint32_t m_obWnd{0}; //! observe window
+    // uint32_t m_obWnd{0}; //! observe window
     // Segment
     uint32_t m_segmentSize{0};          //!< Segment size
     uint32_t m_acked{0}; // acked packets number

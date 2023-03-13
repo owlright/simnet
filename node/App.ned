@@ -21,7 +21,7 @@ module App like IApp
         int destAddress = default(-1); //
 		double startTime @unit(s) = default(0s);
 //        volatile double flowInterval @unit(s) = default(exponential(1s)); // time between generating flows
-        int packetLength @unit(byte) = default(1500B);  // length of one message (fixed! no "volatile" modifier)
+        int packetLength @unit(byte) = default(1KiB);  // length of one message (fixed! no "volatile" modifier)
         @class(App);
         @display("i=block/browser");
         @signal[endToEndDelay](type="simtime_t");
@@ -38,9 +38,9 @@ module App like IApp
 
     submodules:
         socket: Socket;
-    
+
     connections:
-        in --> socket.in; 
+        in --> socket.in;
 		out <-- socket.out;
  }
 

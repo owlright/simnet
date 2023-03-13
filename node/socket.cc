@@ -5,12 +5,13 @@ Define_Module(Socket);
 void Socket::initialize(int stage)
 {
     if (stage == Stage::INITSTAGE_LOCAL) {
+        jitter = &par("jitter");
         m_cong = (TcpCongestionOps*)(getSubmodule("cong"));
         m_tcb = new TcpSocketState();
         m_tcb->m_cWnd = 1;
         m_tcb->m_ssThresh = UINT32_MAX;
         m_tcb->m_congState = TcpSocketState::CA_OPEN;
-        m_tcb->m_obWnd = m_tcb->m_cWnd;
+        // m_tcb->m_obWnd = m_tcb->m_cWnd;
         cwndSignal = registerSignal("cwnd");
         emit(cwndSignal, m_tcb->m_cWnd);
     }
@@ -83,7 +84,7 @@ Socket::SendPendingData()
         datapk->setKind(PacketType::DATA);
         SetPacketCommonField(datapk);
         EV << "sending data packet " << datapk->getName() << endl;
-        send(datapk, "out");
+        sendDelayed(datapk, jitter->doubleValue(), "out");
         m_tcb->m_sent++;
         m_tcb->m_nextTxSequence++; // ! After the loop m_nextTxSequence is the next packet seq
     }
@@ -116,7 +117,7 @@ void
 Socket::ReceivedAck(Packet* pk)
 {
     auto ackNumber = pk->getAckSeq();
-    ASSERT(ackNumber + 1 <= m_tcb->m_nextTxSequence); // ! impossible to receive a ack bigger than have sent
+    ASSERT(ackNumber + 1 <= m_tcb->m_nextTxSequence); // ! impossible to receive a ack bigger than have sent, but may be disorder
     EV << " ackNumber: " << ackNumber << " next seq: "<< m_tcb->m_nextTxSequence << endl;
     if (m_tcb->m_congState != TcpSocketState::CA_OPEN && ackNumber == m_recover) {
         // Recovery is over after the window exceeds m_recover

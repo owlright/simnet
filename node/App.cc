@@ -79,8 +79,8 @@ void App::handleMessage(cMessage *msg)
         // Handle incoming packet
         Packet *pk = check_and_cast<Packet *>(msg);
 
-        if (hasGUI())
-            getParentModule()->bubble("Arrived!");
+        // if (hasGUI())
+        //     getParentModule()->bubble("Arrived!");
 
         delete pk; // do nothing
     }

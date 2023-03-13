@@ -32,6 +32,7 @@ private:
     simsignal_t cwndSignal;
 
 private:
+    cPar* jitter;
     int packetNumber{0};
     int packetBytes{0};
     int m_recover;
