@@ -12,22 +12,31 @@ network Nto1
     types:
         channel C extends DatarateChannel
         {
-            delay = 1ms;
-            datarate = 10Mbps;
+            delay = 2us;
+            datarate = 10Gbps;
         }
     submodules:
-        terminal[numberOfSenders+2]: Node {
+        sender[numberOfSenders]: Node {
+            @node;
             address = index;
+            app.destAddress = parent.numberOfSenders;
             globalController = parent.globalController;
         }
-        controller: Controller {
-            @display("p=125,18;is=s");
+        gate: Node {
+            @node;
+            address = 1111;
+            globalController = parent.globalController;
         }
+        sink: Node {
+            @node;
+            address = parent.numberOfSenders;
+            globalController = parent.globalController;
+        }
+        controller: Controller;
     connections:
-        terminal[1].port++ <--> C <--> terminal[0].port++;
-        for i=0..numberOfSenders-1 {
-        	terminal[i+2].port++ <--> C <--> terminal[0].port++;
-//        	terminal[i].port++ <--> C <--> terminal[0].port++;
+        gate.port++ <--> C <--> sink.port++;
+        for i=0..numberOfSenders-1{
+        	sender[i].port++ <--> C <--> gate.port++;
         }
 }
 
