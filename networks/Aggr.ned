@@ -46,6 +46,11 @@ network Aggr
             address = 30;
             globalController = parent.globalController;
         }
+        gateSink: Node {
+            @node;
+            address = 31;
+            globalController = parent.globalController;
+        }
         sink1: Node {
             @node;
             address = 40;
@@ -65,6 +70,7 @@ network Aggr
         }
         aggr1.port++  <--> C <-->  gate.port++;
         aggr2.port++  <--> C <-->  gate.port++;
-        gate.port++ <--> C <--> sink1.port++;
-        gate.port++ <--> C <--> sink2.port++;
+        gate.port++ <--> C <--> gateSink.port++;
+        gateSink.port++ <--> C <--> sink1.port++;
+        gateSink.port++ <--> C <--> sink2.port++;
 }
