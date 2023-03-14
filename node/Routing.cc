@@ -196,8 +196,8 @@ void Routing::handleMessage(cMessage *msg)
             sprintf(pkname, "ACK-%d-to-%d-ack%u ", packet->getSrcAddr(), addr, packet->getAckSeq());
             pk->setName(pkname);
             EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-            emit(outputIfSignal, outGateIndex);
-            emit(outputPacketSignal, packet);
+//            emit(outputIfSignal, outGateIndex);
+//            emit(outputPacketSignal, packet);
             send(packet, "out", outGateIndex);
         }
         delete pk;
