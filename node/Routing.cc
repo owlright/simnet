@@ -147,6 +147,7 @@ void Routing::handleMessage(cMessage *msg)
         return; // ! do not forget to return here
     }
 
+
     // ! Deal with aggr packet here
     auto aggrGroup = getOrAddGroup(groupAddr);
 
@@ -155,15 +156,25 @@ void Routing::handleMessage(cMessage *msg)
         if (!aggrGroup->isChildrenFull()) {
             aggrGroup->insertChildNode(pk->getSrcAddr());
         }
-        // * everything is updated in aggrPacket(), when a round finish, return the aggr packet
-        auto aggpacket = aggrGroup->aggrPacket(seq, pk);
-        if (aggpacket != nullptr) { // ! all packets are aggregated
+        if (aggrGroup->isGroupHasBuffer(seq) && !aggrGroup->isRecorded(seq)) {
+            // ! the first seq is not aggred because no buffer, the following packets must not be aggrred either even if there is buffer
+            // * everything is updated in aggrPacket(), when a round finish, return the aggr packet
+            auto aggpacket = aggrGroup->aggrPacket(seq, pk);
+            if (aggpacket != nullptr) { // ! all packets are aggregated
+                int outGateIndex = getRouteGateIndex(destAddr);
+                aggpacket->setSrcAddr(myAddress);
+                aggpacket->setHopCount(aggpacket->getHopCount()+1); // todo how to count hop
+                emit(outputIfSignal, outGateIndex);
+                emit(outputPacketSignal, aggpacket);
+                send(aggpacket, "out", outGateIndex);
+            }
+        }
+        else {// no buffer or recorded before not to aggred
+            aggrGroup->recordNotAggr(seq);
             int outGateIndex = getRouteGateIndex(destAddr);
-            aggpacket->setSrcAddr(myAddress);
-            aggpacket->setHopCount(aggpacket->getHopCount()+1); // todo how to count hop
             emit(outputIfSignal, outGateIndex);
-            emit(outputPacketSignal, aggpacket);
-            send(aggpacket, "out", outGateIndex);
+            emit(outputPacketSignal, pk);
+            send(pk, "out", outGateIndex); // do the same as a unicast packet
         }
     } else if (pk->getKind()==PacketType::ACK) {
         auto seq = pk->getAckSeq();

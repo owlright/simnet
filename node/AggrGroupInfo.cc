@@ -22,9 +22,9 @@ bool AggrGroupInfo::isChildrenFull() const
 Packet* AggrGroupInfo::aggrPacket(int seq, Packet *pk)
 {
     if (packets.find(seq) == packets.end()) { // first packet of a round
-        if (packets.size() == bufferSize) {
-            return pk; // ! no space just return
-        }
+//        if (packets.size() == bufferSize) {
+//            return pk; // ! no space just return
+//        }
         packets[seq] = pk->dup();
         counter[seq] = 0;
         senderCounter[seq] = 0;
@@ -43,9 +43,14 @@ Packet* AggrGroupInfo::aggrPacket(int seq, Packet *pk)
 
 void AggrGroupInfo::reset(int seq)
 {
-    packets.erase(seq);
+    packets.erase(seq); // it's ok even if seq not exist
     counter.erase(seq);
     senderCounter.erase(seq);
+    notAggred.erase(seq);
+}
+
+bool AggrGroupInfo::isGroupHasBuffer(int seq) const {
+    return packets.size() < bufferSize;
 }
 
 void AggrGroupInfo::insertChildNode(int address)
@@ -53,4 +58,12 @@ void AggrGroupInfo::insertChildNode(int address)
 
     children.push_back(address);
 
+}
+
+void AggrGroupInfo::recordNotAggr(int seq) {
+    notAggred.insert(seq);
+}
+
+bool AggrGroupInfo::isRecorded(int address) const {
+    return notAggred.count(address) == 1;
 }

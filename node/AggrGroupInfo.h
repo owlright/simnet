@@ -9,6 +9,7 @@ private:
     std::map<int, Packet*> packets;
     std::map<int, int> counter;
     std::map<int, int> senderCounter;
+    std::unordered_set<int> notAggred;
     int bufferSize{0};
 
 public:
@@ -20,6 +21,9 @@ public:
     void reset(int seq);
     ~AggrGroupInfo();
     void insertChildNode(int address);
+    bool isGroupHasBuffer(int address) const;
+    bool isRecorded(int address) const;
+    void recordNotAggr(int seq);
 
 };
 
