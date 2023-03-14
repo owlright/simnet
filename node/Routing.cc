@@ -156,10 +156,9 @@ void Routing::handleMessage(cMessage *msg)
         if (!aggrGroup->isChildrenFull()) {
             aggrGroup->insertChildNode(pk->getSrcAddr());
         }
-        if (aggrGroup->isGroupHasBuffer(seq) && !aggrGroup->isRecorded(seq)) {
-            // ! the first seq is not aggred because no buffer, the following packets must not be aggrred either even if there is buffer
-            // * everything is updated in aggrPacket(), when a round finish, return the aggr packet
+        if (aggrGroup->isRecordedAggr(seq)) {
             auto aggpacket = aggrGroup->aggrPacket(seq, pk);
+            // * when a round finish, then we have the aggr packet otherwise just update info
             if (aggpacket != nullptr) { // ! all packets are aggregated
                 int outGateIndex = getRouteGateIndex(destAddr);
                 aggpacket->setSrcAddr(myAddress);
@@ -169,13 +168,19 @@ void Routing::handleMessage(cMessage *msg)
                 send(aggpacket, "out", outGateIndex);
             }
         }
-        else {// no buffer or recorded before not to aggred
+        else  if (aggrGroup->isGroupHasBuffer() && !aggrGroup->isRecordedNotAggr(seq) ) {
+            // the first time we see the seq and there is space to store
+            aggrGroup->aggrPacket(seq, pk); //just update info
+        }
+        else if (aggrGroup->isRecordedNotAggr(seq) || !aggrGroup->isGroupHasBuffer()){
+            // nospace or the seq is set to noaggr, just send it out
             aggrGroup->recordNotAggr(seq);
             int outGateIndex = getRouteGateIndex(destAddr);
             emit(outputIfSignal, outGateIndex);
             emit(outputPacketSignal, pk);
             send(pk, "out", outGateIndex); // do the same as a unicast packet
         }
+
     } else if (pk->getKind()==PacketType::ACK) {
         auto seq = pk->getAckSeq();
         aggrGroup->reset(seq); // release (key,value) for seq

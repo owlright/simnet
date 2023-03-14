@@ -21,6 +21,7 @@ bool AggrGroupInfo::isChildrenFull() const
 
 Packet* AggrGroupInfo::aggrPacket(int seq, Packet *pk)
 {
+    aggred.insert(seq);
     if (packets.find(seq) == packets.end()) { // first packet of a round
 //        if (packets.size() == bufferSize) {
 //            return pk; // ! no space just return
@@ -47,9 +48,10 @@ void AggrGroupInfo::reset(int seq)
     counter.erase(seq);
     senderCounter.erase(seq);
     notAggred.erase(seq);
+    aggred.erase(seq);
 }
 
-bool AggrGroupInfo::isGroupHasBuffer(int seq) const {
+bool AggrGroupInfo::isGroupHasBuffer() const {
     return packets.size() < bufferSize;
 }
 
@@ -64,6 +66,10 @@ void AggrGroupInfo::recordNotAggr(int seq) {
     notAggred.insert(seq);
 }
 
-bool AggrGroupInfo::isRecorded(int address) const {
+bool AggrGroupInfo::isRecordedNotAggr(int address) const {
     return notAggred.count(address) == 1;
+}
+
+bool AggrGroupInfo::isRecordedAggr(int address) const {
+    return aggred.count(address) == 1;
 }
