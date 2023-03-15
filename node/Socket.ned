@@ -18,11 +18,13 @@ package node;
 module Socket {
     parameters:
 //        volatile double jitter @unit(s) = default(exponential(1us));
-         volatile double jitter @unit(s) = default(0us);
+        volatile double jitter @unit(s) = default(0us);
         @class("Socket");
         @display("i=block/layer");
         @signal[cwnd](type="unsigned long");
         @statistic[cwnd](title="congestion window";record=vector;interpolationmode=linear);
+        @signal[rtt](type="simtime_t");
+        @statistic[rtt](title="rtt";unit=s;record=vector,mean,max;interpolationmode=linear);
   gates:
       input in;
       output out;

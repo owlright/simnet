@@ -13,7 +13,8 @@ void Socket::initialize(int stage)
         m_tcb->m_congState = TcpSocketState::CA_OPEN;
         // m_tcb->m_obWnd = m_tcb->m_cWnd;
         cwndSignal = registerSignal("cwnd");
-        emit(cwndSignal, m_tcb->m_cWnd);
+        rttSignal = registerSignal("rtt");
+        // emit(cwndSignal, m_tcb->m_cWnd);
     }
 }
 
@@ -81,6 +82,7 @@ Socket::SendPendingData()
         auto nextSeq = m_tcb->m_nextTxSequence;
         sprintf(pkname, "DATA-%d-to-%d-seq%u ", m_addr, m_destAddress, nextSeq);
         datapk = new Packet(pkname);
+        rttRecord[nextSeq] = datapk->getCreationTime();
         datapk->setKind(PacketType::DATA);
         SetPacketCommonField(datapk);
         EV << "sending data packet " << datapk->getName() << endl;
@@ -119,6 +121,8 @@ Socket::ReceivedAck(Packet* pk)
     auto ackNumber = pk->getAckSeq();
     ASSERT(ackNumber + 1 <= m_tcb->m_nextTxSequence); // ! impossible to receive a ack bigger than have sent, but may be disorder
     EV << " ackNumber: " << ackNumber << " next seq: "<< m_tcb->m_nextTxSequence << endl;
+    emit(rttSignal, (simTime() - rttRecord.at(ackNumber)));
+    rttRecord.erase(ackNumber);
     if (m_tcb->m_congState != TcpSocketState::CA_OPEN && ackNumber == m_recover) {
         // Recovery is over after the window exceeds m_recover
         // (although it may be re-entered below if ECE is still set)
@@ -151,7 +155,7 @@ Socket::ReceivedAck(Packet* pk)
     }
 
     emit(cwndSignal, m_tcb->m_cWnd);
-    m_tcb->m_lastAckedSeq = ackNumber;
+    m_tcb->m_lastAckedSeq = ackNumber; // TODO what if disorder?
     m_tcb->m_acked += 1;
     EV << "cWnd: "<< m_tcb->m_cWnd <<" inflight: "<< m_tcb->m_sent -  m_tcb->m_acked << endl;
     SendPendingData();

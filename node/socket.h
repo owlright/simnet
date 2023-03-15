@@ -3,6 +3,7 @@
 #endif
 #pragma once
 #include <omnetpp.h>
+#include <unordered_map>
 #include "Packet_m.h"
 #include "tcp-socket-state.h"
 #include "tcp-congestion-ops.h"
@@ -30,7 +31,8 @@ private:
     void SetPacketCommonField(Packet* pk) const;
 
     simsignal_t cwndSignal;
-
+    simsignal_t rttSignal;
+    std::unordered_map<uint32_t, simtime_t> rttRecord; // todo RTT should not be recorded here
 private:
     cPar* jitter;
     int packetNumber{0};
