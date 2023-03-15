@@ -117,7 +117,9 @@ void L2Queue::handleMessage(cMessage *msg)
             {
                 Packet *pk = check_and_cast<Packet *>(msg);
                 if (pk->getKind()==PacketType::DATA) { // ! only set data packet TODO:should label by queue bytes
-                    getParentModule()->bubble("congestion!");
+                    if (getEnvir()->isExpressMode()) {
+                        getParentModule()->bubble("congestion!");
+                    }
                     emit(congestionSignal, ecnThreshold);
                     EV << "Current queue length " << queue.getLength()
                         << " and ECN threshold is " << ecnThreshold <<". Mark ECN!\n";
