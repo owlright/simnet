@@ -10,6 +10,7 @@ using namespace omnetpp;
 class TcpDctcp : public TcpReno {
 public:
     //Documented in base class
+    uint32_t SlowStart(TcpSocketState* tcb) override;
     uint32_t GetSsThresh(const TcpSocketState* tcb, uint32_t bytesInFlight) override;
     void PktsAcked(TcpSocketState* tcb) override;
     void CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState) override;
@@ -21,6 +22,8 @@ private:
 //    cOutVector obcWnd; //! observe window
     uint32_t m_nextSeq{0};//!< TCP sequence number threshold for beginning a new observation window
     bool m_nextSeqFlag{false};
+    bool isAggressive{true};
+    uint32_t m_aggWinCnt{0}; //
     uint32_t m_ackedPacketsEcn{0};
 
     uint32_t m_ackedPacketsTotal{0};

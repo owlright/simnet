@@ -5,6 +5,7 @@ void TcpDctcp::initialize(int stage)
     if (stage==INITSTAGE_LOCAL) {
         m_alpha = par("alpha");
         m_g = par("g");
+        isAggressive = par("aggressive");
         alphaSignal = registerSignal("alpha");
         packetsECNSignal = registerSignal("packetsECN");
     }
@@ -39,7 +40,35 @@ TcpDctcp::Reset(TcpSocketState* tcb)
 uint32_t
 TcpDctcp::GetSsThresh(const TcpSocketState* tcb, uint32_t bytesInFlight)
 {
-    return static_cast<uint32_t>((1.0 - m_alpha / 2.0) * tcb->m_cWnd);
+    auto newWin = static_cast<uint32_t>((1.0 - m_alpha / 2.0) * tcb->m_cWnd);
+//    if (!isAggressive) {
+//        if (newWin > tcb->m_aggWin) {
+//            newWin = tcb->m_aggWin + (newWin - tcb->m_aggWin)/tcb->m_aggNum; // slow the speed to avoid
+//        }
+//    }
+    return newWin;
+}
+
+uint32_t
+TcpDctcp::SlowStart(TcpSocketState* tcb)
+{
+    if (isAggressive) {
+        TcpReno::SlowStart(tcb); // default behaviour
+        return 1;
+    }
+
+    if (tcb->m_cWnd >= tcb->m_aggWin) {
+        if (m_aggWinCnt >= tcb->m_aggNum) {
+            tcb->m_cWnd = std::min(tcb->m_cWnd + 1, tcb->m_ssThresh);
+            m_aggWinCnt = 0;
+        }
+        m_aggWinCnt += 1;
+    }
+    else {
+        TcpReno::SlowStart(tcb);
+    }
+    EV << "After slow start, m_cWnd " << tcb->m_cWnd << " m_ssThresh " << tcb->m_ssThresh << endl;
+    return 1;
 }
 
 void
