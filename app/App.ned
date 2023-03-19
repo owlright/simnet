@@ -7,8 +7,8 @@
 // `license' for details on this and other legal matters.
 //
 
-package node;
-
+package range.app;
+import range.mod.Socket;
 //
 // Application model to generate traffic for the network.
 //

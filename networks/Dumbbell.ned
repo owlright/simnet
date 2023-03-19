@@ -1,7 +1,7 @@
-package networks;
+package range.networks;
 
-import node.Node;
-import node.Controller;
+import range.mod.Node;
+import range.mod.Controller;
 import ned.DatarateChannel;
 // one sender and one receiver
 // a router with different datarate
@@ -43,7 +43,7 @@ network Dumbbell
             address = 4321;
             globalController = parent.globalController;
         }
-        controller: Controller; 
+        controller: Controller;
     connections:
         for i=0..numberFlows-1 {
             sender[i].port++ <--> C <--> LR.port++;

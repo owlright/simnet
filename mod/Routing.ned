@@ -7,7 +7,7 @@
 // `license' for details on this and other legal matters.
 //
 
-package node;
+package range.mod;
 
 //
 // Models a router.

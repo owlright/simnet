@@ -1,7 +1,8 @@
-package networks;
+package range.networks;
+
+import range.mod.Node;
 import ned.DatarateChannel;
-import node.Controller;
-import node.Node;
+import range.mod.Controller;
 
 network Aggr
 {

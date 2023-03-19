@@ -74,8 +74,8 @@ TcpReno::GetSsThresh(const TcpSocketState* tcb, uint32_t bytesInFlight)
     // return std::max<uint32_t>(2 * state->m_segmentSize, state->m_cWnd / 2);
 }
 
-void
-TcpReno::CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState)
-{
+// void
+// TcpReno::CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState)
+// {
 
-}
+// }

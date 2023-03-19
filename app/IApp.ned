@@ -7,7 +7,7 @@
 // `license' for details on this and other legal matters.
 //
 
-package node;
+package range.app;
 
 //
 // Interface for network traffic generator modules that
@@ -17,9 +17,11 @@ moduleinterface IApp
 {
     parameters:
         int address;  // local node address
+
     gates:
         input in;
         output out;
+        input socketIn @directIn;
 }
 
 

@@ -13,8 +13,8 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-package node;
-
+package range.mod;
+import range.mod.cong.Cong;
 module Socket {
     parameters:
 //        volatile double jitter @unit(s) = default(exponential(1us));

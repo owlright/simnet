@@ -1,9 +1,10 @@
+
 #ifdef _MSC_VER
 #pragma warning(disable:4786)
 #endif
 #pragma once
 #include "tcp-socket-state.h"
-#include "../common/Defs.h"
+#include "../../common/Defs.h"
 class TcpCongestionOps : public cSimpleModule
 {
 public:
@@ -74,7 +75,7 @@ public:
      * \param tcb internal congestion state
      * \param event the event which triggered this function
      */
-    virtual void CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t event) = 0;
+    virtual void CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t event){};
 
     // Present in Linux but not in ns-3 yet:
     /* call when ack arrives (optional) */

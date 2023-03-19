@@ -1,4 +1,4 @@
-package node;
+package range.mod.cong;
 
 simple Reno like Cong
 {

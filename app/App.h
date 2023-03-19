@@ -1,3 +1,4 @@
+
 #ifdef _MSC_VER
 #pragma warning(disable:4786)
 #endif
@@ -5,8 +6,8 @@
 
 #include <vector>
 #include <omnetpp.h>
-#include "Packet_m.h"
-#include "socket.h"
+#include "../mod/Packet_m.h"
+#include "../mod/socket.h"
 using namespace omnetpp;
 /**
  * Generates traffic for the network.

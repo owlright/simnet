@@ -1,5 +1,6 @@
+#include "../mod/Controller.h"
+
 #include <omnetpp.h>
-#include "Controller.h"
 #include "../common/Print.h"
 Define_Module(Controller);
 

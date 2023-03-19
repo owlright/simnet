@@ -1,4 +1,4 @@
-#include "AggrGroupInfo.h"
+#include "../mod/AggrGroupInfo.h"
 
 AggrGroupInfo::AggrGroupInfo(int groupid, int number, int buffer) {
     this->groupid = groupid;

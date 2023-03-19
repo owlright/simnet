@@ -1,7 +1,7 @@
-#ifndef NODE_CONTROLLER_H_
-#define NODE_CONTROLLER_H_
+#ifndef MOD_CONTROLLER_H_
+#define MOD_CONTROLLER_H_
 
-#include <omnetpp/csimplemodule.h>
+#include <omnetpp.h>
 #include "../common/Defs.h"
 using namespace omnetpp;
 
@@ -33,4 +33,4 @@ protected:
     virtual void handleMessage(cMessage *msg) override { throw cRuntimeError("this module doesn't handle messages, it runs only in initialize()"); }
 };
 
-#endif /* NODE_CONTROLLER_H_ */
+#endif /* MOD_CONTROLLER_H_ */

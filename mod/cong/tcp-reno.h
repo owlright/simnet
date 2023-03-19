@@ -1,3 +1,4 @@
+
 #ifdef _MSC_VER
 #pragma warning(disable:4786)
 #endif
@@ -11,7 +12,7 @@ class TcpReno : public TcpCongestionOps{
 public:
     void IncreaseWindow(TcpSocketState* tcb) override;
     uint32_t GetSsThresh(const TcpSocketState* tcb, uint32_t bytesInFlight) override;
-    void CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState) override;
+    // void CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState) override;
 
 protected:
     /**

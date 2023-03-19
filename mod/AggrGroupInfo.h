@@ -1,6 +1,6 @@
-#ifndef NODE_AGGRGROUPINFO_H_
-#define NODE_AGGRGROUPINFO_H_
-#include "Packet_m.h"
+#ifndef MOD_AGGRGROUPINFO_H_
+#define MOD_AGGRGROUPINFO_H_
+#include "../mod/Packet_m.h"
 class AggrGroupInfo {
 private:
     int groupid{-1};
@@ -31,4 +31,4 @@ public:
 
 };
 
-#endif /* NODE_AGGRGROUPINFO_H_ */
+#endif /* MOD_AGGRGROUPINFO_H_ */

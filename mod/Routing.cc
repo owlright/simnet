@@ -13,12 +13,12 @@
 
 #include <map>
 #include <omnetpp.h>
-#include "Packet_m.h"
+#include "../mod/Packet_m.h"
 #include "../common/Defs.h"
 #include "../common/Print.h"
 #include "../common/ModuleAccess.h"
-#include "Controller.h"
-#include "AggrGroupInfo.h"
+#include "../mod/Controller.h"
+#include "../mod/AggrGroupInfo.h"
 using namespace omnetpp;
 
 /**

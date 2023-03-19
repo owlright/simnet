@@ -103,7 +103,7 @@ TcpDctcp::PktsAcked(TcpSocketState* tcb)
     }
 }
 
-void TcpDctcp::CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState)
-{
-    //todo what?
-}
+// void TcpDctcp::CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState)
+// {
+//     //todo what?
+// }

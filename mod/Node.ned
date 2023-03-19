@@ -8,8 +8,8 @@
 //
 
 
-package node;
-
+package range.mod;
+import range.app.IApp;
 //
 // A "Node" consists of a Routing plus an App module which represents the
 // aggregate traffic of the subnets connected to that router.
@@ -19,13 +19,13 @@ module Node
     parameters:
         int address;
         bool hasBuffer = default(false);
-        string appType;
+        string appType = default("");
         string globalController;
         @display("i=misc/node_vs,gold");
     gates:
         inout port[];
     submodules:
-        app: App {
+        app: <default(appType)> like IApp if appType != "" {
             parameters:
                 address = parent.address;
                 @display("p=140,60");

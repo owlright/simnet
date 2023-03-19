@@ -7,10 +7,10 @@
 // `license' for details on this and other legal matters.
 //
 
-package networks;
+package range.networks;
 
-import node.Node;
-import builder.NetBuilder;
+import range.mod.Node;
+import range.builder.NetBuilder;
 
 network Dynamic
 {
