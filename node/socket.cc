@@ -52,6 +52,8 @@ void Socket::SetPacketCommonField(Packet *pk) const
     if (pk->getKind() == PacketType::DATA) {
         pk->setByteLength(packetBytes);
         pk->setSeq(m_tcb->m_nextTxSequence);
+        pk->setAggNum(1);
+        pk->setAggWin(INT32_MAX); // a big number
     }
     else if (pk->getKind() == PacketType::ACK) {
         pk->setByteLength(10); // ack packet size
@@ -177,7 +179,7 @@ Socket::ReceivedData(Packet* pk)
         if (m_sendersCounter.at(pkSeq)==m_sendersNum) { // ! check if all packets about seq arrive
             EV << "packet" << pkSeq << " are received" << endl;
             m_sendersCounter.erase(pkSeq); // reset the counter
-            SendAck(pkSeq, pk->getECN());
+            SendAck(pkSeq, pk);
         }
         else {
             EV << "packet " << pkSeq << " still has " << m_sendersNum - m_sendersCounter.at(pkSeq) << " packets left" << endl;
@@ -185,20 +187,22 @@ Socket::ReceivedData(Packet* pk)
     }
     else {
         EV << "packet" << pkSeq << " are received" << endl;
-        SendAck(pkSeq, pk->getECN()); // if this packet is labeled ECN just send it back let sender konw
+        SendAck(pkSeq, pk); // if this packet is labeled ECN just send it back let sender konw
     }
 
 }
 
 void
-Socket::SendAck(uint32_t ackno, bool detectECN) {
+Socket::SendAck(uint32_t ackno, Packet* pk) {
     char pkname[40];
     sprintf(pkname, "ACK-%d-to-%d-ack%u ", m_addr, m_destAddress, m_tcb->m_ackSeq);
     Packet *ackpk = new Packet(pkname);
 
     ackpk->setKind(PacketType::ACK);
+    ackpk->setAggNum(pk->getAggNum());
+    ackpk->setAggWin(pk->getAggWin());
     SetPacketCommonField(ackpk);
-    if (detectECN) { // tell receiver congestion happened
+    if (pk->getECN()) { // tell receiver congestion happened
         EV << "Set ack's ECN" <<endl;
         ackpk->setECN(true);
     }

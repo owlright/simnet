@@ -25,7 +25,7 @@ private:
     void ReceivedAck(Packet* pk);
     // send packet
     void SendPendingData();
-    void SendAck(uint32_t ackno, bool detectECN);
+    void SendAck(uint32_t ackno, Packet* pk);
     // help function
     uint32_t AvailableWindow() const;
     void SetPacketCommonField(Packet* pk) const;
