@@ -1,7 +1,7 @@
-#include "testbed/distribution/data/FbHdp_distribution.inc"
-#include "testbed/distribution/data/AliStorage2019.inc"
-#include "testbed/distribution/data/WebSearch_distribution.inc"
-#include "testbed/distribution/data/GoogleRPC2008.inc"
+#include "FbHdp_distribution.inc"
+#include "AliStorage2019.inc"
+#include "WebSearch_distribution.inc"
+#include "GoogleRPC2008.inc"
 
 std::map<std::string, CdfDistribution> CdfDistribution::table{
     {"FbHdp_distribution", FbHdp_distribution},

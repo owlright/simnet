@@ -1,6 +1,4 @@
-#include "testbed/distribution/CdfDistribution.h"
-
-namespace inet {
+#include "CdfDistribution.h"
 
 int64_t cdf(cRNG *rng, std::string id) {
     return CdfDistribution::get(id).random(rng);
@@ -31,4 +29,3 @@ Define_NED_Function2(nedf_cdfMean,
                      "random/discrete",
                      "Returns the mean of cdf");
 
-} // namespace inet

@@ -1,8 +1,6 @@
-#include "testbed/distribution/CdfDistribution.h"
+#include "CdfDistribution.h"
 
-namespace inet {
-
-#include "testbed/distribution/data/table.inc"
+#include "data/table.inc"
 
 const CdfDistribution &CdfDistribution::add(const std::string file) {
     throw cRuntimeError("Not implemented.");
@@ -50,5 +48,3 @@ int64_t CdfDistribution::mean() const {
     }
     return mean / 100;
 }
-
-} // namespace inet

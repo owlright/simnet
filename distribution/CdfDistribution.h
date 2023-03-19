@@ -1,10 +1,9 @@
 #pragma once
 
 #include <vector>
+#include <omnetpp.h>
+using namespace omnetpp;
 
-#include "inet/common/INETDefs.h"
-
-namespace inet {
 
 struct CdfPoint {
     int64_t length; // unit: Byte
@@ -30,4 +29,3 @@ class CdfDistribution {
     int64_t mean() const;
 };
 
-} // namespace inet

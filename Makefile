@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for routing
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -Xdistribution
+#  opp_makemake -f --deep
 #
 
 # Name of target to be created (-o option)
@@ -34,23 +34,24 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
 OBJS = \
+    $O/app/App.o \
+    $O/app/FlowApp.o \
     $O/builder/netbuilder.o \
     $O/common/ResultFilters.o \
-    $O/node/AggrGroupInfo.o \
-    $O/node/App.o \
-    $O/node/Buffer.o \
-    $O/node/BurstyApp.o \
-    $O/node/Controller.o \
-    $O/node/L2Queue.o \
-    $O/node/Routing.o \
-    $O/node/socket.o \
-    $O/node/tcp-dctcp.o \
-    $O/node/tcp-reno.o \
-    $O/node/Packet_m.o
+    $O/distribution/CdfDistribution.o \
+    $O/distribution/NedFunctions.o \
+    $O/mod/AggrGroupInfo.o \
+    $O/mod/Controller.o \
+    $O/mod/L2Queue.o \
+    $O/mod/Routing.o \
+    $O/mod/socket.o \
+    $O/mod/cong/tcp-dctcp.o \
+    $O/mod/cong/tcp-reno.o \
+    $O/mod/Packet_m.o
 
 # Message files
 MSGFILES = \
-    node/Packet.msg
+    mod/Packet.msg
 
 # SM files
 SMFILES =
