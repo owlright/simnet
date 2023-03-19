@@ -73,3 +73,4 @@ bool AggrGroupInfo::isRecordedNotAggr(int address) const {
 bool AggrGroupInfo::isRecordedAggr(int address) const {
     return aggred.count(address) == 1;
 }
+

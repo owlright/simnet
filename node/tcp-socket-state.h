@@ -63,6 +63,8 @@ public:
     uint32_t m_ackSeq{0}; // ack seq
     uint32_t m_initialCwnd{INT32_MAX};
     uint32_t m_cWnd{0}; // * Congestion window
+    int m_aggWin{0}; // ! use for in network computation
+    int m_aggNum{1};
     uint32_t m_ssThresh{UINT32_MAX}; //!< Slow start threshold
     uint32_t m_nextTxSequence{0}; //!< Next seqnum to be sent (SND.NXT)
     // uint32_t m_obWnd{0}; //! observe window

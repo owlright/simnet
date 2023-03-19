@@ -153,7 +153,8 @@ void Routing::handleMessage(cMessage *msg)
 
     if (pk->getKind()==PacketType::DATA) {
         auto seq = pk->getSeq();
-        if (!aggrGroup->isChildrenFull()) {
+        if (!aggrGroup->isChildrenFull()) { // TODO make the code better
+            // record the children of current aggregation node
             aggrGroup->insertChildNode(pk->getSrcAddr());
         }
         if (aggrGroup->isRecordedAggr(seq)) {
@@ -162,7 +163,13 @@ void Routing::handleMessage(cMessage *msg)
             if (aggpacket != nullptr) { // ! all packets are aggregated
                 int outGateIndex = getRouteGateIndex(destAddr);
                 aggpacket->setSrcAddr(myAddress);
-                aggpacket->setHopCount(aggpacket->getHopCount()+1); // todo how to count hop
+                if (aggrGroup->getChildrenNum() > aggpacket->getAggNum()) {
+                    aggpacket->setAggNum(aggrGroup->getChildrenNum());
+                }
+                if (aggrGroup->getBufferSize() < aggpacket->getAggWin()) {
+                    aggpacket->setAggWin(aggrGroup->getBufferSize());
+                }
+//                aggpacket->setHopCount(aggpacket->getHopCount()+1); // TODO how to count hop
                 emit(outputIfSignal, outGateIndex);
                 emit(outputPacketSignal, aggpacket);
                 send(aggpacket, "out", outGateIndex);

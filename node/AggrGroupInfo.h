@@ -26,6 +26,8 @@ public:
     bool isRecordedAggr(int address) const;
     bool isRecordedNotAggr(int address) const;
     void recordNotAggr(int seq);
+    int getBufferSize() const {return bufferSize;};
+    int getChildrenNum() const {return numberOfChidren;};
 
 };
 

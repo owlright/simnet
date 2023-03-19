@@ -123,6 +123,8 @@ Socket::ReceivedAck(Packet* pk)
     EV << " ackNumber: " << ackNumber << " next seq: "<< m_tcb->m_nextTxSequence << endl;
     emit(rttSignal, (simTime() - rttRecord.at(ackNumber)));
     rttRecord.erase(ackNumber);
+    m_tcb->m_aggWin = pk->getAggWin();
+    m_tcb->m_aggNum = pk->getAggNum();
     if (m_tcb->m_congState != TcpSocketState::CA_OPEN && ackNumber == m_recover) {
         // Recovery is over after the window exceeds m_recover
         // (although it may be re-entered below if ECE is still set)
@@ -166,7 +168,7 @@ Socket::ReceivedData(Packet* pk)
 {
     auto pkSeq = pk->getSeq();
     m_tcb->m_ackSeq = pkSeq; // ! just ack this packet, do not +1
-    if (m_groupAddr != -1) {
+    if (m_groupAddr != -1) { // deal with aggregation packets
         // the first packet
         if (m_sendersCounter.find(pkSeq)==m_sendersCounter.end())
             m_sendersCounter[pkSeq] = 0;
