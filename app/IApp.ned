@@ -17,6 +17,7 @@ moduleinterface IApp
 {
     parameters:
         int address;  // local node address
+        int destAddress;
 
     gates:
         input in;

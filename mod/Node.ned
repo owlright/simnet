@@ -19,13 +19,13 @@ module Node
     parameters:
         int address;
         bool hasBuffer = default(false);
-        string appType = default("");
+//        string appType = default("");
         string globalController;
         @display("i=misc/node_vs,gold");
     gates:
         inout port[];
     submodules:
-        app: <default(appType)> like IApp if appType != "" {
+        app: <default("App")> like IApp {
             parameters:
                 address = parent.address;
                 @display("p=140,60");
@@ -42,7 +42,7 @@ module Node
             parameters:
                 @display("p=80,200,row");
         }
-    connections:
+    connections allowunconnected:
         routing.localOut --> app.in;
         routing.localIn <-- app.out;
         for i=0..sizeof(port)-1 {

@@ -4,9 +4,18 @@ module FlowApp like IApp
 {
     parameters:
         int address;
-        string destAddress = default(""); // list of IP addresses, separated by spaces ("": don't send)
+        int destAddress;
+//        string destAddress = default(""); // list of IP addresses, separated by spaces ("": don't send)
         int flowLength @unit(B) = default(0B);
         int messageLength @unit(B) = default(1000B); // length of messages to generate, in bytes
+        
+        // work on interval mode by default
+        volatile double arrivalInterval @unit(s) = default(1s);
+
+        // work on load mode if load == 0
+        double load = default(0);
+        int flowLengthMean @unit(B) = default(0B);
+        @class(FlowApp);
 
     gates:
         input in;
@@ -16,7 +25,7 @@ module FlowApp like IApp
    	submodules:
         socket: Socket;
 
-    connections:
+    connections allowunconnected:
         in --> socket.in;
 		out <-- socket.out;
 
