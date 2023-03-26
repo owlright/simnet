@@ -1,6 +1,6 @@
 package range.networks;
 
-import range.mod.Node;
+import range.mod.Host;
 import ned.DatarateChannel;
 import range.mod.Controller;
 
@@ -16,7 +16,7 @@ network BinaryTree
             datarate = 10Mbps;
         }
     submodules:
-        terminal[2^height]: Node {
+        terminal[2^height]: Host {
             address = index;
             globalController = parent.globalController;
         }

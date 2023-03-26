@@ -9,7 +9,7 @@
 
 package range.networks;
 
-import range.mod.Node;
+import range.mod.Host;
 import range.builder.NetBuilder;
 
 network Dynamic

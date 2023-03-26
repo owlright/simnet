@@ -1,6 +1,6 @@
 package range.networks;
 
-import range.mod.Node;
+import range.mod.Host;
 import ned.DatarateChannel;
 import range.mod.Controller;
 network Nto1
@@ -16,18 +16,18 @@ network Nto1
             datarate = 10Gbps;
         }
     submodules:
-        sender[numberOfSenders]: Node {
+        sender[numberOfSenders]: Host {
             @node;
             address = index;
             app.destAddress = parent.numberOfSenders;
             globalController = parent.globalController;
         }
-        gate: Node {
+        gate: Host {
             @node;
             address = 1111;
             globalController = parent.globalController;
         }
-        sink: Node {
+        sink: Host {
             @node;
             address = parent.numberOfSenders;
             globalController = parent.globalController;

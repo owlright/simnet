@@ -1,6 +1,6 @@
 package range.networks;
 
-import range.mod.Node;
+import range.mod.Host;
 import range.mod.Controller;
 import ned.DatarateChannel;
 // one sender and one receiver
@@ -18,26 +18,26 @@ network Dumbbell
         }
 
     submodules:
-        sink[numberFlows]: Node {
+        sink[numberFlows]: Host {
             @node;
 //            @display("p=,,c,40");
             address = index;
             globalController = parent.globalController;
         }
-        sender[numberFlows]: Node {
+        sender[numberFlows]: Host {
             @node;
 //            @display("p=,,c,40");
             address = 10*parent.numberFlows + index;
             app.destAddress = index;
             globalController = parent.globalController;
         }
-        LR: Node {
+        LR: Host {
             @node;
 //            @display("g=bottleneck;p=,,r,100");
             address = 1234;
             globalController = parent.globalController;
         }
-        RR: Node {
+        RR: Host {
             @node;
 //            @display("g=bottleneck;p=,,r,100");
             address = 4321;

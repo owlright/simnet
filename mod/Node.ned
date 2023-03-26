@@ -11,17 +11,19 @@
 package range.mod;
 import range.app.IApp;
 //
-// A "Node" consists of a Routing plus an App module which represents the
+// A "Host" consists of a Routing plus an App module which represents the
 // aggregate traffic of the subnets connected to that router.
 //
-module Node
+module Host
 {
     parameters:
         int address;
         bool hasBuffer = default(false);
 //        string appType = default("");
         string globalController;
-        @display("i=misc/node_vs,gold");
+        @node;
+        @host;
+        @display("i=abstract/server_s");
     gates:
         inout port[];
     submodules:
@@ -52,4 +54,35 @@ module Node
         }
 }
 
-
+module Switch
+{
+    parameters:
+        int address;
+        bool hasBuffer = default(false);
+//        string appType = default("");
+        string globalController;
+        @node;
+        @switch;
+        @display("i=abstract/switch_s");
+    gates:
+        inout port[];
+    submodules:
+        routing: Routing {
+            parameters:
+                globalController = parent.globalController;
+                @display("p=140,130");
+            gates:
+                in[sizeof(parent.port)];
+                out[sizeof(parent.port)];
+        }
+        queue[sizeof(port)]: L2Queue {
+            parameters:
+                @display("p=80,200,row");
+        }
+    connections allowunconnected:
+        for i=0..sizeof(port)-1 {
+            routing.out[i] --> queue[i].in;
+            routing.in[i] <-- queue[i].out;
+            queue[i].line <--> port[i];
+        }
+}

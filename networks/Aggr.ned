@@ -1,6 +1,6 @@
 package range.networks;
 
-import range.mod.Node;
+import range.mod.Host;
 import ned.DatarateChannel;
 import range.mod.Controller;
 
@@ -18,46 +18,46 @@ network AggrDumbell
 
     submodules:
         controller: Controller;
-        group1[2]: Node {
+        group1[2]: Host {
             @node;
             address = index;
             app.destAddress = 40;
             app.groupAddress = app.destAddress;
             globalController = parent.globalController;
         }
-        aggr1: Node {
+        aggr1: Host {
             @node;
             address = 10;
             globalController = parent.globalController;
         }
-        group2[4]: Node {
+        group2[4]: Host {
             @node;
             address = index+2;
             app.destAddress = 41;
             app.groupAddress = app.destAddress;
             globalController = parent.globalController;
         }
-        aggr2: Node {
+        aggr2: Host {
             @node;
             address = 20;
             globalController = parent.globalController;
         }
-        gate: Node {
+        gate: Host {
             @node;
             address = 30;
             globalController = parent.globalController;
         }
-        gateSink: Node {
+        gateSink: Host {
             @node;
             address = 31;
             globalController = parent.globalController;
         }
-        sink1: Node {
+        sink1: Host {
             @node;
             address = 40;
             globalController = parent.globalController;
         }
-        sink2: Node {
+        sink2: Host {
             @node;
             address = 41;
             globalController = parent.globalController;
@@ -90,36 +90,36 @@ network AggrIncast
 
     submodules:
         controller: Controller;
-        group1[2]: Node {
+        group1[2]: Host {
             @node;
             address = index;
             app.destAddress = 40;
             app.groupAddress = app.destAddress;
             globalController = parent.globalController;
         }
-        group2[8]: Node {
+        group2[8]: Host {
             @node;
             address = index+2;
             app.destAddress = 41;
             app.groupAddress = app.destAddress;
             globalController = parent.globalController;
         }
-        gate: Node {
+        gate: Host {
             @node;
             address = 30;
             globalController = parent.globalController;
         }
-        gateSink: Node {
+        gateSink: Host {
             @node;
             address = 31;
             globalController = parent.globalController;
         }
-        sink1: Node {
+        sink1: Host {
             @node;
             address = 40;
             globalController = parent.globalController;
         }
-        sink2: Node {
+        sink2: Host {
             @node;
             address = 41;
             globalController = parent.globalController;
@@ -150,19 +150,19 @@ network AggrNto1
             datarate = 10Gbps;
         }
     submodules:
-        sender[numberOfSenders]: Node {
+        sender[numberOfSenders]: Host {
             @node;
             address = index;
             app.destAddress = parent.numberOfSenders;
             app.groupAddress = app.destAddress;
             globalController = parent.globalController;
         }
-        gate: Node {
+        gate: Host {
             @node;
             address =666;
             globalController = parent.globalController;
         }
-        sink: Node {
+        sink: Host {
             @node;
             address = parent.numberOfSenders;
             globalController = parent.globalController;
