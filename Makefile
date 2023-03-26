@@ -47,6 +47,7 @@ OBJS = \
     $O/mod/socket.o \
     $O/mod/cong/tcp-dctcp.o \
     $O/mod/cong/tcp-reno.o \
+    $O/trafficpattern/SimpleTrafficPattern.o \
     $O/mod/Packet_m.o
 
 # Message files
