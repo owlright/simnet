@@ -4,7 +4,7 @@ import range.mod.Node;
 import ned.DatarateChannel;
 import range.mod.Controller;
 
-network Aggr
+network AggrDumbell
 {
     parameters:
         string globalController = fullName()+".controller";
@@ -76,7 +76,7 @@ network Aggr
         gateSink.port++ <--> C <--> sink2.port++;
 }
 
-network AggrRace
+network AggrIncast
 {
     parameters:
         string globalController = fullName()+".controller";
