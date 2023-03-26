@@ -4,7 +4,7 @@ module FlowApp like IApp
 {
     parameters:
         int address;
-        int destAddress;
+        int destAddress = default(-1);
 //        string destAddress = default(""); // list of IP addresses, separated by spaces ("": don't send)
         int flowLength @unit(B) = default(0B);
         int messageLength @unit(B) = default(1000B); // length of messages to generate, in bytes

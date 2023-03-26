@@ -13,6 +13,8 @@ protected:
     bool loadModeEnabled{false};
     simtime_t interval{SIMTIME_ZERO};
 private:
+    int myAddress;
+    int destAddress;
     Socket* socket = nullptr;
     // state
     cMessage *selfMsg{nullptr};

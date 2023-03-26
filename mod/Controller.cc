@@ -4,7 +4,7 @@
 #include "../common/Print.h"
 Define_Module(Controller);
 
-int Controller::getRoute(cModule* from, int to) const
+int Controller::getRoute(cModule* from, int to) const // TODO just pass the src address is ok
 {
     Enter_Method_Silent();
     cTopology::Node *fromNode = topo->getNodeFor(from);
@@ -85,9 +85,33 @@ void Controller::setNodes(const cTopology *topo)
 {
     nodeMap.reserve(topo->getNumNodes());
     for (int i = 0; i < topo->getNumNodes(); i++) {
-        int address = topo->getNode(i)->getModule()->par("address");
+        auto node = topo->getNode(i)->getModule();
+        int address = node->par("address");
+        auto isHost = node->getProperties()->get("host") != nullptr;
+        if (isHost) {
+            hosts.push_back(i);
+        }
         nodeMap.push_back(address);
     }
+}
+
+int Controller::askForDest(int srcAddr) const {
+    return odMap.at(srcAddr);
+}
+
+void Controller::prepareTrafficPattern(const std::string& name) {
+    if (name=="random") {
+        for (auto h:hosts) {
+            int src = nodeMap[h];
+            int destAddr;
+            do {
+                auto destNode = hosts.at(intrand(hosts.size()));
+                destAddr = nodeMap.at(destNode);
+            } while (destAddr == src); // avoid send packet to itself
+            odMap[src] = destAddr;
+        }
+    }
+
 }
 
 void Controller::initialize(int stage)
@@ -132,6 +156,11 @@ void Controller::initialize(int stage)
             }
         }
 
+    }
+    if (stage == Stage::INITSTAGE_LOCAL) {
+        if (!par("trafficPattern").stdstringValue().empty()) {
+            prepareTrafficPattern(par("trafficPattern").stdstringValue());
+        }
     }
     if (stage == Stage::INITSTAGE_CONTROLL) {
         for (const auto& entry: aggrgroup) {
