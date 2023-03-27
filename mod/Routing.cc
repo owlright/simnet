@@ -69,7 +69,7 @@ void Routing::initialize(int stage)
     }
     if (stage == 1) {
         controller = getModuleFromPar<Controller>(par("globalController"), this);
-        assert(controller != nullptr);
+        ASSERT(controller != nullptr);
     }
 }
 
@@ -124,10 +124,12 @@ void Routing::handleMessage(cMessage *msg)
     // ! Deal with unicast packet
     if (!isAggrGroup(groupAddr)) {
         if (destAddr == myAddress) {
+            if (getParentModule()->getProperties()->get("switch") != nullptr)
+                throw cRuntimeError("Can't send a unicast packet to router!");
             int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
             EV << "local delivery of packet " << pk->getName() << endl;
-            pk->addPar("outGateIndex"); // todo its very bad to add par here.
-            pk->par("outGateIndex") = outGateIndex;
+//            pk->addPar("outGateIndex"); // todo its very bad to add par here.
+//            pk->par("outGateIndex") = outGateIndex;
             send(pk, "localOut");
             emit(outputIfSignal, -1);  // -1: local
             return;

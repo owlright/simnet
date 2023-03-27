@@ -44,7 +44,7 @@ module Host
             parameters:
                 @display("p=80,200,row");
         }
-    connections allowunconnected:
+    connections:
         routing.localOut --> app.in;
         routing.localIn <-- app.out;
         for i=0..sizeof(port)-1 {

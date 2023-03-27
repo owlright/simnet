@@ -16,6 +16,8 @@ private:
     int myAddress;
     int destAddress;
     int groupAddress;
+    int packetLengthBytes;
+    cPar* flowLength = nullptr;
     Socket* socket = nullptr;
     // state
     cMessage *startFlowTimer{nullptr};

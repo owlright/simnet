@@ -31,7 +31,7 @@ network SpineLeafNetwork {
             podNumber = parent.podNumber;
         }
         switches[spineNumber]: Switch {
-            address = index + 1000;
+            address = index + 10000;
             globalController = parent.globalController;
             @display("p=50,80,r,50");
         }
@@ -68,7 +68,7 @@ module SpineLeafPod {
         }
         switch: Switch {
             globalController = parent.globalController;
-            address = parent.index * parent.hostNumber + 100;
+            address = parent.index * parent.hostNumber + 1000;
             @display("p=50,80");
         }
 

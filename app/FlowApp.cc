@@ -13,6 +13,8 @@ void FlowApp::initialize(int stage)
         myAddress = par("address");
         destAddress = par("destAddress");
         groupAddress = par("groupAddress");
+        packetLengthBytes = par("packetLength");
+        flowLength = &par("flowLength");
         socket = (Socket*)(getSubmodule("socket"));
     }
     if (stage == Stage::INITSTAGE_LOCAL) {
@@ -58,7 +60,14 @@ void FlowApp::initialize(int stage)
 
 void FlowApp::handleMessage(cMessage *msg)
 {
-    if (msg->isSelfMessage()) {
-
+    if (msg == startFlowTimer) {
+        if (destAddress != -1) {
+            socket->Send(flowLength->intValue(), packetLengthBytes);
+        }
+    }
+    if (msg->arrivedOn("socketIn")) {
+        // Handle incoming packet
+        Packet *pk = check_and_cast<Packet *>(msg);
+        delete pk; // do nothing
     }
 }
