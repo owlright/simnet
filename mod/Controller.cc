@@ -115,6 +115,20 @@ void Controller::prepareTrafficPattern(const std::string& name) {
 
 }
 
+int Controller::askForGroup(int srcAddr) const {
+    // TODO store aggrgroup infomation in a struct, now for compatibility with App
+    for (auto& entry: aggrgroup) {
+        if (entry.first==srcAddr)
+            return srcAddr;
+        for (auto sender: entry.second) {
+            if (sender == srcAddr) {
+                return entry.first;
+            }
+        }
+    }
+    return -1;
+}
+
 void Controller::prepareAggrGroup(const std::string& name) {
     if (name=="random") {
         int groups = 2;
@@ -139,10 +153,14 @@ void Controller::prepareAggrGroup(const std::string& name) {
             auto root = g.back();
             g.pop_back();
             auto rootNode = topo->getNode(root);
+            auto rootAddress = rootNode->getModule()->par("address").intValue();
+
             // std::cout << "root: "<< rootNode->getModule()->par("address") << endl;
             tree->addNode(new cTopology::Node(rootNode->getModuleId())); // ! must duplicate the node
             for (auto& n:g) {
                 auto currentHost = topo->getNode(n);
+                // regester this aggrgoup's senders
+                aggrgroup[rootAddress].push_back(currentHost->getModule()->par("address").intValue());
                 double dist = INFINITY;
                 cTopology::Node* destNode = nullptr;
                 // * find the closest node in the tree
@@ -180,14 +198,22 @@ void Controller::prepareAggrGroup(const std::string& name) {
                     treenode = nexttreenode;
                 }
             }
-            // * the tree is finished
+            // * tree construction is finished
+            // * now assign tree to routers
+
             for (auto i = 0; i < tree->getNumNodes(); i++) {
                 auto node = tree->getNode(i);
                 auto mod = node->getModule();
-                std::cout << mod->par("address") << " " << node->getNumInLinks() << endl;
+                auto indegree = node->getNumInLinks();
+                EV_DETAIL << mod->par("address").intValue() << " indegree:" << indegree << endl;
+                if (indegree >= 2) {
+                    auto routerAddress = mod->par("address").intValue();
+                    aggrNumberOnRouter[rootAddress][routerAddress] = indegree;
+                    aggrBufferOnRouter[rootAddress][routerAddress] = -1; // -1 means unlimited use
+                }
             }
+
             tree->clear();
-            std::cout<<endl;
         }
         delete tree;
     }
@@ -210,7 +236,7 @@ void Controller::initialize(int stage)
         // ! parse aggr group info
         auto groupAggRouter = check_and_cast<cValueArray*>(par("aggrouter").objectValue());
         auto numberOfGroup = groupAggRouter->size();
-        EV << "There are " << numberOfGroup << " groups." << endl;
+
         auto groupAggrNumber = check_and_cast<cValueArray*>(par("aggrnumber").objectValue());
         auto groupAggrBuffer = check_and_cast<cValueArray*>(par("aggrbuffer").objectValue());
         auto targets = check_and_cast<cValueArray*>(par("targets").objectValue())->asIntVector();
@@ -245,9 +271,9 @@ void Controller::initialize(int stage)
         }
     }
     if (stage == Stage::INITSTAGE_CONTROLL) {
+        EV << "There are " << aggrgroup.size() << " groups." << endl;
         for (const auto& entry: aggrgroup) {
             EV << COLOR(bgB::green) << "group:" << entry.first <<" senders:" << entry.second << END;
         }
-
     }
 }

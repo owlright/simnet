@@ -15,6 +15,7 @@ protected:
 private:
     int myAddress;
     int destAddress;
+    int groupAddress;
     Socket* socket = nullptr;
     // state
     cMessage *selfMsg{nullptr};

@@ -12,6 +12,7 @@ void FlowApp::initialize(int stage)
     if (stage == Stage::INITSTAGE_LOCAL) {
         myAddress = par("address");
         destAddress = par("destAddress");
+        groupAddress = par("groupAddress");
         socket = (Socket*)(getSubmodule("socket"));
     }
     if (stage == Stage::INITSTAGE_LOCAL) {
@@ -20,11 +21,11 @@ void FlowApp::initialize(int stage)
         if (load != 0) { // load mode
             assert(0 < load && load < 1);
             auto flowLengthMean = par("flowLengthMean").doubleValueInUnit("b");
-            // !hacky
+            // !HACK
             auto bandwidth = check_and_cast<cDatarateChannel *>(getParentModule()->gateHalf("port", cGate::Type::OUTPUT, 0)->getChannel())->getDatarate();
             loadModeEnabled = true;
             interval = flowLengthMean / (bandwidth * load);
-            EV << "load: " << load << " flowLengthMean: " << flowLengthMean <<" bandwidth: " << bandwidth << endl;
+            EV_DETAIL << "load: " << load << " flowLengthMean: " << flowLengthMean <<" bandwidth: " << bandwidth << endl;
         }
         if (loadModeEnabled) {
             scheduleAfter(exponential(interval), selfMsg);
@@ -33,10 +34,24 @@ void FlowApp::initialize(int stage)
         }
     }
     if (stage == Stage::INITSTAGE_CONTROLL) {
-        if (destAddress==-2) { // means random pattern, ask for controller
-            auto controller = getModuleFromPar<Controller>(this->getParentModule()->par("globalController"), this->getParentModule());
+        // HACK
+        auto controller = getModuleFromPar<Controller>(this->getParentModule()->par("globalController"), this->getParentModule());
+        if (destAddress == -2) { // means random pattern, ask for controller
             destAddress = controller->askForDest(myAddress);
-            EV << "src:" << myAddress << " dest:" << destAddress << endl;
+            EV_DETAIL << "src:" << myAddress << " dest:" << destAddress << endl;
+            socket->Bind(myAddress, destAddress, groupAddress); // ! TODO the socket is unicast at first, it may change into a aggrsocket
+        }
+        if (groupAddress == -2) { // ask for controller to see if myself in a aggr group,-1 means not particapte in aggr group
+            groupAddress = controller->askForGroup(myAddress);
+            if (groupAddress == myAddress) { // I'm the root node of the aggregation tree
+                auto groupSenders = controller->getAggrSendersNum(myAddress);
+                EV << "node "<< myAddress << " is group target and has " << groupSenders << " senders" << endl;
+                socket->Bind(myAddress, destAddress, groupAddress);
+                socket->SetSendersNum(groupSenders);
+            }
+            destAddress = groupAddress; // groupAddress is also the destAddress
+            if (groupAddress > 0)
+                EV_DETAIL << "src:" << myAddress << " dest:" << destAddress << " group:" << groupAddress << endl;
         }
     }
 }
@@ -44,6 +59,6 @@ void FlowApp::initialize(int stage)
 void FlowApp::handleMessage(cMessage *msg)
 {
     if (msg->isSelfMessage()) {
-        EV << destAddress << endl;
+
     }
 }
