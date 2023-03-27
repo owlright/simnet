@@ -36,6 +36,7 @@ private:
 private:
     void setNodes(const cTopology *topo);
     void prepareTrafficPattern(const std::string& name);
+    void prepareAggrGroup(const std::string& name);
 
 protected:
     virtual void initialize(int stage) override;

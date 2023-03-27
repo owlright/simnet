@@ -1,7 +1,8 @@
-#include "../mod/Controller.h"
-
+#include "Controller.h"
 #include <omnetpp.h>
 #include "../common/Print.h"
+#include <unordered_set>
+
 Define_Module(Controller);
 
 int Controller::getRoute(cModule* from, int to) const // TODO just pass the src address is ok
@@ -114,6 +115,84 @@ void Controller::prepareTrafficPattern(const std::string& name) {
 
 }
 
+void Controller::prepareAggrGroup(const std::string& name) {
+    if (name=="random") {
+        int groups = 2;
+        int groupmembers = 10;
+        std::vector<std::vector<int>> aggrgroups;
+        std::unordered_set<int> visited;
+        for (auto i = 0; i < groups; i++) {
+            std::vector<int> g;
+            for (auto j = 0; j < groupmembers ; j++) {
+                auto node = hosts.size(); // which is not possible
+                do {
+                    node = intrand(hosts.size());
+                } while (visited.find(node) != visited.end());
+                g.push_back(node);
+                visited.insert(node);
+            }
+            aggrgroups.emplace_back(g);
+        }
+        //get steiner tree for each group
+        cTopology *tree = new cTopology("steiner");
+        for (auto& g:aggrgroups) {
+            auto root = g.back();
+            g.pop_back();
+            auto rootNode = topo->getNode(root);
+            // std::cout << "root: "<< rootNode->getModule()->par("address") << endl;
+            tree->addNode(new cTopology::Node(rootNode->getModuleId())); // ! must duplicate the node
+            for (auto& n:g) {
+                auto currentHost = topo->getNode(n);
+                double dist = INFINITY;
+                cTopology::Node* destNode = nullptr;
+                // * find the closest node in the tree
+                for (auto i = 0; i < tree->getNumNodes(); i++) {
+                    auto nodeInTree = topo->getNodeFor(tree->getNode(i)->getModule()); // ! the node must in topo
+                    if (nodeInTree == rootNode ||
+                            nodeInTree->getModule()->getProperties()->get("switch")!=nullptr) { // ! remember ignore the hosts
+                        topo->calculateUnweightedSingleShortestPathsTo(nodeInTree);
+                        if (currentHost->getDistanceToTarget() < dist) {
+                            dist = currentHost->getDistanceToTarget();
+                            destNode = nodeInTree;
+                        }
+                    }
+                }
+                ASSERT(destNode);
+                // * add the node into tree using the shortest path
+                topo->calculateUnweightedSingleShortestPathsTo(destNode);
+                auto node = currentHost;
+                auto treenode = new cTopology::Node(node->getModuleId());
+                tree->addNode(treenode);
+                while (node != destNode) {
+                    // std::cout << node->getModule()->par("address") << endl;
+                    auto nextNode = node->getPath(0)->getRemoteNode();
+                    cTopology::Node* nexttreenode = nullptr;
+                    if (nextNode!=destNode) {
+                        nexttreenode = new cTopology::Node(nextNode->getModuleId());
+                        tree->addNode(nexttreenode);
+                    }
+                    else {
+                        nexttreenode = tree->getNodeFor(nextNode->getModule());
+                    }
+                    tree->addLink(new cTopology::Link(), treenode, nexttreenode);
+
+                    node = nextNode;
+                    treenode = nexttreenode;
+                }
+            }
+            // * the tree is finished
+            for (auto i = 0; i < tree->getNumNodes(); i++) {
+                auto node = tree->getNode(i);
+                auto mod = node->getModule();
+                std::cout << mod->par("address") << " " << node->getNumInLinks() << endl;
+            }
+            tree->clear();
+            std::cout<<endl;
+        }
+        delete tree;
+    }
+}
+
 void Controller::initialize(int stage)
 {
     if (stage == Stage::INITSTAGE_LOCAL) {
@@ -160,6 +239,9 @@ void Controller::initialize(int stage)
     if (stage == Stage::INITSTAGE_LOCAL) {
         if (!par("trafficPattern").stdstringValue().empty()) {
             prepareTrafficPattern(par("trafficPattern").stdstringValue());
+        }
+        if (!par("aggrGroupPlacePolicy").stdstringValue().empty()) {
+            prepareAggrGroup(par("aggrGroupPlacePolicy").stdstringValue());
         }
     }
     if (stage == Stage::INITSTAGE_CONTROLL) {
