@@ -4,7 +4,7 @@
 Define_Module(FlowApp);
 FlowApp::~FlowApp()
 {
-    cancelAndDelete(selfMsg);
+    cancelAndDelete(startFlowTimer);
 }
 
 void FlowApp::initialize(int stage)
@@ -16,7 +16,7 @@ void FlowApp::initialize(int stage)
         socket = (Socket*)(getSubmodule("socket"));
     }
     if (stage == Stage::INITSTAGE_LOCAL) {
-        selfMsg = new cMessage("SelfMsg-FlowApp");
+        startFlowTimer = new cMessage("SelfMsg-FlowApp");
         double load = par("load");
         if (load != 0) { // load mode
             assert(0 < load && load < 1);
@@ -28,9 +28,9 @@ void FlowApp::initialize(int stage)
             EV_DETAIL << "load: " << load << " flowLengthMean: " << flowLengthMean <<" bandwidth: " << bandwidth << endl;
         }
         if (loadModeEnabled) {
-            scheduleAfter(exponential(interval), selfMsg);
+            scheduleAfter(exponential(interval), startFlowTimer);
         } else {
-            scheduleAfter(par("arrivalInterval"), selfMsg);
+            scheduleAfter(par("arrivalInterval"), startFlowTimer);
         }
     }
     if (stage == Stage::INITSTAGE_CONTROLL) {

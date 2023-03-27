@@ -18,7 +18,7 @@ private:
     int groupAddress;
     Socket* socket = nullptr;
     // state
-    cMessage *selfMsg{nullptr};
+    cMessage *startFlowTimer{nullptr};
 protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
