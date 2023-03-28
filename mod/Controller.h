@@ -11,7 +11,7 @@ class Controller: public omnetpp::cSimpleModule {
 private:
     typedef std::map<int, std::map<int,int> > aggrGroupOnRouterTable;
 public:
-    int getRoute(cModule* from, int to) const;
+    std::vector<int> getRoutes(cModule* from, int to) const;
     int getGroupInfo(int groupid, int routerid, const aggrGroupOnRouterTable& table) const;
     int getGroupAggrNum(int groupid, int routerid) const;
     int getGroupAggrBuffer(int groupid, int routerid) const;
@@ -28,7 +28,8 @@ public:
 
 private:
     cTopology *topo;
-    std::vector<int> nodeMap; // nodeMap[node-index-in-topo] = node's address
+    std::vector<int> node2addr; // nodeMap[node-index-in-topo] = node's address
+    std::unordered_map<int, int> addr2node;
     std::vector<int> hosts; // store host's index-in-topo not address!
     std::unordered_map<int, int> odMap; // odMap[node's address] = dest's address for assign traffic pattern
     std::map<int, std::vector<int>> aggrgroup; // groupaddr: senders

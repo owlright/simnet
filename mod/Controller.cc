@@ -5,25 +5,38 @@
 
 Define_Module(Controller);
 
-int Controller::getRoute(cModule* from, int to) const // TODO just pass the src address is ok
+std::vector<int> Controller::getRoutes(cModule* from, int to) const // TODO just pass the src address is ok
 {
     Enter_Method_Silent();
     cTopology::Node *fromNode = topo->getNodeFor(from);
 
-    for (int i = 0; i < topo->getNumNodes(); i++) {
-        if (topo->getNode(i) == fromNode)
-            continue;  // skip ourselves
-        int address = nodeMap.at(i);
-        if (address == to) {
-            topo->calculateUnweightedSingleShortestPathsTo(topo->getNode(i));
-            if (fromNode->getNumPaths() > 0) {
-                int gateIndex = fromNode->getPath(0)->getLocalGate()->getIndex();
-                EV << "  towards address " << address << " gateIndex is " << gateIndex << endl;
-                return gateIndex;
-            }
+    auto destNode = topo->getNode(addr2node.at(to));
+    // ! HACK find multiple next hops used for ecmp
+    topo->calculateUnweightedSingleShortestPathsTo(destNode);
+    auto distance = fromNode->getDistanceToTarget();
+    std::vector<int> gateIndexes;
+    std::vector<cTopology::LinkOut *> linkrecord;
+    // HACK: find ecmp paths
+    while (fromNode->getNumPaths() > 0) {
+        if (fromNode->getDistanceToTarget() <= distance) {
+            auto outLink = fromNode->getPath(0);
+            linkrecord.push_back(outLink);
+            fromNode->getPath(0)->disable();
+            int gateIndex = outLink->getLocalGate()->getIndex();
+            gateIndexes.push_back(gateIndex);
+            EV_DETAIL << "src: " << fromNode->getModule()->par("address").intValue()
+                    <<"  towards address " << addr2node.at(to)
+                    << " gateIndex is " << gateIndex << endl;
         }
+        // ! if we get a longer path just disable it and try next one
+        fromNode->getPath(0)->disable(); // * disable this outLink and recalc the shortetpath algorithm
+        topo->calculateUnweightedSingleShortestPathsTo(destNode);
     }
-  return -1;
+    // ! remember to reset the links
+    for (auto link:linkrecord) {
+        link->enable();
+    }
+    return gateIndexes;
 }
 
 int Controller::getGroupInfo(int groupid, int routerid, const aggrGroupOnRouterTable& table) const
@@ -84,7 +97,7 @@ Controller::~Controller() {
 
 void Controller::setNodes(const cTopology *topo)
 {
-    nodeMap.reserve(topo->getNumNodes());
+    node2addr.reserve(topo->getNumNodes());
     for (int i = 0; i < topo->getNumNodes(); i++) {
         auto node = topo->getNode(i)->getModule();
         int address = node->par("address");
@@ -92,7 +105,8 @@ void Controller::setNodes(const cTopology *topo)
         if (isHost) {
             hosts.push_back(i);
         }
-        nodeMap.push_back(address);
+        node2addr.push_back(address);
+        addr2node[address] = i;
     }
 }
 
@@ -103,11 +117,11 @@ int Controller::askForDest(int srcAddr) const {
 void Controller::prepareTrafficPattern(const std::string& name) {
     if (name=="random") {
         for (auto h:hosts) {
-            int src = nodeMap[h];
+            int src = node2addr[h];
             int destAddr;
             do {
                 auto destNode = hosts.at(intrand(hosts.size()));
-                destAddr = nodeMap.at(destNode);
+                destAddr = node2addr.at(destNode);
             } while (destAddr == src); // avoid send packet to itself
             odMap[src] = destAddr;
         }

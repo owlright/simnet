@@ -16,6 +16,7 @@ simple Routing
 {
     parameters:
         string globalController;
+        bool ecmpFlow = default(false);
         @display("i=block/switch");
         @signal[drop](type="long");
         @signal[outputIf](type="long");

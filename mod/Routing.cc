@@ -28,7 +28,8 @@ class Routing : public cSimpleModule
 {
 private:
     int myAddress;
-    typedef std::map<int, int> RoutingTable;  // destaddr -> gateindex
+    bool ecmpFlow = false;
+    typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
     typedef std::map<int, std::vector<int> > AggrRoutingTable;
     AggrRoutingTable aggrChildren;
@@ -46,7 +47,7 @@ private:
     bool isAggrGroup(int address) const;
     AggrGroupInfo* getAggrGroup(int address) const;
     AggrGroupInfo* getOrAddGroup(int address);
-    int getRouteGateIndex(int address);
+    int getRouteGateIndex(int srcAddr, int destAddr);
 
 protected:
     virtual void initialize(int stage) override;
@@ -61,11 +62,12 @@ void Routing::initialize(int stage)
 {
 
     if (stage == 0) {
-        myAddress = getParentModule()->par("address");
+        myAddress = getParentModule()->par("address"); // HACK
+        ecmpFlow = par("ecmpFlow").boolValue();
         dropSignal = registerSignal("drop");
         outputIfSignal = registerSignal("outputIf");
         outputPacketSignal = registerSignal("outputPacket");
-        WATCH_MAP(rtable);
+        // WATCH_MAP(rtable); // ! this causes error if value is vector
     }
     if (stage == 1) {
         controller = getModuleFromPar<Controller>(par("globalController"), this);
@@ -73,19 +75,28 @@ void Routing::initialize(int stage)
     }
 }
 
-int Routing::getRouteGateIndex(int address)
+int Routing::getRouteGateIndex(int srcAddr, int destAddr)
 {
-    RoutingTable::iterator it = rtable.find(address);
+    // srcAddr is only used for ecmp the flow
+    RoutingTable::iterator it = rtable.find(destAddr);
     if (it != rtable.end()) {
-        int outGateIndex = (*it).second;
-        return outGateIndex;
+        auto outGateIndexes = (*it).second;
+        if (ecmpFlow) {
+            auto N = srcAddr + destAddr + myAddress; // HACK a too simple hash function
+            return outGateIndexes.at(N % outGateIndexes.size());
+        } else {
+            return outGateIndexes.at(0);
+        }
     }
     else {
-        int outGateIndex = controller->getRoute(this->getParentModule(), address);
-        if (outGateIndex != -1) {
-            rtable[address] = outGateIndex;
+        auto outGateIndexes = controller->getRoutes(this->getParentModule(), destAddr);
+        if (!outGateIndexes.empty()) {
+            rtable[destAddr] = outGateIndexes;
+            return getRouteGateIndex(srcAddr, destAddr);
         }
-        return outGateIndex;
+        else {
+            return -1;
+        }
     }
 }
 
@@ -118,6 +129,7 @@ AggrGroupInfo* Routing::getAggrGroup(int address) const {
 void Routing::handleMessage(cMessage *msg)
 {
     Packet *pk = check_and_cast<Packet *>(msg);
+    int srcAddr = pk->getSrcAddr();
     int destAddr = pk->getDestAddr();
     int groupAddr = pk->getGroupAddr();
 
@@ -126,7 +138,7 @@ void Routing::handleMessage(cMessage *msg)
         if (destAddr == myAddress) {
             if (getParentModule()->getProperties()->get("switch") != nullptr)
                 throw cRuntimeError("Can't send a unicast packet to router!");
-            int outGateIndex = getRouteGateIndex(pk->getSrcAddr());
+            // int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
             EV << "local delivery of packet " << pk->getName() << endl;
 //            pk->addPar("outGateIndex"); // todo its very bad to add par here.
 //            pk->par("outGateIndex") = outGateIndex;
@@ -134,7 +146,7 @@ void Routing::handleMessage(cMessage *msg)
             emit(outputIfSignal, -1);  // -1: local
             return;
         }
-        int outGateIndex = getRouteGateIndex(destAddr);
+        int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
         if (outGateIndex == -1) {
             EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
             emit(dropSignal, (intval_t)pk->getByteLength());
@@ -163,7 +175,7 @@ void Routing::handleMessage(cMessage *msg)
             auto aggpacket = aggrGroup->aggrPacket(seq, pk);
             // * when a round finish, then we have the aggr packet otherwise just update info
             if (aggpacket != nullptr) { // ! all packets are aggregated
-                int outGateIndex = getRouteGateIndex(destAddr);
+                int outGateIndex = getRouteGateIndex(aggpacket->getSrcAddr(), destAddr);
                 aggpacket->setSrcAddr(myAddress);
                 if (aggrGroup->getChildrenNum() > aggpacket->getAggNum()) {
                     aggpacket->setAggNum(aggrGroup->getChildrenNum());
@@ -184,7 +196,7 @@ void Routing::handleMessage(cMessage *msg)
         else if (aggrGroup->isRecordedNotAggr(seq) || !aggrGroup->isGroupHasBuffer()){
             // nospace or the seq is set to noaggr, just send it out
             aggrGroup->recordNotAggr(seq);
-            int outGateIndex = getRouteGateIndex(destAddr);
+            int outGateIndex = getRouteGateIndex(pk->getSrcAddr(), destAddr);
             emit(outputIfSignal, outGateIndex);
             emit(outputPacketSignal, pk);
             send(pk, "out", outGateIndex); // do the same as a unicast packet
@@ -197,7 +209,7 @@ void Routing::handleMessage(cMessage *msg)
         // find entries and broadcast it
         auto childrenAddresses = aggrGroup->getChildren();
         for (auto& addr : childrenAddresses ) {
-            int outGateIndex = getRouteGateIndex(addr);
+            int outGateIndex = getRouteGateIndex(pk->getSrcAddr(), addr);
             pk->setDestAddr(addr);
 
             auto packet = pk->dup();
