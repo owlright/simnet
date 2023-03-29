@@ -20,16 +20,18 @@ std::vector<int> Controller::getRoutes(cModule* from, int to) const // TODO just
     while (fromNode->getNumPaths() > 0) {
         if (fromNode->getDistanceToTarget() <= distance) {
             auto outLink = fromNode->getPath(0);
-            linkrecord.push_back(outLink);
-            fromNode->getPath(0)->disable();
+
+//            fromNode->getPath(0)->disable();
             int gateIndex = outLink->getLocalGate()->getIndex();
+//            outLink->disable();
             gateIndexes.push_back(gateIndex);
-            EV_DETAIL << "src: " << fromNode->getModule()->par("address").intValue()
-                    <<"  towards address " << addr2node.at(to)
+            EV_DETAIL << "router: " << fromNode->getModule()->par("address").intValue()
+                    <<"  towards address " << to
                     << " gateIndex is " << gateIndex << endl;
         }
         // ! if we get a longer path just disable it and try next one
         fromNode->getPath(0)->disable(); // * disable this outLink and recalc the shortetpath algorithm
+        linkrecord.push_back(fromNode->getPath(0));
         topo->calculateUnweightedSingleShortestPathsTo(destNode);
     }
     // ! remember to reset the links
@@ -107,6 +109,7 @@ void Controller::setNodes(const cTopology *topo)
         }
         node2addr.push_back(address);
         addr2node[address] = i;
+        EV_DETAIL << "node: " << i << " address: " << address << endl;
     }
 }
 
