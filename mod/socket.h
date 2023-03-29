@@ -13,7 +13,7 @@ using namespace omnetpp;
 
 class Socket : public cSimpleModule {
 public:
-    void Send(int packets, int packetBytes);
+    void Send(int totalBytes, int packetBytes);
     void SetSendersNum(int number);
     void Bind(int srcaddr, int destaddr, int groupaddr);
     int GetDestAddr() const;
@@ -36,7 +36,8 @@ private:
     std::unordered_map<uint32_t, simtime_t> rttRecord; // todo RTT should not be recorded here
 private:
     cPar* jitter;
-    int packetNumber{0};
+    int totalBytes{0};
+    int sentBytes{0};
     int packetBytes{0};
     int m_recover;
 

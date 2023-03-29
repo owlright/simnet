@@ -17,10 +17,23 @@ private:
     int destAddress;
     int groupAddress;
     int packetLengthBytes;
+
+    simtime_t flowStartTime;
+    int flowPackets;
+    int flowCounter{0};
+
+
+    std::unordered_set<int> flows;
+    std::unordered_set<int> aggflows;
     cPar* flowLength = nullptr;
     Socket* socket = nullptr;
     // state
     cMessage *startFlowTimer{nullptr};
+private:
+    double bandwidth; //bps
+    simsignal_t flowIdealCompletionTimeSignal;
+    simsignal_t flowRealCompletionTimeSignal;
+
 protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;

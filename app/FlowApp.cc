@@ -16,19 +16,22 @@ void FlowApp::initialize(int stage)
         packetLengthBytes = par("packetLength");
         flowLength = &par("flowLength");
         socket = (Socket*)(getSubmodule("socket"));
+        flowRealCompletionTimeSignal = registerSignal("flowRealCompletionTime");
+        flowIdealCompletionTimeSignal = registerSignal("flowIdealCompletionTime");
     }
     if (stage == Stage::INITSTAGE_LOCAL) {
-        startFlowTimer = new cMessage("SelfMsg-FlowApp");
+        startFlowTimer = new cMessage("flowStart");
         double load = par("load");
         if (load != 0) { // load mode
             assert(0 < load && load < 1);
             auto flowLengthMean = par("flowLengthMean").doubleValueInUnit("b");
             // !HACK
-            auto bandwidth = check_and_cast<cDatarateChannel *>(getParentModule()->gateHalf("port", cGate::Type::OUTPUT, 0)->getChannel())->getDatarate();
+            bandwidth = check_and_cast<cDatarateChannel *>(getParentModule()->gateHalf("port", cGate::Type::OUTPUT, 0)->getChannel())->getDatarate();
             loadModeEnabled = true;
             interval = flowLengthMean / (bandwidth * load);
             EV_DETAIL << "load: " << load << " flowLengthMean: " << flowLengthMean <<" bandwidth: " << bandwidth << endl;
         }
+
         if (loadModeEnabled) {
             scheduleAfter(exponential(interval), startFlowTimer);
         } else {
@@ -62,12 +65,33 @@ void FlowApp::handleMessage(cMessage *msg)
 {
     if (msg == startFlowTimer) {
         if (destAddress != -1) {
-            socket->Send(flowLength->intValue(), packetLengthBytes);
+            auto flowTotalBytes = flowLength->intValue();
+            do {
+                flowTotalBytes = flowLength->intValue();
+            } while (flowTotalBytes <= 0);
+            flowPackets = flowTotalBytes / packetLengthBytes;
+            flowPackets += flowTotalBytes % packetLengthBytes > 0 ? 1 : 0;
+            EV << "flow length in bytes: "<< flowTotalBytes << " packet size in bytes: "<< packetLengthBytes << endl;
+            emit(flowIdealCompletionTimeSignal, (simtime_t)((flowTotalBytes*8)/bandwidth));
+            flowStartTime = simTime();
+            socket->Send(flowTotalBytes, packetLengthBytes);
         }
     }
     if (msg->arrivedOn("socketIn")) {
         // Handle incoming packet
         Packet *pk = check_and_cast<Packet *>(msg);
-        delete pk; // do nothing
+        if (pk->getKind() == PacketType::ACK) {
+            flowPackets--;
+            if (flowPackets == 0) { // flow is finished, start a new flow
+                flowCounter++;
+                emit(flowRealCompletionTimeSignal, simTime() - flowStartTime);
+                if (loadModeEnabled) {
+                    scheduleAfter(exponential(interval), startFlowTimer);
+                } else {
+                    scheduleAfter(par("arrivalInterval"), startFlowTimer);
+                }
+            }
+        }
+        delete pk;
     }
 }

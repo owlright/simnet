@@ -1,6 +1,6 @@
 #include "socket.h"
-
 #include "cong/tcp-dctcp.h"
+#include "../common/Print.h"
 Define_Module(Socket);
 
 void Socket::initialize(int stage)
@@ -51,7 +51,7 @@ void Socket::SetPacketCommonField(Packet *pk) const
     pk->setGroupAddr(m_groupAddr);
     pk->setAggrCounter(1);
     if (pk->getKind() == PacketType::DATA) {
-        pk->setByteLength(packetBytes);
+
         pk->setSeq(m_tcb->m_nextTxSequence);
         pk->setAggNum(1);
         pk->setAggWin(INT32_MAX); // a big number
@@ -68,10 +68,12 @@ void Socket::SetPacketCommonField(Packet *pk) const
 }
 
 void
-Socket::Send(int packets, int packetBytes)
+Socket::Send(int totalBytes, int packetBytes)
 {
     Enter_Method_Silent();
-    this->packetNumber = packets;
+    if (m_addr < 0 || (m_destAddress < 0 && m_groupAddr < 0))
+        throw cRuntimeError("Check address settings");
+    this->totalBytes = totalBytes;
     this->packetBytes = packetBytes;
     SendPendingData();
 }
@@ -81,15 +83,22 @@ Socket::SendPendingData()
 {
     char pkname[40];
     Packet* datapk = nullptr;
-    while (AvailableWindow() > 0 && m_tcb->m_sent != packetNumber) {  // use != not < here because I want if packetNumber is -1, the socket keep sending packets
+    // wait(jitter->doubleValue());
+    while (AvailableWindow() > 0 && sentBytes != totalBytes) {  // use != not < here because I want if totalBytes is -1, the socket keep sending
         auto nextSeq = m_tcb->m_nextTxSequence;
         sprintf(pkname, "DATA-%d-to-%d-seq%u ", m_addr, m_destAddress, nextSeq);
         datapk = new Packet(pkname);
         rttRecord[nextSeq] = datapk->getCreationTime();
         datapk->setKind(PacketType::DATA);
+        if (totalBytes - sentBytes >= packetBytes) { // ! the last packet may smaller than a full packet size
+            datapk->setByteLength(packetBytes);
+        } else {
+            datapk->setByteLength(totalBytes - sentBytes);
+        }
+        sentBytes += datapk->getByteLength();
         SetPacketCommonField(datapk);
         EV << "sending data packet " << datapk->getName() << endl;
-        sendDelayed(datapk, jitter->doubleValue(), "out");
+        send(datapk, "out");
         m_tcb->m_sent++;
         m_tcb->m_nextTxSequence++; // ! After the loop m_nextTxSequence is the next packet seq
     }
@@ -102,10 +111,15 @@ Socket::SendPendingData()
 void
 Socket::Recv(Packet* pk)
 {
+    //! FIXME The socket receives a data packet and sends it back
+    //! it doesn't care where the packet comes from
     m_destAddress = pk->getSrcAddr();
     // do some check
     ASSERT(m_addr == pk->getDestAddr());
     ASSERT(m_groupAddr == pk->getGroupAddr());
+    if (m_addr != pk->getDestAddr()) {
+        EV << COLOR(bgB::red) << "Incorrect address, but still ack it."<< END;
+    }
     auto packetKind = pk->getKind();
     if (packetKind == PacketType::DATA) { // data packet
         ReceivedData(pk);
