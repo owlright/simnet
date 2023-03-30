@@ -29,7 +29,7 @@ protected:
      */
     virtual void CongestionAvoidance(TcpSocketState* tcb);
 
-private:
+protected:
     uint32_t m_cWndCnt{0}; //!< Linear increase counter
 
 };

@@ -49,7 +49,7 @@ TcpDctcp::GetSsThresh(const TcpSocketState* tcb, uint32_t bytesInFlight)
     return newWin;
 }
 
-uint32_t
+/*uint32_t
 TcpDctcp::SlowStart(TcpSocketState* tcb)
 {
     if (isAggressive) {
@@ -69,6 +69,47 @@ TcpDctcp::SlowStart(TcpSocketState* tcb)
     }
     EV << "After slow start, m_cWnd " << tcb->m_cWnd << " m_ssThresh " << tcb->m_ssThresh << endl;
     return 1;
+}*/
+
+void
+TcpDctcp::CongestionAvoidance(TcpSocketState* tcb) {
+    if (isAggressive) {
+        TcpReno::CongestionAvoidance(tcb); // use default
+    }
+    else { // not aggressive and cwnd bigger than aggWin, slow down
+        uint32_t w;
+        if (tcb->m_cWnd < tcb->m_aggWin)
+            w = tcb->m_cWnd;
+        else
+            w = tcb->m_cWnd * tcb->m_aggNum;
+
+        // Floor w to 1 if w == 0
+        if (w == 0)
+        {
+            w = 1;
+        }
+
+        EV_DEBUG << "w in segments " << w << " m_cWndCnt " << m_cWndCnt << endl;
+        if (m_cWndCnt >= w)
+        {
+            m_cWndCnt = 0;
+            tcb->m_cWnd += 1;
+            EV_DEBUG << "Adding 1 segment to m_cWnd" << endl;
+        }
+
+        m_cWndCnt += 1;
+        EV_DEBUG << "Adding 1 segment to m_cWndCnt";
+        if (m_cWndCnt >= w)
+        {
+            uint32_t delta = m_cWndCnt / w;
+
+            m_cWndCnt -= delta * w;
+            tcb->m_cWnd += delta * 1;
+            EV_DEBUG << "Subtracting delta * w from m_cWndCnt " << delta * w << endl;
+        }
+        EV_DEBUG << "At end of CongestionAvoidance(), m_cWnd: " << tcb->m_cWnd
+                                                                 << " m_cWndCnt: " << m_cWndCnt << endl;
+    }
 }
 
 void

@@ -11,7 +11,8 @@ using namespace omnetpp;
 class TcpDctcp : public TcpReno {
 public:
     //Documented in base class
-    uint32_t SlowStart(TcpSocketState* tcb) override;
+//    uint32_t SlowStart(TcpSocketState* tcb) override;
+    void CongestionAvoidance(TcpSocketState* tcb) override;
     uint32_t GetSsThresh(const TcpSocketState* tcb, uint32_t bytesInFlight) override;
     void PktsAcked(TcpSocketState* tcb) override;
     // void CwndEvent(TcpSocketState* tcb, const TcpSocketState::TcpCAEvent_t newState) override;
