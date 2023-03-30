@@ -233,6 +233,43 @@ void Controller::prepareAggrGroup(const std::string& name) {
             tree->clear();
         }
         delete tree;
+    } else if (name=="manual") {
+        // ! parse aggr group info
+        auto groupAggSenders = check_and_cast<cValueArray*>(par("aggSenders").objectValue());
+        auto groupAggRouters = check_and_cast<cValueArray*>(par("aggRouters").objectValue());
+        auto numberOfGroup = groupAggRouters->size();
+
+        auto groupAggFanInDegree = check_and_cast<cValueArray*>(par("aggFanInDegree").objectValue());
+        auto groupAggMaxBufferSize = check_and_cast<cValueArray*>(par("aggMaxBufferSize").objectValue());
+        // ! only targets is single
+        auto groupTargets = check_and_cast<cValueArray*>(par("targets").objectValue())->asIntVector();
+
+        if (groupAggFanInDegree->size()!=numberOfGroup
+        ||groupTargets.size()!=numberOfGroup
+        ||groupAggMaxBufferSize->size()!=numberOfGroup
+        ||groupAggSenders->size()!=numberOfGroup) {
+            throw cRuntimeError("number of aggr group is not equal.");
+        }
+
+        for (int i = 0; i < numberOfGroup; i++) {
+            auto aggSenders = check_and_cast<cValueArray*>( (groupAggSenders->get(i)).objectValue() )->asIntVector();
+
+            auto aggRouter = check_and_cast<cValueArray*>( (groupAggRouters->get(i)).objectValue() )->asIntVector(); //todo this is too tedious!
+            auto aggFanInDegree = check_and_cast<cValueArray*>( (groupAggFanInDegree->get(i)).objectValue() )->asIntVector();
+            auto aggBuffer = check_and_cast<cValueArray*>( (groupAggMaxBufferSize->get(i)).objectValue() )->asIntVector();
+            auto root = groupTargets[i];
+            for (auto s:aggSenders) {
+                aggrgroup[root].push_back(s);
+            }
+            EV << "group "<< root << " aggregate on "<< aggRouter << " with number: " << aggFanInDegree << endl;
+            auto numberOfRouter = aggRouter.size();
+            if (numberOfRouter != aggFanInDegree.size())
+                throw cRuntimeError("router number and aggr number not match!");
+            for (int j = 0; j < numberOfRouter; j++) {
+                aggrNumberOnRouter[root][aggRouter[j]] = aggFanInDegree[j];
+                aggrBufferOnRouter[root][aggRouter[j]] = aggBuffer[j];
+            }
+        }
     }
 }
 
@@ -250,33 +287,7 @@ void Controller::initialize(int stage)
         topo->extractByProperty("node");
         EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
         setNodes(topo);
-        // ! parse aggr group info
-        auto groupAggRouter = check_and_cast<cValueArray*>(par("aggrouter").objectValue());
-        auto numberOfGroup = groupAggRouter->size();
 
-        auto groupAggrNumber = check_and_cast<cValueArray*>(par("aggrnumber").objectValue());
-        auto groupAggrBuffer = check_and_cast<cValueArray*>(par("aggrbuffer").objectValue());
-        auto targets = check_and_cast<cValueArray*>(par("targets").objectValue())->asIntVector();
-
-        if (groupAggrNumber->size()!=numberOfGroup||targets.size()!=numberOfGroup||groupAggrBuffer->size()!=numberOfGroup) {
-            throw cRuntimeError("number of aggr group is not equal.");
-        }
-
-        for (int i = 0; i < numberOfGroup; i++) {
-            auto aggrRouter = check_and_cast<cValueArray*>( (groupAggRouter->get(i)).objectValue() )->asIntVector(); //todo this is too tedious!
-            auto aggrNumber = check_and_cast<cValueArray*>( (groupAggrNumber->get(i)).objectValue() )->asIntVector();
-            auto aggrBuffer = check_and_cast<cValueArray*>( (groupAggrBuffer->get(i)).objectValue() )->asIntVector();
-            auto root = targets[i];
-//            aggrNumberOnRouter[root][aggrRouter[i]] = aggrNumber[i];
-            EV << "group "<< root << " aggregate on "<< aggrRouter << " with number: " << aggrNumber << endl;
-            auto numberOfRouter = aggrRouter.size();
-            if (numberOfRouter != aggrNumber.size())
-                throw cRuntimeError("router number and aggr number not match!");
-            for (int j = 0; j < numberOfRouter; j++) {
-                aggrNumberOnRouter[root][aggrRouter[j]] = aggrNumber[j];
-                aggrBufferOnRouter[root][aggrRouter[j]] = aggrBuffer[j];
-            }
-        }
 
     }
     if (stage == Stage::INITSTAGE_LOCAL) {
