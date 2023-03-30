@@ -7,12 +7,13 @@ module FlowApp like IApp
         int destAddress = default(-1);
         int groupAddress = default(-1);
         int packetLength @unit(B) = default(1000B);
+        int aggFlowLength @unit(B) = default(10MB);
         //        string destAddress = default(""); // list of IP addresses, separated by spaces ("": don't send)
         volatile int flowLength @unit(B) = default(0B);
 //        int messageLength @unit(B) = default(1000B); // length of messages to generate, in bytes
 
         // work on interval mode by default
-        volatile double arrivalInterval @unit(s) = default(1s);
+        volatile double arrivalInterval @unit(s) = default(1ms); // FIXME only for aggrgroup now
 
         // work on load mode if load == 0
         double load = default(0);
