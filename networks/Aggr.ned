@@ -1,6 +1,7 @@
 package range.networks;
 
 import range.mod.Host;
+import range.mod.Switch;
 import ned.DatarateChannel;
 import range.mod.Controller;
 
@@ -18,55 +19,43 @@ network AggrDumbell
 
     submodules:
         controller: Controller;
-        group1[2]: Host {
-            @node;
+        group1[8]: Host {
             address = index;
-            app.destAddress = 40;
-            app.groupAddress = app.destAddress;
             globalController = parent.globalController;
         }
-        aggr1: Host {
-            @node;
-            address = 10;
+        aggr1: Switch {
+            address = 100;
             globalController = parent.globalController;
         }
-        group2[4]: Host {
-            @node;
-            address = index+2;
-            app.destAddress = 41;
-            app.groupAddress = app.destAddress;
+        group2[16]: Host {
+            address = index+8;
             globalController = parent.globalController;
         }
-        aggr2: Host {
-            @node;
-            address = 20;
+        aggr2: Switch {
+            address = 200;
             globalController = parent.globalController;
         }
-        gate: Host {
-            @node;
-            address = 30;
+        gate: Switch {
+            address = 300;
             globalController = parent.globalController;
         }
-        gateSink: Host {
-            @node;
-            address = 31;
+        gateSink: Switch {
+            address = 301;
             globalController = parent.globalController;
         }
         sink1: Host {
-            @node;
             address = 40;
             globalController = parent.globalController;
         }
         sink2: Host {
-            @node;
             address = 41;
             globalController = parent.globalController;
         }
     connections:
-        for i=0..1 {
+        for i=0..7 {
             group1[i].port++  <--> C <--> aggr1.port++;
         }
-        for i=0..3 {
+        for i=0..15 {
             group2[i].port++  <--> C <--> aggr2.port++;
         }
         aggr1.port++  <--> C <-->  gate.port++;
@@ -153,11 +142,9 @@ network AggrNto1
         sender[numberOfSenders]: Host {
             @node;
             address = index;
-            app.destAddress = parent.numberOfSenders;
-            app.groupAddress = app.destAddress;
             globalController = parent.globalController;
         }
-        gate: Host {
+        gate: Switch {
             @node;
             address =666;
             globalController = parent.globalController;
