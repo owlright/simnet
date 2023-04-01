@@ -142,7 +142,9 @@ void Routing::handleMessage(cMessage *msg)
                      // record the children of current aggregation node
                      aggrGroup->insertChildNode(pk->getSrcAddr());
                  }
-                 if (aggrGroup->isRecordedAggr(seq)) {
+                 if (aggrGroup->isRecordedAggr(seq) || // recorded already
+                         (aggrGroup->isGroupHasBuffer() && !aggrGroup->isRecordedNotAggr(seq))) // the first time we see the seq and there is space to store
+                 {
                      auto aggpacket = aggrGroup->aggrPacket(seq, pk);
                      // * when a round finish, then we have the aggr packet otherwise just update info
                      if (aggpacket != nullptr) { // ! all packets are aggregated
@@ -160,10 +162,10 @@ void Routing::handleMessage(cMessage *msg)
                          send(aggpacket, "out", outGateIndex);
                      }
                  }
-                 else  if (aggrGroup->isGroupHasBuffer() && !aggrGroup->isRecordedNotAggr(seq) ) {
-                     // the first time we see the seq and there is space to store
-                     aggrGroup->aggrPacket(seq, pk); //just update info
-                 }
+//                 else  if (aggrGroup->isGroupHasBuffer() && !aggrGroup->isRecordedNotAggr(seq) ) {
+//
+//                     aggrGroup->aggrPacket(seq, pk); //just update info
+//                 }
                  else if (aggrGroup->isRecordedNotAggr(seq) || !aggrGroup->isGroupHasBuffer()){
                      // nospace or the seq is set to noaggr, just send it out
                      aggrGroup->recordNotAggr(seq);
@@ -171,6 +173,9 @@ void Routing::handleMessage(cMessage *msg)
                      emit(outputIfSignal, outGateIndex);
                      emit(outputPacketSignal, pk);
                      send(pk, "out", outGateIndex); // do the same as a unicast packet
+                 }
+                 else {
+                     throw cRuntimeError("What do I miss?");
                  }
 
              } else if (pk->getKind()==PacketType::ACK) {
