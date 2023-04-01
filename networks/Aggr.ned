@@ -13,13 +13,13 @@ network AggrDumbell
     types:
         channel C extends DatarateChannel
         {
-            delay = 2us;
+            delay = 10us;
             datarate = 10Gbps;
         }
 
     submodules:
         controller: Controller;
-        group1[8]: Host {
+        group1[1]: Host {
             address = index;
             globalController = parent.globalController;
         }
@@ -52,9 +52,9 @@ network AggrDumbell
             globalController = parent.globalController;
         }
     connections:
-        for i=0..7 {
-            group1[i].port++  <--> C <--> aggr1.port++;
-        }
+//        for i=0..7 {
+            group1[0].port++  <--> C <--> aggr1.port++;
+//        }
         for i=0..15 {
             group2[i].port++  <--> C <--> aggr2.port++;
         }
@@ -65,66 +65,6 @@ network AggrDumbell
         gateSink.port++ <--> C <--> sink2.port++;
 }
 
-network AggrIncast
-{
-    parameters:
-        string globalController = fullName()+".controller";
-
-    types:
-        channel C extends DatarateChannel
-        {
-            delay = 2us;
-            datarate = 10Gbps;
-        }
-
-    submodules:
-        controller: Controller;
-        group1[2]: Host {
-            @node;
-            address = index;
-            app.destAddress = 40;
-            app.groupAddress = app.destAddress;
-            globalController = parent.globalController;
-        }
-        group2[8]: Host {
-            @node;
-            address = index+2;
-            app.destAddress = 41;
-            app.groupAddress = app.destAddress;
-            globalController = parent.globalController;
-        }
-        gate: Host {
-            @node;
-            address = 30;
-            globalController = parent.globalController;
-        }
-        gateSink: Host {
-            @node;
-            address = 31;
-            globalController = parent.globalController;
-        }
-        sink1: Host {
-            @node;
-            address = 40;
-            globalController = parent.globalController;
-        }
-        sink2: Host {
-            @node;
-            address = 41;
-            globalController = parent.globalController;
-        }
-    connections:
-        for i=0..1 {
-            group1[i].port++  <--> C <--> gate.port++;
-        }
-        for i=0..7 {
-            group2[i].port++  <--> C <--> gate.port++;
-        }
-		gate.port++ <--> C <--> gateSink.port++;
-        gateSink.port++ <--> C <-->sink1.port++;
-        gateSink.port++ <--> C <-->sink2.port++;
-
-}
 
 network AggrNto1
 {
