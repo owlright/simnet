@@ -1,154 +1,107 @@
-#
-# OMNeT++/OMNEST Makefile for routing
-#
-# This file was generated with the command:
-#  opp_makemake -f --deep
-#
+PROJECT_NAME := mnet
+PROJECT_SRC := src/mnet
+#PROJECT_MAKEFILE := src/Makefile
+PROJECT_TARGET := src/lib$(PROJECT_NAME).dll
+PROJECT_TARGET_DBG := src/lib$(PROJECT_NAME)_dbg.dll
+# I don't want automatically find these files.
+# PROJECT_SRC_FILES := $(shell find $(PROJECT_SRC) -name '*.cc' -or -name '*.h' -or -name '*.msg')
 
-# Name of target to be created (-o option)
-TARGET_DIR = .
-TARGET_NAME = routing$(D)
-TARGET = $(TARGET_NAME)$(EXE_SUFFIX)
-TARGET_IMPLIB = $(TARGET_NAME)$(IMPLIB_SUFFIX)
-TARGET_IMPDEF = $(TARGET_NAME)$(IMPDEF_SUFFIX)
-TARGET_FILES = $(TARGET_DIR)/$(TARGET)
-
-# User interface (uncomment one) (-u option)
-USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(QTENV_LIBS) $(CMDENV_LIBS)
-#USERIF_LIBS = $(CMDENV_LIBS)
-#USERIF_LIBS = $(QTENV_LIBS)
-
-# C++ include paths (with -I)
-INCLUDE_PATH =
-
-# Additional object and library files to link with
-EXTRA_OBJS =
-
-# Additional libraries (-L, -l options)
-LIBS =
-
-# Output directory
-PROJECT_OUTPUT_DIR = out
-PROJECTRELATIVE_PATH =
-O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
-
-# Object files for local .cc, .msg and .sm files
-OBJS = \
-    $O/app/App.o \
-    $O/app/FlowApp.o \
-    $O/builder/netbuilder.o \
-    $O/common/ResultFilters.o \
-    $O/distribution/CdfDistribution.o \
-    $O/distribution/NedFunctions.o \
-    $O/mod/AggrGroupInfo.o \
-    $O/mod/Controller.o \
-    $O/mod/L2Queue.o \
-    $O/mod/Routing.o \
-    $O/mod/socket.o \
-    $O/mod/cong/tcp-dctcp.o \
-    $O/mod/cong/tcp-reno.o \
-    $O/trafficpattern/SimpleTrafficPattern.o \
-    $O/mod/Packet_m.o
-
-# Message files
-MSGFILES = \
-    mod/Packet.msg
-
-# SM files
-SMFILES =
-
-#------------------------------------------------------------------------------
-
-# Pull in OMNeT++ configuration (Makefile.inc)
-
-ifneq ("$(OMNETPP_CONFIGFILE)","")
-CONFIGFILE = $(OMNETPP_CONFIGFILE)
+# default target
+ifeq ($(MODE),debug)
+  PROJECT_TARGET_DEFAULT = $(PROJECT_TARGET_DBG)
 else
-CONFIGFILE = $(shell opp_configfilepath)
+  PROJECT_TARGET_DEFAULT = $(PROJECT_TARGET)
 endif
 
-ifeq ("$(wildcard $(CONFIGFILE))","")
-$(error Config file '$(CONFIGFILE)' does not exist -- add the OMNeT++ bin directory to the path so that opp_configfilepath can be found, or set the OMNETPP_CONFIGFILE variable to point to Makefile.inc)
-endif
+# targets don't have deps, list them here
+.PHONY: makefiles checkmakefiles
 
-include $(CONFIGFILE)
+all: checkmakefiles $(PROJECT_TARGET_DEFAULT)
+	@echo 'compile ${PROJECT_TARGET_DEFAULT} finished!';\
 
-# Simulation kernel and user interface libraries
-OMNETPP_LIBS = $(OPPMAIN_LIB) $(USERIF_LIBS) $(KERNEL_LIBS) $(SYS_LIBS)
 
-COPTS = $(CFLAGS) $(IMPORT_DEFINES)  $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
-MSGCOPTS = $(INCLUDE_PATH)
-SMCOPTS =
+clean: checkmakefiles
+	cd src && $(MAKE) clean
 
-# we want to recompile everything if COPTS changes,
-# so we store COPTS into $COPTS_FILE (if COPTS has changed since last build)
-# and make the object files depend on it
-COPTS_FILE = $O/.last-copts
-ifneq ("$(COPTS)","$(shell cat $(COPTS_FILE) 2>/dev/null || echo '')")
-  $(shell $(MKPATH) "$O")
-  $(file >$(COPTS_FILE),$(COPTS))
-endif
+cleanall: checkmakefiles
+	cd src && $(MAKE) MODE=release clean
+	cd src && $(MAKE) MODE=debug clean
+	rm -f src/Makefile
 
-#------------------------------------------------------------------------------
-# User-supplied makefile fragment(s)
--include makefrag
+checkmakefiles:
+	@if [ ! -f src/Makefile ]; then \
+	echo; \
+	echo '========================================================================'; \
+	echo 'src/Makefile does not exist. Please use "make makefiles" to generate it!'; \
+	echo '========================================================================'; \
+	echo; \
+	exit 1; \
+	fi
 
-#------------------------------------------------------------------------------
+# make share library
+makefiles:
+	@cd src && opp_makemake --make-so -f --deep -o $(PROJECT_NAME) -O out -I.
 
-# Main target
-all: $(TARGET_FILES)
+$(PROJECT_TARGET): checkmakefiles
+	@cd src && $(MAKE) -j $(shell nproc)
+#	touch $(PROJECT_TARGET)
 
-$(TARGET_DIR)/% :: $O/%
-	@mkdir -p $(TARGET_DIR)
-	$(Q)$(LN) $< $@
-ifeq ($(TOOLCHAIN_NAME),clang-msabi)
-	-$(Q)-$(LN) $(<:%.dll=%.lib) $(@:%.dll=%.lib) 2>/dev/null
+$(PROJECT_TARGET_DBG): checkmakefiles
+	@cd src && $(MAKE) MODE=debug -j $(shell nproc)
+#	touch $(PROJECT_TARGET_DBG)
 
-$O/$(TARGET_NAME).pdb: $O/$(TARGET)
-endif
+# run simulation
+MAKEFLAGS += --no-builtin-rules
+.SECONDARY:
+.SUFFIXES:
 
-$O/$(TARGET): $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile $(CONFIGFILE)
-	@$(MKPATH) $O
-	@echo Creating executable: $@
-	$(Q)$(CXX) $(LDFLAGS) -o $O/$(TARGET) $(OBJS) $(EXTRA_OBJS) $(AS_NEEDED_OFF) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS)
+,:= ,
+space:= $() $()
 
-.PHONY: all clean cleanall depend msgheaders smheaders
+OPP_RUN_OPTIONS := -m \
+--cmdenv-redirect-output=false \
+--cmdenv-log-level=warn \
+-n simulations \
+-n $(PROJECT_SRC) -l $(PROJECT_TARGET)
 
-# disabling all implicit rules
-.SUFFIXES :
+OPP_RUN_DBG_OPTIONS := -m \
+--cmdenv-redirect-output=false \
+--cmdenv-log-level=warn \
+--debug-on-errors=true \
+-n simulations \
+-n $(PROJECT_SRC) -l $(PROJECT_TARGET_DBG)
 
-$O/%.o: %.cc $(COPTS_FILE) | msgheaders smheaders
-	@$(MKPATH) $(dir $@)
-	$(qecho) "$<"
-	$(Q)$(CXX) -c $(CXXFLAGS) $(COPTS) -o $@ $<
+define SIM_template
+$(eval SIM_INI_FILE := simulations/$(1)/omnetpp.ini)
 
-%_m.cc %_m.h: %.msg
-	$(qecho) MSGC: $<
-	$(Q)$(MSGC) -s _m.cc -MD -MP -MF $O/$(basename $<)_m.h.d $(MSGCOPTS) $?
+$(1)-%: $(PROJECT_TARGET)
+	opp_runall -j $(shell nproc) \
+	opp_run $(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_OPTIONS)
 
-%_sm.cc %_sm.h: %.sm
-	$(qecho) SMC: $<
-	$(Q)$(SMC) -c++ -suffix cc $(SMCOPTS) $?
+	opp_scavetool export -o simulations/$(1)/results/$$*.csv -F CSV-R --type vs --allow-nonmatching \
+	simulations/$(1)/results/$$**.vec \
+	simulations/$(1)/results/$$**.sca
 
-msgheaders: $(MSGFILES:.msg=_m.h)
+	$(RM) \
+	simulations/$(1)/results/$$**.vec \
+	simulations/$(1)/results/$$**.vci \
+	simulations/$(1)/results/$$**.sca
 
-smheaders: $(SMFILES:.sm=_sm.h)
+	python3 simulations/$(1)/plot.py $$*
 
-clean:
-	$(qecho) Cleaning $(TARGET)
-	$(Q)-rm -rf $O
-	$(Q)-rm -f $(TARGET_FILES)
-	$(Q)-rm -f $(call opp_rwildcard, . , *_m.cc *_m.h *_sm.cc *_sm.h)
+$(1)-%-plt:
+	python3 simulations/$(1)/plot.py $$*
 
-cleanall:
-	$(Q)$(CLEANALL_COMMAND)
-	$(Q)-rm -rf $(PROJECT_OUTPUT_DIR)
+$(1)-%-qt: $(PROJECT_TARGET)
+	opp_run $(SIM_INI_FILE) -c $$* -u Qtenv $(OPP_RUN_OPTIONS) --**.statistic-recording=false --output-scalar-file=/dev/null --output-scalar-file-append=true
 
-help:
-	@echo "$$HELP_SYNOPSYS"
-	@echo "$$HELP_TARGETS"
-	@echo "$$HELP_VARIABLES"
-	@echo "$$HELP_EXAMPLES"
+$(1)-%-dbg: $(PROJECT_TARGET_DBG)
+	@echo "\e[1;34m[\"$(subst $(space),\"$(,)$(space)\",$(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_DBG_OPTIONS) --**.statistic-recording=false --output-scalar-file=/dev/null --output-scalar-file-append=true)\"]\e[0m"
+	opp_run_dbg $(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_DBG_OPTIONS) --**.statistic-recording=false --output-scalar-file=/dev/null --output-scalar-file-append=true
 
-# include all dependencies
--include $(OBJS:%=%.d) $(MSGFILES:%.msg=$O/%_m.h.d)
+.PHONY: $(1)-% $(1)-%-plt $(1)-%-qt $(1)-%-dbg
+endef
+
+$(foreach p, $(shell find simulations/* -maxdepth 0 -type d ! -name __pycache__ -exec basename {} \;), \
+  $(eval $(call SIM_template,$(p))) \
+)
