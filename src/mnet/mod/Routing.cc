@@ -18,7 +18,7 @@
 #include "../common/Print.h"
 #include "../common/ModuleAccess.h"
 #include "../mod/Controller.h"
-#include "../mod/AggrGroupInfo.h"
+// #include "../mod/AggrGroupInfo.h"
 using namespace omnetpp;
 
 /**
@@ -33,7 +33,7 @@ private:
     RoutingTable rtable;
     typedef std::map<int, std::vector<int> > AggrRoutingTable;
     AggrRoutingTable aggrChildren;
-    std::map<int, AggrGroupInfo*> aggrGroupTable;
+    // std::map<int, AggrGroupInfo*> aggrGroupTable;
     opp_component_ptr<Controller> controller;
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
@@ -43,10 +43,10 @@ private:
     // std::map<int, int> aggrNumber;
 
 private:
-    bool isAggrGroupAdded(int address) const;
-    bool isAggrGroup(int address) const;
-    AggrGroupInfo* getAggrGroup(int address) const;
-    AggrGroupInfo* getOrAddGroup(int address);
+    // bool isAggrGroupAdded(int address) const;
+    // bool isAggrGroup(int address) const;
+    // AggrGroupInfo* getAggrGroup(int address) const;
+    // AggrGroupInfo* getOrAddGroup(int address);
     int getRouteGateIndex(int srcAddr, int destAddr);
 
 protected:
@@ -100,38 +100,39 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr)
     }
 }
 
-bool Routing::isAggrGroupAdded(int address) const
-{
-    return aggrGroupTable.find(address)!=aggrGroupTable.end();
-}
+// bool Routing::isAggrGroupAdded(int address) const
+// {
+//     return aggrGroupTable.find(address)!=aggrGroupTable.end();
+// }
 
-bool Routing::isAggrGroup(int address) const
-{
-    return controller->isAggrGroupOnRouter(address, myAddress);
-}
+// bool Routing::isAggrGroup(int address) const
+// {
+//     return controller->isAggrGroupOnRouter(address, myAddress);
+// }
 
-AggrGroupInfo* Routing::getOrAddGroup(int address) {
-    if (!isAggrGroupAdded(address)) {// ! the first packet of the first round
-        auto numberOfChildren = controller->getGroupAggrNum(address, myAddress);
-        auto bufferSize = controller->getGroupAggrBuffer(address, myAddress);
-        aggrGroupTable[address] = new AggrGroupInfo(address, numberOfChildren, bufferSize);
-        EV << "Aggregating group " << address << " Buffer size: " << bufferSize << " with " << numberOfChildren << " children." << endl;
+// AggrGroupInfo* Routing::getOrAddGroup(int address) {
+//     if (!isAggrGroupAdded(address)) {// ! the first packet of the first round
+//         auto numberOfChildren = controller->getGroupAggrNum(address, myAddress);
+//         auto bufferSize = controller->getGroupAggrBuffer(address, myAddress);
+//         aggrGroupTable[address] = new AggrGroupInfo(address, numberOfChildren, bufferSize);
+//         EV << "Aggregating group " << address << " Buffer size: " << bufferSize << " with " << numberOfChildren << " children." << endl;
 
-    }
+//     }
 
-   return getAggrGroup(address);
-}
+//    return getAggrGroup(address);
+// }
 
-AggrGroupInfo* Routing::getAggrGroup(int address) const {
-    return aggrGroupTable.at(address);
-}
+// AggrGroupInfo* Routing::getAggrGroup(int address) const {
+//     return aggrGroupTable.at(address);
+// }
 
 void Routing::handleMessage(cMessage *msg)
 {
     Packet *pk = check_and_cast<Packet *>(msg);
     int srcAddr = pk->getSrcAddr();
     int destAddr = pk->getDestAddr();
-    int groupAddr = pk->getGroupAddr();
+    // int groupAddr = pk->getGroupAddr();
+    /*
     if (getParentModule()->getProperties()->get("switch") != nullptr) { // I'm the router
         if (isAggrGroup(groupAddr)) {
             // ! Deal with aggr packet here
@@ -203,7 +204,7 @@ void Routing::handleMessage(cMessage *msg)
              }
              return; // ! do not forget to return here.
         }
-    }
+    } */
     // ! Deal with unicast packet
 
     if (destAddr == myAddress) {
@@ -220,7 +221,7 @@ void Routing::handleMessage(cMessage *msg)
         return;
     }
     EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-    pk->setHopCount(pk->getHopCount()+1);
+    // pk->setHopCount(pk->getHopCount()+1);
     emit(outputIfSignal, outGateIndex);
     emit(outputPacketSignal, pk);
     send(pk, "out", outGateIndex);

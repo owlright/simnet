@@ -1,4 +1,4 @@
-package mnet.networks;
+package mnet.simulations.networks;
 
 import mnet.mod.Host;
 import ned.DatarateChannel;
