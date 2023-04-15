@@ -7,7 +7,7 @@
 // `license' for details on this and other legal matters.
 //
 
-package range.builder;
+package mnet.builder;
 
 //
 // Dynamically sets up a network, with the topology coming from text files

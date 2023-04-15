@@ -1,4 +1,4 @@
-package range.mod.cong;
+package mnet.mod.cong;
 
 moduleinterface Cong
 {

@@ -1,5 +1,5 @@
-package range.app;
-import range.mod.Socket;
+package mnet.app;
+import mnet.mod.Socket;
 module FlowApp like IApp
 {
     parameters:
@@ -20,12 +20,12 @@ module FlowApp like IApp
         int flowLengthMean @unit(B) = default(0B);
         @class(FlowApp);
         @display("bgb=170,146");
-        
+
         @signal[flowRealCompletionTime](type="simtime_t");
         @signal[flowIdealCompletionTime](type="simtime_t");
         @statistic[flowRealCompletionTime](title="realFCT";unit=s;record=vector,mean,max;interpolationmode=none);
         @statistic[flowIdealCompletionTime](title="idealFCT";unit=s;record=vector,mean,max;interpolationmode=none);
-        
+
     gates:
         input in;
         output out;

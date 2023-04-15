@@ -1,7 +1,7 @@
-package range.networks;
+package mnet.networks;
 
-import range.mod.Host;
-import range.mod.Controller;
+import mnet.mod.Host;
+import mnet.mod.Controller;
 import ned.DatarateChannel;
 // one sender and one receiver
 // a router with different datarate

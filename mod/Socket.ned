@@ -13,8 +13,8 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-package range.mod;
-import range.mod.cong.Cong;
+package mnet.mod;
+import mnet.mod.cong.Cong;
 module Socket {
     parameters:
 //        volatile double jitter @unit(s) = default(exponential(1us));
