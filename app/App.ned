@@ -7,8 +7,8 @@
 // `license' for details on this and other legal matters.
 //
 
-package range.app;
-import range.mod.Socket;
+package mnet.app;
+import mnet.mod.Socket;
 //
 // Application model to generate traffic for the network.
 //

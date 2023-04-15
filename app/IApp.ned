@@ -7,7 +7,7 @@
 // `license' for details on this and other legal matters.
 //
 
-package range.app;
+package mnet.app;
 
 //
 // Interface for network traffic generator modules that

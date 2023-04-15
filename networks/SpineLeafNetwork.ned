@@ -1,8 +1,8 @@
-package range.networks;
-import range.mod.Host;
-import range.mod.Switch;
+package mnet.networks;
+import mnet.mod.Host;
+import mnet.mod.Switch;
 import ned.DatarateChannel;
-import range.mod.Controller;
+import mnet.mod.Controller;
 
 network SpineLeafNetwork {
     parameters:

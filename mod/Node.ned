@@ -8,8 +8,8 @@
 //
 
 
-package range.mod;
-import range.app.IApp;
+package mnet.mod;
+import mnet.app.IApp;
 //
 // A "Host" consists of a Routing plus an App module which represents the
 // aggregate traffic of the subnets connected to that router.

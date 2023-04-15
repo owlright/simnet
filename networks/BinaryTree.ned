@@ -1,8 +1,8 @@
-package range.networks;
+package mnet.networks;
 
-import range.mod.Host;
+import mnet.mod.Host;
 import ned.DatarateChannel;
-import range.mod.Controller;
+import mnet.mod.Controller;
 
 network BinaryTree
 {
