@@ -29,13 +29,16 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
 OBJS = \
-    $O/builder/netbuilder.o \
     $O/distribution/CdfDistribution.o \
     $O/distribution/NedFunctions.o \
     $O/mnet/app/UnicastApp.o \
+    $O/mnet/app/UnicastEchoApp.o \
+    $O/mnet/app/UnicastSenderApp.o \
     $O/mnet/common/ResultFilters.o \
+    $O/mnet/mod/Connection.o \
     $O/mnet/mod/Controller.o \
     $O/mnet/mod/L2Queue.o \
+    $O/mnet/mod/MessageDispatcher.o \
     $O/mnet/mod/Routing.o \
     $O/mnet/trafficpattern/SimpleTrafficPattern.o \
     $O/mnet/mod/Packet_m.o
@@ -95,6 +98,8 @@ endif
 
 #------------------------------------------------------------------------------
 # User-supplied makefile fragment(s)
+-include makefrag
+
 #------------------------------------------------------------------------------
 
 # Main target

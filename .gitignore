@@ -6,5 +6,6 @@ out/
 results/
 .vscode/
 .settings/
-routing
-routing_dbg
+*.def
+*.dll
+*.dll.a
