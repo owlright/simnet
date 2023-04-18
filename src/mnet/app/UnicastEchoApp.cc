@@ -47,7 +47,7 @@ void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg
 cMessage *UnicastEchoApp::makeAckPacket(Connection *connection, Packet *pk)
 {
     char pkname[40];
-    sprintf(pkname, "ACK%d-to-%d-seq%u ", myAddr, pk->getDestAddr(), pk->getSeqNumber());
+    sprintf(pkname, "DATA-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, myAddr, pk->getDestAddr(), pk->getSeqNumber());
     pk->setKind(PacketType::ACK);
     pk->setName(pkname);
     pk->setECN(false);

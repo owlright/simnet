@@ -1,7 +1,6 @@
 #pragma once
-typedef int64_t IntAddress, B;
+typedef int64_t IntAddress, B, IdNumber;
 typedef uint16_t PortNumber;
-typedef uint64_t IdNumber;
 
 // using IntAddress = int64_t;
 // using PortNumber = uint16_t;

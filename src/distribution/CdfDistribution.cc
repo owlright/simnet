@@ -36,7 +36,8 @@ int64_t CdfDistribution::random(cRNG *rng) const {
             return l0 + (l1 - l0) / (p1 - p0) * (p - p0);
         }
     }
-    assert(false);
+    ASSERT(false);
+    return -1;
 }
 
 int64_t CdfDistribution::mean() const {

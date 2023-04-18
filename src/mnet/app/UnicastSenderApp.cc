@@ -64,7 +64,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 cMessage *UnicastSenderApp::makeDataPacket(Connection *connection, Packet *pk)
 {
     char pkname[40];
-    sprintf(pkname, "DATA-%d-to-%d-seq%u ", myAddr, destAddr, sentBytes);
+    sprintf(pkname, "DATA-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, myAddr, destAddr, sentBytes);
     pk->setName(pkname);
     pk->setECN(false);
     pk->setByteLength(messageLength);
