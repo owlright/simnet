@@ -7,7 +7,7 @@
 // `license' for details on this and other legal matters.
 //
 
-package mnet.mod;
+package simnet.mod;
 
 //
 // Models a router.

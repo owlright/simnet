@@ -7,7 +7,7 @@
 // `license' for details on this and other legal matters.
 //
 
-package mnet.app;
+package simnet.app;
 
 //
 // Interface for network traffic generator modules that

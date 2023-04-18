@@ -1,13 +1,13 @@
 #
-# OMNeT++/OMNEST Makefile for $(LIB_PREFIX)mnet
+# OMNeT++/OMNEST Makefile for $(LIB_PREFIX)simnet
 #
 # This file was generated with the command:
-#  opp_makemake --make-so -f --deep -o mnet -O out -I.
+#  opp_makemake --make-so -f --deep -o simnet -O out -I.
 #
 
 # Name of target to be created (-o option)
 TARGET_DIR = .
-TARGET_NAME = $(LIB_PREFIX)mnet$(D)
+TARGET_NAME = $(LIB_PREFIX)simnet$(D)
 TARGET = $(TARGET_NAME)$(SHARED_LIB_SUFFIX)
 TARGET_IMPLIB = $(TARGET_NAME)$(IMPLIB_SUFFIX)
 TARGET_IMPDEF = $(TARGET_NAME)$(IMPDEF_SUFFIX)
@@ -31,21 +31,21 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 OBJS = \
     $O/distribution/CdfDistribution.o \
     $O/distribution/NedFunctions.o \
-    $O/mnet/app/UnicastApp.o \
-    $O/mnet/app/UnicastEchoApp.o \
-    $O/mnet/app/UnicastSenderApp.o \
-    $O/mnet/common/ResultFilters.o \
-    $O/mnet/mod/Connection.o \
-    $O/mnet/mod/Controller.o \
-    $O/mnet/mod/L2Queue.o \
-    $O/mnet/mod/MessageDispatcher.o \
-    $O/mnet/mod/Routing.o \
-    $O/mnet/trafficpattern/SimpleTrafficPattern.o \
-    $O/mnet/mod/Packet_m.o
+    $O/simnet/app/UnicastApp.o \
+    $O/simnet/app/UnicastEchoApp.o \
+    $O/simnet/app/UnicastSenderApp.o \
+    $O/simnet/common/ResultFilters.o \
+    $O/simnet/mod/Connection.o \
+    $O/simnet/mod/Controller.o \
+    $O/simnet/mod/L2Queue.o \
+    $O/simnet/mod/MessageDispatcher.o \
+    $O/simnet/mod/Routing.o \
+    $O/simnet/trafficpattern/SimpleTrafficPattern.o \
+    $O/simnet/mod/Packet_m.o
 
 # Message files
 MSGFILES = \
-    mnet/mod/Packet.msg
+    simnet/mod/Packet.msg
 
 # SM files
 SMFILES =

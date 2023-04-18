@@ -1,8 +1,8 @@
-package mnet.simulations.networks;
+package simnet.simulations.networks;
 
-import mnet.mod.Host;
+import simnet.mod.Host;
 import ned.DatarateChannel;
-import mnet.mod.Controller;
+import simnet.mod.Controller;
 
 network BinaryTree
 {

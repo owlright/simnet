@@ -1,9 +1,9 @@
-package mnet.simulations.networks;
+package simnet.simulations.networks;
 
-import mnet.mod.Host;
-import mnet.mod.Switch;
+import simnet.mod.Host;
+import simnet.mod.Switch;
 import ned.DatarateChannel;
-import mnet.mod.Controller;
+import simnet.mod.Controller;
 
 network AggrDumbell
 {

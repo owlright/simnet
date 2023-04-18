@@ -1,4 +1,4 @@
-package mnet.app;
+package simnet.app;
 
 simple UnicastSenderApp like IApp {
     parameters:

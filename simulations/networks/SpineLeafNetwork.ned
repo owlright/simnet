@@ -1,8 +1,8 @@
-package mnet.simulations.networks;
-import mnet.mod.Host;
-import mnet.mod.Switch;
+package simnet.simulations.networks;
+import simnet.mod.Host;
+import simnet.mod.Switch;
 import ned.DatarateChannel;
-import mnet.mod.Controller;
+import simnet.mod.Controller;
 
 network SpineLeafNetwork {
     parameters:

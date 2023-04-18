@@ -8,8 +8,8 @@
 //
 
 
-package mnet.mod;
-import mnet.app.IApp;
+package simnet.mod;
+import simnet.app.IApp;
 //
 // A "Host" consists of a Routing plus an App module which represents the
 // aggregate traffic of the subnets connected to that router.

@@ -1,7 +1,7 @@
-package mnet.simulations.networks;
+package simnet.simulations.networks;
 
-import mnet.mod.Host;
-import mnet.mod.Controller;
+import simnet.mod.Host;
+import simnet.mod.Controller;
 import ned.DatarateChannel;
 // one sender and one receiver
 // a router with different datarate

@@ -1,4 +1,4 @@
-package mnet.mod;
+package simnet.mod;
 
 
 simple PortDispatcher

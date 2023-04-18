@@ -1,5 +1,5 @@
-PROJECT_NAME := mnet
-PROJECT_SRC := src/mnet
+PROJECT_NAME := simnet
+PROJECT_SRC := src/simnet
 #PROJECT_MAKEFILE := src/Makefile
 PROJECT_TARGET := src/lib$(PROJECT_NAME).dll
 PROJECT_TARGET_DBG := src/lib$(PROJECT_NAME)_dbg.dll

@@ -1,1 +1,1 @@
-package mnet.simulations;
+package simnet.simulations;
