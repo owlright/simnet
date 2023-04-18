@@ -17,12 +17,11 @@ moduleinterface IApp
 {
     parameters:
         int address;  // local node address
-        int destAddress;
+//        int destAddress;
 
     gates:
         input in;
         output out;
-        input socketIn @directIn;
 }
 
 

@@ -23,12 +23,12 @@ enum PacketType
 
 packet Packet
 {
+    int64_t connectionId;
     int64_t srcAddr;
     uint16_t localPort;
     int64_t destAddr;
     uint16_t destPort;
     int64_t seqNumber;
-    int16_t PacketType @enum(PacketType);
     bool ECN;
     bool ECE;
 }

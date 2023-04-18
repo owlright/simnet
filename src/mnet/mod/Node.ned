@@ -18,35 +18,47 @@ module Host
 {
     parameters:
         int address;
-        bool hasBuffer = default(false);
-//        string appType = default("");
+        int numApps = default(0);
+        //        bool hasBuffer = default(false);
+        //        string appType = default("");
         string globalController;
         @node;
         @host;
-        @display("i=abstract/server_s");
+        @display("i=abstract/server_s;bgb=276,324");
     gates:
         inout port[];
     submodules:
-        app: <default("App")> like IApp {
+        apps[numApps]: <default("UnicastSenderApp")> like IApp {
             parameters:
                 address = parent.address;
-                @display("p=140,60");
+                @display("p=140,31");
+        }
+        at: PortDispatcher {
+            parameters:
+            	@display("p=140,103");
+           	gates:
+           	    localIn[sizeof(parent.apps)];
+           	    localOut[sizeof(parent.apps)];
         }
         routing: Routing {
             parameters:
                 globalController = parent.globalController;
-                @display("p=140,130");
+                @display("p=140,161");
             gates:
                 in[sizeof(parent.port)];
                 out[sizeof(parent.port)];
         }
         queue[sizeof(port)]: L2Queue {
             parameters:
-                @display("p=80,200,row");
+                @display("p=140,236,row");
         }
     connections:
-        routing.localOut --> app.in;
-        routing.localIn <-- app.out;
+        for i=0..numApps-1 {
+            apps[i].out --> at.localIn[i];
+            apps[i].in <-- at.localOut[i];
+        }
+        at.out --> routing.localIn;
+        at.in <-- routing.localOut;
         for i=0..sizeof(port)-1 {
             routing.out[i] --> queue[i].in;
             routing.in[i] <-- queue[i].out;
@@ -58,8 +70,8 @@ module Switch
 {
     parameters:
         int address;
-        bool hasBuffer = default(false);
-//        string appType = default("");
+//        bool hasBuffer = default(false);
+        //        string appType = default("");
         string globalController;
         @node;
         @switch;
@@ -79,7 +91,7 @@ module Switch
             parameters:
                 @display("p=80,200,row");
         }
-    connections allowunconnected:
+    connections allowunconnected: // routing module's gates localIn/Out is not connected
         for i=0..sizeof(port)-1 {
             routing.out[i] --> queue[i].in;
             routing.in[i] <-- queue[i].out;

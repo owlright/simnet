@@ -177,12 +177,12 @@ Packet& Packet::operator=(const Packet& other)
 
 void Packet::copy(const Packet& other)
 {
+    this->connectionId = other.connectionId;
     this->srcAddr = other.srcAddr;
     this->localPort = other.localPort;
     this->destAddr = other.destAddr;
     this->destPort = other.destPort;
     this->seqNumber = other.seqNumber;
-    this->PacketType = other.PacketType;
     this->ECN = other.ECN;
     this->ECE = other.ECE;
 }
@@ -190,12 +190,12 @@ void Packet::copy(const Packet& other)
 void Packet::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::omnetpp::cPacket::parsimPack(b);
+    doParsimPacking(b,this->connectionId);
     doParsimPacking(b,this->srcAddr);
     doParsimPacking(b,this->localPort);
     doParsimPacking(b,this->destAddr);
     doParsimPacking(b,this->destPort);
     doParsimPacking(b,this->seqNumber);
-    doParsimPacking(b,this->PacketType);
     doParsimPacking(b,this->ECN);
     doParsimPacking(b,this->ECE);
 }
@@ -203,14 +203,24 @@ void Packet::parsimPack(omnetpp::cCommBuffer *b) const
 void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::omnetpp::cPacket::parsimUnpack(b);
+    doParsimUnpacking(b,this->connectionId);
     doParsimUnpacking(b,this->srcAddr);
     doParsimUnpacking(b,this->localPort);
     doParsimUnpacking(b,this->destAddr);
     doParsimUnpacking(b,this->destPort);
     doParsimUnpacking(b,this->seqNumber);
-    doParsimUnpacking(b,this->PacketType);
     doParsimUnpacking(b,this->ECN);
     doParsimUnpacking(b,this->ECE);
+}
+
+int64_t Packet::getConnectionId() const
+{
+    return this->connectionId;
+}
+
+void Packet::setConnectionId(int64_t connectionId)
+{
+    this->connectionId = connectionId;
 }
 
 int64_t Packet::getSrcAddr() const
@@ -263,16 +273,6 @@ void Packet::setSeqNumber(int64_t seqNumber)
     this->seqNumber = seqNumber;
 }
 
-int16_t Packet::getPacketType() const
-{
-    return this->PacketType;
-}
-
-void Packet::setPacketType(int16_t PacketType)
-{
-    this->PacketType = PacketType;
-}
-
 bool Packet::getECN() const
 {
     return this->ECN;
@@ -298,12 +298,12 @@ class PacketDescriptor : public omnetpp::cClassDescriptor
   private:
     mutable const char **propertyNames;
     enum FieldConstants {
+        FIELD_connectionId,
         FIELD_srcAddr,
         FIELD_localPort,
         FIELD_destAddr,
         FIELD_destPort,
         FIELD_seqNumber,
-        FIELD_PacketType,
         FIELD_ECN,
         FIELD_ECE,
     };
@@ -384,12 +384,12 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         field -= base->getFieldCount();
     }
     static unsigned int fieldTypeFlags[] = {
+        FD_ISEDITABLE,    // FIELD_connectionId
         FD_ISEDITABLE,    // FIELD_srcAddr
         FD_ISEDITABLE,    // FIELD_localPort
         FD_ISEDITABLE,    // FIELD_destAddr
         FD_ISEDITABLE,    // FIELD_destPort
         FD_ISEDITABLE,    // FIELD_seqNumber
-        FD_ISEDITABLE,    // FIELD_PacketType
         FD_ISEDITABLE,    // FIELD_ECN
         FD_ISEDITABLE,    // FIELD_ECE
     };
@@ -405,12 +405,12 @@ const char *PacketDescriptor::getFieldName(int field) const
         field -= base->getFieldCount();
     }
     static const char *fieldNames[] = {
+        "connectionId",
         "srcAddr",
         "localPort",
         "destAddr",
         "destPort",
         "seqNumber",
-        "PacketType",
         "ECN",
         "ECE",
     };
@@ -421,12 +421,12 @@ int PacketDescriptor::findField(const char *fieldName) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     int baseIndex = base ? base->getFieldCount() : 0;
-    if (strcmp(fieldName, "srcAddr") == 0) return baseIndex + 0;
-    if (strcmp(fieldName, "localPort") == 0) return baseIndex + 1;
-    if (strcmp(fieldName, "destAddr") == 0) return baseIndex + 2;
-    if (strcmp(fieldName, "destPort") == 0) return baseIndex + 3;
-    if (strcmp(fieldName, "seqNumber") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "PacketType") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "connectionId") == 0) return baseIndex + 0;
+    if (strcmp(fieldName, "srcAddr") == 0) return baseIndex + 1;
+    if (strcmp(fieldName, "localPort") == 0) return baseIndex + 2;
+    if (strcmp(fieldName, "destAddr") == 0) return baseIndex + 3;
+    if (strcmp(fieldName, "destPort") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "seqNumber") == 0) return baseIndex + 5;
     if (strcmp(fieldName, "ECN") == 0) return baseIndex + 6;
     if (strcmp(fieldName, "ECE") == 0) return baseIndex + 7;
     return base ? base->findField(fieldName) : -1;
@@ -441,12 +441,12 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         field -= base->getFieldCount();
     }
     static const char *fieldTypeStrings[] = {
+        "int64_t",    // FIELD_connectionId
         "int64_t",    // FIELD_srcAddr
         "uint16_t",    // FIELD_localPort
         "int64_t",    // FIELD_destAddr
         "uint16_t",    // FIELD_destPort
         "int64_t",    // FIELD_seqNumber
-        "int16_t",    // FIELD_PacketType
         "bool",    // FIELD_ECN
         "bool",    // FIELD_ECE
     };
@@ -462,10 +462,6 @@ const char **PacketDescriptor::getFieldPropertyNames(int field) const
         field -= base->getFieldCount();
     }
     switch (field) {
-        case FIELD_PacketType: {
-            static const char *names[] = { "enum", "enum",  nullptr };
-            return names;
-        }
         default: return nullptr;
     }
 }
@@ -479,10 +475,6 @@ const char *PacketDescriptor::getFieldProperty(int field, const char *propertyNa
         field -= base->getFieldCount();
     }
     switch (field) {
-        case FIELD_PacketType:
-            if (!strcmp(propertyName, "enum")) return "PacketType";
-            if (!strcmp(propertyName, "enum")) return "PacketType";
-            return nullptr;
         default: return nullptr;
     }
 }
@@ -541,12 +533,12 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
     }
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
+        case FIELD_connectionId: return int642string(pp->getConnectionId());
         case FIELD_srcAddr: return int642string(pp->getSrcAddr());
         case FIELD_localPort: return ulong2string(pp->getLocalPort());
         case FIELD_destAddr: return int642string(pp->getDestAddr());
         case FIELD_destPort: return ulong2string(pp->getDestPort());
         case FIELD_seqNumber: return int642string(pp->getSeqNumber());
-        case FIELD_PacketType: return enum2string(pp->getPacketType(), "PacketType");
         case FIELD_ECN: return bool2string(pp->getECN());
         case FIELD_ECE: return bool2string(pp->getECE());
         default: return "";
@@ -565,12 +557,12 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
     }
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
+        case FIELD_connectionId: pp->setConnectionId(string2int64(value)); break;
         case FIELD_srcAddr: pp->setSrcAddr(string2int64(value)); break;
         case FIELD_localPort: pp->setLocalPort(string2ulong(value)); break;
         case FIELD_destAddr: pp->setDestAddr(string2int64(value)); break;
         case FIELD_destPort: pp->setDestPort(string2ulong(value)); break;
         case FIELD_seqNumber: pp->setSeqNumber(string2int64(value)); break;
-        case FIELD_PacketType: pp->setPacketType((PacketType)string2enum(value, "PacketType")); break;
         case FIELD_ECN: pp->setECN(string2bool(value)); break;
         case FIELD_ECE: pp->setECE(string2bool(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
@@ -587,12 +579,12 @@ omnetpp::cValue PacketDescriptor::getFieldValue(omnetpp::any_ptr object, int fie
     }
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
+        case FIELD_connectionId: return pp->getConnectionId();
         case FIELD_srcAddr: return pp->getSrcAddr();
         case FIELD_localPort: return (omnetpp::intval_t)(pp->getLocalPort());
         case FIELD_destAddr: return pp->getDestAddr();
         case FIELD_destPort: return (omnetpp::intval_t)(pp->getDestPort());
         case FIELD_seqNumber: return pp->getSeqNumber();
-        case FIELD_PacketType: return pp->getPacketType();
         case FIELD_ECN: return pp->getECN();
         case FIELD_ECE: return pp->getECE();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'Packet' as cValue -- field index out of range?", field);
@@ -611,12 +603,12 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
     }
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
+        case FIELD_connectionId: pp->setConnectionId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_srcAddr: pp->setSrcAddr(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_localPort: pp->setLocalPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
         case FIELD_destAddr: pp->setDestAddr(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_destPort: pp->setDestPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
         case FIELD_seqNumber: pp->setSeqNumber(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
-        case FIELD_PacketType: pp->setPacketType((PacketType)value.intValue()); break;
         case FIELD_ECN: pp->setECN(value.boolValue()); break;
         case FIELD_ECE: pp->setECE(value.boolValue()); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);

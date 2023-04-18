@@ -56,12 +56,12 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b
  * <pre>
  * packet Packet
  * {
+ *     int64_t connectionId;
  *     int64_t srcAddr;
  *     uint16_t localPort;
  *     int64_t destAddr;
  *     uint16_t destPort;
  *     int64_t seqNumber;
- *     int16_t PacketType \@enum(PacketType);
  *     bool ECN;
  *     bool ECE;
  * }
@@ -70,12 +70,12 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b
 class Packet : public ::omnetpp::cPacket
 {
   protected:
+    int64_t connectionId = 0;
     int64_t srcAddr = 0;
     uint16_t localPort = 0;
     int64_t destAddr = 0;
     uint16_t destPort = 0;
     int64_t seqNumber = 0;
-    int16_t PacketType = 0;
     bool ECN = false;
     bool ECE = false;
 
@@ -94,6 +94,9 @@ class Packet : public ::omnetpp::cPacket
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
 
+    virtual int64_t getConnectionId() const;
+    virtual void setConnectionId(int64_t connectionId);
+
     virtual int64_t getSrcAddr() const;
     virtual void setSrcAddr(int64_t srcAddr);
 
@@ -108,9 +111,6 @@ class Packet : public ::omnetpp::cPacket
 
     virtual int64_t getSeqNumber() const;
     virtual void setSeqNumber(int64_t seqNumber);
-
-    virtual int16_t getPacketType() const;
-    virtual void setPacketType(int16_t PacketType);
 
     virtual bool getECN() const;
     virtual void setECN(bool ECN);
