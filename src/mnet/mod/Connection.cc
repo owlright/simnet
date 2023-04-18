@@ -10,10 +10,6 @@ void Connection::bind(IntAddress localAddr, PortNumber localPort, cGate* const o
 {
     bind(localAddr, localPort);
     setOutputGate(outGate);
-    auto registerInfo = new cMessage("Register port");
-    registerInfo->addPar("appPort");
-    registerInfo->par("appPort") = localPort;
-    sendToUnicast(registerInfo);
 }
 
 void Connection::listenFrom(IntAddress destAddr, PortNumber destPort)

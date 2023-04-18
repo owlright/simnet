@@ -1,5 +1,5 @@
 #include "UnicastApp.h"
-
+#include "../mod/MessageDispatcher.h"
 
 
 UnicastApp::~UnicastApp()
@@ -14,6 +14,8 @@ void UnicastApp::initialize(int stage)
         localPort = par("port");
         connection.bind(myAddr, localPort, gate("out"));
         connection.setCallback(this);
+        auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
+        check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
     }
 }
 

@@ -6,11 +6,12 @@ using namespace omnetpp;
 
 class  PortDispatcher : public cSimpleModule {
 public:
+    void registerPort(PortNumber port, int gateIndex);
+private:
     std::map<PortNumber, int> portToGateIndex;
     std::map<IntAddress, int> addrToGateIndex; // * store incoming connections
 private:
     int findGateIndexByPort(PortNumber port);
-private:
     // inherited funcitons
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;

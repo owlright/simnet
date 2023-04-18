@@ -7,12 +7,25 @@ void PortDispatcher::initialize(int stage)
 
 }
 
-int PortDispatcher::findGateIndexByPort(PortNumber port) {
+void PortDispatcher::registerPort(PortNumber port, int gateIndex)
+{
+    Enter_Method("PortDispatcher::registerPort");
+    if (portToGateIndex.find(port) != portToGateIndex.end()) {
+        throw cRuntimeError("port %" PRIu16 " is already registered.", port);
+    }
+    else {
+        EV_INFO << "Gate localIn " << gateIndex << " belongs to port "<< port <<endl;
+        portToGateIndex[port] = gateIndex;
+    }
+}
+
+int PortDispatcher::findGateIndexByPort(PortNumber port)
+{
     auto it = portToGateIndex.find(port);
     if (it != portToGateIndex.end()) {
         return it->second;
     } else {
-        throw cRuntimeError("PortDispatcher::handleMessage: no app use port %u", port);
+        throw cRuntimeError("PortDispatcher::handleMessage: port %" PRIu16" is not registered.", port);
     }
 }
 
@@ -26,14 +39,9 @@ void PortDispatcher::handleMessage(cMessage *msg)
         EV_INFO << "Dispatching packet "<< msg->getName() << " to gate localOut " << outGateIndex  << endl;
     }
     else if (msg->arrivedOn("localIn")) {
-        if (msg->isPacket()) {
-            send(msg, "out");
-        }
-        else { // * some configuration command from app
-            int port = msg->par("appPort");
-            portToGateIndex[port] = msg->getArrivalGate()->getIndex();
-            delete msg;
-        }
+        ASSERT(msg->isPacket());
+        send(msg, "out");
+        EV_INFO << "Received packet "<< msg->getName() << " from app." << endl;
     }
     else {
         throw cRuntimeError("should not run here");
