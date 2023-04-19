@@ -25,7 +25,7 @@ private:
     cMessage* makeDataPacket(Connection *connection, Packet* pk) override;
     cMessage* makeAckPacket(Connection *connection, Packet* pk) override {throw cRuntimeError("this is an sender app, do not respond.");};
     // helper functions
-    void processSend();
+    void sendPendingData();
     B inflightBytes() {return sentBytes - confirmedBytes;};
 public:
     ~UnicastSenderApp();

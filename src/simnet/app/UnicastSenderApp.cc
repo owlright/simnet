@@ -39,7 +39,7 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
     }
 }
 
-void UnicastSenderApp::processSend()
+void UnicastSenderApp::sendPendingData()
 {
     while (cong->getSndWin() > inflightBytes()) {
         auto packetSize = messageLength;
