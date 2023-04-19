@@ -40,6 +40,7 @@ OBJS = \
     $O/simnet/mod/L2Queue.o \
     $O/simnet/mod/MessageDispatcher.o \
     $O/simnet/mod/Routing.o \
+    $O/simnet/mod/cong/Reno.o \
     $O/simnet/trafficpattern/SimpleTrafficPattern.o \
     $O/simnet/mod/Packet_m.o
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "UnicastApp.h"
-
+#include "simnet/mod/cong/CongAlgo.h"
 class UnicastSenderApp : public UnicastApp {
 private:
     // configuration
@@ -20,11 +20,13 @@ private:
     simsignal_t cwndSignal;
     simsignal_t rttSignal;
 
+    CongAlgo* cong;
 private:
     cMessage* makeDataPacket(Connection *connection, Packet* pk) override;
     cMessage* makeAckPacket(Connection *connection, Packet* pk) override {throw cRuntimeError("this is an sender app, do not respond.");};
     // helper functions
     void processSend();
+    B inflightBytes() {return sentBytes - confirmedBytes;};
 public:
     ~UnicastSenderApp();
 private:
