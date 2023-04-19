@@ -22,7 +22,7 @@ void Connection::sendTo(cMessage* msg, IntAddress destAddr, PortNumber destPort)
 {
     if (!cb)
         throw cRuntimeError("Connection::sendTo: must be binded before send.");
-    if (destAddr == -1 || destPort == MAX_PORT_NUMBER)
+    if (destAddr == -1 || destPort == INVALID_PORT)
         throw cRuntimeError("Connection::sendTo: check the destAddr  %lld and destPort %hu", destAddr, destPort);
     listenFrom(destAddr, destPort);
 

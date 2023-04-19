@@ -26,8 +26,8 @@ private:
     IdNumber connectionId{0};
     IntAddress localAddr{-1};
     IntAddress destAddr{-1};
-    PortNumber localPort{MAX_PORT_NUMBER};
-    PortNumber destPort{MAX_PORT_NUMBER};
+    PortNumber localPort{INVALID_PORT};
+    PortNumber destPort{INVALID_PORT};
     std::string ccAlgorithmName;
     ICallback *cb = nullptr;
     cGate *gateToUnicast = nullptr;

@@ -6,7 +6,7 @@ typedef uint16_t PortNumber;
 // using PortNumber = uint16_t;
 // using IdNumber = uint64_t;
 // using B = int64_t;
-#define MAX_PORT_NUMBER UINT16_MAX
+#define INVALID_PORT UINT16_MAX
 inline omnetpp::cEnvir *getActiveSimulationOrEnvir() { return omnetpp::cSimulation::getActiveEnvir(); }
 
 enum Stage
