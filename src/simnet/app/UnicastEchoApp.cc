@@ -29,20 +29,28 @@ void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::DATA);
     IdNumber connectionid = pk->getConnectionId();
-    if (connections.find(connectionid) == connections.end()) {
+
+    if (connection->getConnectionId()==connectionid) {
+        //TODO where should I put these code
+        auto packet = new Packet();
+        setCommonField(packet);
+        packet->setConnectionId(connection->getConnectionId());
+        packet->setSeqNumber(pk->getSeqNumber());
+        packet->setKind(PacketType::ACK);
+        packet->setDestAddr(pk->getSrcAddr());
+        packet->setDestPort(pk->getLocalPort());
+        connection->sendTo(packet, pk->getSrcAddr(), pk->getLocalPort());
+
+        delete pk;
+        return;
+    }
+    if (connections.find(connectionid) == connections.end()){
         onNewConnectionArrived(pk);
-    } else {
-        connections[connectionid]->processMessage(msg);
     }
 
-    //TODO where should I put these code
-    auto packet = new Packet();
-    setCommonField(packet);
-    packet->setKind(PacketType::ACK);
-    packet->setDestAddr(pk->getSrcAddr());
-    packet->setDestPort(pk->getLocalPort());
-    connection->sendTo(packet, pk->getSrcAddr(), pk->getLocalPort());
-    delete pk;
+    connections[connectionid]->processMessage(msg);
+
+
 }
 
 cMessage *UnicastEchoApp::makeAckPacket(Connection *connection, Packet *pk)
