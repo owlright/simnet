@@ -12,6 +12,14 @@ void Connection::bind(IntAddress localAddr, PortNumber localPort, cGate* const o
     setOutputGate(outGate);
 }
 
+void Connection::setConnectionId(IdNumber id)
+{
+    if (connectionId!=INVALID_ID) {
+        throw cRuntimeError("conncection id can only be set once!");
+    }
+    connectionId = id;
+}
+
 void Connection::listenFrom(IntAddress destAddr, PortNumber destPort)
 {
     this->destAddr = destAddr;

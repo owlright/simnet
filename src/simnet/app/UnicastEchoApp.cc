@@ -18,7 +18,8 @@ void UnicastEchoApp::initialize(int stage)
 void UnicastEchoApp::onNewConnectionArrived(Packet *pk)
 {
     IdNumber connectionid = pk->getConnectionId();
-    connections[connectionid] = new Connection(connectionid);
+    connections[connectionid] = new Connection();
+    connections[connectionid]->setConnectionId(connectionid);
     connections[connectionid]->bind(myAddr, localPort, gate("out"));
     connections[connectionid]->setCallback(this);
 }

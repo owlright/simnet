@@ -20,20 +20,20 @@ public:
         virtual cMessage* makePacket(Connection *connection, cMessage* msg, IntAddress destAddr, PortNumber destPort) = 0;
 
     };
-    explicit Connection() {connectionId = cSimulation::getActiveEnvir()->getUniqueNumber();};
-    explicit Connection(IdNumber id) {connectionId = id;};
+
 private:
     IdNumber connectionId{INVALID_ID};
     IntAddress localAddr{INVALID_ADDRESS};
     IntAddress destAddr{INVALID_ADDRESS};
     PortNumber localPort{INVALID_PORT};
     PortNumber destPort{INVALID_PORT};
-    std::string ccAlgorithmName;
+
     ICallback *cb = nullptr;
     cGate *gateToUnicast = nullptr;
 public:
     const IntAddress getDestAddr() const {return destAddr;};
     const IntAddress getDestPort() const {return destPort;};
+    void setConnectionId(IdNumber id);
 private:
     void listenFrom(IntAddress destAddr, PortNumber destPort);
     void setOutputGate(cGate* const toUnicast) {gateToUnicast = toUnicast;};

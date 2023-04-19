@@ -14,6 +14,7 @@ void UnicastSenderApp::initialize(int stage)
         messageLength = par("messageLength");
         flowSize = par("flowSize");
         flowInterval = &par("flowInterval");
+        connection.setConnectionId(cSimulation::getActiveEnvir()->getUniqueNumber());
 
         //signals
         cwndSignal = registerSignal("cwnd");

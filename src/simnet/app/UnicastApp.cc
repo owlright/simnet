@@ -43,7 +43,6 @@ cMessage* UnicastApp::makePacket(Connection *connection, cMessage* msg, IntAddre
 
 void UnicastApp::setCommonField(Packet *packet)
 {
-    packet->setConnectionId(connection.getConnectionId());
     packet->setSrcAddr(myAddr);
     packet->setLocalPort(localPort);
 
