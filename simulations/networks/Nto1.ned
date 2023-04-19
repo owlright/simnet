@@ -1,6 +1,7 @@
 package simnet.simulations.networks;
 
 import simnet.mod.Host;
+import simnet.mod.Switch;
 import ned.DatarateChannel;
 import simnet.mod.Controller;
 network Nto1
@@ -19,12 +20,11 @@ network Nto1
         sender[numberOfSenders]: Host {
             @node;
             address = index;
-            app.destAddress = parent.numberOfSenders;
             globalController = parent.globalController;
         }
-        gate: Host {
+        gate: Switch {
             @node;
-            address = 1111;
+            address = 1234;
             globalController = parent.globalController;
         }
         sink: Host {

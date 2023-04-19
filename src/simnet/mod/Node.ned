@@ -31,7 +31,6 @@ module Host
         apps[numApps]: <default("UnicastSenderApp")> like IApp {
             parameters:
                 address = parent.address;
-                @display("p=140,31");
         }
         at: PortDispatcher {
             parameters:
