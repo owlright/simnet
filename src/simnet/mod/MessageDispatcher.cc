@@ -36,12 +36,12 @@ void PortDispatcher::handleMessage(cMessage *msg)
         auto port = pk->getDestPort();
         auto outGateIndex = findGateIndexByPort(port);
         send(msg, "localOut", outGateIndex);
-        EV_INFO << "Dispatching packet "<< msg->getName() << " to gate localOut " << outGateIndex  << endl;
+        EV_DEBUG << "Dispatching packet "<< msg->getName() << " to gate localOut " << outGateIndex  << endl;
     }
     else if (msg->arrivedOn("localIn")) {
         ASSERT(msg->isPacket());
         send(msg, "out");
-        EV_INFO << "Received packet "<< msg->getName() << " from app." << endl;
+        EV_DEBUG << "Received packet "<< msg->getName() << " from app." << endl;
     }
     else {
         throw cRuntimeError("should not run here");
