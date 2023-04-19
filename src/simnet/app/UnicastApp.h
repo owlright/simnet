@@ -14,7 +14,7 @@ protected:
     PortNumber localPort{INVALID_PORT};
 
 public:
-    virtual ~UnicastApp();
+    virtual ~UnicastApp() {};
 
 protected:
     // inherited funcitons

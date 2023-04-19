@@ -1,11 +1,7 @@
 #include "UnicastApp.h"
 #include "../mod/MessageDispatcher.h"
 
-
-UnicastApp::~UnicastApp()
-{
-    // cancelAndDelete(flowStartTimer);
-}
+Define_Module(UnicastApp);
 
 void UnicastApp::initialize(int stage)
 {
