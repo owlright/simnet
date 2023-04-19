@@ -23,9 +23,9 @@ public:
     explicit Connection() {connectionId = cSimulation::getActiveEnvir()->getUniqueNumber();};
     explicit Connection(IdNumber id) {connectionId = id;};
 private:
-    IdNumber connectionId{0};
-    IntAddress localAddr{-1};
-    IntAddress destAddr{-1};
+    IdNumber connectionId{INVALID_ID};
+    IntAddress localAddr{INVALID_ADDRESS};
+    IntAddress destAddr{INVALID_ADDRESS};
     PortNumber localPort{INVALID_PORT};
     PortNumber destPort{INVALID_PORT};
     std::string ccAlgorithmName;

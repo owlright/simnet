@@ -4,16 +4,17 @@
 class UnicastSenderApp : public UnicastApp {
 private:
     // configuration
-    IntAddress destAddr;
-    PortNumber destPort;
+    IntAddress destAddr{INVALID_ADDRESS};
+    PortNumber destPort{INVALID_PORT};
     double startTime;
-    B messageLength;
-    B flowSize;
-    cPar *flowInterval;
+    B messageLength{0};
+    B flowSize{0};
+    cPar *flowInterval{nullptr};
 
     // state
     cMessage *flowStartTimer = nullptr;
-    B sentBytes;
+    B sentBytes{0};
+    B confirmedBytes{0};
 
     // signals
     simsignal_t cwndSignal;

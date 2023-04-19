@@ -1,5 +1,5 @@
 #pragma once
-typedef int64_t IntAddress, B, IdNumber;
+typedef int64_t IntAddress, B, IdNumber, SeqNumber;
 typedef uint16_t PortNumber;
 
 // using IntAddress = int64_t;
@@ -7,6 +7,9 @@ typedef uint16_t PortNumber;
 // using IdNumber = uint64_t;
 // using B = int64_t;
 #define INVALID_PORT UINT16_MAX
+#define INVALID_ADDRESS -1
+#define INVALID_ID -1
+
 inline omnetpp::cEnvir *getActiveSimulationOrEnvir() { return omnetpp::cSimulation::getActiveEnvir(); }
 
 enum Stage

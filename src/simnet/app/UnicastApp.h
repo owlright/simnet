@@ -9,9 +9,9 @@ using namespace omnetpp;
 class UnicastApp : public cSimpleModule, public Connection::ICallback
 {
 protected:
-    Connection connection;
-    IntAddress myAddr;
-    PortNumber localPort;
+    Connection connection; // this connection is just for listen incoming connections.
+    IntAddress myAddr{INVALID_ADDRESS};
+    PortNumber localPort{INVALID_PORT};
 
 public:
     virtual ~UnicastApp();
