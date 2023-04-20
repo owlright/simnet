@@ -1,3 +1,4 @@
+@echo off
 set "CURRENT_DIR=%CD%"
 for %%I in ("%CURRENT_DIR%") do set "PARENT_DIR=%%~dpI"
 
