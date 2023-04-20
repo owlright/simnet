@@ -18,7 +18,7 @@ public:
     virtual void onSendData(SeqNumber seq) {};
     virtual void onSendAck(SeqNumber seq) {};
     virtual void onRecvAck(SeqNumber seq, bool congestion) = 0;
-    virtual void onRecvData(SeqNumber seq, B pkSize) = 0;
+    // virtual void onRecvData(SeqNumber seq, B pkSize) = 0;
     void setSegmentSize(B segmentSize) {this->segmentSize=segmentSize;};
 
 protected:

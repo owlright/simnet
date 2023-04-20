@@ -1,6 +1,9 @@
 #include "Reno.h"
-#include <algorithm>
+
 Define_Module(Reno);
+
+simsignal_t Reno::cwndSignal = registerSignal("cwnd");
+simsignal_t Reno::rttSignal = registerSignal("rtt");
 
 void Reno::initialize(int stage)
 {
@@ -10,9 +13,17 @@ void Reno::initialize(int stage)
 }
 void Reno::onRecvAck(SeqNumber seq, bool congestion)
 {
-    if (cWndLeft + segmentSize != seq)
+    if (cWndLeft + segmentSize != seq) {
+        // ! there is no dealing with seq between cwndleft and cwndright other than next seq
         throw cRuntimeError("Can't deal with disordering packets.");
+    }
     cWndLeft = seq;
+    // * do calculations about a RTT
+    if (seq == markSeq) {
+
+        markSeq = cWndRight;
+    }
+
     if (!congestion) {
         increaseWindow(); // no congestion happened, we can increase anyway
         switch (congState) {
@@ -35,11 +46,12 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion)
                 throw cRuntimeError("unknow congetsion state type");
         }
     }
-
+    emit(cwndSignal, cWnd);
 }
 
 void Reno::increaseWindow()
 {
+
     if (cWnd < ssThresh)
     {
         EV_TRACE << "In slow start, cWnd " << cWnd << " ssThresh " << ssThresh << endl;
@@ -50,6 +62,7 @@ void Reno::increaseWindow()
         EV_TRACE  << "In cong. avoidance, cWnd: " << cWnd << " ssThresh: "<< ssThresh << endl;
         congestionAvoidance();
     }
+    cWndRight = cWndLeft + cWnd;
 }
 
 void Reno::slowStart()
@@ -106,4 +119,6 @@ SeqNumber Reno::getSsThresh()
     // return std::max<uint32_t>(2 * state->m_segmentSize, state->m_cWnd / 2);
 }
 
-
+void Reno::onSendData(SeqNumber seq) {
+    cWndRight = seq;
+};
