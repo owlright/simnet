@@ -10,6 +10,7 @@ public:
     virtual void onSendData(SeqNumber seq) override;
 
 protected:
+    SeqNumber recover;
     SeqNumber firstWndSeq{0};
     SeqNumber ackedBytes{0}; // sent but not acked
     SeqNumber sentBytes{0}; //max seq sent by now
