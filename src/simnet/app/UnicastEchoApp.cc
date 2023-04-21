@@ -39,6 +39,9 @@ void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg
         packet->setKind(PacketType::ACK);
         packet->setDestAddr(pk->getSrcAddr());
         packet->setDestPort(pk->getLocalPort());
+        if (pk->getECN()) {
+            packet->setECE(true);
+        }
         connection->sendTo(packet, pk->getSrcAddr(), pk->getLocalPort());
 
         delete pk;
@@ -56,7 +59,7 @@ void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg
 cMessage *UnicastEchoApp::makeAckPacket(Connection *connection, Packet *pk)
 {
     char pkname[40];
-    sprintf(pkname, "DATA-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, myAddr, pk->getDestAddr(), pk->getSeqNumber());
+    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, myAddr, pk->getDestAddr(), pk->getSeqNumber());
     pk->setKind(PacketType::ACK);
     pk->setName(pkname);
     pk->setECN(false);

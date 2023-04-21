@@ -29,7 +29,7 @@ simple L2Queue
     parameters:
         int capacity @unit(B) = default(1MB); // max bytes a queue can hold; -1 means no limit;
         int ecnThreshold = default(10); // ! threshold when begining to mark the packet; unit is frameSize
-        int frameSize @unit(B) = default(1000B);
+        int frameSize @unit(B) = default(1kB);
         bool useCutThroughSwitching = default(false);  // use cut-through switching instead of store-and-forward
         @display("i=block/queue;q=queue");
         @signal[qlen](type="long");
