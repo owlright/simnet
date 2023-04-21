@@ -15,8 +15,8 @@ module UnicastSenderApp extends UnicastApp {
        @class(UnicastSenderApp);
         int destAddress = default(-1);
         int destPort = default(0);
-        int messageLength @unit(B) = default(1000B);
-        int flowSize @unit(B) = default(10MB);
+        int messageLength @unit(B) = default(1kB);
+        int flowSize @unit(B) = default(8kB);
         volatile double flowInterval @unit(s) = default(10us);
    submodules:
         cong: <default("Reno")> like Cong;
@@ -25,6 +25,6 @@ module UnicastSenderApp extends UnicastApp {
 module UnicastEchoApp extends UnicastApp {
     parameters:
         @class(UnicastEchoApp);
-    submodules:
-        cong: <default("Reno")> like Cong;
+//    submodules:
+//        cong: <default("Reno")> like Cong;
 }

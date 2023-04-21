@@ -4,18 +4,25 @@ using namespace omnetpp;
 
 class Reno : public CongAlgo {
 public:
-    virtual B getSndWin() override {return cWnd;};
+    virtual B getcWnd() override {return cWnd;};
     virtual void onRecvAck(SeqNumber seq, bool congestion) override;
-    virtual void onRecvData(SeqNumber seq, B pkSize) override {};
+    // virtual void onRecvData(SeqNumber seq, B pkSize) override {};
+    virtual void onSendData(SeqNumber seq) override;
 
 protected:
-    SeqNumber cWndLeft{0};
-    SeqNumber cWndRight{0};
+    SeqNumber firstWndSeq{0};
+    SeqNumber ackedBytes{0}; // sent but not acked
+    SeqNumber sentBytes{0}; //max seq sent by now
     B cWnd{INT64_MAX};
     SeqNumber ssThresh{INT64_MAX};
 
     congStateType congState{OPEN};
     SeqNumber cWndCnt{0}; // ! Linear increase counter
+
+private:
+    // signals
+    static simsignal_t cwndSignal;
+    static simsignal_t rttSignal;
 
 private:
     void increaseWindow();
