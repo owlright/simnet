@@ -30,6 +30,7 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion)
                 break;
             case CWR: // congestion happened last time
                 congState = OPEN; // change to OPEN
+                break;
             default:
                 throw cRuntimeError("Unknown congetsion state type");
         }
