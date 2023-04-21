@@ -14,7 +14,7 @@ protected:
     };
 
 public:
-    virtual B getSndWin() {return INT64_MAX;};
+    virtual B getcWnd() {return INT64_MAX;};
     virtual void onSendData(SeqNumber seq) {};
     virtual void onSendAck(SeqNumber seq) {};
     virtual void onRecvAck(SeqNumber seq, bool congestion) = 0;

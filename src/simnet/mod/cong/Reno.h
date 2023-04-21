@@ -4,7 +4,7 @@ using namespace omnetpp;
 
 class Reno : public CongAlgo {
 public:
-    virtual B getSndWin() override {return std::max<B>(cWnd - (cWndRight - cWndLeft), 0);};
+    virtual B getcWnd() override {return cWnd;};
     virtual void onRecvAck(SeqNumber seq, bool congestion) override;
     // virtual void onRecvData(SeqNumber seq, B pkSize) override {};
     virtual void onSendData(SeqNumber seq) override;
