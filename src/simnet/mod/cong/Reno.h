@@ -10,10 +10,9 @@ public:
     virtual void onSendData(SeqNumber seq) override;
 
 protected:
-    // SeqNumber lastTxSeq{0};
-    SeqNumber markSeq{0};
-    SeqNumber cWndLeft{0};
-    SeqNumber cWndRight{0};
+    SeqNumber firstWndSeq{0};
+    SeqNumber ackedBytes{0}; // sent but not acked
+    SeqNumber sentBytes{0}; //max seq sent by now
     B cWnd{INT64_MAX};
     SeqNumber ssThresh{INT64_MAX};
 

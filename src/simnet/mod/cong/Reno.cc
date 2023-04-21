@@ -13,15 +13,14 @@ void Reno::initialize(int stage)
 }
 void Reno::onRecvAck(SeqNumber seq, bool congestion)
 {
-    if (cWndLeft + segmentSize != seq) {
+    if (ackedBytes + segmentSize < seq) { // ! avoid the last packet is smaller than a segmentSize, so >= is possible
         // ! there is no dealing with seq between cwndleft and cwndright other than next seq
         throw cRuntimeError("Can't deal with disordering packets.");
     }
-    cWndLeft = seq;
-    // * do calculations about a RTT
-    if (seq == markSeq) {
-
-        markSeq = cWndRight;
+    ackedBytes = seq;
+    // * do calculations after each RTT finished
+    if (ackedBytes == firstWndSeq) {
+        emit(cwndSignal, cWnd);
     }
 
     if (!congestion) {
@@ -46,7 +45,8 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion)
                 throw cRuntimeError("unknow congetsion state type");
         }
     }
-    emit(cwndSignal, cWnd);
+
+
 }
 
 void Reno::increaseWindow()
@@ -62,7 +62,7 @@ void Reno::increaseWindow()
         EV_TRACE  << "In cong. avoidance, cWnd: " << cWnd << " ssThresh: "<< ssThresh << endl;
         congestionAvoidance();
     }
-    cWndRight = cWndLeft + cWnd;
+
 }
 
 void Reno::slowStart()
@@ -119,6 +119,9 @@ SeqNumber Reno::getSsThresh()
     // return std::max<uint32_t>(2 * state->m_segmentSize, state->m_cWnd / 2);
 }
 
-void Reno::onSendData(SeqNumber seq) {
-    cWndRight = seq;
+void Reno::onSendData(B numBytes) {
+    sentBytes += numBytes;
+    if (ackedBytes >= firstWndSeq) {
+        firstWndSeq = sentBytes;
+    }
 };
