@@ -119,7 +119,7 @@ void L2Queue::handleMessage(cMessage *msg)
         else {
             msg = popQueue();
             emit(queueingTimeSignal, simTime() - msg->getTimestamp());
-            emit(qlenSignal, queue.getLength());
+            emit(qlenSignal, getQueueBytes());
             startTransmitting(msg);
         }
     }
