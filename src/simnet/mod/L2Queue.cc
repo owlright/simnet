@@ -170,7 +170,9 @@ void L2Queue::handleMessage(cMessage *msg)
 
 void L2Queue::refreshDisplay() const
 {
-    getDisplayString().setTagArg("t", 0, isBusy ? "transmitting" : "idle");
-    getDisplayString().setTagArg("i", 1, isBusy ? (getQueueBytes() >= ecnThreshold * frameSize ? "red" : "yellow") : "");
+    if (!getEnvir()->isExpressMode()) {
+        getDisplayString().setTagArg("t", 0, isBusy ? "transmitting" : "idle");
+        getDisplayString().setTagArg("i", 1, isBusy ? (getQueueBytes() >= ecnThreshold * frameSize ? "red" : "yellow") : "");
+    }
 }
 
