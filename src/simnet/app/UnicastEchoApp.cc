@@ -39,6 +39,9 @@ void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg
         packet->setKind(PacketType::ACK);
         packet->setDestAddr(pk->getSrcAddr());
         packet->setDestPort(pk->getLocalPort());
+        if (pk->getECN()) {
+            pk->setECE(true);
+        }
         connection->sendTo(packet, pk->getSrcAddr(), pk->getLocalPort());
 
         delete pk;
