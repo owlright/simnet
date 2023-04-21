@@ -40,7 +40,7 @@ void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg
         packet->setDestAddr(pk->getSrcAddr());
         packet->setDestPort(pk->getLocalPort());
         if (pk->getECN()) {
-            pk->setECE(true);
+            packet->setECE(true);
         }
         connection->sendTo(packet, pk->getSrcAddr(), pk->getLocalPort());
 
