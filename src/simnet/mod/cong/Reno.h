@@ -1,7 +1,13 @@
 #pragma once
 #include "CongAlgo.h"
 using namespace omnetpp;
-
+/**
+ * @brief A class for implementation of tcp reno algorithm
+ *
+ * Note that this class use ECE label to trigger its half-window beaviour, which
+ * is not the standard behaviour in real network.
+ *
+ */
 class Reno : public CongAlgo {
 public:
     virtual B getcWnd() override {return cWnd;};
