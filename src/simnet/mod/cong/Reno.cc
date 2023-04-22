@@ -41,8 +41,10 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion)
                 congState = CWR;
                 cWnd = getSsThresh(); // half the window(most of the time)
             case CWR: // * continus congestion events
-                if (ackedBytes >= recover) // only half once a RTT/window
+                if (ackedBytes >= recover) { // only half once a RTT/window
                     cWnd = getSsThresh(); // half the window(most of the time)
+                    congState = OPEN; // reset the state after a RTT
+                }
                 break;
             default:
                 throw cRuntimeError("unknow congetsion state type");
