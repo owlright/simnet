@@ -35,11 +35,16 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion)
                 throw cRuntimeError("Unknown congetsion state type");
         }
     } else {
-       switch (congState) {
+        EV_DEBUG << "Received congestion signal on packet " << seq << endl;
+        switch (congState) {
             case OPEN:
+                ssThresh = getSsThresh();
+                cWnd = ssThresh; // half the window(most of the time)
+                EV_DEBUG << "Reduce ssThresh and cWnd to " << cWnd << endl;
                 recover = sentBytes; // * assume sentBytes is about a RTT away
+                EV << "ssThresh will not be updated until packet " << recover << " is received" << endl;
                 congState = CWR;
-                cWnd = getSsThresh(); // half the window(most of the time)
+                break;
             case CWR: // * continus congestion events
                 if (ackedBytes >= recover) { // only half once a RTT/window
                     cWnd = getSsThresh(); // half the window(most of the time)
