@@ -11,6 +11,7 @@ void Reno::initialize(int stage)
         cWnd = par("initWinSize");
     }
 }
+
 void Reno::onRecvAck(SeqNumber seq, bool congestion)
 {
     if (ackedBytes + segmentSize < seq) { // ! avoid the last packet is smaller than a segmentSize, so >= is possible
@@ -116,7 +117,7 @@ void Reno::congestionAvoidance()
             << " m_cWndCnt: " << cWndCnt << endl;
 }
 
-SeqNumber Reno::getSsThresh()
+B Reno::getSsThresh()
 {
     return std::max<SeqNumber>(cWnd >> 1, 1);
     // In Linux, it is written as:  return max(tp->snd_cwnd >> 1U, 2U);

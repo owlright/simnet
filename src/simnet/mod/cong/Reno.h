@@ -35,7 +35,7 @@ private:
     void increaseWindow();
     void slowStart();
     void congestionAvoidance();
-    SeqNumber getSsThresh();
+    virtual B getSsThresh();
 
     virtual void initialize(int stage) override;
 };
