@@ -64,12 +64,12 @@ void Reno::increaseWindow()
 
     if (cWnd < ssThresh)
     {
-        EV_TRACE << "In slow start, cWnd " << cWnd << " ssThresh " << ssThresh << endl;
+        EV_DEBUG << "In slow start, cWnd " << cWnd << " ssThresh " << ssThresh << endl;
         slowStart();
     }
     else
     {
-        EV_TRACE  << "In cong. avoidance, cWnd: " << cWnd << " ssThresh: "<< ssThresh << endl;
+        EV_DEBUG  << "In cong. avoidance, cWnd: " << cWnd << " ssThresh: "<< ssThresh << endl;
         congestionAvoidance();
     }
 
@@ -99,12 +99,12 @@ void Reno::congestionAvoidance()
     {
         cWndCnt = 0;
         cWnd += segmentSize;
-        EV_TRACE << "Adding 1 segment to cWnd" << endl;
+        EV_DEBUG << "Adding 1 segment to cWnd" << endl;
     } // ! after this, cWndCnt must < w or = 0, max(w-1, 0)
 
     cWndCnt += 1;
     EV_DEBUG << "Adding 1 segment to cWndCnt";
-    // ! I don't know when will trigger the code below
+    // ! Deal with multiple segments acked, not needed now
     // if (cWndCnt >= w)
     // {
     //     SeqNumber delta = cWndCnt / w;
@@ -118,7 +118,7 @@ void Reno::congestionAvoidance()
 
 SeqNumber Reno::getSsThresh()
 {
-    return std::max<SeqNumber>(cWnd >> 1, 2);
+    return std::max<SeqNumber>(cWnd >> 1, 1);
     // In Linux, it is written as:  return max(tp->snd_cwnd >> 1U, 2U);
     // if ((tcb->m_cWnd)>>1 == 0 ) {
     //     EV_WARN << "window too small" << endl;
