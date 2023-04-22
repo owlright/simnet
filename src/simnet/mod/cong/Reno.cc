@@ -86,7 +86,7 @@ void Reno::slowStart()
 void Reno::congestionAvoidance()
 {
 
-    auto w = cWnd;
+    auto w = cWnd / segmentSize;
 
     // Floor w to 1 if w == 0
     if (w == 0)
@@ -98,7 +98,7 @@ void Reno::congestionAvoidance()
     if (cWndCnt >= w) // * wait for a window data sended
     {
         cWndCnt = 0;
-        cWnd += 1;
+        cWnd += segmentSize;
         EV_TRACE << "Adding 1 segment to cWnd" << endl;
     } // ! after this, cWndCnt must < w or = 0, max(w-1, 0)
 
