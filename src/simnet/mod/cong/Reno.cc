@@ -5,15 +5,13 @@ Define_Module(Reno);
 simsignal_t Reno::cwndSignal = registerSignal("cwnd");
 simsignal_t Reno::rttSignal = registerSignal("rtt");
 
-void Reno::initialize(int stage)
-{
+void Reno::initialize(int stage) {
     if (stage==INITSTAGE_LOCAL) {
         cWnd = par("initWinSize");
     }
 }
 
-void Reno::onRecvAck(SeqNumber seq, bool congestion)
-{
+void Reno::onRecvAck(SeqNumber seq, bool congestion) {
     if (ackedBytes + segmentSize < seq) { // ! avoid the last packet is smaller than a segmentSize, so >= is possible
         // ! there is no dealing with seq between cwndleft and cwndright other than next seq
         throw cRuntimeError("Can't deal with disordering packets.");
@@ -60,42 +58,30 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion)
 
 }
 
-void Reno::increaseWindow()
-{
-
-    if (cWnd < ssThresh)
-    {
+void Reno::increaseWindow() {
+    if (cWnd < ssThresh) {
         EV_DEBUG << "In slow start, cWnd " << cWnd << " ssThresh " << ssThresh << endl;
         slowStart();
-    }
-    else
-    {
+    } else {
         EV_DEBUG  << "In cong. avoidance, cWnd: " << cWnd << " ssThresh: "<< ssThresh << endl;
         congestionAvoidance();
     }
 
 }
 
-void Reno::slowStart()
-{
+void Reno::slowStart() {
     cWnd = std::min(cWnd + segmentSize, ssThresh);
     EV_TRACE << "After slow start, m_cWnd " << cWnd << " ssThresh " << ssThresh << endl;
 }
 
-
-
-void Reno::congestionAvoidance()
-{
-
+void Reno::congestionAvoidance() {
     auto w = cWnd / segmentSize;
-
     // Floor w to 1 if w == 0
-    if (w == 0)
-    {
+    if (w == 0) {
         w = 1;
     }
 
-    EV_TRACE << "w in segments " << w << " cWndCnt " << cWndCnt << endl;
+    EV_DEBUG << "w in segments " << w << " cWndCnt " << cWndCnt << endl;
     if (cWndCnt >= w) // * wait for a window data sended
     {
         cWndCnt = 0;
@@ -104,30 +90,10 @@ void Reno::congestionAvoidance()
     } // ! after this, cWndCnt must < w or = 0, max(w-1, 0)
 
     cWndCnt += 1;
-    EV_DEBUG << "Adding 1 segment to cWndCnt";
-    // ! Deal with multiple segments acked, not needed now
-    // if (cWndCnt >= w)
-    // {
-    //     SeqNumber delta = cWndCnt / w;
-    //     cWndCnt -= static_cast<SeqNumber>(delta * w);
-    //     cWnd += delta * 1;
-    //     EV_DEBUG << "Subtracting delta * w from m_cWndCnt " << delta * w << endl;
-    // }
-    EV_TRACE<< "At end of CongestionAvoidance(), cWnd: " << cWnd
-            << " m_cWndCnt: " << cWndCnt << endl;
 }
 
-B Reno::getSsThresh()
-{
+B Reno::getSsThresh() {
     return std::max<SeqNumber>(cWnd >> 1, 1);
-    // In Linux, it is written as:  return max(tp->snd_cwnd >> 1U, 2U);
-    // if ((tcb->m_cWnd)>>1 == 0 ) {
-    //     EV_WARN << "window too small" << endl;
-    //     return 1;
-    // } else {
-    //     return tcb->m_cWnd >> 1;
-    // }
-    // return std::max<uint32_t>(2 * state->m_segmentSize, state->m_cWnd / 2);
 }
 
 void Reno::onSendData(B numBytes) {
