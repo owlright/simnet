@@ -36,7 +36,8 @@ private:
     void slowStart();
     void congestionAvoidance();
     virtual B getSsThresh();
-
+    
+protected:
     virtual void initialize(int stage) override;
 };
 
