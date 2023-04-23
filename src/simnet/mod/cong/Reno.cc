@@ -93,7 +93,7 @@ void Reno::congestionAvoidance() {
 }
 
 B Reno::getSsThresh() {
-    return std::max<SeqNumber>(cWnd >> 1, 1);
+    return std::max<SeqNumber>(cWnd >> 1, segmentSize);
 }
 
 void Reno::onSendData(B numBytes) {
