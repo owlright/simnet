@@ -41,7 +41,7 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
 
 void UnicastSenderApp::sendPendingData()
 {
-    while (cong->getSndWin() > inflightBytes()) {
+    while (cong->getcWnd() > inflightBytes() && sentBytes < flowSize) {
         auto packetSize = messageLength;
         if (flowSize != 0 && messageLength + sentBytes > flowSize) {
             packetSize = flowSize - sentBytes; // the data about to send is too small.
@@ -57,8 +57,9 @@ void UnicastSenderApp::sendPendingData()
         packet->setDestAddr(destAddr);
         packet->setDestPort(destPort);
         connection.sendTo(packet, destAddr, destPort);
-        cong->onSendData(sentBytes);
+        cong->onSendData(packetSize);
     }
+
 }
 
 void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *msg)
@@ -68,9 +69,12 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     // let cong algo update state
     confirmedBytes = pk->getSeqNumber();
     cong->onRecvAck(pk->getSeqNumber(), pk->getECE());
-    sendPendingData();
-    //TODO if all packets sended
-    if (sentBytes == flowSize) {
+
+
+    if (sentBytes < flowSize) {
+        sendPendingData();
+    } else {
+        //TODO if all packets sended
 
     }
     //TODO if all packets are confirmed

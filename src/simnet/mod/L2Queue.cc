@@ -21,11 +21,13 @@ using namespace omnetpp;
 class L2Queue : public cSimpleModule
 {
   private:
-    intval_t frameCapacity;
-    intval_t ecnThreshold;
+    B frameSize{0};
+    B capacity{0};
+    intval_t ecnThreshold{0};
 
     cQueue queue;
-    cMessage *endTransmissionEvent = nullptr;
+    B queueBytes{0};
+    cMessage *endTransmissionEvent{nullptr};
     bool isBusy;
 
     simsignal_t qlenSignal;
@@ -37,6 +39,9 @@ class L2Queue : public cSimpleModule
     simsignal_t congestionSignal;
 
   public:
+    B getQueueBytes() const {return queueBytes;};
+    void insertQueue(cMessage *);
+    cMessage* popQueue();
     virtual ~L2Queue();
 
   protected:
@@ -47,6 +52,17 @@ class L2Queue : public cSimpleModule
 };
 
 Define_Module(L2Queue);
+
+void L2Queue::insertQueue(cMessage *msg) {
+    queue.insert(msg);
+    queueBytes += check_and_cast<cPacket *>(msg)->getByteLength();
+}
+
+cMessage* L2Queue::popQueue() {
+    auto msg = (cMessage *)queue.pop();
+    queueBytes -= check_and_cast<cPacket *>(msg)->getByteLength();
+    return msg;
+}
 
 L2Queue::~L2Queue()
 {
@@ -61,8 +77,9 @@ void L2Queue::initialize()
     if (par("useCutThroughSwitching"))
         gate("line$i")->setDeliverImmediately(true);
 
-    frameCapacity = par("frameCapacity");
+    capacity = par("capacity");
     ecnThreshold = par("ecnThreshold");
+    frameSize = par("frameSize");
 
     qlenSignal = registerSignal("qlen");
     busySignal = registerSignal("busy");
@@ -71,7 +88,7 @@ void L2Queue::initialize()
     txBytesSignal = registerSignal("txBytes");
     rxBytesSignal = registerSignal("rxBytes");
     congestionSignal = registerSignal("congestion");
-    emit(qlenSignal, queue.getLength());
+    emit(qlenSignal, getQueueBytes());
     emit(busySignal, false);
     isBusy = false;
 }
@@ -100,9 +117,9 @@ void L2Queue::handleMessage(cMessage *msg)
             emit(busySignal, false);
         }
         else {
-            msg = (cMessage *)queue.pop();
+            msg = popQueue();
             emit(queueingTimeSignal, simTime() - msg->getTimestamp());
-            emit(qlenSignal, queue.getLength());
+            emit(qlenSignal, getQueueBytes());
             startTransmitting(msg);
         }
     }
@@ -113,24 +130,21 @@ void L2Queue::handleMessage(cMessage *msg)
     }
     else {  // arrived on gate "in"
         if (endTransmissionEvent->isScheduled()) {
-            if (ecnThreshold > 0 && queue.getLength() >= ecnThreshold)
+            if (ecnThreshold > 0 && getQueueBytes() >= ecnThreshold * frameSize)
             {
-                Packet *pk = check_and_cast<Packet *>(msg);
-                if (pk->getKind()==PacketType::DATA) { // ! only set data packet TODO:should label by queue bytes
-                    if (getEnvir()->isExpressMode()) {
-                        getParentModule()->bubble("congestion!");
-                    }
-                    emit(congestionSignal, ecnThreshold);
-                    EV << "Current queue length " << queue.getLength()
-                        << " and ECN threshold is " << ecnThreshold <<". Mark ECN!\n";
-                    pk->setECN(true);
+                if (!getEnvir()->isExpressMode()) {
+                    getParentModule()->bubble("congestion!");
                 }
+                emit(congestionSignal, ecnThreshold);
+                EV << "Current queue length " << queue.getLength()
+                    << " and ECN threshold is " << ecnThreshold <<". Mark ECN!\n";
+                check_and_cast<Packet *>(msg)->setECN(true); // TODO how to avoid using Packet here?
             }
             else {
                 emit(congestionSignal, 0);
             }
             // We are currently busy, so just queue up the packet.
-            if (frameCapacity && queue.getLength() >= frameCapacity) {
+            if (capacity && getQueueBytes() >= capacity) {
                 EV << "Received " << msg << " but transmitter busy and queue full: discarding\n";
                 emit(dropSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());
                 delete msg;
@@ -138,7 +152,8 @@ void L2Queue::handleMessage(cMessage *msg)
             else {
                 EV << "Received " << msg << " but transmitter busy: queueing up\n";
                 msg->setTimestamp();
-                queue.insert(msg);
+                // queue.insert(msg);
+                insertQueue(msg);
 //                emit(qlenSignal, queue.getLength());
             }
 
@@ -155,7 +170,9 @@ void L2Queue::handleMessage(cMessage *msg)
 
 void L2Queue::refreshDisplay() const
 {
-    getDisplayString().setTagArg("t", 0, isBusy ? "transmitting" : "idle");
-    getDisplayString().setTagArg("i", 1, isBusy ? (queue.getLength() >= 3 ? "red" : "yellow") : "");
+    if (!getEnvir()->isExpressMode()) {
+        getDisplayString().setTagArg("t", 0, isBusy ? "transmitting" : "idle");
+        getDisplayString().setTagArg("i", 1, isBusy ? (getQueueBytes() >= ecnThreshold * frameSize ? "red" : "yellow") : "");
+    }
 }
 
