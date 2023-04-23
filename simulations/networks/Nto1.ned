@@ -3,11 +3,11 @@ package simnet.simulations.networks;
 import simnet.mod.Host;
 import simnet.mod.Switch;
 import ned.DatarateChannel;
-import simnet.mod.Controller;
+import simnet.mod.GlobalRouteManager;
 network Nto1
 {
     parameters:
-        string globalController = fullName()+".controller";
+        string globalRouteManager = fullName() + ".routeManager";
         int numberOfSenders = default(2);
 
     types:
@@ -20,19 +20,19 @@ network Nto1
         sender[numberOfSenders]: Host {
             @node;
             address = index;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         gate: Switch {
             @node;
             address = 1234;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         sink: Host {
             @node;
             address = parent.numberOfSenders;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
-        controller: Controller;
+        routeManager: GlobalRouteManager;
     connections:
         gate.port++ <--> C <--> sink.port++;
         for i=0..numberOfSenders-1{

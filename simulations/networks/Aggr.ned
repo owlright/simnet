@@ -8,7 +8,7 @@ import simnet.mod.Controller;
 network AggrDumbell
 {
     parameters:
-        string globalController = fullName()+".controller";
+        string globalRouteManager = fullName()+".controller";
 
     types:
         channel C extends DatarateChannel
@@ -21,35 +21,35 @@ network AggrDumbell
         controller: Controller;
         group1[1]: Host {
             address = index;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         aggr1: Switch {
             address = 100;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         group2[16]: Host {
             address = index+8;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         aggr2: Switch {
             address = 200;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         gate: Switch {
             address = 300;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         gateSink: Switch {
             address = 301;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         sink1: Host {
             address = 40;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         sink2: Host {
             address = 41;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
     connections:
 //        for i=0..7 {
@@ -69,7 +69,7 @@ network AggrDumbell
 network AggrNto1
 {
      parameters:
-        string globalController = fullName()+".controller";
+        string globalRouteManager = fullName()+".controller";
         int numberOfSenders = default(2);
 
     types:
@@ -82,17 +82,17 @@ network AggrNto1
         sender[numberOfSenders]: Host {
             @node;
             address = index;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         gate: Switch {
             @node;
             address =666;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         sink: Host {
             @node;
             address = parent.numberOfSenders;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         controller: Controller;
     connections:

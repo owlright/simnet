@@ -15,7 +15,7 @@ package simnet.mod;
 simple Routing
 {
     parameters:
-        string globalController;
+        string globalRouteManager;
         bool ecmpFlow = default(false);
         @display("i=block/switch");
         @signal[drop](type="long");
