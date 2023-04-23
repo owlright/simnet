@@ -144,7 +144,7 @@ void L2Queue::handleMessage(cMessage *msg)
                 emit(congestionSignal, 0);
             }
             // We are currently busy, so just queue up the packet.
-            if (capacity && queue.getLength() >= capacity) {
+            if (capacity && getQueueBytes() >= capacity) {
                 EV << "Received " << msg << " but transmitter busy and queue full: discarding\n";
                 emit(dropSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());
                 delete msg;
