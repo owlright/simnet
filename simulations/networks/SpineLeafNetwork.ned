@@ -2,12 +2,12 @@ package simnet.simulations.networks;
 import simnet.mod.Host;
 import simnet.mod.Switch;
 import ned.DatarateChannel;
-import simnet.mod.Controller;
+import simnet.mod.GlobalRouteManager;
 
 network SpineLeafNetwork {
     parameters:
         @display("bgb=459,257");
-        string globalController = fullName()+".controller";
+        string globalRouteManager = fullName()+".routeManager";
         int spineNumber;
         int podNumber;
         int hostNumber;
@@ -23,16 +23,16 @@ network SpineLeafNetwork {
         }
 
     submodules:
-        controller: Controller;
+        routeManager: GlobalRouteManager;
         pods[podNumber]: SpineLeafPod {
             @display("p=50,150,r,50");
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
             hostNumber = parent.hostNumber;
             podNumber = parent.podNumber;
         }
         switches[spineNumber]: Switch {
             address = index + 10000;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
             @display("p=50,80,r,50");
         }
 
@@ -45,7 +45,7 @@ network SpineLeafNetwork {
 module SpineLeafPod {
     parameters:
         @display("bgb=459,257");
-        string globalController;
+        string globalRouteManager;
         int hostNumber;
         int podNumber;
         double bandwidth @unit(bps);
@@ -63,11 +63,11 @@ module SpineLeafPod {
     submodules:
         hosts[hostNumber]: Host {
             address = parent.index * parent.hostNumber + index;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
             @display("p=50,150,r,50");
         }
         switch: Switch {
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
             address = parent.index * parent.hostNumber + 1000;
             @display("p=50,80");
         }

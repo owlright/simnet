@@ -17,7 +17,7 @@
 #include "../common/Defs.h"
 #include "../common/Print.h"
 #include "../common/ModuleAccess.h"
-#include "../mod/Controller.h"
+#include "simnet/mod/GlobalRouteMangager.h"
 // #include "../mod/AggrGroupInfo.h"
 using namespace omnetpp;
 
@@ -27,14 +27,14 @@ using namespace omnetpp;
 class Routing : public cSimpleModule
 {
 private:
-    int myAddress;
+    IntAddress myAddress;
     bool ecmpFlow = false;
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
     typedef std::map<int, std::vector<int> > AggrRoutingTable;
     AggrRoutingTable aggrChildren;
     // std::map<int, AggrGroupInfo*> aggrGroupTable;
-    opp_component_ptr<Controller> controller;
+    GlobalRouteManager* routeManager;
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
     simsignal_t outputPacketSignal;
@@ -70,8 +70,8 @@ void Routing::initialize(int stage)
         // WATCH_MAP(rtable); // ! this causes error if value is vector
     }
     if (stage == 1) {
-        controller = getModuleFromPar<Controller>(par("globalController"), this);
-        ASSERT(controller != nullptr);
+        routeManager = getModuleFromPar<GlobalRouteManager>(par("globalRouteManager"), this);
+        ASSERT(routeManager != nullptr);
     }
 }
 
@@ -89,14 +89,9 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr)
         }
     }
     else {
-        auto outGateIndexes = controller->getRoutes(this->getParentModule(), destAddr);
-        if (!outGateIndexes.empty()) {
-            rtable[destAddr] = outGateIndexes;
-            return getRouteGateIndex(srcAddr, destAddr);
-        }
-        else {
-            return -1;
-        }
+        auto outGateIndexes = routeManager->getRoutes(myAddress, destAddr);
+        rtable[destAddr] = outGateIndexes;
+        return getRouteGateIndex(srcAddr, destAddr); // ! recursion find outgate index
     }
 }
 
@@ -129,8 +124,8 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr)
 void Routing::handleMessage(cMessage *msg)
 {
     Packet *pk = check_and_cast<Packet *>(msg);
-    int srcAddr = pk->getSrcAddr();
-    int destAddr = pk->getDestAddr();
+    auto srcAddr = pk->getSrcAddr();
+    auto destAddr = pk->getDestAddr();
     // int groupAddr = pk->getGroupAddr();
     /*
     if (getParentModule()->getProperties()->get("switch") != nullptr) { // I'm the router
@@ -230,7 +225,9 @@ void Routing::handleMessage(cMessage *msg)
 
 void Routing::refreshDisplay() const
 {
-    char buf[20];
-    sprintf(buf, "%d", myAddress);
-    getParentModule()->getDisplayString().setTagArg("t", 0, buf);
+    if (!getEnvir()->isExpressMode()) {
+        char buf[20];
+        sprintf(buf, "%" PRId64, myAddress);
+        getParentModule()->getDisplayString().setTagArg("t", 0, buf);
+    }
 }

@@ -7,7 +7,7 @@ import simnet.mod.Controller;
 network BinaryTree
 {
     parameters:
-        string globalController = fullName()+".controller";
+        string globalRouteManager = fullName()+".controller";
         int height;
     types:
         channel C extends DatarateChannel
@@ -18,7 +18,7 @@ network BinaryTree
     submodules:
         terminal[2^height]: Host {
             address = index;
-            globalController = parent.globalController;
+            globalRouteManager = parent.globalRouteManager;
         }
         controller: Controller {
             @display("p=89,26;is=s");

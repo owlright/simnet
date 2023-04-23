@@ -19,9 +19,7 @@ module Host
     parameters:
         int address;
         int numApps = default(0);
-        //        bool hasBuffer = default(false);
-        //        string appType = default("");
-        string globalController;
+        string globalRouteManager;
         @node;
         @host;
         @display("i=abstract/server_s;bgb=276,324");
@@ -41,7 +39,7 @@ module Host
         }
         routing: Routing {
             parameters:
-                globalController = parent.globalController;
+                globalRouteManager = parent.globalRouteManager;
                 @display("p=140,161");
             gates:
                 in[sizeof(parent.port)];
@@ -71,7 +69,7 @@ module Switch
         int address;
 //        bool hasBuffer = default(false);
         //        string appType = default("");
-        string globalController;
+        string globalRouteManager;
         @node;
         @switch;
         @display("i=abstract/switch_s");
@@ -80,7 +78,7 @@ module Switch
     submodules:
         routing: Routing {
             parameters:
-                globalController = parent.globalController;
+                globalRouteManager = parent.globalRouteManager;
                 @display("p=140,130");
             gates:
                 in[sizeof(parent.port)];
