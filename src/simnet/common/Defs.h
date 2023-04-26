@@ -7,6 +7,9 @@ typedef uint16_t PortNumber;
 #define INVALID_ADDRESS -1
 #define INVALID_ID -1
 
+#define GROUPADDR_START 10000
+#define GROUPADDR_END 20000
+
 inline omnetpp::cEnvir *getActiveSimulationOrEnvir() { return omnetpp::cSimulation::getActiveEnvir(); }
 
 enum Stage
