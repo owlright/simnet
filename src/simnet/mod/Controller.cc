@@ -298,7 +298,7 @@ void Controller::initialize(int stage)
             prepareAggrGroup(par("aggrGroupPlacePolicy").stdstringValue());
         }
     }
-    if (stage == Stage::INITSTAGE_CONTROLL) {
+    if (stage == Stage::INITSTAGE_ASSIGN) {
         EV << "There are " << aggrgroup.size() << " groups." << endl;
         for (const auto& entry: aggrgroup) {
             EV << COLOR(bgB::green) << "group:" << entry.first <<" senders:" << entry.second << END;
