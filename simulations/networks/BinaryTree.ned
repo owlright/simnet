@@ -18,7 +18,7 @@ network BinaryTree
     submodules:
         terminal[2^height]: Host {
             address = index;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         controller: Controller {
             @display("p=89,26;is=s");

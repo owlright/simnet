@@ -3,6 +3,6 @@ package simnet.mod;
 moduleinterface PacketHandler
 {
     parameters:
-        string groupRouteManager;
+        string groupManager;
         @display("i=block/cogwheel");
 }

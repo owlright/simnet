@@ -76,7 +76,7 @@ void Routing::initialize(int stage)
         outputIfSignal = registerSignal("outputIf");
         outputPacketSignal = registerSignal("outputPacket");
         // WATCH_MAP(rtable); // ! this causes error if value is vector
-        routeManager = getModuleFromPar<GlobalRouteManager>(par("globalRouteManager"), this);
+        routeManager = getModuleFromPar<GlobalRouteManager>(par("routeManager"), this);
         ASSERT(routeManager != nullptr);
         auto handler = getSubmodule("pkh");
         if (handler!=nullptr) // handler is allowed to be nullptr

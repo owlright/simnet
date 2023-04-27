@@ -20,17 +20,17 @@ network Nto1
         sender[numberOfSenders]: Host {
             @node;
             address = index;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         gate: Switch {
             @node;
             address = 1234;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         sink: Host {
             @node;
             address = parent.numberOfSenders;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         routeManager: GlobalRouteManager;
     connections:
