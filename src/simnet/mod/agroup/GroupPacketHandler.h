@@ -2,11 +2,20 @@
 
 #include <omnetpp.h>
 #include <unordered_map>
-#include "../common/Defs.h"
+#include "simnet/common/Defs.h"
 #include "simnet/mod/Packet_m.h"
 #include "simnet/mod/agroup/AggGroupEntry.h"
 #include "GlobalGroupManager.h"
 using namespace omnetpp;
+
+// Hash function
+struct hashFunction
+{
+    size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
+        return x.first ^ x.second;
+    }
+};
+
 
 class GroupPacketHandler : public cSimpleModule {
 public:
@@ -30,10 +39,3 @@ private:
     std::unordered_set< std::pair<IntAddress, SeqNumber>, hashFunction > markNotAgg;
 };
 
-// Hash function
-struct hashFunction
-{
-    size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
-    return x.first ^ x.second;
-}
-};
