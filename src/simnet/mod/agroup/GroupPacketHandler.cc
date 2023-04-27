@@ -1,10 +1,12 @@
 #include "GroupPacketHandler.h"
 #include "simnet/common/ModuleAccess.h"
+Define_Module(GroupPacketHandler);
+
 void GroupPacketHandler::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
         bufferSize = par("bufferSize");
-        groupManager = getModuleFromPar<GlobalGroupManager>(par("globalGroupManager"), this) ;
+        groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this) ;
         if (groupManager == nullptr)
             throw cRuntimeError("GroupPacketHandler::initialize: If not manual, you must set the globalGroupManager!");
     }
@@ -19,7 +21,7 @@ Packet *GroupPacketHandler::agg(Packet *pk)
         return pk;
     }
     // ! when packet arrives but not enough memory to hold it , it must be sent out immediately,
-    // ! then the following packets of the same <groupAddr, seq> cannot be aggregated either
+    // ! the following packets of the same <groupAddr, seq> cannot be aggregated either
     if (getUsedBufferSize() >= bufferSize) {
         markNotAgg.insert(std::make_pair(group, seq));
         return pk; // ! no buffer to store the packet, just return it
@@ -62,5 +64,4 @@ const std::vector<int> &GroupPacketHandler::getReversePortIndexes(Packet *pk) co
     if (groupTable.find(group)!=groupTable.end())
         throw cRuntimeError("GroupPakcetHandler::getReversePortIndexes: not find the group");
     return groupTable.at(group)->getIncomingPortIndexes(seq);
-    // TODO: insert return statement here
 }
