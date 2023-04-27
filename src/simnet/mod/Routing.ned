@@ -16,6 +16,7 @@ simple Routing
 {
     parameters:
         string globalRouteManager;
+        string globalGroupRouteManager = default("");
         bool ecmpFlow = default(false);
         @display("i=block/switch");
         @signal[drop](type="long");
@@ -25,11 +26,17 @@ simple Routing
         @statistic[dataRate](title="data rate"; source=throughput(outputPacket)/1000; record=vector; unit=kbps; interpolationmode=linear);
         @statistic[drop](title="dropped packet byte length";unit=bytes;record=vector?,count,sum;interpolationmode=none);
         @statistic[outputIf](title="output interface for each routed packet";record=histogram;interpolationmode=none);
+
     gates:
         input in[];
         output out[];
         input localIn;
         output localOut;
+
+    submodules:
+        pkh: <default("GroupPacketHandler")> like PacketHandler if globalGroupRouteManager != "" {
+            globalGroupRouteManager = parent.globalGroupRouteManager;
+        };
 }
 
 

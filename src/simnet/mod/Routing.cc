@@ -18,6 +18,7 @@
 #include "../common/Print.h"
 #include "../common/ModuleAccess.h"
 #include "simnet/mod/GlobalRouteMangager.h"
+#include "simnet/mod/agroup/GroupPacketHandler.h"
 // #include "../mod/AggrGroupInfo.h"
 using namespace omnetpp;
 
@@ -34,7 +35,8 @@ private:
     typedef std::map<int, std::vector<int> > AggrRoutingTable;
     AggrRoutingTable aggrChildren;
     // std::map<int, AggrGroupInfo*> aggrGroupTable;
-    GlobalRouteManager* routeManager;
+    GlobalRouteManager* routeManager{nullptr};
+    GroupPacketHandler* gpkHandler{nullptr};
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
     simsignal_t outputPacketSignal;
@@ -48,6 +50,13 @@ private:
     // AggrGroupInfo* getAggrGroup(int address) const;
     // AggrGroupInfo* getOrAddGroup(int address);
     int getRouteGateIndex(int srcAddr, int destAddr);
+    bool isGroupAddr(IntAddress addr) const {
+        return (GROUPADDR_START <= addr && addr < GROUPADDR_END);
+    };
+    bool isUnicastAddr(IntAddress addr) const {
+        return !isGroupAddr(addr);
+    };
+    void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
 
 protected:
     virtual void initialize(int stage) override;
@@ -60,18 +69,18 @@ Define_Module(Routing);
 
 void Routing::initialize(int stage)
 {
-
-    if (stage == 0) {
+    if (stage == INITSTAGE_LOCAL) {
         myAddress = getParentModule()->par("address"); // HACK
         ecmpFlow = par("ecmpFlow").boolValue();
         dropSignal = registerSignal("drop");
         outputIfSignal = registerSignal("outputIf");
         outputPacketSignal = registerSignal("outputPacket");
         // WATCH_MAP(rtable); // ! this causes error if value is vector
-    }
-    if (stage == 1) {
         routeManager = getModuleFromPar<GlobalRouteManager>(par("globalRouteManager"), this);
         ASSERT(routeManager != nullptr);
+        auto handler = getSubmodule("pkh");
+        if (handler!=nullptr) // handler is allowed to be nullptr
+            gpkHandler = check_and_cast<GroupPacketHandler*>(handler);
     }
 }
 
@@ -95,6 +104,18 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr)
     }
 }
 
+void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
+    for (auto& gateIndex : outGateIndexes ) {
+        auto packet = pk->dup();
+        char pkname[40];
+        sprintf(pkname, "ACK-%" PRId64 "-to-group-%" PRId64 "-seq%" PRId64,
+                packet->getSrcAddr(), packet->getDestAddr(), packet->getSeqNumber());
+        packet->setName(pkname);
+        EV_INFO << "Forwarding broadcast packet " << pk->getName() << " on gate index " << gateIndex << endl;
+        send(packet, "out", gateIndex);
+    }
+    delete pk;
+}
 // bool Routing::isAggrGroupAdded(int address) const
 // {
 //     return aggrGroupTable.find(address)!=aggrGroupTable.end();
@@ -126,7 +147,26 @@ void Routing::handleMessage(cMessage *msg)
     Packet *pk = check_and_cast<Packet *>(msg);
     auto srcAddr = pk->getSrcAddr();
     auto destAddr = pk->getDestAddr();
-    // int groupAddr = pk->getGroupAddr();
+    if (isGroupAddr(destAddr)) {
+        if (gpkHandler == nullptr) {
+            throw cRuntimeError("Routing::handleMessage: you must have a group packet handler to deal with group packet!");
+        }
+
+        if (pk->getKind() == DATA) {
+            auto aggpk = gpkHandler->agg(pk); // group addr and packet seq will be handled here
+            if (aggpk != nullptr) { // packet aggregation is finished
+
+            }
+            return;
+        }
+
+        if (pk->getKind() == ACK) {
+            auto outGateIndexes = gpkHandler->getReversePortIndexes(pk);
+            broadcast(pk, outGateIndexes);
+            gpkHandler->releaseGroupOnSeq(pk->getDestAddr(), pk->getSeqNumber()); // release store memory
+            return;
+        }
+    }
     /*
     if (getParentModule()->getProperties()->get("switch") != nullptr) { // I'm the router
         if (isAggrGroup(groupAddr)) {
@@ -178,49 +218,34 @@ void Routing::handleMessage(cMessage *msg)
                  auto seq = pk->getAckSeq();
                  aggrGroup->reset(seq); // release (key,value) for seq
                  EV << "ACK to group " << groupAddr << " arrive." << endl;
-                 // find entries and broadcast it
-                 auto childrenAddresses = aggrGroup->getChildren();
-                 for (auto& addr : childrenAddresses ) {
-                     int outGateIndex = getRouteGateIndex(pk->getSrcAddr(), addr);
-                     pk->setDestAddr(addr);
 
-                     auto packet = pk->dup();
-                     char pkname[40];
-                     sprintf(pkname, "ACK-%d-to-%d-ack%u ", packet->getSrcAddr(), addr, packet->getAckSeq());
-                     pk->setName(pkname);
-                     EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-         //            emit(outputIfSignal, outGateIndex);
-         //            emit(outputPacketSignal, packet);
-                     send(packet, "out", outGateIndex);
-                 }
-                 delete pk;
-             } else {
-                 throw cRuntimeError("Unkonwn packet type!");
-             }
+
              return; // ! do not forget to return here.
         }
     } */
     // ! Deal with unicast packet
-
-    if (destAddr == myAddress) {
-        EV << "local delivery of packet " << pk->getName() << endl;
-        send(pk, "localOut");
-        emit(outputIfSignal, -1);  // -1: local
-        return;
+    if (isUnicastAddr(destAddr)) {
+        if (destAddr == myAddress) {
+            EV << "local delivery of packet " << pk->getName() << endl;
+            send(pk, "localOut");
+            emit(outputIfSignal, -1);  // -1: local
+            return;
+        }
+        int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
+        if (outGateIndex == -1) {
+            EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
+            emit(dropSignal, (intval_t)pk->getByteLength());
+            delete pk;
+            return;
+        }
+        EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
+        // pk->setHopCount(pk->getHopCount()+1);
+        // emit(outputIfSignal, outGateIndex);
+        // emit(outputPacketSignal, pk);
+        send(pk, "out", outGateIndex);
     }
-    int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
-    if (outGateIndex == -1) {
-        EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
-        emit(dropSignal, (intval_t)pk->getByteLength());
-        delete pk;
-        return;
-    }
-    EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-    // pk->setHopCount(pk->getHopCount()+1);
-    emit(outputIfSignal, outGateIndex);
-    emit(outputPacketSignal, pk);
-    send(pk, "out", outGateIndex);
-
+    // ! code can't run till here
+    throw cRuntimeError("Unknown packet dest address %" PRId64, destAddr);
 }
 
 void Routing::refreshDisplay() const
