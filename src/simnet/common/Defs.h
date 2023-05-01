@@ -1,30 +1,22 @@
 #pragma once
+#include <omnetpp.h>
 typedef int64_t IntAddress, B, IdNumber, SeqNumber;
 typedef uint16_t PortNumber;
 
-// using IntAddress = int64_t;
-// using PortNumber = uint16_t;
-// using IdNumber = uint64_t;
-// using B = int64_t;
 #define INVALID_PORT UINT16_MAX
 #define INVALID_ADDRESS -1
 #define INVALID_ID -1
+
+#define GROUPADDR_START 10000
+#define GROUPADDR_END 20000
 
 inline omnetpp::cEnvir *getActiveSimulationOrEnvir() { return omnetpp::cSimulation::getActiveEnvir(); }
 
 enum Stage
 {
     INITSTAGE_LOCAL,
-    INITSTAGE_REPORT,
-    INITSTAGE_CONTROLL,
+    INITSTAGE_COLLECT,
+    INITSTAGE_ASSIGN,
     NUM_INIT_STAGES
 };
-
-// enum PacketType
-// {
-//     ACK,
-//     DATA,
-//     LAST
-// } ;
-
 

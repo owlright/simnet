@@ -1,27 +1,25 @@
-//
-// This file is part of an OMNeT++/OMNEST simulation example.
-//
-// Copyright (C) 1992-2015 Andras Varga
-//
-// This file is distributed WITHOUT ANY WARRANTY. See the file
-// `license' for details on this and other legal matters.
-//
-
-
 package simnet.mod;
 import simnet.app.IApp;
+import simnet.mod.contract.PortDispatcher;
+
+module ManagerListener
+{
+    parameters:
+        string routeManager = default("^.routeManager");
+        string groupManager = default("^.groupManager");
+        *.routeManager = default(absPath(this.routeManager));
+        *.groupManager = default(absPath(this.groupManager));
+}
 //
 // A "Host" consists of a Routing plus an App module which represents the
 // aggregate traffic of the subnets connected to that router.
 //
-module Host
+module Host extends ManagerListener
 {
     parameters:
         int address;
         int numApps = default(0);
-        //        bool hasBuffer = default(false);
-        //        string appType = default("");
-        string globalController;
+        
         @node;
         @host;
         @display("i=abstract/server_s;bgb=276,324");
@@ -34,14 +32,13 @@ module Host
         }
         at: PortDispatcher {
             parameters:
-            	@display("p=140,103");
-           	gates:
-           	    localIn[sizeof(parent.apps)];
-           	    localOut[sizeof(parent.apps)];
+                @display("p=140,103");
+            gates:
+                localIn[sizeof(parent.apps)];
+                localOut[sizeof(parent.apps)];
         }
         routing: Routing {
             parameters:
-                globalController = parent.globalController;
                 @display("p=140,161");
             gates:
                 in[sizeof(parent.port)];
@@ -65,13 +62,10 @@ module Host
         }
 }
 
-module Switch
+module Switch extends ManagerListener
 {
     parameters:
         int address;
-//        bool hasBuffer = default(false);
-        //        string appType = default("");
-        string globalController;
         @node;
         @switch;
         @display("i=abstract/switch_s");
@@ -80,7 +74,7 @@ module Switch
     submodules:
         routing: Routing {
             parameters:
-                globalController = parent.globalController;
+                // globalRouteManager = parent.globalRouteManager;
                 @display("p=140,130");
             gates:
                 in[sizeof(parent.port)];

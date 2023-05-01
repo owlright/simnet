@@ -8,7 +8,7 @@ import ned.DatarateChannel;
 network Dumbbell
 {
     parameters:
-        string globalController = fullName()+".controller";
+        string globalRouteManager = fullName()+".controller";
         int numberFlows = default(1);
     types:
         channel C extends DatarateChannel
@@ -22,26 +22,26 @@ network Dumbbell
             @node;
 //            @display("p=,,c,40");
             address = index;
-            globalController = parent.globalController;
+//            globalRouteManager = parent.globalRouteManager;
         }
         sender[numberFlows]: Host {
             @node;
 //            @display("p=,,c,40");
             address = 10*parent.numberFlows + index;
             app.destAddress = index;
-            globalController = parent.globalController;
+//            globalRouteManager = parent.globalRouteManager;
         }
         LR: Host {
             @node;
 //            @display("g=bottleneck;p=,,r,100");
             address = 1234;
-            globalController = parent.globalController;
+//            globalRouteManager = parent.globalRouteManager;
         }
         RR: Host {
             @node;
 //            @display("g=bottleneck;p=,,r,100");
             address = 4321;
-            globalController = parent.globalController;
+//            globalRouteManager = parent.globalRouteManager;
         }
         controller: Controller;
     connections:

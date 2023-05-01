@@ -1,7 +1,7 @@
 #pragma once
 #include <omnetpp.h>
-#include "Connection.h"
-#include "Packet_m.h"
+#include "simnet/mod/Connection.h"
+#include "simnet/mod/Packet_m.h"
 using namespace omnetpp;
 
 class  PortDispatcher : public cSimpleModule {
