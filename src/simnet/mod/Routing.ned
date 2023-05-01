@@ -16,12 +16,12 @@ module Routing
 {
     parameters:
         // ! these parameters are set in Node.ned
-         string routeManager;
-         string groupManager = default("");
-
-         *.groupManager = default(absPath(this.groupManager));
-
+        string routeManager;
         bool ecmpFlow = default(false);
+
+        string groupManager = default("");
+        int bufferSize @unit(B) = default(10MB);
+        
         @class(Routing);
         @display("i=block/switch");
         @signal[drop](type="long");
@@ -38,8 +38,8 @@ module Routing
         input localIn;
         output localOut;
 
-    submodules:
-        pkh: <default("GroupPacketHandler")> like PacketHandler if this.groupManager != "";
+    // submodules:
+    //     pkh: <default("GroupPacketHandler")> like PacketHandler if this.groupManager != "";
 }
 
 

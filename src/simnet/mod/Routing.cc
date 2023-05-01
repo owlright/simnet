@@ -1,70 +1,4 @@
-//
-// This file is part of an OMNeT++/OMNEST simulation example.
-//
-// Copyright (C) 1992-2015 Andras Varga
-//
-// This file is distributed WITHOUT ANY WARRANTY. See the file
-// `license' for details on this and other legal matters.
-//
-
-#ifdef _MSC_VER
-#pragma warning(disable:4786)
-#endif
-
-#include <map>
-#include <omnetpp.h>
-#include "../mod/Packet_m.h"
-#include "../common/Defs.h"
-#include "../common/Print.h"
-#include "../common/ModuleAccess.h"
-#include "simnet/mod/manager/GlobalRouteMangager.h"
-#include "simnet/mod/agroup/GroupPacketHandler.h"
-// #include "../mod/AggrGroupInfo.h"
-using namespace omnetpp;
-
-/**
- * Demonstrates static routing, utilizing the cTopology class.
- */
-class Routing : public cSimpleModule
-{
-private:
-    IntAddress myAddress;
-    bool ecmpFlow = false;
-    typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
-    RoutingTable rtable;
-    typedef std::map<int, std::vector<int> > AggrRoutingTable;
-    AggrRoutingTable aggrChildren;
-    // std::map<int, AggrGroupInfo*> aggrGroupTable;
-    GlobalRouteManager* routeManager{nullptr};
-    GroupPacketHandler* gpkHandler{nullptr};
-    simsignal_t dropSignal;
-    simsignal_t outputIfSignal;
-    simsignal_t outputPacketSignal;
-    // std::map<int, Packet*> aggrPacket;
-    // std::map<int, int> aggrCounter;
-    // std::map<int, int> aggrNumber;
-
-private:
-    // bool isAggrGroupAdded(int address) const;
-    // bool isAggrGroup(int address) const;
-    // AggrGroupInfo* getAggrGroup(int address) const;
-    // AggrGroupInfo* getOrAddGroup(int address);
-    int getRouteGateIndex(int srcAddr, int destAddr);
-    bool isGroupAddr(IntAddress addr) const {
-        return (GROUPADDR_START <= addr && addr < GROUPADDR_END);
-    };
-    bool isUnicastAddr(IntAddress addr) const {
-        return !isGroupAddr(addr);
-    };
-    void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
-
-protected:
-    virtual void initialize(int stage) override;
-    virtual void handleMessage(cMessage *msg) override;
-    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
-    virtual void refreshDisplay() const override;
-};
-
+#include "Routing.h"
 Define_Module(Routing);
 
 void Routing::initialize(int stage)
@@ -77,10 +11,15 @@ void Routing::initialize(int stage)
         outputPacketSignal = registerSignal("outputPacket");
         // WATCH_MAP(rtable); // ! this causes error if value is vector
         routeManager = getModuleFromPar<GlobalRouteManager>(par("routeManager"), this);
+        groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
         ASSERT(routeManager != nullptr);
-        auto handler = getSubmodule("pkh");
-        if (handler!=nullptr) // handler is allowed to be nullptr
-            gpkHandler = check_and_cast<GroupPacketHandler*>(handler);
+
+        aggPacketHandler.bufferSize = par("bufferSize");
+        aggPacketHandler.groupManager = groupManager;
+
+        // auto handler = getSubmodule("pkh");
+        // if (handler!=nullptr) // handler is allowed to be nullptr
+            // gpkHandler = check_and_cast<GroupPacketHandler*>(handler);
     }
 }
 
@@ -148,12 +87,13 @@ void Routing::handleMessage(cMessage *msg)
     auto srcAddr = pk->getSrcAddr();
     auto destAddr = pk->getDestAddr();
     if (isGroupAddr(destAddr)) {
-        if (gpkHandler == nullptr) {
-            throw cRuntimeError("Routing::handleMessage: you must have a group packet handler to deal with group packet!");
-        }
+        // if (gpkHandler == nullptr) {
+        //     throw cRuntimeError("Routing::handleMessage: you must have a group packet handler to deal with group packet!");
+        // }
 
         if (pk->getKind() == DATA) {
-            auto aggpk = gpkHandler->agg(pk); // group addr and packet seq will be handled here
+            // auto aggpk = gpkHandler->agg(pk); // group addr and packet seq will be handled here
+            auto aggpk = aggPacketHandler.agg(pk);
             if (aggpk != nullptr) { // packet aggregation is finished
 
             }
@@ -161,9 +101,9 @@ void Routing::handleMessage(cMessage *msg)
         }
 
         if (pk->getKind() == ACK) {
-            auto outGateIndexes = gpkHandler->getReversePortIndexes(pk);
+            auto outGateIndexes = aggPacketHandler.getReversePortIndexes(pk);
             broadcast(pk, outGateIndexes);
-            gpkHandler->releaseGroupOnSeq(pk->getDestAddr(), pk->getSeqNumber()); // release store memory
+            aggPacketHandler.releaseGroupOnSeq(pk->getDestAddr(), pk->getSeqNumber()); // release store memory
             return;
         }
     }
