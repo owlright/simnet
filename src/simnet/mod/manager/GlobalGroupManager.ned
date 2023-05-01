@@ -1,4 +1,4 @@
-package simnet.mod.agroup;
+package simnet.mod.manager;
 
 simple GlobalGroupManager
 {

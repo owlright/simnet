@@ -1,18 +1,6 @@
-#include "GroupPacketHandler.h"
-#include "simnet/common/ModuleAccess.h"
-Define_Module(GroupPacketHandler);
+#include "Routing.h"
 
-void GroupPacketHandler::initialize(int stage)
-{
-    if (stage == INITSTAGE_LOCAL) {
-        bufferSize = par("bufferSize");
-        groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this) ;
-        if (groupManager == nullptr)
-            throw cRuntimeError("GroupPacketHandler::initialize: If not manual, you must set the globalGroupManager!");
-    }
-}
-
-Packet *GroupPacketHandler::agg(Packet *pk)
+Packet* Routing::AggPacketHandler::agg(Packet *pk)
 {
     auto group = pk->getDestAddr();
     auto seq = pk->getSeqNumber();
@@ -36,7 +24,7 @@ Packet *GroupPacketHandler::agg(Packet *pk)
     return groupTable.at(group)->agg(pk);
 }
 
-B GroupPacketHandler::getUsedBufferSize() const
+B Routing::AggPacketHandler::getUsedBufferSize() const
 {
     // TODO this can be optimized
     B used = 0;
@@ -46,7 +34,7 @@ B GroupPacketHandler::getUsedBufferSize() const
     return used;
 }
 
-void GroupPacketHandler::releaseGroupOnSeq(IntAddress group, SeqNumber seq)
+void Routing::AggPacketHandler::releaseGroupOnSeq(IntAddress group, SeqNumber seq)
 {
     auto key = std::make_pair(group, seq);
     if (markNotAgg.find(key) != markNotAgg.end()) {
@@ -57,7 +45,7 @@ void GroupPacketHandler::releaseGroupOnSeq(IntAddress group, SeqNumber seq)
     }
 }
 
-const std::vector<int> &GroupPacketHandler::getReversePortIndexes(Packet *pk) const
+const std::vector<int> &Routing::AggPacketHandler::getReversePortIndexes(Packet *pk) const
 {
     auto group = pk->getDestAddr();
     auto seq = pk->getSeqNumber();

@@ -2,7 +2,7 @@ package simnet.simulations.networks;
 import simnet.mod.Host;
 import simnet.mod.Switch;
 import ned.DatarateChannel;
-import simnet.mod.GlobalRouteManager;
+import simnet.mod.manager.GlobalRouteManager;
 
 network SpineLeafNetwork {
     parameters:
