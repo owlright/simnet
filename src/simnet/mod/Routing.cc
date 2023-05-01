@@ -17,7 +17,7 @@
 #include "../common/Defs.h"
 #include "../common/Print.h"
 #include "../common/ModuleAccess.h"
-#include "simnet/mod/GlobalRouteMangager.h"
+#include "simnet/mod/manager/GlobalRouteMangager.h"
 #include "simnet/mod/agroup/GroupPacketHandler.h"
 // #include "../mod/AggrGroupInfo.h"
 using namespace omnetpp;

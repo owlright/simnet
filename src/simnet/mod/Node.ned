@@ -1,5 +1,6 @@
 package simnet.mod;
 import simnet.app.IApp;
+import simnet.mod.contract.PortDispatcher;
 
 module ManagerListener
 {
@@ -18,13 +19,7 @@ module Host extends ManagerListener
     parameters:
         int address;
         int numApps = default(0);
-//        string routeManager = default("^.routeManager");
-//        string groupManager = default("^.groupManager");
-//        *.routeManager = default(absPath(this.routeManager));
-//        *.groupManager = default(absPath(this.groupManager));
-        //! pass global module(Manager) to submodule
-        // string globalRouteManager;
-        // string globalGroupManager;
+        
         @node;
         @host;
         @display("i=abstract/server_s;bgb=276,324");
@@ -44,8 +39,6 @@ module Host extends ManagerListener
         }
         routing: Routing {
             parameters:
-                // globalRouteManager = parent.globalRouteManager;
-                // globalRouteManager = parent.globalGroupManager;
                 @display("p=140,161");
             gates:
                 in[sizeof(parent.port)];
@@ -73,10 +66,6 @@ module Switch extends ManagerListener
 {
     parameters:
         int address;
-//        string routeManager = default("^.routeManager");
-//        string groupManager = default("^.groupManager");
-//        *.routeManager = default(absPath(this.routeManager));
-//        *.groupManager = default(absPath(this.groupManager));
         @node;
         @switch;
         @display("i=abstract/switch_s");

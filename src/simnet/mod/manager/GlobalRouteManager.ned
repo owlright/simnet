@@ -1,4 +1,4 @@
-package simnet.mod;
+package simnet.mod.manager;
 
 simple GlobalRouteManager {
     parameters:

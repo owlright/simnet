@@ -3,8 +3,8 @@ package simnet.simulations.agg;
 import simnet.mod.Host;
 import simnet.mod.Switch;
 import ned.DatarateChannel;
-import simnet.mod.GlobalRouteManager;
-import simnet.mod.agroup.GlobalGroupManager;
+import simnet.mod.manager.GlobalRouteManager;
+import simnet.mod.manager.GlobalGroupManager;
 
 network AggNto1
 {

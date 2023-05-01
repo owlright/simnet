@@ -1,6 +1,6 @@
 #pragma once
 #include <omnetpp.h>
-#include "../common/Defs.h"
+#include "simnet/common/Defs.h"
 #include <unordered_map>
 using namespace omnetpp;
 

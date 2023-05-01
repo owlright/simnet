@@ -5,7 +5,7 @@
 #include "simnet/common/Defs.h"
 #include "simnet/mod/Packet_m.h"
 #include "simnet/mod/agroup/AggGroupEntry.h"
-#include "GlobalGroupManager.h"
+#include "simnet/mod/manager/GlobalGroupManager.h"
 using namespace omnetpp;
 
 // Hash function

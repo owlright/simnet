@@ -2,7 +2,7 @@
 
 #include <omnetpp.h>
 #include "simnet/common/Defs.h"
-#include "AggGroupEntry.h"
+#include "simnet/mod/agroup/AggGroupEntry.h"
 using namespace omnetpp;
 
 class GlobalGroupManager : public cSimpleModule

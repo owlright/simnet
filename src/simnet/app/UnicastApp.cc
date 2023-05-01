@@ -1,5 +1,5 @@
 #include "UnicastApp.h"
-#include "../mod/MessageDispatcher.h"
+#include "simnet/mod/contract/MessageDispatcher.h"
 
 Define_Module(UnicastApp);
 
