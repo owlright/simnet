@@ -12,11 +12,19 @@ package simnet.mod;
 //
 // Models a router.
 //
-simple Routing
+module Routing
 {
     parameters:
-        string globalRouteManager;
+        // string globalRouteManager;
+        // string globalGroupRouteManager = default("");
+        // ! these parameters are set in Node.ned
+        string routeManager;
+        string groupManager;
+    	*.routeManager = default(absPath(this.routeManager));
+        *.groupManager = default(absPath(this.groupManager));
+        
         bool ecmpFlow = default(false);
+        @class(Routing);
         @display("i=block/switch");
         @signal[drop](type="long");
         @signal[outputIf](type="long");
@@ -25,11 +33,15 @@ simple Routing
         @statistic[dataRate](title="data rate"; source=throughput(outputPacket)/1000; record=vector; unit=kbps; interpolationmode=linear);
         @statistic[drop](title="dropped packet byte length";unit=bytes;record=vector?,count,sum;interpolationmode=none);
         @statistic[outputIf](title="output interface for each routed packet";record=histogram;interpolationmode=none);
+
     gates:
         input in[];
         output out[];
         input localIn;
         output localOut;
+
+    submodules:
+        pkh: <default("GroupPacketHandler")> like PacketHandler if this.groupManager != "";
 }
 
 

@@ -22,26 +22,26 @@ network Dumbbell
             @node;
 //            @display("p=,,c,40");
             address = index;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         sender[numberFlows]: Host {
             @node;
 //            @display("p=,,c,40");
             address = 10*parent.numberFlows + index;
             app.destAddress = index;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         LR: Host {
             @node;
 //            @display("g=bottleneck;p=,,r,100");
             address = 1234;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         RR: Host {
             @node;
 //            @display("g=bottleneck;p=,,r,100");
             address = 4321;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         controller: Controller;
     connections:

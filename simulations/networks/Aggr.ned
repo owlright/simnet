@@ -21,35 +21,35 @@ network AggrDumbell
         controller: Controller;
         group1[1]: Host {
             address = index;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         aggr1: Switch {
             address = 100;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         group2[16]: Host {
             address = index+8;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         aggr2: Switch {
             address = 200;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         gate: Switch {
             address = 300;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         gateSink: Switch {
             address = 301;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         sink1: Host {
             address = 40;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         sink2: Host {
             address = 41;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
     connections:
 //        for i=0..7 {
@@ -82,17 +82,17 @@ network AggrNto1
         sender[numberOfSenders]: Host {
             @node;
             address = index;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         gate: Switch {
             @node;
             address =666;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         sink: Host {
             @node;
             address = parent.numberOfSenders;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
         }
         controller: Controller;
     connections:

@@ -32,7 +32,7 @@ network SpineLeafNetwork {
         }
         switches[spineNumber]: Switch {
             address = index + 10000;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
             @display("p=50,80,r,50");
         }
 
@@ -63,11 +63,11 @@ module SpineLeafPod {
     submodules:
         hosts[hostNumber]: Host {
             address = parent.index * parent.hostNumber + index;
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
             @display("p=50,150,r,50");
         }
         switch: Switch {
-            globalRouteManager = parent.globalRouteManager;
+//            globalRouteManager = parent.globalRouteManager;
             address = parent.index * parent.hostNumber + 1000;
             @display("p=50,80");
         }
