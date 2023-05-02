@@ -16,6 +16,9 @@ void GlobalRouteManager::initialize(int stage)
 
 std::vector<int> GlobalRouteManager::getRoutes(IntAddress src, IntAddress dest) const // TODO just pass the src address is ok
 {
+    if (src == dest) {
+        throw cRuntimeError("src and dest are the same.");
+    }
     Enter_Method("GlobalRouteManager::getRoutes");
     auto its = addr2node.find(src);
     auto itd = addr2node.find(dest);

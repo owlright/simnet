@@ -24,6 +24,7 @@ void WorkerApp::initialize(int stage)
     }
     if (stage == INITSTAGE_ASSIGN) {
         groupAddr = groupManager->getGroupAddress(myAddr);
+        destAddr = groupAddr;
         treeIndex = groupManager->getTreeIndex(myAddr);
         EV << "groupAddr: " << groupAddr << endl;
     }

@@ -7,9 +7,8 @@ UnicastSenderApp::~UnicastSenderApp() {
 
 void UnicastSenderApp::initialize(int stage)
 {
-
+    UnicastApp::initialize(stage);
     if (stage==INITSTAGE_LOCAL) {
-        UnicastApp::initialize(stage);
         destAddr = par("destAddress");
         destPort = par("destPort");
         messageLength = par("messageLength");

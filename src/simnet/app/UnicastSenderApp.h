@@ -10,7 +10,7 @@ protected:
     void sendPendingData();
     B inflightBytes() {return sentBytes - confirmedBytes;};
 
-    // inherited funcitons
+    // inherited functions
     void initialize(int stage) override;
     void handleMessage(cMessage *msg) override;
     void connectionDataArrived(Connection *connection, cMessage *msg) override;

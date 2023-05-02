@@ -20,15 +20,12 @@ network AggNto1
 
     submodules:
         sender[numberOfSenders]: Host {
-            @node;
             address = index;
         }
         gate: Switch {
-            @node;
             address = 1234;
         }
         sink: Host {
-            @node;
             address = parent.numberOfSenders;
         }
         routeManager: GlobalRouteManager;
