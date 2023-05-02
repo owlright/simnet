@@ -18,8 +18,8 @@ private:
 public:
     ~UnicastEchoApp() {};
 
-private:
-    // inherited funcitons
+protected:
+    // inherited functions
     void initialize(int stage) override;
     // void handleMessage(cMessage *msg) override;
     int numInitStages() const override { return Stage::NUM_INIT_STAGES; }

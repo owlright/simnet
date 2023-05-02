@@ -25,7 +25,7 @@ void UnicastSenderApp::initialize(int stage)
         //schedule sending event
         flowStartTimer = new cMessage("flowStart");
         scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
-        EV_DETAIL << "node: " << myAddr << " destAddr: " << destAddr << " destPort: " << destPort << endl;
+        EV << "destAddr: " << destAddr << " destPort: " << destPort << endl;
     }
 
 }

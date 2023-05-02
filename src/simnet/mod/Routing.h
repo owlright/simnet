@@ -10,12 +10,7 @@
 // #include "simnet/mod/agroup/GroupPacketHandler.h"
 // #include "../mod/AggrGroupInfo.h"
 using namespace omnetpp;
-struct hashFunction
-{
-    size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
-        return x.first ^ x.second;
-    }
-};
+
 
 /**
  * Demonstrates static routing, utilizing the cTopology class.
@@ -50,6 +45,12 @@ private:
         const std::vector<int>& getReversePortIndexes(Packet* pk) const;
 
     private:
+        struct hashFunction
+        {
+            size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
+                return x.first ^ x.second;
+            }
+        };
         void registerGroup(IntAddress group, B bufferSize);
     public:
         GlobalGroupManager* groupManager{nullptr};

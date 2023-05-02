@@ -3,4 +3,4 @@
 # The column "treeIndex" is used for the case when a group has multiple trees,
 # how to allocate packet seqs to each tree is globalGroupManager or sender's job
 # groupAddr    treeIndex    switch    fanIndegree
-10000          0            1111      2
+10000          0            1234      2
