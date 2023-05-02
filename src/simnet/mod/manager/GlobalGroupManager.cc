@@ -9,6 +9,16 @@ AggGroupEntry *GlobalGroupManager::getGroupEntry(IntAddress group)
     return entry;
 }
 
+IntAddress GlobalGroupManager::getGroupAddress(IntAddress fromNode) const
+{
+    return hostGroupInfo.at(fromNode).at(0);
+}
+
+int GlobalGroupManager::getTreeIndex(IntAddress fromNode) const
+{
+    return hostGroupInfo.at(fromNode).at(1);
+}
+
 void GlobalGroupManager::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
@@ -66,6 +76,14 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             long treeIndex = atol(tokens[1].c_str());
             long hostAddr = atol(tokens[2].c_str());
             long isRoot = atol(tokens[3].c_str());
+            hostGroupInfo[hostAddr].push_back(groupAddr);
+            hostGroupInfo[hostAddr].push_back(treeIndex);
+            if (isRoot == 0) {
+                groupSources[std::make_pair(groupAddr, treeIndex)].push_back(hostAddr);
+            } else {
+                groupRoot[std::make_pair(groupAddr, treeIndex)] = hostAddr;
+            }
+
             EV << "groupAddress:" << groupAddr
             << " treeIndex:" << treeIndex
             << " hostAddress:" << hostAddr

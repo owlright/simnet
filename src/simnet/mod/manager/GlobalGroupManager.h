@@ -8,7 +8,11 @@ using namespace omnetpp;
 class GlobalGroupManager : public cSimpleModule
 {
 public:
+    // ! for switch use
     AggGroupEntry* getGroupEntry(IntAddress group);
+    // ! for host use
+    IntAddress getGroupAddress(IntAddress fromNode) const;
+    int getTreeIndex(IntAddress fromNode) const;
 
 protected:
     virtual void initialize(int stage) override;
@@ -19,5 +23,17 @@ protected:
 private:
     void readSwitchConfig(const char * fileName);
     void readHostConfig(const char * fileName);
+
+private:
+    struct hashFunction
+    {
+        size_t operator()(const std::pair<IntAddress , int64_t> &x) const{
+            return x.first ^ x.second;
+        }
+    };
+    std::unordered_map<IntAddress, std::vector<int64_t> > hostGroupInfo;
+    std::unordered_map<std::pair<IntAddress, int64_t>, IntAddress, hashFunction> groupRoot;
+    std::unordered_map<std::pair<IntAddress, int64_t>, std::vector<int64_t>, hashFunction> groupSources;
+
 };
 
