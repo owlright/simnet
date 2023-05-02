@@ -6,6 +6,8 @@ class ParameterServerApp : public UnicastEchoApp
 {
 protected:
     void initialize(int stage) override;
+    void dealWithDataPacket(Connection *connection, Packet* pk) override;
+
 private:
     GlobalGroupManager* groupManager;
     IntAddress groupAddr{INVALID_ADDRESS};
@@ -27,4 +29,19 @@ void ParameterServerApp::initialize(int stage)
         treeIndex = groupManager->getTreeIndex(myAddr);
         EV << "groupAddr: " << groupAddr << endl;
     }
+}
+
+void ParameterServerApp::dealWithDataPacket(Connection *connection, Packet* pk)
+{
+    auto packet = new Packet();
+    setCommonField(packet);
+    packet->setConnectionId(connection->getConnectionId());
+    packet->setSeqNumber(pk->getSeqNumber());
+    packet->setKind(PacketType::ACK);
+    packet->setDestAddr(pk->getDestAddr()); // groupAddress
+    packet->setDestPort(pk->getLocalPort());
+    if (pk->getECN()) {
+        packet->setECE(true);
+    }
+    connection->sendTo(packet, pk->getDestAddr(), pk->getLocalPort());
 }

@@ -32,28 +32,33 @@ void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg
 
     if (connection->getConnectionId()==connectionid) {
         //TODO where should I put these code
-        auto packet = new Packet();
-        setCommonField(packet);
-        packet->setConnectionId(connection->getConnectionId());
-        packet->setSeqNumber(pk->getSeqNumber());
-        packet->setKind(PacketType::ACK);
-        packet->setDestAddr(pk->getSrcAddr());
-        packet->setDestPort(pk->getLocalPort());
-        if (pk->getECN()) {
-            packet->setECE(true);
-        }
-        connection->sendTo(packet, pk->getSrcAddr(), pk->getLocalPort());
-
+        dealWithDataPacket(connection, pk);
         delete pk;
         return;
     }
+    // ! The code must be put here
     if (connections.find(connectionid) == connections.end()){
         onNewConnectionArrived(pk);
     }
 
-    connections[connectionid]->processMessage(msg);
+    connections[connectionid]->processMessage(msg); // this make it to run into this function again
 
 
+}
+
+void UnicastEchoApp::dealWithDataPacket(Connection *connection, Packet* pk)
+{
+    auto packet = new Packet();
+    setCommonField(packet);
+    packet->setConnectionId(connection->getConnectionId());
+    packet->setSeqNumber(pk->getSeqNumber());
+    packet->setKind(PacketType::ACK);
+    packet->setDestAddr(pk->getSrcAddr());
+    packet->setDestPort(pk->getLocalPort());
+    if (pk->getECN()) {
+        packet->setECE(true);
+    }
+    connection->sendTo(packet, pk->getSrcAddr(), pk->getLocalPort());
 }
 
 cMessage *UnicastEchoApp::makeAckPacket(Connection *connection, Packet *pk)
