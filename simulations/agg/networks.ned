@@ -22,14 +22,10 @@ network AggNto1
         sender[numberOfSenders]: Host {
             @node;
             address = index;
-            // globalRouteManager = parent.globalRouteManager;
-            // globalGroupManager = parent.globalGroupManager;
         }
         gate: Switch {
             @node;
             address = 1234;
-            // globalRouteManager = parent.globalRouteManager;
-            // globalGroupManager = parent.globalGroupManager;
         }
         sink: Host {
             @node;

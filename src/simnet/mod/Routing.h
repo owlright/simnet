@@ -27,8 +27,8 @@ private:
     bool ecmpFlow = false;
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
-    typedef std::map<int, std::vector<int> > AggrRoutingTable;
-    AggrRoutingTable aggrChildren;
+    // typedef std::map<int, std::vector<int> > AggrRoutingTable;
+    // AggrRoutingTable aggrChildren;
     // std::map<int, AggrGroupInfo*> aggrGroupTable;
     GlobalRouteManager* routeManager{nullptr};
     GlobalGroupManager* groupManager{nullptr};
