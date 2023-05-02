@@ -9,17 +9,23 @@ void Routing::initialize(int stage)
         dropSignal = registerSignal("drop");
         outputIfSignal = registerSignal("outputIf");
         outputPacketSignal = registerSignal("outputPacket");
+        isSwitch = (getParentModule()->getProperties()->get("switch") != nullptr);
         // WATCH_MAP(rtable); // ! this causes error if value is vector
         routeManager = getModuleFromPar<GlobalRouteManager>(par("routeManager"), this);
         groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
         ASSERT(routeManager != nullptr);
+        ASSERT(groupManager != nullptr);
 
-        aggPacketHandler.bufferSize = par("bufferSize");
-        aggPacketHandler.groupManager = groupManager;
+        if (isSwitch) {
+            aggPacketHandler.bufferSize = par("bufferSize");
+            aggPacketHandler.groupManager = groupManager;
+            aggPacketHandler.switchAddress = myAddress;
+        }
 
-        // auto handler = getSubmodule("pkh");
-        // if (handler!=nullptr) // handler is allowed to be nullptr
-            // gpkHandler = check_and_cast<GroupPacketHandler*>(handler);
+    }
+    if (stage == INITSTAGE_ASSIGN) {
+        if (!isSwitch)
+            myGroupAddress = groupManager->getGroupAddress(myAddress);
     }
 }
 
@@ -37,19 +43,23 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr)
         }
     }
     else {
-        auto outGateIndexes = routeManager->getRoutes(myAddress, destAddr);
+        int address = destAddr;
+        if (isGroupAddr(destAddr)) {
+            address = groupManager->getGroupRootAddress(destAddr);
+        }
+        auto outGateIndexes = routeManager->getRoutes(myAddress, address);
         rtable[destAddr] = outGateIndexes;
         return getRouteGateIndex(srcAddr, destAddr); // ! recursion find outgate index
     }
 }
 
-void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
+void Routing::broadcast(Packet *pk, const std::unordered_set<int>& outGateIndexes) {
     for (auto& gateIndex : outGateIndexes ) {
         auto packet = pk->dup();
-        char pkname[40];
-        sprintf(pkname, "ACK-%" PRId64 "-to-group-%" PRId64 "-seq%" PRId64,
-                packet->getSrcAddr(), packet->getDestAddr(), packet->getSeqNumber());
-        packet->setName(pkname);
+//        char pkname[40];
+//        sprintf(pkname, "ACK-%" PRId64 "-to-group-%" PRId64 "-seq%" PRId64,
+//                packet->getSrcAddr(), packet->getDestAddr(), packet->getSeqNumber());
+//        packet->setName(pkname);
         EV_INFO << "Forwarding broadcast packet " << pk->getName() << " on gate index " << gateIndex << endl;
         send(packet, "out", gateIndex);
     }
@@ -86,26 +96,35 @@ void Routing::handleMessage(cMessage *msg)
     Packet *pk = check_and_cast<Packet *>(msg);
     auto srcAddr = pk->getSrcAddr();
     auto destAddr = pk->getDestAddr();
-    if (isGroupAddr(destAddr)) {
-        // if (gpkHandler == nullptr) {
-        //     throw cRuntimeError("Routing::handleMessage: you must have a group packet handler to deal with group packet!");
-        // }
 
+    if ((destAddr == myAddress || destAddr == myGroupAddress)
+            && strcmp(pk->getArrivalGate()->getName(),"in")==0) { // packet must come from below layer
+        EV << "local delivery of packet " << pk->getName() << endl;
+        send(pk, "localOut"); // send to upperlayer
+        return;
+    }
+
+    if (isSwitch && isGroupAddr(destAddr) ) {
         if (pk->getKind() == DATA) {
-            // auto aggpk = gpkHandler->agg(pk); // group addr and packet seq will be handled here
-            auto aggpk = aggPacketHandler.agg(pk);
-            if (aggpk != nullptr) { // packet aggregation is finished
-
+            auto aggpk = aggPacketHandler.agg(pk); // group addr and packet seq will be handled here
+            if (aggpk == nullptr) { // packet aggregation is finished
+                return;
             }
-            return;
+            pk = aggpk;
         }
 
         if (pk->getKind() == ACK) {
             auto outGateIndexes = aggPacketHandler.getReversePortIndexes(pk);
-            broadcast(pk, outGateIndexes);
             aggPacketHandler.releaseGroupOnSeq(pk->getDestAddr(), pk->getSeqNumber()); // release store memory
+            broadcast(pk, outGateIndexes);
             return;
         }
+    }
+
+    if (!isSwitch) { // HACK: if this node is not switch, only out[0]
+        EV << "Forwarding packet " << pk->getName() << " on gate index " << 0 << endl;
+        send(pk, "out", 0);
+        return;
     }
     /*
     if (getParentModule()->getProperties()->get("switch") != nullptr) { // I'm the router
@@ -163,29 +182,23 @@ void Routing::handleMessage(cMessage *msg)
              return; // ! do not forget to return here.
         }
     } */
-    // ! Deal with unicast packet
-    if (isUnicastAddr(destAddr)) {
-        if (destAddr == myAddress) {
-            EV << "local delivery of packet " << pk->getName() << endl;
-            send(pk, "localOut");
-            emit(outputIfSignal, -1);  // -1: local
-            return;
-        }
-        int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
-        if (outGateIndex == -1) {
-            EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
-            emit(dropSignal, (intval_t)pk->getByteLength());
-            delete pk;
-            return;
-        }
-        EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-        // pk->setHopCount(pk->getHopCount()+1);
-        // emit(outputIfSignal, outGateIndex);
-        // emit(outputPacketSignal, pk);
-        send(pk, "out", outGateIndex);
+
+    // ! destAddr may be unicast addr or multicast
+    int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
+    if (outGateIndex == -1) {
+        EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
+        emit(dropSignal, (intval_t)pk->getByteLength());
+        delete pk;
+        return;
     }
+    EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
+    // pk->setHopCount(pk->getHopCount()+1);
+    // emit(outputIfSignal, outGateIndex);
+    // emit(outputPacketSignal, pk);
+    send(pk, "out", outGateIndex);
+
     // ! code can't run till here
-    throw cRuntimeError("Unknown packet dest address %" PRId64, destAddr);
+    // throw cRuntimeError("Unknown packet dest address %" PRId64, destAddr);
 }
 
 void Routing::refreshDisplay() const

@@ -18,7 +18,9 @@ using namespace omnetpp;
 class Routing : public cSimpleModule
 {
 private:
-    IntAddress myAddress;
+    bool isSwitch;
+    IntAddress myAddress{INVALID_ADDRESS};
+    IntAddress myGroupAddress{INVALID_ADDRESS};
     bool ecmpFlow = false;
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
@@ -39,10 +41,11 @@ private:
     //! for dealing with agg groups
     class AggPacketHandler {
     public:
+        IntAddress switchAddress;
         Packet* agg(Packet* pk);
         B getUsedBufferSize() const;
         void releaseGroupOnSeq(IntAddress group, SeqNumber seq);
-        const std::vector<int>& getReversePortIndexes(Packet* pk) const;
+        const std::unordered_set<int>& getReversePortIndexes(Packet* pk) const;
 
     private:
         struct hashFunction
@@ -66,7 +69,7 @@ private:
     int getRouteGateIndex(int srcAddr, int destAddr);
     bool isGroupAddr(IntAddress addr) const { return (GROUPADDR_START <= addr && addr < GROUPADDR_END);};
     bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
-    void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
+    void broadcast(Packet* pk, const std::unordered_set<int>& outGateIndexes);
 
 protected:
     virtual void initialize(int stage) override;

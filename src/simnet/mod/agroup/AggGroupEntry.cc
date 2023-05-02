@@ -1,5 +1,5 @@
 #include "AggGroupEntry.h"
-
+#include <iostream>
 // AggGroupEntry::AggGroupEntry(int groupid, int number, int buffer) {
 //     this->groupAddr = groupid;
 //     numberOfChidren = number;
@@ -15,25 +15,27 @@
     // return packets.at(seq);
 // }
 
-AggGroupEntry::AggGroupEntry(SeqNumber seq, int indegree)
+AggGroupEntry::AggGroupEntry(B size, int indegree)
 {
-    // usually the first packet of a seq will call this construction
-    packetTable[seq] = new AggPacketEntry(seq, indegree);
-
+    this->bufferSize = size;
+    this->indegree = indegree;
 }
 
 Packet *AggGroupEntry::agg(Packet *pk)
 {
     auto seq = pk->getSeqNumber();
-    if (markNotAgg.find(seq) != markNotAgg.end())
-        return pk;
+   if (markNotAgg.find(seq) != markNotAgg.end())
+       return pk;
 
-    if (getUsedBufferSize() >= bufferSize)
-    { // When switch has enough buffer space, it doesn't mean the group can use it.
+    if (getUsedBufferSize() >= bufferSize) {
+        // When switch has enough buffer space, it doesn't mean the group can use it.
+        markNotAgg.insert(seq);
         return pk;
     }
 
-    assert(packetTable.find(seq) != packetTable.end()); // ! packetEntry must be set by group manager already
+    if (packetTable.find(seq) == packetTable.end()) {
+        packetTable[seq] = new AggPacketEntry(seq, indegree);
+    }
 
     return packetTable[seq]->agg(pk);
 }
@@ -56,6 +58,7 @@ B AggGroupEntry::getUsedBufferSize() const
 
 Packet *AggGroupEntry::AggPacketEntry::agg(Packet *pk)
 {
+    incomingPortIndexes.insert(pk->getArrivalGate()->getIndex());
     if (counter == 0) {
         assert(packet == nullptr);
         packet = pk; // just keep the first packet is ok
@@ -75,7 +78,6 @@ AggGroupEntry::AggPacketEntry::AggPacketEntry(SeqNumber seq, int indegree)
 {
     this->seq = seq;
     fanIndegree = indegree;
-    incomingPortIndexes.reserve(fanIndegree); // may not necessary
     packet = nullptr;
     counter = 0;
 }
