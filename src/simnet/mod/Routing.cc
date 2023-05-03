@@ -12,9 +12,8 @@ void Routing::initialize(int stage)
         isSwitch = (getParentModule()->getProperties()->get("switch") != nullptr);
         // WATCH_MAP(rtable); // ! this causes error if value is vector
         routeManager = getModuleFromPar<GlobalRouteManager>(par("routeManager"), this);
-        groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
-        ASSERT(routeManager != nullptr);
-        ASSERT(groupManager != nullptr);
+        if (strcmp(par("groupManager").stringValue(), "") != 0)
+            groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
 
         if (isSwitch) {
             aggPacketHandler.bufferSize = par("bufferSize");
@@ -24,7 +23,7 @@ void Routing::initialize(int stage)
 
     }
     if (stage == INITSTAGE_ASSIGN) {
-        if (!isSwitch)
+        if (!isSwitch && groupManager != nullptr)
             myGroupAddress = groupManager->getGroupAddress(myAddress);
     }
 }
