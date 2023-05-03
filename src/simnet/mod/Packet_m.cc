@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -178,6 +178,7 @@ Packet& Packet::operator=(const Packet& other)
 void Packet::copy(const Packet& other)
 {
     this->connectionId = other.connectionId;
+    this->flowId = other.flowId;
     this->srcAddr = other.srcAddr;
     this->localPort = other.localPort;
     this->destAddr = other.destAddr;
@@ -191,6 +192,7 @@ void Packet::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::omnetpp::cPacket::parsimPack(b);
     doParsimPacking(b,this->connectionId);
+    doParsimPacking(b,this->flowId);
     doParsimPacking(b,this->srcAddr);
     doParsimPacking(b,this->localPort);
     doParsimPacking(b,this->destAddr);
@@ -204,6 +206,7 @@ void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::omnetpp::cPacket::parsimUnpack(b);
     doParsimUnpacking(b,this->connectionId);
+    doParsimUnpacking(b,this->flowId);
     doParsimUnpacking(b,this->srcAddr);
     doParsimUnpacking(b,this->localPort);
     doParsimUnpacking(b,this->destAddr);
@@ -221,6 +224,16 @@ int64_t Packet::getConnectionId() const
 void Packet::setConnectionId(int64_t connectionId)
 {
     this->connectionId = connectionId;
+}
+
+int64_t Packet::getFlowId() const
+{
+    return this->flowId;
+}
+
+void Packet::setFlowId(int64_t flowId)
+{
+    this->flowId = flowId;
 }
 
 int64_t Packet::getSrcAddr() const
@@ -299,6 +312,7 @@ class PacketDescriptor : public omnetpp::cClassDescriptor
     mutable const char **propertyNames;
     enum FieldConstants {
         FIELD_connectionId,
+        FIELD_flowId,
         FIELD_srcAddr,
         FIELD_localPort,
         FIELD_destAddr,
@@ -372,7 +386,7 @@ const char *PacketDescriptor::getProperty(const char *propertyName) const
 int PacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 8+base->getFieldCount() : 8;
+    return base ? 9+base->getFieldCount() : 9;
 }
 
 unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
@@ -385,6 +399,7 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
     }
     static unsigned int fieldTypeFlags[] = {
         FD_ISEDITABLE,    // FIELD_connectionId
+        FD_ISEDITABLE,    // FIELD_flowId
         FD_ISEDITABLE,    // FIELD_srcAddr
         FD_ISEDITABLE,    // FIELD_localPort
         FD_ISEDITABLE,    // FIELD_destAddr
@@ -393,7 +408,7 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_ECN
         FD_ISEDITABLE,    // FIELD_ECE
     };
-    return (field >= 0 && field < 8) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 9) ? fieldTypeFlags[field] : 0;
 }
 
 const char *PacketDescriptor::getFieldName(int field) const
@@ -406,6 +421,7 @@ const char *PacketDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "connectionId",
+        "flowId",
         "srcAddr",
         "localPort",
         "destAddr",
@@ -414,7 +430,7 @@ const char *PacketDescriptor::getFieldName(int field) const
         "ECN",
         "ECE",
     };
-    return (field >= 0 && field < 8) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 9) ? fieldNames[field] : nullptr;
 }
 
 int PacketDescriptor::findField(const char *fieldName) const
@@ -422,13 +438,14 @@ int PacketDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     int baseIndex = base ? base->getFieldCount() : 0;
     if (strcmp(fieldName, "connectionId") == 0) return baseIndex + 0;
-    if (strcmp(fieldName, "srcAddr") == 0) return baseIndex + 1;
-    if (strcmp(fieldName, "localPort") == 0) return baseIndex + 2;
-    if (strcmp(fieldName, "destAddr") == 0) return baseIndex + 3;
-    if (strcmp(fieldName, "destPort") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "seqNumber") == 0) return baseIndex + 5;
-    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 6;
-    if (strcmp(fieldName, "ECE") == 0) return baseIndex + 7;
+    if (strcmp(fieldName, "flowId") == 0) return baseIndex + 1;
+    if (strcmp(fieldName, "srcAddr") == 0) return baseIndex + 2;
+    if (strcmp(fieldName, "localPort") == 0) return baseIndex + 3;
+    if (strcmp(fieldName, "destAddr") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "destPort") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "seqNumber") == 0) return baseIndex + 6;
+    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 7;
+    if (strcmp(fieldName, "ECE") == 0) return baseIndex + 8;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -442,6 +459,7 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "int64_t",    // FIELD_connectionId
+        "int64_t",    // FIELD_flowId
         "int64_t",    // FIELD_srcAddr
         "uint16_t",    // FIELD_localPort
         "int64_t",    // FIELD_destAddr
@@ -450,7 +468,7 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "bool",    // FIELD_ECN
         "bool",    // FIELD_ECE
     };
-    return (field >= 0 && field < 8) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 9) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **PacketDescriptor::getFieldPropertyNames(int field) const
@@ -534,6 +552,7 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
         case FIELD_connectionId: return int642string(pp->getConnectionId());
+        case FIELD_flowId: return int642string(pp->getFlowId());
         case FIELD_srcAddr: return int642string(pp->getSrcAddr());
         case FIELD_localPort: return ulong2string(pp->getLocalPort());
         case FIELD_destAddr: return int642string(pp->getDestAddr());
@@ -558,6 +577,7 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
         case FIELD_connectionId: pp->setConnectionId(string2int64(value)); break;
+        case FIELD_flowId: pp->setFlowId(string2int64(value)); break;
         case FIELD_srcAddr: pp->setSrcAddr(string2int64(value)); break;
         case FIELD_localPort: pp->setLocalPort(string2ulong(value)); break;
         case FIELD_destAddr: pp->setDestAddr(string2int64(value)); break;
@@ -580,6 +600,7 @@ omnetpp::cValue PacketDescriptor::getFieldValue(omnetpp::any_ptr object, int fie
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
         case FIELD_connectionId: return pp->getConnectionId();
+        case FIELD_flowId: return pp->getFlowId();
         case FIELD_srcAddr: return pp->getSrcAddr();
         case FIELD_localPort: return (omnetpp::intval_t)(pp->getLocalPort());
         case FIELD_destAddr: return pp->getDestAddr();
@@ -604,6 +625,7 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
         case FIELD_connectionId: pp->setConnectionId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
+        case FIELD_flowId: pp->setFlowId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_srcAddr: pp->setSrcAddr(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_localPort: pp->setLocalPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
         case FIELD_destAddr: pp->setDestAddr(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;

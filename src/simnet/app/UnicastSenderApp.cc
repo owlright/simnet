@@ -1,5 +1,10 @@
 #include "UnicastSenderApp.h"
 Define_Module(UnicastSenderApp);
+//signals
+simsignal_t UnicastSenderApp::cwndSignal = registerSignal("cwnd");
+simsignal_t UnicastSenderApp::rttSignal = registerSignal("rtt");
+simsignal_t UnicastSenderApp::fctSignal = registerSignal("fct");
+simsignal_t UnicastSenderApp::idealFctSignal = registerSignal("idealFct");
 
 UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(flowStartTimer);
@@ -12,15 +17,16 @@ void UnicastSenderApp::initialize(int stage)
         destAddr = par("destAddress");
         destPort = par("destPort");
         messageLength = par("messageLength");
-        flowSize = par("flowSize");
+        flowSize = &par("flowSize");
         flowInterval = &par("flowInterval");
         connection.setConnectionId(cSimulation::getActiveEnvir()->getUniqueNumber());
         cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
         cong->setSegmentSize(messageLength);
-
-        //signals
-        cwndSignal = registerSignal("cwnd");
-        rttSignal = registerSignal("rtt");
+        //HACK
+        bandwidth = check_and_cast<cDatarateChannel *>(
+                                    getParentModule()
+                                    ->gateHalf("port", cGate::Type::OUTPUT, 0)
+                                    ->getChannel())->getDatarate();
         //schedule sending event
         flowStartTimer = new cMessage("flowStart");
         scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
@@ -32,6 +38,14 @@ void UnicastSenderApp::initialize(int stage)
 void UnicastSenderApp::handleMessage(cMessage *msg)
 {
     if (msg == flowStartTimer) {
+        if (!getEnvir()->isExpressMode())
+            getParentModule()->bubble("a new flow!");
+        flowId++;
+        sentBytes = 0;
+        confirmedBytes = 0;
+        flowStartTime = simTime();
+        currentFlowSize = flowSize->intValue();
+        emit(idealFctSignal, currentFlowSize/bandwidth);
         sendPendingData();
     } else {
         UnicastApp::handleMessage(msg);
@@ -40,10 +54,10 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
 
 void UnicastSenderApp::sendPendingData()
 {
-    while (cong->getcWnd() > inflightBytes() && sentBytes < flowSize) {
+    while (cong->getcWnd() > inflightBytes() && sentBytes < currentFlowSize) {
         auto packetSize = messageLength;
-        if (flowSize != 0 && messageLength + sentBytes > flowSize) {
-            packetSize = flowSize - sentBytes; // the data about to send is too small.
+        if (flowSize != 0 && messageLength + sentBytes > currentFlowSize) {
+            packetSize = currentFlowSize - sentBytes; // the data about to send is too small.
         }
         sentBytes += packetSize;
         // make packet
@@ -70,15 +84,16 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     cong->onRecvAck(pk->getSeqNumber(), pk->getECE());
 
 
-    if (sentBytes < flowSize) {
+    if (sentBytes < currentFlowSize) {
         sendPendingData();
     } else {
         //TODO if all packets sended
 
     }
     //TODO if all packets are confirmed
-    if (confirmedBytes == flowSize) {
-
+    if (confirmedBytes == currentFlowSize) {
+        emit(fctSignal, simTime() - flowStartTime);
+        scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
     }
 
     delete pk;
@@ -87,11 +102,9 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 cMessage *UnicastSenderApp::makeDataPacket(Connection *connection, Packet *pk)
 {
     char pkname[40];
-    sprintf(pkname, "DATA-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, myAddr, destAddr, sentBytes);
+    sprintf(pkname, "flow%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
+            flowId, myAddr, destAddr, sentBytes);
     pk->setName(pkname);
     pk->setECN(false);
     return pk;
 }
-
-
-

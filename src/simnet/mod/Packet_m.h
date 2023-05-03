@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
 //
 
 #ifndef __PACKET_M_H
@@ -18,7 +18,7 @@
 
 class Packet;
 /**
- * Enum generated from <tt>simnet/mod/Packet.msg:19</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/../mod/Packet.msg:19</tt> by opp_msgtool.
  * <pre>
  * //
  * // Represents a packet in the network.
@@ -52,11 +52,12 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:25</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:25</tt> by opp_msgtool.
  * <pre>
  * packet Packet
  * {
  *     int64_t connectionId;
+ *     int64_t flowId;
  *     int64_t srcAddr;
  *     uint16_t localPort;
  *     int64_t destAddr;
@@ -71,6 +72,7 @@ class Packet : public ::omnetpp::cPacket
 {
   protected:
     int64_t connectionId = 0;
+    int64_t flowId = 0;
     int64_t srcAddr = 0;
     uint16_t localPort = 0;
     int64_t destAddr = 0;
@@ -96,6 +98,9 @@ class Packet : public ::omnetpp::cPacket
 
     virtual int64_t getConnectionId() const;
     virtual void setConnectionId(int64_t connectionId);
+
+    virtual int64_t getFlowId() const;
+    virtual void setFlowId(int64_t flowId);
 
     virtual int64_t getSrcAddr() const;
     virtual void setSrcAddr(int64_t srcAddr);

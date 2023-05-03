@@ -15,7 +15,7 @@ void Connection::bind(IntAddress localAddr, PortNumber localPort, cGate* const o
 void Connection::setConnectionId(IdNumber id)
 {
     if (connectionId!=INVALID_ID) {
-        throw cRuntimeError("conncection id can only be set once!");
+        throw cRuntimeError("connection id can only be set once!");
     }
     connectionId = id;
 }

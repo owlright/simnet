@@ -19,6 +19,10 @@ module UnicastSenderApp extends UnicastApp {
         int messageLength @unit(B) = default(1kB);
         int flowSize @unit(B) = default(8kB);
         volatile double flowInterval @unit(s) = default(10us);
+        @signal[fct](type=simtime_t);
+        @singal[idealFct](type=simtime_t);
+        @statistic[fct](title="flow complete time"; source=fct; record=count,mean,max,min,vector; interpolationmode=none);
+        @statistic[idealFct](title="ideal flow complete time"; source=idealFct; record=count,mean,max,min,vector; interpolationmode=none);
    submodules:
         cong: <default("Reno")> like Cong;
 }
