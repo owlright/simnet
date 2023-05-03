@@ -51,7 +51,7 @@ std::vector<int> GlobalRouteManager::getRoutes(IntAddress switchAddr, IntAddress
                     <<"  towards address " << dest
                     << " gateIndex is " << gateIndex << endl;
         }
-        // ! disable this link and reclacuate shortest paths
+        // ! disable this link and recalculate shortest paths
         srcNode->getPath(0)->disable();
         linkrecord.push_back(srcNode->getPath(0));
         topo->calculateUnweightedSingleShortestPathsTo(destNode);

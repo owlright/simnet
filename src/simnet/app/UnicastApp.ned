@@ -13,8 +13,9 @@ simple UnicastApp like IApp {
 module UnicastSenderApp extends UnicastApp {
    parameters:
        @class(UnicastSenderApp);
+       port = default(1000);
         int destAddress = default(-1);
-        int destPort = default(0);
+        int destPort = default(1001);
         int messageLength @unit(B) = default(1kB);
         int flowSize @unit(B) = default(8kB);
         volatile double flowInterval @unit(s) = default(10us);
@@ -24,6 +25,7 @@ module UnicastSenderApp extends UnicastApp {
 
 module UnicastEchoApp extends UnicastApp {
     parameters:
+        port = default(1001);
         @class(UnicastEchoApp);
 //    submodules:
 //        cong: <default("Reno")> like Cong;
@@ -31,6 +33,8 @@ module UnicastEchoApp extends UnicastApp {
 
 module WorkerApp extends UnicastSenderApp {
     parameters:
+        port = default(2000);
+        destPort = default(2001);
         int groupAddress = default(this.destAddress);
         string groupManager;
         @class(WorkerApp);
@@ -39,6 +43,7 @@ module WorkerApp extends UnicastSenderApp {
 
 module ParameterServerApp extends UnicastEchoApp {
     parameters:
+        port = default(2001);
         string groupManager;
         @class(ParameterServerApp);
     
