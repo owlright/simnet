@@ -80,7 +80,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     if (confirmedBytes == flowSize) {
 
     }
-    // connection->sendTo();
+
     delete pk;
 }
 

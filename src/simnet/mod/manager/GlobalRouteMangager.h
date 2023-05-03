@@ -6,7 +6,7 @@ using namespace omnetpp;
 
 class GlobalRouteManager: public cSimpleModule {
 public:
-    std::vector<int> getRoutes(IntAddress src, IntAddress dest) const;
+    std::vector<int> getRoutes(IntAddress switchAddr, IntAddress dest) const;
     GlobalRouteManager() {};
     ~GlobalRouteManager() {delete topo;};
 

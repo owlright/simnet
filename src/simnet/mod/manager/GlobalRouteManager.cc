@@ -5,7 +5,7 @@ Define_Module(GlobalRouteManager);
 void GlobalRouteManager::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
-        EV_INFO << "network intialization." << endl;
+        EV_INFO << "network initialization." << endl;
 
         this->topo = new cTopology("topo");
         topo->extractByProperty("node");
@@ -14,19 +14,19 @@ void GlobalRouteManager::initialize(int stage)
     }
 }
 
-std::vector<int> GlobalRouteManager::getRoutes(IntAddress src, IntAddress dest) const // TODO just pass the src address is ok
+std::vector<int> GlobalRouteManager::getRoutes(IntAddress switchAddr, IntAddress dest) const // TODO just pass the src address is ok
 {
-    if (src == dest) {
-        throw cRuntimeError("src and dest are the same.");
+    if (switchAddr == dest) {
+        throw cRuntimeError("switchAddr and dest are the same.");
     }
     Enter_Method("GlobalRouteManager::getRoutes");
-    auto its = addr2node.find(src);
+    auto its = addr2node.find(switchAddr);
     auto itd = addr2node.find(dest);
     if (its == addr2node.end()) {
-       throw cRuntimeError("node %" PRId64 " does not existed!", src);
+       throw cRuntimeError("node %" PRId64 " does not exist!", switchAddr);
     }
     if (itd == addr2node.end()) {
-       throw cRuntimeError("node %" PRId64 " does not existed!", dest);
+       throw cRuntimeError("node %" PRId64 " does not exist!", dest);
     }
     auto srcNode = topo->getNode(its->second);
     auto destNode = topo->getNode(itd->second);
@@ -36,7 +36,7 @@ std::vector<int> GlobalRouteManager::getRoutes(IntAddress src, IntAddress dest) 
     topo->calculateUnweightedSingleShortestPathsTo(destNode);
     auto distance = srcNode->getDistanceToTarget();
     if (distance == INFINITY) {
-        throw cRuntimeError("there is no path from %" PRId64 " to %" PRId64, src, dest);
+        throw cRuntimeError("there is no path from %" PRId64 " to %" PRId64, switchAddr, dest);
     }
     // * find path whose length <= distance
     std::vector<int> gateIndexes;
