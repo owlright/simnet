@@ -1,0 +1,5 @@
+# This file assign job's senders and receivers on hosts
+# groupAddr    treeIndex    host    root(true/false)
+10000          0            0       0
+10000          0            1       0
+10000          0            2       1

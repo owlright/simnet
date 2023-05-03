@@ -7,9 +7,8 @@ UnicastSenderApp::~UnicastSenderApp() {
 
 void UnicastSenderApp::initialize(int stage)
 {
-
+    UnicastApp::initialize(stage);
     if (stage==INITSTAGE_LOCAL) {
-        UnicastApp::initialize(stage);
         destAddr = par("destAddress");
         destPort = par("destPort");
         messageLength = par("messageLength");
@@ -25,7 +24,7 @@ void UnicastSenderApp::initialize(int stage)
         //schedule sending event
         flowStartTimer = new cMessage("flowStart");
         scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
-        EV_DETAIL << "node: " << myAddr << " destAddr: " << destAddr << " destPort: " << destPort << endl;
+        EV << "destAddr: " << destAddr << " destPort: " << destPort << endl;
     }
 
 }
@@ -81,7 +80,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     if (confirmedBytes == flowSize) {
 
     }
-    // connection->sendTo();
+
     delete pk;
 }
 

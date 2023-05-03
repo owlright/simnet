@@ -28,3 +28,18 @@ module UnicastEchoApp extends UnicastApp {
 //    submodules:
 //        cong: <default("Reno")> like Cong;
 }
+
+module WorkerApp extends UnicastSenderApp {
+    parameters:
+        int groupAddress = default(this.destAddress);
+        string groupManager;
+        @class(WorkerApp);
+
+}
+
+module ParameterServerApp extends UnicastEchoApp {
+    parameters:
+        string groupManager;
+        @class(ParameterServerApp);
+    
+}

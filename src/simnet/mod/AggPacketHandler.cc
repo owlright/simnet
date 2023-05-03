@@ -17,8 +17,8 @@ Packet* Routing::AggPacketHandler::agg(Packet *pk)
 
     if (groupTable.find(group) == groupTable.end()) {
         // * the first time we see the group
-        // set this group
-        groupTable[group] = groupManager->getGroupEntry(group);
+        auto indegree = groupManager->getFanIndegree(group, 0, switchAddress); // FIXME set treeindex =0
+        groupTable[group] = new AggGroupEntry(bufferSize, indegree);
     }
     // ! Now group entry must be in the groupTable
     return groupTable.at(group)->agg(pk);
@@ -45,11 +45,11 @@ void Routing::AggPacketHandler::releaseGroupOnSeq(IntAddress group, SeqNumber se
     }
 }
 
-const std::vector<int> &Routing::AggPacketHandler::getReversePortIndexes(Packet *pk) const
+const std::unordered_set<int> &Routing::AggPacketHandler::getReversePortIndexes(Packet *pk) const
 {
     auto group = pk->getDestAddr();
     auto seq = pk->getSeqNumber();
-    if (groupTable.find(group)!=groupTable.end())
+    if (groupTable.find(group)==groupTable.end())
         throw cRuntimeError("GroupPakcetHandler::getReversePortIndexes: not find the group");
     return groupTable.at(group)->getIncomingPortIndexes(seq);
 }

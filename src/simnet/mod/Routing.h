@@ -10,12 +10,7 @@
 // #include "simnet/mod/agroup/GroupPacketHandler.h"
 // #include "../mod/AggrGroupInfo.h"
 using namespace omnetpp;
-struct hashFunction
-{
-    size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
-        return x.first ^ x.second;
-    }
-};
+
 
 /**
  * Demonstrates static routing, utilizing the cTopology class.
@@ -23,12 +18,14 @@ struct hashFunction
 class Routing : public cSimpleModule
 {
 private:
-    IntAddress myAddress;
+    bool isSwitch;
+    IntAddress myAddress{INVALID_ADDRESS};
+    IntAddress myGroupAddress{INVALID_ADDRESS};
     bool ecmpFlow = false;
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
-    typedef std::map<int, std::vector<int> > AggrRoutingTable;
-    AggrRoutingTable aggrChildren;
+    // typedef std::map<int, std::vector<int> > AggrRoutingTable;
+    // AggrRoutingTable aggrChildren;
     // std::map<int, AggrGroupInfo*> aggrGroupTable;
     GlobalRouteManager* routeManager{nullptr};
     GlobalGroupManager* groupManager{nullptr};
@@ -44,12 +41,19 @@ private:
     //! for dealing with agg groups
     class AggPacketHandler {
     public:
+        IntAddress switchAddress;
         Packet* agg(Packet* pk);
         B getUsedBufferSize() const;
         void releaseGroupOnSeq(IntAddress group, SeqNumber seq);
-        const std::vector<int>& getReversePortIndexes(Packet* pk) const;
+        const std::unordered_set<int>& getReversePortIndexes(Packet* pk) const;
 
     private:
+        struct hashFunction
+        {
+            size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
+                return x.first ^ x.second;
+            }
+        };
         void registerGroup(IntAddress group, B bufferSize);
     public:
         GlobalGroupManager* groupManager{nullptr};
@@ -65,7 +69,7 @@ private:
     int getRouteGateIndex(int srcAddr, int destAddr);
     bool isGroupAddr(IntAddress addr) const { return (GROUPADDR_START <= addr && addr < GROUPADDR_END);};
     bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
-    void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
+    void broadcast(Packet* pk, const std::unordered_set<int>& outGateIndexes);
 
 protected:
     virtual void initialize(int stage) override;

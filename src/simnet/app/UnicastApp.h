@@ -17,7 +17,7 @@ public:
     virtual ~UnicastApp() {};
 
 protected:
-    // inherited funcitons
+    // inherited functions
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
     virtual int numInitStages() const override { return Stage::NUM_INIT_STAGES; }

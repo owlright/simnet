@@ -10,6 +10,7 @@ void UnicastApp::initialize(int stage)
         localPort = par("port");
         connection.bind(myAddr, localPort, gate("out"));
         connection.setCallback(this);
+        EV << "node: " << myAddr << " localport: " << localPort << endl;
         auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
         check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
     }
