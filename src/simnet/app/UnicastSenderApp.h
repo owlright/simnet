@@ -4,16 +4,19 @@
 class UnicastSenderApp : public UnicastApp
 {
 protected:
-    cMessage* makeDataPacket(Connection *connection, Packet* pk) override;
-    cMessage* makeAckPacket(Connection *connection, Packet* pk) override {throw cRuntimeError("this is an sender app, do not respond.");};
     // helper functions
     void sendPendingData();
     B inflightBytes() {return sentBytes - confirmedBytes;};
+    virtual void onFlowStart();
+    virtual void onFlowStop();
 
     // inherited functions
     void initialize(int stage) override;
     void handleMessage(cMessage *msg) override;
     void connectionDataArrived(Connection *connection, cMessage *msg) override;
+
+    cMessage* makeDataPacket(Connection *connection, Packet* pk) override;
+    cMessage* makeAckPacket(Connection *connection, Packet* pk) override {throw cRuntimeError("this is an sender app, do not respond.");};
 
 protected:
     // configuration
