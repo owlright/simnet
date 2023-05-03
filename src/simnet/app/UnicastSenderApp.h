@@ -19,20 +19,26 @@ protected:
     // configuration
     IntAddress destAddr{INVALID_ADDRESS};
     PortNumber destPort{INVALID_PORT};
-    double startTime;
+
     B messageLength{0};
-    B flowSize{0};
-    cPar *flowInterval{nullptr};
+    cPar* flowSize{nullptr};
+    cPar* flowInterval{nullptr};
     // state
+    IdNumber flowId{-1};
     cMessage *flowStartTimer = nullptr;
     B sentBytes{0};
     B confirmedBytes{0};
+    B currentFlowSize{0};
 
     // signals
-    simsignal_t cwndSignal;
-    simsignal_t rttSignal;
+    static simsignal_t cwndSignal;
+    static simsignal_t rttSignal;
+    static simsignal_t fctSignal;
+    static simsignal_t idealFctSignal;
+    simtime_t flowStartTime;
 
     CongAlgo* cong;
+    double bandwidth;
 
 public:
     ~UnicastSenderApp();
