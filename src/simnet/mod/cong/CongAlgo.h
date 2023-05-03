@@ -20,7 +20,8 @@ public:
     virtual void onRecvAck(SeqNumber seq, bool congestion) = 0;
     // virtual void onRecvData(SeqNumber seq, B pkSize) = 0;
     void setSegmentSize(B segmentSize) {this->segmentSize=segmentSize;};
-
+    virtual void reset() = 0;
+    
 protected:
     virtual void initialize(int stage) override{};
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }

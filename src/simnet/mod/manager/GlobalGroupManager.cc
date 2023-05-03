@@ -34,12 +34,41 @@ int GlobalGroupManager::getFanIndegree(IntAddress group, int treeIndex, IntAddre
 
 }
 
-int GlobalGroupManager::getBufferSize(IntAddress group, IntAddress switchAddress)
+int GlobalGroupManager::getBufferSize(IntAddress group, IntAddress switchAddress) const
 {
     auto it = switchBufferSize.find(std::make_pair(group, switchAddress));
     if (it == switchBufferSize.end())
         throw cRuntimeError("bufferSize not found.");
     return it->second;
+}
+
+void GlobalGroupManager::reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime)
+{
+    if (groupRoundStartTime.find(groupAddr) == groupRoundStartTime.end()) {
+        groupRoundStartTime[groupAddr] = new groupRoundFinishInfo();
+        groupRoundStartTime[groupAddr]->roundFctSignal = createSignalForGroup(groupAddr);
+        groupRoundStartTime[groupAddr]->startTime = roundStartTime;
+    } else {
+        if (roundStartTime  < groupRoundStartTime[groupAddr]->startTime) {
+            groupRoundStartTime[groupAddr]->startTime = roundStartTime;
+        }
+    }
+}
+
+void GlobalGroupManager::reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime)
+{
+    auto it = groupRoundStartTime.find(groupAddr);
+    if (it == groupRoundStartTime.end()) {
+        throw cRuntimeError("This group hasn't registered its signal");
+    }
+
+    auto roundMeter = it->second;
+    roundMeter->counter++;
+    if (roundMeter->counter == groupSources.at(std::make_pair(groupAddr, 0)).size()) {
+        emit(roundMeter->roundFctSignal, simTime() - roundMeter->startTime);
+        roundMeter->startTime = simTime();
+        roundMeter->counter = 0;
+    }
 }
 
 void GlobalGroupManager::initialize(int stage)
@@ -118,4 +147,18 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             << endl;
         }
     }
+}
+
+simsignal_t GlobalGroupManager::createSignalForGroup(IntAddress group)
+{
+    char signalName[32];
+    sprintf(signalName, "group%d-RoundFinishTime", group);
+    simsignal_t signal = registerSignal(signalName);
+
+    char statisticName[32];
+    sprintf(statisticName, "group%d-RoundFinishTime", group);
+    cProperty *statisticTemplate =
+        getProperties()->get("statisticTemplate", "groupRoundFinishTime");
+    getEnvir()->addResultRecorders(this, signal, statisticName, statisticTemplate);
+    return signal;
 }

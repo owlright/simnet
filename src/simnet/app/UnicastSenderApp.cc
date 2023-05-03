@@ -40,12 +40,7 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
     if (msg == flowStartTimer) {
         if (!getEnvir()->isExpressMode())
             getParentModule()->bubble("a new flow!");
-        flowId++;
-        sentBytes = 0;
-        confirmedBytes = 0;
-        flowStartTime = simTime();
-        currentFlowSize = flowSize->intValue();
-        emit(idealFctSignal, currentFlowSize/bandwidth);
+        onFlowStart();
         sendPendingData();
     } else {
         UnicastApp::handleMessage(msg);
@@ -75,6 +70,23 @@ void UnicastSenderApp::sendPendingData()
 
 }
 
+void UnicastSenderApp::onFlowStart()
+{
+    flowId++;
+    sentBytes = 0;
+    confirmedBytes = 0;
+    flowStartTime = simTime();
+    currentFlowSize = flowSize->intValue();
+    cong->reset();
+    emit(idealFctSignal, SimTime((8.0*currentFlowSize)/bandwidth));
+}
+
+void UnicastSenderApp::onFlowStop()
+{
+    emit(fctSignal, simTime() - flowStartTime);
+    scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
+}
+
 void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
     auto pk = check_and_cast<Packet*>(msg);
@@ -92,8 +104,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     }
     //TODO if all packets are confirmed
     if (confirmedBytes == currentFlowSize) {
-        emit(fctSignal, simTime() - flowStartTime);
-        scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
+        onFlowStop();
     }
 
     delete pk;

@@ -14,7 +14,9 @@ public:
     IntAddress getGroupRootAddress(IntAddress groupAddr) const;
     int getTreeIndex(IntAddress fromNode) const;
     int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;
-    int getBufferSize(IntAddress group, IntAddress switchAddress);
+    int getBufferSize(IntAddress group, IntAddress switchAddress) const;
+    void reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime);
+    void reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime);
 
 protected:
     virtual void initialize(int stage) override;
@@ -25,6 +27,7 @@ protected:
 private:
     void readSwitchConfig(const char * fileName);
     void readHostConfig(const char * fileName);
+    simsignal_t createSignalForGroup(IntAddress group);
 
 private:
     struct hashFunctionInt2
@@ -44,5 +47,12 @@ private:
     std::unordered_map<std::pair<IntAddress, int64_t>, std::vector<int64_t>, hashFunctionInt2> groupSources;
     std::unordered_map<std::tuple<IntAddress, IntAddress, int64_t>, int, hashFunctionInt3> switchFanIndegree;
     std::unordered_map<std::pair<IntAddress, IntAddress>, B, hashFunctionInt2> switchBufferSize;
+
+    struct groupRoundFinishInfo {
+        int counter{0};
+        simtime_t startTime;
+        simsignal_t roundFctSignal;
+    };
+    std::unordered_map<IntAddress, groupRoundFinishInfo*> groupRoundStartTime;
 };
 
