@@ -6,6 +6,10 @@ class WorkerApp : public UnicastSenderApp
 {
 protected:
     void initialize(int stage) override;
+    cMessage* makeDataPacket(Connection *connection, Packet *pk) override;
+    void onFlowStart() override;
+    void onFlowStop() override;
+
 private:
     IntAddress groupAddr{INVALID_ADDRESS};
     int treeIndex{INVALID_ID};
@@ -19,8 +23,6 @@ void WorkerApp::initialize(int stage)
     UnicastSenderApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
-        // if (groupManager==nullptr)
-        //     throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
     }
     if (stage == INITSTAGE_ASSIGN) {
         groupAddr = groupManager->getGroupAddress(myAddr);
@@ -28,4 +30,25 @@ void WorkerApp::initialize(int stage)
         treeIndex = groupManager->getTreeIndex(myAddr);
         EV << "groupAddr: " << groupAddr << endl;
     }
+}
+
+cMessage* WorkerApp::makeDataPacket(Connection *connection, Packet *pk)
+{
+    char pkname[40];
+    sprintf(pkname, "Group-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, myAddr, destAddr, sentBytes);
+    pk->setName(pkname);
+    pk->setECN(false);
+    return pk;
+}
+
+void WorkerApp::onFlowStart()
+{
+    UnicastSenderApp::onFlowStart();
+    groupManager->reportFlowStart(groupAddr, simTime());
+}
+
+void WorkerApp::onFlowStop()
+{
+    UnicastSenderApp::onFlowStop();
+    groupManager->reportFlowStop(groupAddr, simTime());
 }

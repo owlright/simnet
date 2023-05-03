@@ -2,4 +2,4 @@
 # groupAddr    treeIndex    host    root(true/false)
 10000          0            0       0
 10000          0            1       0
-10000          0            4       1
+10000          0            2       1

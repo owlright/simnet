@@ -11,6 +11,17 @@ void Reno::initialize(int stage) {
     }
 }
 
+void Reno::reset()
+{
+    cWnd = par("initWinSize");
+    firstWndSeq = 0;
+    ackedBytes = 0;
+    sentBytes = 0;
+    ssThresh = INT64_MAX;
+    congState = OPEN;
+    cWndCnt = 0;
+}
+
 void Reno::onRecvAck(SeqNumber seq, bool congestion) {
     if (ackedBytes + segmentSize < seq) { // ! avoid the last packet is smaller than a segmentSize, so >= is possible
         // ! there is no dealing with seq between cwndleft and cwndright other than next seq
