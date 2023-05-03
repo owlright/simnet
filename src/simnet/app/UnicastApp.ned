@@ -20,7 +20,7 @@ module UnicastSenderApp extends UnicastApp {
         int flowSize @unit(B) = default(8kB);
         volatile double flowInterval @unit(s) = default(10us);
         @signal[fct](type=simtime_t);
-        @singal[idealFct](type=simtime_t);
+        @signal[idealFct](type=simtime_t);
         @statistic[fct](title="flow complete time"; source=fct; record=count,mean,max,min,vector; interpolationmode=none);
         @statistic[idealFct](title="ideal flow complete time"; source=idealFct; record=count,mean,max,min,vector; interpolationmode=none);
    submodules:
@@ -42,7 +42,6 @@ module WorkerApp extends UnicastSenderApp {
         int groupAddress = default(this.destAddress);
         string groupManager;
         @class(WorkerApp);
-
 }
 
 module ParameterServerApp extends UnicastEchoApp {
