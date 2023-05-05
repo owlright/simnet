@@ -6,7 +6,8 @@ class ParameterServerApp : public UnicastEchoApp
 {
 protected:
     void initialize(int stage) override;
-    void dealWithDataPacket(Connection *connection, Packet* pk) override;
+    virtual void onNewConnectionArrived(const Packet* const packet) override;
+    virtual Packet* createAckPacket(const Packet* const pk) override;
 
 private:
     GlobalGroupManager* groupManager;
@@ -31,17 +32,19 @@ void ParameterServerApp::initialize(int stage)
     }
 }
 
-void ParameterServerApp::dealWithDataPacket(Connection *connection, Packet* pk)
+void ParameterServerApp::onNewConnectionArrived(const Packet* const pk)
 {
-    auto packet = new Packet();
-    setCommonField(packet);
-    packet->setConnectionId(connection->getConnectionId());
-    packet->setSeqNumber(pk->getSeqNumber());
-    packet->setKind(PacketType::ACK);
-    packet->setDestAddr(pk->getDestAddr()); // groupAddress
-    packet->setDestPort(pk->getLocalPort());
-    if (pk->getECN()) {
-        packet->setECE(true);
-    }
-    connection->sendTo(packet, pk->getDestAddr(), pk->getLocalPort());
+    UnicastEchoApp::onNewConnectionArrived(pk);
+    auto connection = connections.at(pk->getConnectionId());
+    connection->bindRemote(pk->getDestAddr(), pk->getLocalPort()); // note here is dest addr not src addr
+}
+
+Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
+{
+    auto packet = UnicastEchoApp::createAckPacket(pk);
+    char pkname[40];
+    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
+            localAddr, pk->getDestAddr(), pk->getSeqNumber());
+    packet->setName(pkname);
+    return packet;
 }
