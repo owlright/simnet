@@ -41,9 +41,11 @@ public:
     void setCallback(ICallback *callback);
 
     const IdNumber getConnectionId() const {return connectionId;};
-    void sendTo(cMessage* msg, IntAddress destAddr, PortNumber destPort);
-    void sendToUnicast(cMessage* msg);
+    void send(cMessage* msg);
     void processMessage(cMessage* msg);
+
+private:
+    void sendToUnicast(cMessage* msg);
 };
 
 

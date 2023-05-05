@@ -20,14 +20,10 @@ Connection::Connection(IdNumber connId)
     connectionId = connId;
 }
 
-void Connection::sendTo(cMessage* msg, IntAddress destAddr, PortNumber destPort)
+void Connection::send(cMessage* msg)
 {
-    if (!cb)
-        throw cRuntimeError("Connection::sendTo: must be binded before send.");
     if (destAddr == -1 || destPort == INVALID_PORT)
-        throw cRuntimeError("Connection::sendTo: check the destAddr  %lld and destPort %hu", destAddr, destPort);
-    this->destAddr = destAddr;
-    this->destPort = destPort;
+        throw cRuntimeError("Connection::send: must set destAddr and destPort before using this function");
     auto pk = check_and_cast<Packet *>(msg);
     pk->setSrcAddr(localAddr);
     pk->setDestAddr(destAddr);
