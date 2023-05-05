@@ -15,6 +15,7 @@ module UnicastSenderApp extends UnicastApp {
        @class(UnicastSenderApp);
        port = default(1000);
         int destAddress = default(-1);
+        string destAddresses = default("");
         int destPort = default(1001);
         int messageLength @unit(B) = default(1kB);
         int flowSize @unit(B) = default(8kB);
@@ -49,5 +50,5 @@ module ParameterServerApp extends UnicastEchoApp {
         port = default(2001);
         string groupManager;
         @class(ParameterServerApp);
-    
+
 }

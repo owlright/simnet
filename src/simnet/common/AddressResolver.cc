@@ -18,3 +18,13 @@ IntAddress AddressResolver::resolve(const char *s)
         throw cRuntimeError("module `%s' does not have par address", modname.c_str());
     return mod->par("address").intValue();
 }
+
+std::vector<IntAddress> AddressResolver::resolve(std::vector<std::string> strs)
+{
+    std::vector<IntAddress> result;
+    int n = strs.size();
+    result.reserve(n);
+    for (int i = 0; i < n; i++)
+        result.push_back(resolve(strs[i].c_str()));
+    return result;
+}

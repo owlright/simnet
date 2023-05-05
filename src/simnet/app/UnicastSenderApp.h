@@ -20,6 +20,7 @@ protected:
 
 protected:
     // configuration
+    std::vector<IntAddress> destAddresses;
     IntAddress destAddr{INVALID_ADDRESS};
     PortNumber destPort{INVALID_PORT};
 

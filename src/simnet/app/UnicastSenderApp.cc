@@ -1,4 +1,5 @@
 #include "UnicastSenderApp.h"
+#include "simnet/common/AddressResolver.h"
 Define_Module(UnicastSenderApp);
 //signals
 simsignal_t UnicastSenderApp::cwndSignal = registerSignal("cwnd");
@@ -14,6 +15,8 @@ void UnicastSenderApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
     if (stage==INITSTAGE_LOCAL) {
+        std::vector<std::string> v = cStringTokenizer(par("destAddresses").stringValue()).asVector();
+        destAddresses = AddressResolver::resolve(v);
         destAddr = par("destAddress");
         destPort = par("destPort");
         messageLength = par("messageLength");
