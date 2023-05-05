@@ -6,12 +6,18 @@ void Connection::bind(IntAddress localAddr, PortNumber localPort)
     this->localPort = localPort;
 }
 
-void Connection::setConnectionId(IdNumber id)
+void Connection::bindRemote(IntAddress destAddr, PortNumber destPort)
+{
+    this->destAddr = destAddr;
+    this->destPort = destPort;
+}
+
+Connection::Connection(IdNumber connId)
 {
     if (connectionId!=INVALID_ID) {
         throw cRuntimeError("connection id can only be set once!");
     }
-    connectionId = id;
+    connectionId = connId;
 }
 
 void Connection::sendTo(cMessage* msg, IntAddress destAddr, PortNumber destPort)

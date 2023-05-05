@@ -32,12 +32,12 @@ private:
 public:
     const IntAddress getDestAddr() const {return destAddr;};
     const IntAddress getDestPort() const {return destPort;};
-    void setConnectionId(IdNumber id);
+    explicit Connection(IdNumber connId);
     void setOutputGate(cGate* const toUnicast) {gateToUnicast = toUnicast;};
 
 public:
     void bind(IntAddress localAddr, PortNumber localPort);
-
+    void bindRemote(IntAddress destAddr, PortNumber destPort);
     void setCallback(ICallback *callback);
 
     const IdNumber getConnectionId() const {return connectionId;};
