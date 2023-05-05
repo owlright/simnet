@@ -5,7 +5,7 @@ using namespace omnetpp;
 
 class UnicastEchoApp : public UnicastApp
 {
-private:
+protected:
     // configuration
     std::unordered_map<IdNumber, Connection*> connections;
 
@@ -21,13 +21,12 @@ public:
 protected:
     // inherited functions
     void initialize(int stage) override;
-    // void handleMessage(cMessage *msg) override;
+    void handleMessage(cMessage *msg) override;
     int numInitStages() const override { return Stage::NUM_INIT_STAGES; }
     // helper functions
-    void onNewConnectionArrived(Packet *packet);
-    virtual void dealWithDataPacket(Connection *connection, Packet *packet);
+    virtual void onNewConnectionArrived(const Packet* const packet);
+
     // for callback function use
     void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    cMessage* makeAckPacket(Connection *connection, Packet* pk) override;
-    cMessage* makeDataPacket(Connection *connection, Packet* pk) override {throw cRuntimeError("echo app do not produce data");};
+    virtual Packet* createAckPacket(const Packet* const pk);
 };

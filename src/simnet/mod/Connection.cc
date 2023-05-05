@@ -1,40 +1,35 @@
 #include "Connection.h"
-
+#include "simnet/mod/Packet_m.h"
 void Connection::bind(IntAddress localAddr, PortNumber localPort)
 {
     this->localAddr = localAddr;
     this->localPort = localPort;
 }
 
-void Connection::bind(IntAddress localAddr, PortNumber localPort, cGate* const outGate)
-{
-    bind(localAddr, localPort);
-    setOutputGate(outGate);
-}
-
-void Connection::setConnectionId(IdNumber id)
-{
-    if (connectionId!=INVALID_ID) {
-        throw cRuntimeError("connection id can only be set once!");
-    }
-    connectionId = id;
-}
-
-void Connection::listenFrom(IntAddress destAddr, PortNumber destPort)
+void Connection::bindRemote(IntAddress destAddr, PortNumber destPort)
 {
     this->destAddr = destAddr;
     this->destPort = destPort;
 }
 
-void Connection::sendTo(cMessage* msg, IntAddress destAddr, PortNumber destPort)
+Connection::Connection(IdNumber connId)
 {
-    if (!cb)
-        throw cRuntimeError("Connection::sendTo: must be binded before send.");
-    if (destAddr == -1 || destPort == INVALID_PORT)
-        throw cRuntimeError("Connection::sendTo: check the destAddr  %lld and destPort %hu", destAddr, destPort);
-    listenFrom(destAddr, destPort);
+    if (connectionId!=INVALID_ID) {
+        throw cRuntimeError("connection id can only be set once!");
+    }
+    connectionId = connId;
+}
 
-    auto pk = cb->makePacket(this, msg, destAddr, destPort);
+void Connection::send(cMessage* msg)
+{
+    if (destAddr == -1 || destPort == INVALID_PORT)
+        throw cRuntimeError("Connection::send: must set destAddr and destPort before using this function");
+    auto pk = check_and_cast<Packet *>(msg);
+    pk->setSrcAddr(localAddr);
+    pk->setDestAddr(destAddr);
+    pk->setLocalPort(localPort);
+    pk->setDestPort(destPort);
+    pk->setConnectionId(getConnectionId());
     sendToUnicast(pk);
 }
 

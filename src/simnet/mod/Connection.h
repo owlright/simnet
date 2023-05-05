@@ -17,7 +17,6 @@ public:
          * Notifies about data arrival, packet ownership is transferred to the callee.
          */
         virtual void connectionDataArrived(Connection *connection, cMessage* msg) = 0;
-        virtual cMessage* makePacket(Connection *connection, cMessage* msg, IntAddress destAddr, PortNumber destPort) = 0;
 
     };
 
@@ -33,20 +32,20 @@ private:
 public:
     const IntAddress getDestAddr() const {return destAddr;};
     const IntAddress getDestPort() const {return destPort;};
-    void setConnectionId(IdNumber id);
-private:
-    void listenFrom(IntAddress destAddr, PortNumber destPort);
+    explicit Connection(IdNumber connId);
     void setOutputGate(cGate* const toUnicast) {gateToUnicast = toUnicast;};
+
 public:
     void bind(IntAddress localAddr, PortNumber localPort);
-    void bind(IntAddress localAddr, PortNumber localPort, cGate* const outGate);
-
+    void bindRemote(IntAddress destAddr, PortNumber destPort);
     void setCallback(ICallback *callback);
 
     const IdNumber getConnectionId() const {return connectionId;};
-    void sendTo(cMessage* msg, IntAddress destAddr, PortNumber destPort);
-    void sendToUnicast(cMessage* msg);
+    void send(cMessage* msg);
     void processMessage(cMessage* msg);
+
+private:
+    void sendToUnicast(cMessage* msg);
 };
 
 

@@ -5,69 +5,48 @@ Define_Module(UnicastEchoApp);
 void UnicastEchoApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
-    if (stage==INITSTAGE_LOCAL) {
-        connection.setCallback(this);
-    }
 }
 
-// void UnicastEchoApp::handleMessage(cMessage *msg)
-// {
-//     UnicastApp::handleMessage(msg);
-// }
-
-void UnicastEchoApp::onNewConnectionArrived(Packet *pk)
+void UnicastEchoApp::handleMessage(cMessage *msg)
 {
-    IdNumber connectionid = pk->getConnectionId();
-    connections[connectionid] = new Connection();
-    connections[connectionid]->setConnectionId(connectionid);
-    connections[connectionid]->bind(myAddr, localPort, gate("out"));
-    connections[connectionid]->setCallback(this);
+    auto pk = check_and_cast<Packet*>(msg);
+    auto connectionId = pk->getConnectionId();
+    auto it = connections.find(connectionId);
+    if (it == connections.end()) {
+        onNewConnectionArrived(pk);
+    }
+    connections.at(connectionId)->processMessage(pk);
+}
+
+void UnicastEchoApp::onNewConnectionArrived(const Packet* const pk)
+{
+    IdNumber connectionId = pk->getConnectionId();
+    connections[connectionId] = createConnection(connectionId);
+    connections[connectionId]->bindRemote(pk->getSrcAddr(), pk->getLocalPort());
 }
 
 void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::DATA);
-    IdNumber connectionid = pk->getConnectionId();
+    ASSERT(pk->getConnectionId()==connection->getConnectionId());
 
-    if (connection->getConnectionId()==connectionid) {
-        //TODO where should I put these code
-        dealWithDataPacket(connection, pk);
-        delete pk;
-        return;
-    }
-    // ! The code must be put here
-    if (connections.find(connectionid) == connections.end()){
-        onNewConnectionArrived(pk);
-    }
-
-    connections[connectionid]->processMessage(msg); // this make it to run into this function again
-
-
+    auto packet = createAckPacket(pk);
+    connection->send(packet);
+    delete pk;
 }
 
-void UnicastEchoApp::dealWithDataPacket(Connection *connection, Packet* pk)
+Packet *UnicastEchoApp::createAckPacket(const Packet* const pk)
 {
-    auto packet = new Packet();
-    setCommonField(packet);
-    packet->setConnectionId(connection->getConnectionId());
+    char pkname[40];
+    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
+            localAddr, pk->getDestAddr(), pk->getSeqNumber());
+    auto packet = new Packet(pkname);
     packet->setSeqNumber(pk->getSeqNumber());
     packet->setKind(PacketType::ACK);
-    packet->setDestAddr(pk->getSrcAddr());
-    packet->setDestPort(pk->getLocalPort());
+    packet->setByteLength(64);
     if (pk->getECN()) {
         packet->setECE(true);
     }
-    connection->sendTo(packet, pk->getSrcAddr(), pk->getLocalPort());
-}
-
-cMessage *UnicastEchoApp::makeAckPacket(Connection *connection, Packet *pk)
-{
-    char pkname[40];
-    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, myAddr, pk->getDestAddr(), pk->getSeqNumber());
-    pk->setKind(PacketType::ACK);
-    pk->setName(pkname);
-    pk->setECN(false);
-    pk->setByteLength(64);
-    return pk;
+    return packet;
 }

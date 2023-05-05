@@ -1,4 +1,5 @@
 #include "UnicastSenderApp.h"
+#include "simnet/common/AddressResolver.h"
 Define_Module(UnicastSenderApp);
 //signals
 simsignal_t UnicastSenderApp::cwndSignal = registerSignal("cwnd");
@@ -14,12 +15,14 @@ void UnicastSenderApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
     if (stage==INITSTAGE_LOCAL) {
+        std::vector<std::string> v = cStringTokenizer(par("destAddresses").stringValue()).asVector();
+        destAddresses = AddressResolver::resolve(v);
         destAddr = par("destAddress");
         destPort = par("destPort");
         messageLength = par("messageLength");
         flowSize = &par("flowSize");
         flowInterval = &par("flowInterval");
-        connection.setConnectionId(cSimulation::getActiveEnvir()->getUniqueNumber());
+        connection->bindRemote(destAddr, destPort); // ! note to bind remote before using send
         cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
         cong->setSegmentSize(messageLength);
         //HACK
@@ -55,16 +58,8 @@ void UnicastSenderApp::sendPendingData()
             packetSize = currentFlowSize - sentBytes; // the data about to send is too small.
         }
         sentBytes += packetSize;
-        // make packet
-        auto packet = new Packet();
-        setCommonField(packet);
-        packet->setConnectionId(connection.getConnectionId());
-        packet->setKind(PacketType::DATA);
-        packet->setSeqNumber(sentBytes);
-        packet->setByteLength(packetSize);
-        packet->setDestAddr(destAddr);
-        packet->setDestPort(destPort);
-        connection.sendTo(packet, destAddr, destPort);
+        auto packet = createDataPacket(packetSize);
+        connection->send(packet);
         cong->onSendData(packetSize);
     }
 
@@ -110,12 +105,15 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     delete pk;
 }
 
-cMessage *UnicastSenderApp::makeDataPacket(Connection *connection, Packet *pk)
+Packet* UnicastSenderApp::createDataPacket(B packetBytes)
 {
     char pkname[40];
-    sprintf(pkname, "flow%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            flowId, myAddr, destAddr, sentBytes);
-    pk->setName(pkname);
+    sprintf(pkname, "conn%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
+            connection->getConnectionId(), localAddr, destAddr, sentBytes);
+    auto pk = new Packet(pkname);
+    pk->setKind(DATA);
+    pk->setSeqNumber(sentBytes);
+    pk->setByteLength(packetBytes);
     pk->setECN(false);
     return pk;
 }
