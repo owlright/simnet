@@ -5,24 +5,24 @@ Define_Module(UnicastEchoApp);
 void UnicastEchoApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
-    if (stage==INITSTAGE_LOCAL) {
-        connection.setCallback(this);
-    }
 }
 
-// void UnicastEchoApp::handleMessage(cMessage *msg)
-// {
-//     UnicastApp::handleMessage(msg);
-// }
-
-void UnicastEchoApp::onNewConnectionArrived(Packet *pk)
+void UnicastEchoApp::handleMessage(cMessage *msg)
 {
-    IdNumber connectionid = pk->getConnectionId();
-    connections[connectionid] = new Connection();
-    connections[connectionid]->setConnectionId(connectionid);
-    connections[connectionid]->bind(localAddr, localPort);
-    connections[connectionid]->setOutputGate(gate("out"));
-    connections[connectionid]->setCallback(this);
+    auto pk = check_and_cast<Packet*>(msg);
+    auto connectionId = pk->getConnectionId();
+    auto it = connections.find(connectionId);
+    if (it == connections.end()) {
+        onNewConnectionArrived(pk);
+    }
+    connections.at(connectionId)->processMessage(pk);
+}
+
+void UnicastEchoApp::onNewConnectionArrived(const Packet* const pk)
+{
+    IdNumber connectionId = pk->getConnectionId();
+    connections[connectionId] = createConnection(connectionId);
+    connections[connectionId]->bindRemote(pk->getSrcAddr(), pk->getLocalPort());
 }
 
 void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg)
