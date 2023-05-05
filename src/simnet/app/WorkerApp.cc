@@ -26,6 +26,7 @@ void WorkerApp::initialize(int stage)
     if (stage == INITSTAGE_ASSIGN) {
         groupAddr = groupManager->getGroupAddress(localAddr);
         destAddr = groupAddr;
+        connection->bindRemote(destAddr, destPort);
         treeIndex = groupManager->getTreeIndex(localAddr);
         EV << "groupAddr: " << groupAddr << endl;
     }
