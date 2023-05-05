@@ -28,6 +28,5 @@ protected:
     virtual void dealWithDataPacket(Connection *connection, Packet *packet);
     // for callback function use
     void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    cMessage* makeAckPacket(Connection *connection, Packet* pk) override;
-    cMessage* makeDataPacket(Connection *connection, Packet* pk) override {throw cRuntimeError("echo app do not produce data");};
+    cMessage* makeAckPacket(Connection *connection, Packet* pk);
 };

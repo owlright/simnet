@@ -1,5 +1,5 @@
 #include "Connection.h"
-
+#include "simnet/mod/Packet_m.h"
 void Connection::bind(IntAddress localAddr, PortNumber localPort)
 {
     this->localAddr = localAddr;
@@ -22,7 +22,12 @@ void Connection::sendTo(cMessage* msg, IntAddress destAddr, PortNumber destPort)
         throw cRuntimeError("Connection::sendTo: check the destAddr  %lld and destPort %hu", destAddr, destPort);
     this->destAddr = destAddr;
     this->destPort = destPort;
-    auto pk = cb->makePacket(this, msg, destAddr, destPort);
+    auto pk = check_and_cast<Packet *>(msg);
+    pk->setSrcAddr(localAddr);
+    pk->setDestAddr(destAddr);
+    pk->setLocalPort(localPort);
+    pk->setDestPort(destPort);
+    pk->setConnectionId(getConnectionId());
     sendToUnicast(pk);
 }
 

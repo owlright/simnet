@@ -6,7 +6,6 @@ class WorkerApp : public UnicastSenderApp
 {
 protected:
     void initialize(int stage) override;
-    cMessage* makeDataPacket(Connection *connection, Packet *pk) override;
     void onFlowStart() override;
     void onFlowStop() override;
 
@@ -30,15 +29,6 @@ void WorkerApp::initialize(int stage)
         treeIndex = groupManager->getTreeIndex(localAddr);
         EV << "groupAddr: " << groupAddr << endl;
     }
-}
-
-cMessage* WorkerApp::makeDataPacket(Connection *connection, Packet *pk)
-{
-    char pkname[40];
-    sprintf(pkname, "Group-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, localAddr, destAddr, sentBytes);
-    pk->setName(pkname);
-    pk->setECN(false);
-    return pk;
 }
 
 void WorkerApp::onFlowStart()

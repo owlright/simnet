@@ -58,15 +58,7 @@ void UnicastSenderApp::sendPendingData()
             packetSize = currentFlowSize - sentBytes; // the data about to send is too small.
         }
         sentBytes += packetSize;
-        // make packet
-        auto packet = new Packet();
-        setCommonField(packet);
-        packet->setConnectionId(connection.getConnectionId());
-        packet->setKind(PacketType::DATA);
-        packet->setSeqNumber(sentBytes);
-        packet->setByteLength(packetSize);
-        packet->setDestAddr(destAddr);
-        packet->setDestPort(destPort);
+        auto packet = createDataPacket(packetSize);
         connection.sendTo(packet, destAddr, destPort);
         cong->onSendData(packetSize);
     }
@@ -113,12 +105,16 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     delete pk;
 }
 
-cMessage *UnicastSenderApp::makeDataPacket(Connection *connection, Packet *pk)
+Packet* UnicastSenderApp::createDataPacket(B packetBytes)
 {
     char pkname[40];
     sprintf(pkname, "flow%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            flowId, myAddr, destAddr, sentBytes);
+            flowId, localAddr, destAddr, sentBytes);
+    auto pk = new Packet(pkname);
     pk->setName(pkname);
+    pk->setKind(DATA);
+    pk->setSeqNumber(sentBytes);
+    pk->setByteLength(packetBytes);
     pk->setECN(false);
     return pk;
 }

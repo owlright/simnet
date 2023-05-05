@@ -23,9 +23,6 @@ protected:
     virtual int numInitStages() const override { return Stage::NUM_INIT_STAGES; }
     // for callback function use
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    cMessage* makePacket(Connection *connection, cMessage* msg, IntAddress destAddr, PortNumber destPort) override;
 
     void setCommonField(Packet* pk);
-    virtual cMessage* makeDataPacket(Connection *connection, Packet* msg) {return nullptr;};
-    virtual cMessage* makeAckPacket(Connection *connection, Packet* msg) {return nullptr;};
 };

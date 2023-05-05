@@ -25,20 +25,6 @@ void UnicastApp::handleMessage(cMessage *msg)
 
 }
 
-cMessage* UnicastApp::makePacket(Connection *connection, cMessage* msg, IntAddress destAddr, PortNumber destPort) {
-    auto pk = check_and_cast<Packet*>(msg);
-    ASSERT(pk->getConnectionId() == connection->getConnectionId());
-
-    switch (pk->getKind()) {
-        case DATA:
-            return makeDataPacket(connection, pk);
-        case ACK:
-            return makeAckPacket(connection, pk);
-        default:
-            throw cRuntimeError("Unknow packet type");
-    }
-}
-
 void UnicastApp::setCommonField(Packet *packet)
 {
     packet->setSrcAddr(localAddr);

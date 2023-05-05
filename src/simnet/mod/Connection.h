@@ -17,7 +17,6 @@ public:
          * Notifies about data arrival, packet ownership is transferred to the callee.
          */
         virtual void connectionDataArrived(Connection *connection, cMessage* msg) = 0;
-        virtual cMessage* makePacket(Connection *connection, cMessage* msg, IntAddress destAddr, PortNumber destPort) = 0;
 
     };
 
