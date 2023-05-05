@@ -34,12 +34,13 @@ public:
     const IntAddress getDestAddr() const {return destAddr;};
     const IntAddress getDestPort() const {return destPort;};
     void setConnectionId(IdNumber id);
+    void setOutputGate(cGate* const toUnicast) {gateToUnicast = toUnicast;};
+
 private:
     void listenFrom(IntAddress destAddr, PortNumber destPort);
-    void setOutputGate(cGate* const toUnicast) {gateToUnicast = toUnicast;};
+
 public:
     void bind(IntAddress localAddr, PortNumber localPort);
-    void bind(IntAddress localAddr, PortNumber localPort, cGate* const outGate);
 
     void setCallback(ICallback *callback);
 

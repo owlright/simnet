@@ -6,12 +6,6 @@ void Connection::bind(IntAddress localAddr, PortNumber localPort)
     this->localPort = localPort;
 }
 
-void Connection::bind(IntAddress localAddr, PortNumber localPort, cGate* const outGate)
-{
-    bind(localAddr, localPort);
-    setOutputGate(outGate);
-}
-
 void Connection::setConnectionId(IdNumber id)
 {
     if (connectionId!=INVALID_ID) {

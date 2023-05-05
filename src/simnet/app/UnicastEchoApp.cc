@@ -20,7 +20,8 @@ void UnicastEchoApp::onNewConnectionArrived(Packet *pk)
     IdNumber connectionid = pk->getConnectionId();
     connections[connectionid] = new Connection();
     connections[connectionid]->setConnectionId(connectionid);
-    connections[connectionid]->bind(localAddr, localPort, gate("out"));
+    connections[connectionid]->bind(localAddr, localPort);
+    connections[connectionid]->setOutputGate(gate("out"));
     connections[connectionid]->setCallback(this);
 }
 

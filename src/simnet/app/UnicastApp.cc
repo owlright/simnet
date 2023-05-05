@@ -8,7 +8,8 @@ void UnicastApp::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         localAddr = par("address");
         localPort = par("port");
-        connection.bind(localAddr, localPort, gate("out"));
+        connection.bind(localAddr, localPort);
+        connection.setOutputGate(gate("out"));
         connection.setCallback(this);
         EV << "node: " << localAddr << " localport: " << localPort << endl;
         auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
