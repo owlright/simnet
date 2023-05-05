@@ -10,7 +10,7 @@ class UnicastApp : public cSimpleModule, public Connection::ICallback
 {
 protected:
     Connection connection; // this connection is just for listen incoming connections.
-    IntAddress myAddr{INVALID_ADDRESS};
+    IntAddress localAddr{INVALID_ADDRESS};
     PortNumber localPort{INVALID_PORT};
 
 public:

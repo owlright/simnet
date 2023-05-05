@@ -20,7 +20,7 @@ void UnicastEchoApp::onNewConnectionArrived(Packet *pk)
     IdNumber connectionid = pk->getConnectionId();
     connections[connectionid] = new Connection();
     connections[connectionid]->setConnectionId(connectionid);
-    connections[connectionid]->bind(myAddr, localPort, gate("out"));
+    connections[connectionid]->bind(localAddr, localPort, gate("out"));
     connections[connectionid]->setCallback(this);
 }
 
@@ -64,7 +64,7 @@ void UnicastEchoApp::dealWithDataPacket(Connection *connection, Packet* pk)
 cMessage *UnicastEchoApp::makeAckPacket(Connection *connection, Packet *pk)
 {
     char pkname[40];
-    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, myAddr, pk->getDestAddr(), pk->getSeqNumber());
+    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, localAddr, pk->getDestAddr(), pk->getSeqNumber());
     pk->setKind(PacketType::ACK);
     pk->setName(pkname);
     pk->setECN(false);

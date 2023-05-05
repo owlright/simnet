@@ -6,11 +6,11 @@ Define_Module(UnicastApp);
 void UnicastApp::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
-        myAddr = par("address");
+        localAddr = par("address");
         localPort = par("port");
-        connection.bind(myAddr, localPort, gate("out"));
+        connection.bind(localAddr, localPort, gate("out"));
         connection.setCallback(this);
-        EV << "node: " << myAddr << " localport: " << localPort << endl;
+        EV << "node: " << localAddr << " localport: " << localPort << endl;
         auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
         check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
     }
@@ -40,7 +40,7 @@ cMessage* UnicastApp::makePacket(Connection *connection, cMessage* msg, IntAddre
 
 void UnicastApp::setCommonField(Packet *packet)
 {
-    packet->setSrcAddr(myAddr);
+    packet->setSrcAddr(localAddr);
     packet->setLocalPort(localPort);
 
 }

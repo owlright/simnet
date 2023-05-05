@@ -25,9 +25,9 @@ void WorkerApp::initialize(int stage)
         groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
     }
     if (stage == INITSTAGE_ASSIGN) {
-        groupAddr = groupManager->getGroupAddress(myAddr);
+        groupAddr = groupManager->getGroupAddress(localAddr);
         destAddr = groupAddr;
-        treeIndex = groupManager->getTreeIndex(myAddr);
+        treeIndex = groupManager->getTreeIndex(localAddr);
         EV << "groupAddr: " << groupAddr << endl;
     }
 }
@@ -35,7 +35,7 @@ void WorkerApp::initialize(int stage)
 cMessage* WorkerApp::makeDataPacket(Connection *connection, Packet *pk)
 {
     char pkname[40];
-    sprintf(pkname, "Group-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, myAddr, destAddr, sentBytes);
+    sprintf(pkname, "Group-%" PRId64 "-to-%" PRId64 "-seq%" PRId64, localAddr, destAddr, sentBytes);
     pk->setName(pkname);
     pk->setECN(false);
     return pk;

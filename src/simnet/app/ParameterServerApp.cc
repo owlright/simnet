@@ -25,8 +25,8 @@ void ParameterServerApp::initialize(int stage)
             throw cRuntimeError("ParameterServerApp::initialize: groupManager not found!");
     }
     if (stage == INITSTAGE_ASSIGN) {
-        groupAddr = groupManager->getGroupAddress(myAddr);
-        treeIndex = groupManager->getTreeIndex(myAddr);
+        groupAddr = groupManager->getGroupAddress(localAddr);
+        treeIndex = groupManager->getTreeIndex(localAddr);
         EV << "groupAddr: " << groupAddr << endl;
     }
 }
