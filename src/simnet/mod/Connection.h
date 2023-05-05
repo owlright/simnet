@@ -36,9 +36,6 @@ public:
     void setConnectionId(IdNumber id);
     void setOutputGate(cGate* const toUnicast) {gateToUnicast = toUnicast;};
 
-private:
-    void listenFrom(IntAddress destAddr, PortNumber destPort);
-
 public:
     void bind(IntAddress localAddr, PortNumber localPort);
 
