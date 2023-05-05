@@ -9,7 +9,7 @@ using namespace omnetpp;
 class UnicastApp : public cSimpleModule, public Connection::ICallback
 {
 protected:
-    Connection connection; // this connection is just for listen incoming connections.
+    Connection* connection{nullptr}; // this connection is just for listen incoming connections.
     IntAddress localAddr{INVALID_ADDRESS};
     PortNumber localPort{INVALID_PORT};
 
@@ -24,5 +24,6 @@ protected:
     // for callback function use
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
 
-    void setCommonField(Packet* pk);
+    virtual Connection* createConnection(int connId=-1);
+
 };

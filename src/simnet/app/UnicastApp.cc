@@ -8,10 +8,8 @@ void UnicastApp::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         localAddr = par("address");
         localPort = par("port");
-        connection.bind(localAddr, localPort);
-        connection.setOutputGate(gate("out"));
-        connection.setCallback(this);
         EV << "node: " << localAddr << " localport: " << localPort << endl;
+        connection = createConnection();
         auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
         check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
     }
@@ -20,19 +18,22 @@ void UnicastApp::initialize(int stage)
 void UnicastApp::handleMessage(cMessage *msg)
 {
     if (msg->isPacket()) {
-        connection.processMessage(msg);
+        connection->processMessage(msg);
     }
-
-}
-
-void UnicastApp::setCommonField(Packet *packet)
-{
-    packet->setSrcAddr(localAddr);
-    packet->setLocalPort(localPort);
 
 }
 
 void UnicastApp::connectionDataArrived(Connection *connection, cMessage* msg)
 {
     delete msg;
+}
+
+Connection* UnicastApp::createConnection(int connId)
+{
+    auto connectionId = connId == -1 ? cSimulation::getActiveEnvir()->getUniqueNumber() : connId;
+    auto conn = new Connection(connectionId);
+    conn->bind(localAddr, localPort);
+    conn->setOutputGate(gate("out"));
+    conn->setCallback(this);
+    return conn;
 }
