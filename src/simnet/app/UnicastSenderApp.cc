@@ -22,7 +22,7 @@ void UnicastSenderApp::initialize(int stage)
         messageLength = par("messageLength");
         flowSize = &par("flowSize");
         flowInterval = &par("flowInterval");
-        connection.setConnectionId(cSimulation::getActiveEnvir()->getUniqueNumber());
+        connection->bindRemote(destAddr, destPort); // ! note to bind remote before using send
         cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
         cong->setSegmentSize(messageLength);
         //HACK
@@ -59,7 +59,7 @@ void UnicastSenderApp::sendPendingData()
         }
         sentBytes += packetSize;
         auto packet = createDataPacket(packetSize);
-        connection.sendTo(packet, destAddr, destPort);
+        connection->send(packet);
         cong->onSendData(packetSize);
     }
 
@@ -108,10 +108,9 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 Packet* UnicastSenderApp::createDataPacket(B packetBytes)
 {
     char pkname[40];
-    sprintf(pkname, "flow%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            flowId, localAddr, destAddr, sentBytes);
+    sprintf(pkname, "conn%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
+            connection->getConnectionId(), localAddr, destAddr, sentBytes);
     auto pk = new Packet(pkname);
-    pk->setName(pkname);
     pk->setKind(DATA);
     pk->setSeqNumber(sentBytes);
     pk->setByteLength(packetBytes);
