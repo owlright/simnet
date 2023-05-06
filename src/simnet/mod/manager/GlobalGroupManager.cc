@@ -168,6 +168,58 @@ simsignal_t GlobalGroupManager::createSignalForGroup(IntAddress group)
     getEnvir()->addResultRecorders(this, signal, statisticName, statisticTemplate);
     return signal;
 }
+
+void GlobalGroupManager::addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop)
+{
+    topo->calculateUnweightedSingleShortestPathsTo(stop);
+    auto node = start;
+    auto treeNode = new cTopology::Node(node->getModuleId()); // ! must new a node
+    tree.addNode(treeNode);
+    while (node != stop) {
+        auto nextNode = node->getPath(0)->getRemoteNode();
+        cTopology::Node* nextTreeNode = nullptr;
+        if (nextNode != stop) {
+            nextTreeNode = new cTopology::Node(nextNode->getModuleId());
+            tree.addNode(nextTreeNode);
+        }
+        else { // avoid add a node twice into tree
+            nextTreeNode = tree.getNodeFor(nextNode->getModule());
+        }
+        // the link is always a new one
+        tree.addLink(new cTopology::Link(), treeNode, nextTreeNode);
+        node = nextNode;
+        treeNode = nextTreeNode;
+    }
+}
+
+void GlobalGroupManager::buildSteinerTree(cTopology& tree, const std::vector<int>& members, int root)
+{
+    auto rootNode = topo->getNode(root);
+    tree.addNode(new cTopology::Node(rootNode->getModuleId())); // ! must new a node
+    for (auto& n:members) {
+        double dist = INFINITY;
+        auto currentHost = topo->getNode(n);
+        // * find the joint node to the tree
+        cTopology::Node* jointNode = nullptr;
+        for (auto i = 0; i < tree.getNumNodes(); i++) {
+            // ! Node* of the same Module in tree and topo are different
+            auto nodeInTree = topo->getNodeFor(tree.getNode(i)->getModule());
+            if (nodeInTree == rootNode ||
+                    nodeInTree->getModule()->getProperties()->get("switch")!=nullptr)
+            { // ! ignore hosts
+                topo->calculateUnweightedSingleShortestPathsTo(nodeInTree);
+                if (currentHost->getDistanceToTarget() < dist) {
+                    dist = currentHost->getDistanceToTarget();
+                    jointNode = nodeInTree;
+                }
+            }
+        }
+        ASSERT(jointNode);
+        // * add the node into tree using the shortest path
+        addShortestPath(tree, currentHost, jointNode);
+    }
+}
+
 void GlobalGroupManager::prepareAggGroup(const char* policyName)
 {
     if (strcmp(policyName, "manual") == 0)
@@ -202,7 +254,14 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
                 hostGroupInfo[addr].push_back(groupAddr);
                 hostGroupInfo[addr].push_back(0); // TODO treeIndex is always 0 so far
             }
+            auto root = members.back();
+            members.pop_back();
+            groupRoot[gkey] = root;
+            groupSources[gkey].assign(members.begin(), members.end());
 
+            // * get steiner tree for each group
+            cTopology tree = cTopology("steiner");
+            buildSteinerTree(tree, members, root);
         }
     }
 

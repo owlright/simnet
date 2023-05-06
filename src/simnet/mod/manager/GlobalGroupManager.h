@@ -2,12 +2,10 @@
 
 #include <omnetpp.h>
 #include <tuple>
-#include <unordered_map>
-#include "simnet/common/Defs.h"
-
+#include "GlobalView.h"
 using namespace omnetpp;
 
-class GlobalGroupManager : public cSimpleModule
+class GlobalGroupManager : public GlobalView
 {
 public:
     // for switch node use
@@ -52,7 +50,7 @@ private:
     std::unordered_map<std::pair<IntAddress, IntAddress>, B, hashFunctionInt2> switchBufferSize;
 
     struct groupRoundFinishInfo {
-        int counter{0};
+        size_t counter{0};
         simtime_t startTime;
         simsignal_t roundFctSignal;
     };
@@ -61,5 +59,9 @@ private:
 private:
     // for aggregation job
     void prepareAggGroup(const char* policyName);
+    void buildSteinerTree(cTopology& tree, const std::vector<int>& members, int root);
+    // TODO make this function more clearly
+    // ! add the shortest path between Node start and stop, note that only stop is in the tree
+    void addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop);
 };
 
