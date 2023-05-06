@@ -13,5 +13,5 @@ public:
 
 protected:
     void initialize(int stage) override;
-
+    cTopology::Node* getNode(IntAddress address) const;
 };

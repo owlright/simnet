@@ -10,7 +10,7 @@ void GlobalView::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
         if (!isInitialized) {
-            EV_INFO << "network initialization." << endl;
+            EV << "network initialization." << endl;
             topo = new cTopology("topo");
             topo->extractByProperty("node");
             EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
@@ -26,7 +26,7 @@ void GlobalView::collectNodes(cTopology *topo)
     for (int i = 0; i < topo->getNumNodes(); i++)
     {
         auto node = topo->getNode(i)->getModule();
-        int address = node->par("address");
+        IntAddress address = node->par("address");
         auto isHost = node->getProperties()->get("host") != nullptr;
         if (isHost) {
             hostNodes.push_back(i);
