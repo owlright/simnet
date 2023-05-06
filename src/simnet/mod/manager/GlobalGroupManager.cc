@@ -79,6 +79,7 @@ void GlobalGroupManager::reportFlowStop(IntAddress groupAddr, simtime_t roundSto
 
 void GlobalGroupManager::initialize(int stage)
 {
+    GlobalView::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         readSwitchConfig(par("groupSwitchFile").stringValue());
         readHostConfig(par("groupHostFile").stringValue());

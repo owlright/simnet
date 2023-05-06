@@ -4,14 +4,7 @@ Define_Module(GlobalRouteManager);
 
 void GlobalRouteManager::initialize(int stage)
 {
-    if (stage == INITSTAGE_LOCAL) {
-        EV_INFO << "network initialization." << endl;
-
-        this->topo = new cTopology("topo");
-        topo->extractByProperty("node");
-        EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
-        setNodes(topo);
-    }
+    GlobalView::initialize(stage);
 }
 
 std::vector<int> GlobalRouteManager::getRoutes(IntAddress switchAddr, IntAddress dest) const // TODO just pass the src address is ok
@@ -28,12 +21,12 @@ std::vector<int> GlobalRouteManager::getRoutes(IntAddress switchAddr, IntAddress
     if (itd == addr2node.end()) {
        throw cRuntimeError("node %" PRId64 " does not exist!", dest);
     }
-    auto srcNode = topo->getNode(its->second);
-    auto destNode = topo->getNode(itd->second);
+    auto srcNode = GlobalView::topo->getNode(its->second);
+    auto destNode = GlobalView::topo->getNode(itd->second);
 
     // ! HACK find multiple next hops used for ecmp
     // * try to get one shortest path
-    topo->calculateUnweightedSingleShortestPathsTo(destNode);
+    GlobalView::topo->calculateUnweightedSingleShortestPathsTo(destNode);
     auto distance = srcNode->getDistanceToTarget();
     if (distance == INFINITY) {
         throw cRuntimeError("there is no path from %" PRId64 " to %" PRId64, switchAddr, dest);
@@ -54,27 +47,11 @@ std::vector<int> GlobalRouteManager::getRoutes(IntAddress switchAddr, IntAddress
         // ! disable this link and recalculate shortest paths
         srcNode->getPath(0)->disable();
         linkrecord.push_back(srcNode->getPath(0));
-        topo->calculateUnweightedSingleShortestPathsTo(destNode);
+        GlobalView::topo->calculateUnweightedSingleShortestPathsTo(destNode);
     }
     // reset the links
     for (auto link:linkrecord) {
         link->enable();
     }
     return gateIndexes;
-}
-
-void GlobalRouteManager::setNodes(const cTopology *topo)
-{
-    node2addr.reserve(topo->getNumNodes());
-    for (int i = 0; i < topo->getNumNodes(); i++) {
-        auto node = topo->getNode(i)->getModule();
-        int address = node->par("address");
-        auto isHost = node->getProperties()->get("host") != nullptr;
-        if (isHost) {
-            hostNodes.push_back(i);
-        }
-        node2addr[i] = address;
-        addr2node[address] = i;
-        EV_DEBUG<< "node: " << i << " address: " << address << endl;
-    }
 }
