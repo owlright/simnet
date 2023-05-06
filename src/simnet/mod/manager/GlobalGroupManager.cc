@@ -6,22 +6,28 @@ Define_Module(GlobalGroupManager);
 IntAddress GlobalGroupManager::getGroupAddress(IntAddress fromNode) const
 {
     if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
-        throw cRuntimeError("address %" PRId64 "'s group is not found.", fromNode);
+    {
+        return INVALID_ADDRESS;
+    }
     return hostGroupInfo.at(fromNode).at(0);
 }
 
 IntAddress GlobalGroupManager::getGroupRootAddress(IntAddress groupAddr) const
 {
     auto it = groupRoot.find(std::make_pair(groupAddr, 0));
-    if (it == groupRoot.end()) // FIXME, treeIndex is fixed here
-        throw cRuntimeError("group address %" PRId64 " doesn't exist.", groupAddr);
+    if (it == groupRoot.end())
+    {
+        return INVALID_ADDRESS;
+    }
     return it->second;
 }
 
 int GlobalGroupManager::getTreeIndex(IntAddress fromNode) const
 {
     if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
-        throw cRuntimeError("address %" PRId64 "'s treeindex is not found.", fromNode);
+    {
+        return INVALID_ADDRESS;
+    }
     return hostGroupInfo.at(fromNode).at(1);
 }
 
