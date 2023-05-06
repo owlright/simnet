@@ -81,8 +81,7 @@ void GlobalGroupManager::initialize(int stage)
 {
     GlobalView::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        readSwitchConfig(par("groupSwitchFile").stringValue());
-        readHostConfig(par("groupHostFile").stringValue());
+        prepareAggGroup(par("groupPolicy").stringValue());
     }
 
     if (stage == INITSTAGE_ASSIGN) {
@@ -168,4 +167,43 @@ simsignal_t GlobalGroupManager::createSignalForGroup(IntAddress group)
         getProperties()->get("statisticTemplate", "groupRoundFinishTime");
     getEnvir()->addResultRecorders(this, signal, statisticName, statisticTemplate);
     return signal;
+}
+void GlobalGroupManager::prepareAggGroup(const char* policyName)
+{
+    if (strcmp(policyName, "manual") == 0)
+    {
+        readSwitchConfig(par("groupSwitchFile").stringValue());
+        readHostConfig(par("groupHostFile").stringValue());
+    }
+    else if (strcmp(policyName, "random") == 0)
+    {
+        int groupNum = 2;
+        int groupMembers = 4;
+        IntAddress groupAddr = GROUPADDR_START - 1;
+        std::unordered_set<int> visited; // TODO may not necessary
+        for (auto i = 0; i < groupNum; i++)
+        {
+            groupAddr++;
+            auto gkey = std::make_pair(groupAddr, 0);
+            std::vector<int> members;
+            // * choose group members randomly without repetition
+            for (auto j = 0; j < groupMembers ; j++)
+            {
+                int node = hostNodes.size();
+                if (groupMembers > node)
+                    throw cRuntimeError("too many group members!");
+                do {
+                    node = intrand(hostNodes.size());
+                }
+                while (visited.find(node) != visited.end());
+                members.push_back(node);
+                visited.insert(node);
+                auto addr = node2addr.at(node);
+                hostGroupInfo[addr].push_back(groupAddr);
+                hostGroupInfo[addr].push_back(0); // TODO treeIndex is always 0 so far
+            }
+
+        }
+    }
+
 }

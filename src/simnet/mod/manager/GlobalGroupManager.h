@@ -10,11 +10,14 @@ using namespace omnetpp;
 class GlobalGroupManager : public cSimpleModule
 {
 public:
+    // for switch node use
     IntAddress getGroupAddress(IntAddress fromNode) const;
     IntAddress getGroupRootAddress(IntAddress groupAddr) const;
+    // for host node use
     int getTreeIndex(IntAddress fromNode) const;
     int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;
     int getBufferSize(IntAddress group, IntAddress switchAddress) const;
+    // for signals collection
     void reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime);
     void reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime);
 
@@ -54,5 +57,9 @@ private:
         simsignal_t roundFctSignal;
     };
     std::unordered_map<IntAddress, groupRoundFinishInfo*> groupRoundStartTime;
+
+private:
+    // for aggregation job
+    void prepareAggGroup(const char* policyName);
 };
 
