@@ -80,12 +80,8 @@ void GlobalGroupManager::reportFlowStop(IntAddress groupAddr, simtime_t roundSto
 void GlobalGroupManager::initialize(int stage)
 {
     GlobalView::initialize(stage);
-    if (stage == INITSTAGE_LOCAL) {
+    if (stage == INITSTAGE_COLLECT) {
         prepareAggGroup(par("groupPolicy").stringValue());
-    }
-
-    if (stage == INITSTAGE_ASSIGN) {
-
     }
 }
 
@@ -264,6 +260,21 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
             // * get steiner tree for each group
             cTopology tree = cTopology("steiner");
             buildSteinerTree(tree, members, root);
+            // * tree construction is finished
+            // * now assign tree to routers
+            for (auto i = 0; i < tree.getNumNodes(); i++) {
+                auto node = tree.getNode(i);
+                auto mod = node->getModule();
+                if (mod->getProperties()->get("switch")!=nullptr) {
+                    auto indegree = node->getNumInLinks();
+                    auto switchAddr = mod->par("address").intValue();
+                    EV_DEBUG <<"switchAddr:" << std::setw(6) << switchAddr << " indegree:" << indegree << endl;
+                    if (indegree >= 2) {
+                        switchFanIndegree[std::make_tuple(groupAddr, 0, switchAddr)] = indegree;
+                        switchBufferSize[std::make_pair(groupAddr, switchAddr)] = 10000;
+                    }
+                }
+            }
         }
     }
 
