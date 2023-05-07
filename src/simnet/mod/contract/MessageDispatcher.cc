@@ -14,7 +14,7 @@ void PortDispatcher::registerPort(PortNumber port, int gateIndex)
         throw cRuntimeError("port %" PRIu16 " is already registered.", port);
     }
     else {
-        EV_INFO << "Gate localIn " << gateIndex << " belongs to port "<< port <<endl;
+        EV_DEBUG << "localIn " << gateIndex << " belongs to localPort "<< port <<endl;
         portToGateIndex[port] = gateIndex;
     }
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include <iomanip>
 #include <omnetpp.h>
 typedef int64_t IntAddress, B, IdNumber, SeqNumber;
 typedef uint16_t PortNumber;
@@ -15,8 +16,9 @@ inline omnetpp::cEnvir *getActiveSimulationOrEnvir() { return omnetpp::cSimulati
 enum Stage
 {
     INITSTAGE_LOCAL,
-    INITSTAGE_COLLECT,
-    INITSTAGE_ASSIGN,
+    INITSTAGE_COLLECT, // host and switch report to global manager
+    INITSTAGE_ASSIGN, // host and switch ask global manager
+    INITSTAGE_LAST,
     NUM_INIT_STAGES
 };
 
