@@ -257,8 +257,9 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
             }
             auto root = members.back();
             members.pop_back();
-            groupRoot[gkey] = root;
-            groupSources[gkey].assign(members.begin(), members.end());
+            groupRoot[gkey] = node2addr.at(root);
+            for (auto& m:members)
+                groupSources[gkey].push_back(node2addr.at(m));
 
             // * get steiner tree for each group
             cTopology tree = cTopology("steiner");
