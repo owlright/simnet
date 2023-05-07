@@ -241,13 +241,14 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
             // * choose group members randomly without repetition
             for (auto j = 0; j < groupMembers ; j++)
             {
-                int node = hostNodes.size();
-                if (groupMembers > node)
+                int index = hostNodes.size();
+                if (groupMembers > index)
                     throw cRuntimeError("too many group members!");
                 do {
-                    node = intrand(hostNodes.size());
+                    index = intrand(hostNodes.size());
                 }
-                while (visited.find(node) != visited.end());
+                while (visited.find(index) != visited.end());
+                auto node = hostNodes.at(index);
                 members.push_back(node);
                 visited.insert(node);
                 auto addr = node2addr.at(node);
