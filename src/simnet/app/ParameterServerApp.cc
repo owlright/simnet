@@ -28,7 +28,13 @@ void ParameterServerApp::initialize(int stage)
     if (stage == INITSTAGE_ASSIGN) {
         groupAddr = groupManager->getGroupAddress(localAddr);
         treeIndex = groupManager->getTreeIndex(localAddr);
-        EV << "groupAddr: " << groupAddr << endl;
+        if (groupManager->getGroupRootAddress(groupAddr) == localAddr) {
+            EV << "(receiver) groupAddr: " << groupAddr <<" localAddr:" << localAddr  << endl;
+        }
+        else
+        {
+            groupAddr = -1;
+        }
     }
 }
 

@@ -15,9 +15,13 @@ void UnicastSenderApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
     if (stage==INITSTAGE_LOCAL) {
-        std::vector<std::string> v = cStringTokenizer(par("destAddresses").stringValue()).asVector();
-        destAddresses = AddressResolver::resolve(v);
         destAddr = par("destAddress");
+        if (destAddr == -1) {
+            std::vector<std::string> v = cStringTokenizer(par("destAddresses").stringValue()).asVector();
+            destAddresses = AddressResolver::resolve(v);
+            if (destAddresses.size() > 0) // TODO
+                destAddr = destAddresses[0];
+        }
         destPort = par("destPort");
         messageLength = par("messageLength");
         flowSize = &par("flowSize");
@@ -36,6 +40,10 @@ void UnicastSenderApp::initialize(int stage)
         EV << "destAddr: " << destAddr << " destPort: " << destPort << endl;
     }
 
+    if (stage == INITSTAGE_LAST) {
+        if (destAddr == -1)
+        EV_WARN << "this app has no destAddress" << endl;
+    }
 }
 
 void UnicastSenderApp::handleMessage(cMessage *msg)

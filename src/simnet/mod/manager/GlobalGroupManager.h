@@ -2,19 +2,20 @@
 
 #include <omnetpp.h>
 #include <tuple>
-#include <unordered_map>
-#include "simnet/common/Defs.h"
-
+#include "GlobalView.h"
 using namespace omnetpp;
 
-class GlobalGroupManager : public cSimpleModule
+class GlobalGroupManager : public GlobalView
 {
 public:
+    // for switch node use
     IntAddress getGroupAddress(IntAddress fromNode) const;
     IntAddress getGroupRootAddress(IntAddress groupAddr) const;
+    // for host node use
     int getTreeIndex(IntAddress fromNode) const;
     int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;
     int getBufferSize(IntAddress group, IntAddress switchAddress) const;
+    // for signals collection
     void reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime);
     void reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime);
 
@@ -49,10 +50,18 @@ private:
     std::unordered_map<std::pair<IntAddress, IntAddress>, B, hashFunctionInt2> switchBufferSize;
 
     struct groupRoundFinishInfo {
-        int counter{0};
+        size_t counter{0};
         simtime_t startTime;
         simsignal_t roundFctSignal;
     };
     std::unordered_map<IntAddress, groupRoundFinishInfo*> groupRoundStartTime;
+
+private:
+    // for aggregation job
+    void prepareAggGroup(const char* policyName);
+    void buildSteinerTree(cTopology& tree, const std::vector<int>& members, int root);
+    // TODO make this function more clearly
+    // ! add the shortest path between Node start and stop, note that only stop is in the tree
+    void addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop);
 };
 

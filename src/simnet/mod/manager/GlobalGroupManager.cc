@@ -6,22 +6,28 @@ Define_Module(GlobalGroupManager);
 IntAddress GlobalGroupManager::getGroupAddress(IntAddress fromNode) const
 {
     if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
-        throw cRuntimeError("address %" PRId64 "'s group is not found.", fromNode);
+    {
+        return INVALID_ADDRESS;
+    }
     return hostGroupInfo.at(fromNode).at(0);
 }
 
 IntAddress GlobalGroupManager::getGroupRootAddress(IntAddress groupAddr) const
 {
     auto it = groupRoot.find(std::make_pair(groupAddr, 0));
-    if (it == groupRoot.end()) // FIXME, treeIndex is fixed here
-        throw cRuntimeError("group address %" PRId64 " doesn't exist.", groupAddr);
+    if (it == groupRoot.end())
+    {
+        return INVALID_ADDRESS;
+    }
     return it->second;
 }
 
 int GlobalGroupManager::getTreeIndex(IntAddress fromNode) const
 {
     if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
-        throw cRuntimeError("address %" PRId64 "'s treeindex is not found.", fromNode);
+    {
+        return INVALID_ADDRESS;
+    }
     return hostGroupInfo.at(fromNode).at(1);
 }
 
@@ -73,13 +79,9 @@ void GlobalGroupManager::reportFlowStop(IntAddress groupAddr, simtime_t roundSto
 
 void GlobalGroupManager::initialize(int stage)
 {
-    if (stage == INITSTAGE_LOCAL) {
-        readSwitchConfig(par("groupSwitchFile").stringValue());
-        readHostConfig(par("groupHostFile").stringValue());
-    }
-
-    if (stage == INITSTAGE_ASSIGN) {
-
+    GlobalView::initialize(stage);
+    if (stage == INITSTAGE_COLLECT) {
+        prepareAggGroup(par("groupPolicy").stringValue());
     }
 }
 
@@ -152,13 +154,128 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
 simsignal_t GlobalGroupManager::createSignalForGroup(IntAddress group)
 {
     char signalName[32];
-    sprintf(signalName, "group%d-RoundFinishTime", group);
+    sprintf(signalName, "group%lld-RoundFinishTime", group);
     simsignal_t signal = registerSignal(signalName);
 
     char statisticName[32];
-    sprintf(statisticName, "group%d-RoundFinishTime", group);
+    sprintf(statisticName, "group%lld-RoundFinishTime", group);
     cProperty *statisticTemplate =
         getProperties()->get("statisticTemplate", "groupRoundFinishTime");
     getEnvir()->addResultRecorders(this, signal, statisticName, statisticTemplate);
     return signal;
+}
+
+void GlobalGroupManager::addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop)
+{
+    topo->calculateUnweightedSingleShortestPathsTo(stop);
+    auto node = start;
+    auto treeNode = new cTopology::Node(node->getModuleId()); // ! must new a node
+    tree.addNode(treeNode);
+    while (node != stop) {
+        auto nextNode = node->getPath(0)->getRemoteNode();
+        cTopology::Node* nextTreeNode = nullptr;
+        if (nextNode != stop) {
+            nextTreeNode = new cTopology::Node(nextNode->getModuleId());
+            tree.addNode(nextTreeNode);
+        }
+        else { // avoid add a node twice into tree
+            nextTreeNode = tree.getNodeFor(nextNode->getModule());
+        }
+        // the link is always a new one
+        tree.addLink(new cTopology::Link(), treeNode, nextTreeNode);
+        node = nextNode;
+        treeNode = nextTreeNode;
+    }
+}
+
+void GlobalGroupManager::buildSteinerTree(cTopology& tree, const std::vector<int>& members, int root)
+{
+    auto rootNode = topo->getNode(root);
+    tree.addNode(new cTopology::Node(rootNode->getModuleId())); // ! must new a node
+    for (auto& n:members) {
+        double dist = INFINITY;
+        auto currentHost = topo->getNode(n);
+        // * find the joint node to the tree
+        cTopology::Node* jointNode = nullptr;
+        for (auto i = 0; i < tree.getNumNodes(); i++) {
+            // ! Node* of the same Module in tree and topo are different
+            auto nodeInTree = topo->getNodeFor(tree.getNode(i)->getModule());
+            if (nodeInTree == rootNode ||
+                    nodeInTree->getModule()->getProperties()->get("switch")!=nullptr)
+            { // ! ignore hosts
+                topo->calculateUnweightedSingleShortestPathsTo(nodeInTree);
+                if (currentHost->getDistanceToTarget() < dist) {
+                    dist = currentHost->getDistanceToTarget();
+                    jointNode = nodeInTree;
+                }
+            }
+        }
+        ASSERT(jointNode);
+        // * add the node into tree using the shortest path
+        addShortestPath(tree, currentHost, jointNode);
+    }
+}
+
+void GlobalGroupManager::prepareAggGroup(const char* policyName)
+{
+    if (strcmp(policyName, "manual") == 0)
+    {
+        readSwitchConfig(par("groupSwitchFile").stringValue());
+        readHostConfig(par("groupHostFile").stringValue());
+    }
+    else if (strcmp(policyName, "random") == 0)
+    {
+        int groupNum = 2;
+        int groupMembers = 4;
+        IntAddress groupAddr = GROUPADDR_START - 1;
+        std::unordered_set<int> visited; // TODO may not necessary
+        for (auto i = 0; i < groupNum; i++)
+        {
+            groupAddr++;
+            auto gkey = std::make_pair(groupAddr, 0);
+            std::vector<int> members;
+            // * choose group members randomly without repetition
+            for (auto j = 0; j < groupMembers ; j++)
+            {
+                int index = hostNodes.size();
+                if (groupMembers > index)
+                    throw cRuntimeError("too many group members!");
+                do {
+                    index = intrand(hostNodes.size());
+                }
+                while (visited.find(index) != visited.end());
+                auto node = hostNodes.at(index);
+                members.push_back(node);
+                visited.insert(node);
+                auto addr = node2addr.at(node);
+                hostGroupInfo[addr].push_back(groupAddr);
+                hostGroupInfo[addr].push_back(0); // TODO treeIndex is always 0 so far
+            }
+            auto root = members.back();
+            members.pop_back();
+            groupRoot[gkey] = node2addr.at(root);
+            for (auto& m:members)
+                groupSources[gkey].push_back(node2addr.at(m));
+
+            // * get steiner tree for each group
+            cTopology tree = cTopology("steiner");
+            buildSteinerTree(tree, members, root);
+            // * tree construction is finished
+            // * now assign tree to routers
+            for (auto i = 0; i < tree.getNumNodes(); i++) {
+                auto node = tree.getNode(i);
+                auto mod = node->getModule();
+                if (mod->getProperties()->get("switch")!=nullptr) {
+                    auto indegree = node->getNumInLinks();
+                    auto switchAddr = mod->par("address").intValue();
+                    EV_DEBUG <<"switchAddr:" << std::setw(6) << switchAddr << " indegree:" << indegree << endl;
+                    if (indegree >= 2) {
+                        switchFanIndegree[std::make_tuple(groupAddr, 0, switchAddr)] = indegree;
+                        switchBufferSize[std::make_pair(groupAddr, switchAddr)] = 10000;
+                    }
+                }
+            }
+        }
+    }
+
 }
