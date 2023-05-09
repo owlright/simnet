@@ -277,5 +277,8 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
             }
         }
     }
-
+    else
+    {
+        // do nothing;
+    }
 }
