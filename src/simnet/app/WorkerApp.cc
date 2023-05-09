@@ -25,11 +25,14 @@ void WorkerApp::initialize(int stage)
     }
     if (stage == INITSTAGE_ASSIGN) {
         groupAddr = groupManager->getGroupAddress(localAddr);
-        destAddr = groupAddr;
-        connection->bindRemote(destAddr, destPort);
-        treeIndex = groupManager->getTreeIndex(localAddr);
         if (groupAddr > 0 && groupManager->getGroupRootAddress(groupAddr) != localAddr)
+        {
+            destAddr = groupAddr;
+    //        connection->bindRemote(destAddr, destPort); // no need to do this, parent will do this
+            treeIndex = groupManager->getTreeIndex(localAddr);
+
             EV << "(sender) groupAddr: " << groupAddr <<" localAddr:" << localAddr  << endl;
+        }
     }
 }
 
