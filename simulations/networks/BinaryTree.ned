@@ -1,32 +1,32 @@
 package simnet.simulations.networks;
 
+import simnet.mod.INode;
 import simnet.mod.Host;
 import ned.DatarateChannel;
-import simnet.mod.Controller;
+import simnet.mod.manager.GlobalRouteManager;
+import simnet.mod.manager.GlobalGroupManager;
 
 network BinaryTree
 {
     parameters:
-        string globalRouteManager = fullName()+".controller";
         int height;
+        
     types:
         channel C extends DatarateChannel
         {
-            delay = 1ms;
-            datarate = 10Mbps;
+            delay = 2us;
+            datarate = 10Gbps;
         }
     submodules:
-        terminal[2^height]: Host {
+        V[2^height]: <default("Host")> like INode {
             address = index;
-//            globalRouteManager = parent.globalRouteManager;
         }
-        controller: Controller {
-            @display("p=89,26;is=s");
-        }
+		routeManager: GlobalRouteManager;
+        groupManager: GlobalGroupManager;
     connections allowunconnected:
         for i=0..2^(height-1)-2 {
-            terminal[i].port++ <--> C <--> terminal[2*i+1].port++;
-            terminal[i].port++ <--> C <--> terminal[2*i+2].port++;
+            V[i].port++ <--> C <--> V[2*i+1].port++;
+            V[i].port++ <--> C <--> V[2*i+2].port++;
         }
-        terminal[0].port++ <--> C <--> terminal[7].port++;
+        V[0].port++ <--> C <--> V[2^height-1].port++;
 }

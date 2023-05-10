@@ -4,32 +4,26 @@ Define_Module(GlobalRouteManager);
 
 void GlobalRouteManager::initialize(int stage)
 {
-    if (stage == INITSTAGE_LOCAL) {
-        EV_INFO << "network initialization." << endl;
+    GlobalView::initialize(stage);
+}
 
-        this->topo = new cTopology("topo");
-        topo->extractByProperty("node");
-        EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
-        setNodes(topo);
+cTopology::Node* GlobalRouteManager::getNode(IntAddress address) const
+{
+    auto its = addr2node.find(address);
+    if (its == addr2node.end()) {
+       throw cRuntimeError("address %lld does not exist!", address);
     }
+    return topo->getNode(its->second);
 }
 
 std::vector<int> GlobalRouteManager::getRoutes(IntAddress switchAddr, IntAddress dest) const // TODO just pass the src address is ok
 {
+    Enter_Method("GlobalRouteManager::getRoutes");
     if (switchAddr == dest) {
         throw cRuntimeError("switchAddr and dest are the same.");
     }
-    Enter_Method("GlobalRouteManager::getRoutes");
-    auto its = addr2node.find(switchAddr);
-    auto itd = addr2node.find(dest);
-    if (its == addr2node.end()) {
-       throw cRuntimeError("node %" PRId64 " does not exist!", switchAddr);
-    }
-    if (itd == addr2node.end()) {
-       throw cRuntimeError("node %" PRId64 " does not exist!", dest);
-    }
-    auto srcNode = topo->getNode(its->second);
-    auto destNode = topo->getNode(itd->second);
+    auto srcNode = getNode(switchAddr);
+    auto destNode = getNode(dest);
 
     // ! HACK find multiple next hops used for ecmp
     // * try to get one shortest path
@@ -61,20 +55,4 @@ std::vector<int> GlobalRouteManager::getRoutes(IntAddress switchAddr, IntAddress
         link->enable();
     }
     return gateIndexes;
-}
-
-void GlobalRouteManager::setNodes(const cTopology *topo)
-{
-    node2addr.reserve(topo->getNumNodes());
-    for (int i = 0; i < topo->getNumNodes(); i++) {
-        auto node = topo->getNode(i)->getModule();
-        int address = node->par("address");
-        auto isHost = node->getProperties()->get("host") != nullptr;
-        if (isHost) {
-            hostNodes.push_back(i);
-        }
-        node2addr[i] = address;
-        addr2node[address] = i;
-        EV_DEBUG<< "node: " << i << " address: " << address << endl;
-    }
 }

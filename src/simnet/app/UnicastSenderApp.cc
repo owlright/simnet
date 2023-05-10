@@ -15,27 +15,40 @@ void UnicastSenderApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
     if (stage==INITSTAGE_LOCAL) {
-        std::vector<std::string> v = cStringTokenizer(par("destAddresses").stringValue()).asVector();
-        destAddresses = AddressResolver::resolve(v);
+        // two ways to set destAddr
         destAddr = par("destAddress");
-        destPort = par("destPort");
-        messageLength = par("messageLength");
-        flowSize = &par("flowSize");
-        flowInterval = &par("flowInterval");
-        connection->bindRemote(destAddr, destPort); // ! note to bind remote before using send
-        cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
-        cong->setSegmentSize(messageLength);
-        //HACK
-        bandwidth = check_and_cast<cDatarateChannel *>(
-                                    getParentModule()
-                                    ->gateHalf("port", cGate::Type::OUTPUT, 0)
-                                    ->getChannel())->getDatarate();
-        //schedule sending event
-        flowStartTimer = new cMessage("flowStart");
-        scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
-        EV << "destAddr: " << destAddr << " destPort: " << destPort << endl;
+        if (destAddr == -1) {
+            std::vector<std::string> v = cStringTokenizer(par("destAddresses").stringValue()).asVector();
+            destAddresses = AddressResolver::resolve(v);
+            if (destAddresses.size() > 0) // TODO
+                destAddr = destAddresses[0];
+        }
     }
 
+    if (stage == INITSTAGE_LAST) {
+        if (destAddr > 0) {
+            destPort = par("destPort");
+            messageLength = par("messageLength");
+            flowSize = &par("flowSize");
+            flowInterval = &par("flowInterval");
+            connection->bindRemote(destAddr, destPort); // ! note to bind remote before using send
+            cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
+            cong->setSegmentSize(messageLength);
+            //HACK
+            bandwidth = check_and_cast<cDatarateChannel *>(
+                                        getParentModule()
+                                        ->gateHalf("port", cGate::Type::OUTPUT, 0)
+                                        ->getChannel())->getDatarate();
+            //schedule sending event
+            flowStartTimer = new cMessage("flowStart");
+            scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
+            EV << "destAddr: " << destAddr << " destPort: " << destPort << endl;
+        }
+        else {
+            EV_WARN << "this app has no destAddress" << endl;
+        }
+
+    }
 }
 
 void UnicastSenderApp::handleMessage(cMessage *msg)

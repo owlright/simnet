@@ -16,9 +16,7 @@ void Routing::initialize(int stage)
             groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
 
         if (isSwitch) {
-            aggPacketHandler.bufferSize = par("bufferSize");
-            aggPacketHandler.groupManager = groupManager;
-            aggPacketHandler.switchAddress = myAddress;
+            bufferSize = par("bufferSize");
         }
 
     }
@@ -52,13 +50,40 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr)
     }
 }
 
-void Routing::broadcast(Packet *pk, const std::unordered_set<int>& outGateIndexes) {
+void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
     for (auto& gateIndex : outGateIndexes ) {
         auto packet = pk->dup();
         EV_INFO << "Forwarding broadcast packet " << pk->getName() << " on gate index " << gateIndex << endl;
         send(packet, "out", gateIndex);
     }
     delete pk;
+}
+
+std::vector<int> Routing::getReversePortIndexes(const GroupSeqType& groupSeqKey) const
+{
+    //TODO: now the port only related to group, but the treeIndex may also related
+    if (incomingPortIndexes.find(groupSeqKey) == incomingPortIndexes.end())
+        throw cRuntimeError("Routing::getReversePortIndexes: group %lld seq %lld not found!",
+                                    groupSeqKey.first, groupSeqKey.second);
+    return incomingPortIndexes.at(groupSeqKey);
+}
+
+int Routing::getComputationCount() const
+{
+    int c = 0;
+    for (const auto& kv: groupTable) {
+        c += kv.second->getComputationCount();
+    }
+    return c;
+}
+
+simtime_t Routing::getUsedTime() const
+{
+    simtime_t t = 0;
+    for (const auto& kv: groupTable) {
+        t += kv.second->getUsedTime();
+    }
+    return t;
 }
 
 void Routing::handleMessage(cMessage *msg)
@@ -79,27 +104,69 @@ void Routing::handleMessage(cMessage *msg)
     // ! If I'm a host, the packet comes from upperLayer
     if (!isSwitch) {
     // HACK: if this node is host, only gate out[0] can be sent to
-    // save the time to ask route manager
+    // TODO: save the time to ask route manager, but if this is always right?
         EV << "Forwarding packet " << pk->getName() << " on gate index " << 0 << endl;
         send(pk, "out", 0);
         return;
     }
 
-    // ! If I'm a switch, deal with group address
+    // ! Only switch deal with group address
     if (isSwitch && isGroupAddr(destAddr) ) {
+        auto group = pk->getDestAddr();
+        auto seq = pk->getSeqNumber();
+        auto groupSeqKey = std::make_pair(group, seq);
+
         if (pk->getKind() == DATA) {
-            auto aggpk = aggPacketHandler.agg(pk); // group addr and packet seq will be handled here
-            if (aggpk == nullptr) { // packet aggregation is finished
-                return;
+            incomingPortIndexes[groupSeqKey].push_back(pk->getArrivalGate()->getIndex());
+            if (markNotAgg.find(groupSeqKey) == markNotAgg.end())
+            {
+                if (groupTable.find(group) != groupTable.end()) // already have an entry
+                {
+                    if (groupTable.at(group)->getLeftBuffer() > 0) // ! a group may have its own restriction
+                        pk = groupTable.at(group)->agg(pk);
+                }
+                else
+                {
+                    // * the first time we see the group, generate an entry for it
+                    if (usedBuffer + pk->getByteLength() <= bufferSize)
+                    {
+                        auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
+                         // TODO now every group use whole memory
+                        groupTable[group] = new AggGroupEntry(bufferSize, indegree);
+
+                        if (groupTable.at(group)->getLeftBuffer() > pk->getByteLength())
+                        {// ! this check maybe not necessary, unless you set bufferSize < pk->getByteLength()
+                            usedBuffer += pk->getByteLength();
+                            pk = groupTable.at(group)->agg(pk); // ! this line must be put at last as pk is changed
+                        }
+                        else
+                            markNotAgg.insert(groupSeqKey);
+                    }
+                    else
+                    {
+                        // ! not enough buffer to hold it , it must be sent out immediately,
+                        // ! the following packets of the same <groupAddr, seq> cannot be aggregated either
+                        markNotAgg.insert(groupSeqKey);
+                        // ! do nothing to pk, pk will be handled like normal packet below
+                    }
+                }
+                if (pk == nullptr)
+                    return;
             }
-            pk = aggpk;
         }
 
-        if (pk->getKind() == ACK) {
-            auto outGateIndexes = aggPacketHandler.getReversePortIndexes(pk);
-            aggPacketHandler.releaseGroupOnSeq(pk->getDestAddr(), pk->getSeqNumber()); // release store memory
-            broadcast(pk, outGateIndexes);
-            return;
+        if (pk->getKind() == ACK )
+        {   // key not exist is ok
+            markNotAgg.erase(groupSeqKey);
+            if (groupTable.find(group) != groupTable.end())
+            {
+                auto outGateIndexes = getReversePortIndexes(groupSeqKey);
+                incomingPortIndexes.erase(groupSeqKey);
+                auto releasedBuffer = groupTable[group]->release(pk);
+                usedBuffer -= releasedBuffer;
+                broadcast(pk, outGateIndexes);
+                return;
+            }
         }
     }
 
@@ -123,4 +190,15 @@ void Routing::refreshDisplay() const
         sprintf(buf, "%" PRId64, myAddress);
         getParentModule()->getDisplayString().setTagArg("t", 0, buf);
     }
+}
+
+void Routing::finish()
+{
+    if (isSwitch) {
+        char buf[30];
+        sprintf(buf, "switch-%lld-compEff", myAddress);
+        // I dont want the time's unit too big, otherwise the efficiency will be too big
+        recordScalar(buf, getComputationCount() / double(getUsedTime().inUnit(SIMTIME_US))); // TODO will resource * usedTime better?
+    }
+
 }

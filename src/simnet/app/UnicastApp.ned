@@ -32,8 +32,6 @@ module UnicastEchoApp extends UnicastApp {
     parameters:
         port = default(1001);
         @class(UnicastEchoApp);
-//    submodules:
-//        cong: <default("Reno")> like Cong;
 }
 
 module WorkerApp extends UnicastSenderApp {

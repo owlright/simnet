@@ -2,6 +2,15 @@ package simnet.mod;
 import simnet.app.IApp;
 import simnet.mod.contract.PortDispatcher;
 
+moduleinterface INode
+{
+    parameters:
+		int address;
+		@node;
+	gates:
+        inout port[];
+}
+
 module ManagerListener
 {
     parameters:
@@ -14,7 +23,7 @@ module ManagerListener
 // A "Host" consists of a Routing plus an App module which represents the
 // aggregate traffic of the subnets connected to that router.
 //
-module Host extends ManagerListener
+module Host extends ManagerListener like INode
 {
     parameters:
         int address;
@@ -62,7 +71,7 @@ module Host extends ManagerListener
         }
 }
 
-module Switch extends ManagerListener
+module Switch extends ManagerListener like INode
 {
     parameters:
         int address;

@@ -5,12 +5,18 @@ PROJECT_TARGET := src/lib$(PROJECT_NAME).dll
 PROJECT_TARGET_DBG := src/lib$(PROJECT_NAME)_dbg.dll
 # I don't want automatically find these files.
 # PROJECT_SRC_FILES := $(shell find $(PROJECT_SRC) -name '*.cc' -or -name '*.h' -or -name '*.msg')
+# check system
+ifeq ($(shell uname),Darwin)
+    CPU_COUNT = $(shell sysctl -n hw.logicalcpu)
+else
+    CPU_COUNT = $(CPU_COUNT)
+endif
 
 # default target
 ifeq ($(MODE),debug)
-  PROJECT_TARGET_DEFAULT = $(PROJECT_TARGET_DBG)
+	PROJECT_TARGET_DEFAULT = $(PROJECT_TARGET_DBG)
 else
-  PROJECT_TARGET_DEFAULT = $(PROJECT_TARGET)
+	PROJECT_TARGET_DEFAULT = $(PROJECT_TARGET)
 endif
 
 # targets don't have deps, list them here
@@ -43,11 +49,11 @@ makefiles:
 	@cd src && opp_makemake --make-so -f --deep -o $(PROJECT_NAME) -O out -I.
 
 $(PROJECT_TARGET): checkmakefiles
-	@cd src && $(MAKE) -j $(shell nproc)
+	@cd src && $(MAKE) -j $(CPU_COUNT)
 #	touch $(PROJECT_TARGET)
 
 $(PROJECT_TARGET_DBG): checkmakefiles
-	@cd src && $(MAKE) MODE=debug -j $(shell nproc)
+	@cd src && $(MAKE) MODE=debug -j $(CPU_COUNT)
 #	touch $(PROJECT_TARGET_DBG)
 
 # run simulation
@@ -75,7 +81,7 @@ define SIM_template
 $(eval SIM_INI_FILE := simulations/$(1)/omnetpp.ini)
 
 $(1)-%: $(PROJECT_TARGET)
-	opp_runall -j $(shell nproc) \
+	opp_runall -j $(CPU_COUNT) \
 	opp_run $(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_OPTIONS)
 
 	opp_scavetool export -o simulations/$(1)/results/$$*.csv -F CSV-R --type vs --allow-nonmatching \

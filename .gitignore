@@ -9,3 +9,5 @@ results/
 *.def
 *.dll
 *.dll.a
+*.dylib
+.DS_Store

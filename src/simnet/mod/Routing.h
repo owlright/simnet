@@ -7,16 +7,22 @@
 #include "simnet/mod/manager/GlobalRouteMangager.h"
 #include "simnet/mod/manager/GlobalGroupManager.h"
 #include "simnet/mod/agroup/AggGroupEntry.h"
-// #include "simnet/mod/agroup/GroupPacketHandler.h"
-// #include "../mod/AggrGroupInfo.h"
-using namespace omnetpp;
 
+using namespace omnetpp;
 
 /**
  * Demonstrates static routing, utilizing the cTopology class.
  */
 class Routing : public cSimpleModule
 {
+    struct hashFunction
+    {
+        size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
+            return x.first ^ x.second;
+        }
+    };
+    typedef std::pair<IntAddress, SeqNumber> GroupSeqType;
+
 private:
     bool isSwitch;
     IntAddress myAddress{INVALID_ADDRESS};
@@ -24,56 +30,35 @@ private:
     bool ecmpFlow = false;
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
-    // typedef std::map<int, std::vector<int> > AggrRoutingTable;
-    // AggrRoutingTable aggrChildren;
-    // std::map<int, AggrGroupInfo*> aggrGroupTable;
+
     GlobalRouteManager* routeManager{nullptr};
     GlobalGroupManager* groupManager{nullptr};
     // GroupPacketHandler* gpkHandler{nullptr};
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
     simsignal_t outputPacketSignal;
-    // std::map<int, Packet*> aggrPacket;
-    // std::map<int, int> aggrCounter;
-    // std::map<int, int> aggrNumber;
+
+    B bufferSize{0};
+    B usedBuffer{0};
+
+    std::unordered_set<GroupSeqType, hashFunction> markNotAgg;
+    std::unordered_map<GroupSeqType, std::vector<int>, hashFunction> incomingPortIndexes;
+    std::unordered_map<IntAddress, AggGroupEntry*> groupTable;
 
 private:
-    //! for dealing with agg groups
-    class AggPacketHandler {
-    public:
-        IntAddress switchAddress;
-        Packet* agg(Packet* pk);
-        B getUsedBufferSize() const;
-        void releaseGroupOnSeq(IntAddress group, SeqNumber seq);
-        const std::unordered_set<int>& getReversePortIndexes(Packet* pk) const;
-
-    private:
-        struct hashFunction
-        {
-            size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
-                return x.first ^ x.second;
-            }
-        };
-        void registerGroup(IntAddress group, B bufferSize);
-    public:
-        GlobalGroupManager* groupManager{nullptr};
-        std::unordered_map<IntAddress, AggGroupEntry*> groupTable;
-        B bufferSize{0}; // the max buffer size that in network computation/aggregation can use
-        std::unordered_set< std::pair<IntAddress, SeqNumber>, hashFunction > markNotAgg;
-    };
-    AggPacketHandler aggPacketHandler;
-    // bool isAggrGroupAdded(int address) const;
-    // bool isAggrGroup(int address) const;
-    // AggrGroupInfo* getAggrGroup(int address) const;
-    // AggrGroupInfo* getOrAddGroup(int address);
+    // AggPacketHandler aggPacketHandler;
     int getRouteGateIndex(int srcAddr, int destAddr);
     bool isGroupAddr(IntAddress addr) const { return (GROUPADDR_START <= addr && addr < GROUPADDR_END);};
     bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
-    void broadcast(Packet* pk, const std::unordered_set<int>& outGateIndexes);
+    void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
+    std::vector<int> getReversePortIndexes(const GroupSeqType& groupSeqKey) const;
+    int getComputationCount() const;
+    simtime_t getUsedTime() const;
 
 protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     virtual void refreshDisplay() const override;
+    virtual void finish() override;
 };

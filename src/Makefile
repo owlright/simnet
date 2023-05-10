@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for $(LIB_PREFIX)simnet
 #
 # This file was generated with the command:
-#  opp_makemake --make-so -f --deep -o simnet -O out -I.
+#  opp_makemake --make-so -f --deep -O out -I.
 #
 
 # Name of target to be created (-o option)
@@ -31,16 +31,25 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 OBJS = \
     $O/distribution/CdfDistribution.o \
     $O/distribution/NedFunctions.o \
+    $O/simnet/app/ParameterServerApp.o \
     $O/simnet/app/UnicastApp.o \
     $O/simnet/app/UnicastEchoApp.o \
     $O/simnet/app/UnicastSenderApp.o \
+    $O/simnet/app/WorkerApp.o \
+    $O/simnet/common/AddressResolver.o \
+    $O/simnet/common/NedFunctions.o \
     $O/simnet/common/ResultFilters.o \
     $O/simnet/mod/Connection.o \
     $O/simnet/mod/Controller.o \
     $O/simnet/mod/L2Queue.o \
-    $O/simnet/mod/MessageDispatcher.o \
     $O/simnet/mod/Routing.o \
+    $O/simnet/mod/agroup/AggGroupEntry.o \
+    $O/simnet/mod/cong/Dctcp.o \
     $O/simnet/mod/cong/Reno.o \
+    $O/simnet/mod/contract/MessageDispatcher.o \
+    $O/simnet/mod/manager/GlobalGroupManager.o \
+    $O/simnet/mod/manager/GlobalRouteManager.o \
+    $O/simnet/mod/manager/GLobalView.o \
     $O/simnet/trafficpattern/SimpleTrafficPattern.o \
     $O/simnet/mod/Packet_m.o
 
