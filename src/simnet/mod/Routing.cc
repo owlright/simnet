@@ -97,7 +97,7 @@ void Routing::handleMessage(cMessage *msg)
 
         if (pk->getKind() == ACK) {
             auto outGateIndexes = aggPacketHandler.getReversePortIndexes(pk);
-            aggPacketHandler.releaseGroupOnSeq(pk->getDestAddr(), pk->getSeqNumber()); // release store memory
+            aggPacketHandler.release(pk); // release store memory
             broadcast(pk, outGateIndexes);
             return;
         }
@@ -123,4 +123,15 @@ void Routing::refreshDisplay() const
         sprintf(buf, "%" PRId64, myAddress);
         getParentModule()->getDisplayString().setTagArg("t", 0, buf);
     }
+}
+
+void Routing::finish()
+{
+    if (isSwitch) {
+        char buf[30];
+        sprintf(buf, "switch-%lld-compEff", myAddress);
+        // I dont want the time's unit too big, otherwise the efficiency will be too big
+        recordScalar(buf, aggPacketHandler.getComputationCount() / double(aggPacketHandler.getUsedTime().inUnit(SIMTIME_US))); // TODO will resource * usedTime better?
+    }
+
 }

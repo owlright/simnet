@@ -1,19 +1,5 @@
 #include "AggGroupEntry.h"
 #include <iostream>
-// AggGroupEntry::AggGroupEntry(int groupid, int number, int buffer) {
-//     this->groupAddr = groupid;
-//     numberOfChidren = number;
-//     bufferSize = buffer;
-// }
-
-// const Packet *AggGroupEntry::getAggPacket(SeqNumber seq) const
-// {
-    // auto packetEntry = packetTable.find(seq);
-    // if (packets.find(seq)==packets.end()) {
-    //     return nullptr;
-    // }
-    // return packets.at(seq);
-// }
 
 AggGroupEntry::AggGroupEntry(B size, int indegree)
 {
@@ -24,7 +10,7 @@ AggGroupEntry::AggGroupEntry(B size, int indegree)
 Packet *AggGroupEntry::agg(Packet *pk)
 {
     auto seq = pk->getSeqNumber();
-   if (markNotAgg.find(seq) != markNotAgg.end())
+    if (markNotAgg.find(seq) != markNotAgg.end())
        return pk;
 
     if (getUsedBufferSize() >= bufferSize) {
@@ -35,13 +21,18 @@ Packet *AggGroupEntry::agg(Packet *pk)
 
     if (packetTable.find(seq) == packetTable.end()) {
         packetTable[seq] = new AggPacketEntry(seq, indegree);
+        packetTable[seq]->startTime = pk->getArrivalTime();
+        packetTable[seq]->computationCount = 0;
     }
 
     return packetTable[seq]->agg(pk);
 }
 
-void AggGroupEntry::release(int seq)
+void AggGroupEntry::release(const Packet* pk)
 {
+    auto seq = pk->getSeqNumber();
+    accumulatedTime += pk->getArrivalTime() - packetTable[seq]->startTime; // TODO: take the computation time into account
+    computationCount += packetTable[seq]->computationCount;
     packetTable.erase(seq); // it's ok even if seq not exist
     markNotAgg.erase(seq);
 }
@@ -63,6 +54,7 @@ Packet *AggGroupEntry::AggPacketEntry::agg(Packet *pk)
         assert(packet == nullptr);
         packet = pk; // just keep the first packet is ok
     } else {
+        computationCount++;
         delete pk;
     }
 

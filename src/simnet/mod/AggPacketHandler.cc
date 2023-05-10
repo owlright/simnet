@@ -16,8 +16,8 @@ Packet* Routing::AggPacketHandler::agg(Packet *pk)
     }
 
     if (groupTable.find(group) == groupTable.end()) {
-        // * the first time we see the group
-        auto indegree = groupManager->getFanIndegree(group, 0, switchAddress); // FIXME set treeindex =0
+        // * the first time we see the group, generate an entry for it
+        auto indegree = groupManager->getFanIndegree(group, 0, switchAddress); // FIXME set treeIndex =0
         groupTable[group] = new AggGroupEntry(bufferSize, indegree);
     }
     // ! Now group entry must be in the groupTable
@@ -34,14 +34,34 @@ B Routing::AggPacketHandler::getUsedBufferSize() const
     return used;
 }
 
-void Routing::AggPacketHandler::releaseGroupOnSeq(IntAddress group, SeqNumber seq)
+simtime_t Routing::AggPacketHandler::getUsedTime() const
 {
+    simtime_t t = 0;
+    for (const auto& kv: groupTable) {
+        t += kv.second->getUsedTime();
+    }
+    return t;
+}
+
+int Routing::AggPacketHandler::getComputationCount() const
+{
+    int c = 0;
+    for (const auto& kv: groupTable) {
+        c += kv.second->getComputationCount();
+    }
+    return c;
+}
+
+void Routing::AggPacketHandler::release(const Packet* pk)
+{
+    IntAddress group = pk->getDestAddr();
+    SeqNumber seq = pk->getSeqNumber();
     auto key = std::make_pair(group, seq);
     if (markNotAgg.find(key) != markNotAgg.end()) {
         // the <group, seq> has not been aggregated at all
         markNotAgg.erase(key);
     } else {
-        groupTable[group]->release(seq);
+        groupTable[group]->release(pk);
     }
 }
 
@@ -50,6 +70,6 @@ const std::unordered_set<int> &Routing::AggPacketHandler::getReversePortIndexes(
     auto group = pk->getDestAddr();
     auto seq = pk->getSeqNumber();
     if (groupTable.find(group)==groupTable.end())
-        throw cRuntimeError("GroupPakcetHandler::getReversePortIndexes: not find the group");
+        throw cRuntimeError("GroupPacketHandler::getReversePortIndexes: not find the group");
     return groupTable.at(group)->getIncomingPortIndexes(seq);
 }
