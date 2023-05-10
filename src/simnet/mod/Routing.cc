@@ -16,9 +16,7 @@ void Routing::initialize(int stage)
             groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
 
         if (isSwitch) {
-            aggPacketHandler.bufferSize = par("bufferSize");
-            aggPacketHandler.groupManager = groupManager;
-            aggPacketHandler.switchAddress = myAddress;
+            bufferSize = par("bufferSize");
         }
 
     }
@@ -61,6 +59,33 @@ void Routing::broadcast(Packet *pk, const std::unordered_set<int>& outGateIndexe
     delete pk;
 }
 
+std::unordered_set<int> Routing::getReversePortIndexes(Packet *pk) const
+{
+    auto group = pk->getDestAddr();
+    auto seq = pk->getSeqNumber();
+    if (groupTable.find(group)==groupTable.end())
+        throw cRuntimeError("GroupPacketHandler::getReversePortIndexes: not find the group");
+    return groupTable.at(group)->getIncomingPortIndexes(seq);
+}
+
+int Routing::getComputationCount() const
+{
+    int c = 0;
+    for (const auto& kv: groupTable) {
+        c += kv.second->getComputationCount();
+    }
+    return c;
+}
+
+simtime_t Routing::getUsedTime() const
+{
+    simtime_t t = 0;
+    for (const auto& kv: groupTable) {
+        t += kv.second->getUsedTime();
+    }
+    return t;
+}
+
 void Routing::handleMessage(cMessage *msg)
 {
     Packet *pk = check_and_cast<Packet *>(msg);
@@ -79,27 +104,59 @@ void Routing::handleMessage(cMessage *msg)
     // ! If I'm a host, the packet comes from upperLayer
     if (!isSwitch) {
     // HACK: if this node is host, only gate out[0] can be sent to
-    // save the time to ask route manager
+    // TODO: save the time to ask route manager, but if this is always right?
         EV << "Forwarding packet " << pk->getName() << " on gate index " << 0 << endl;
         send(pk, "out", 0);
         return;
     }
 
-    // ! If I'm a switch, deal with group address
+    // ! Only switch deal with group address
     if (isSwitch && isGroupAddr(destAddr) ) {
+        auto group = pk->getDestAddr();
+        auto seq = pk->getSeqNumber();
         if (pk->getKind() == DATA) {
-            auto aggpk = aggPacketHandler.agg(pk); // group addr and packet seq will be handled here
-            if (aggpk == nullptr) { // packet aggregation is finished
-                return;
+            if (markNotAgg.find(std::make_pair(group, seq)) == markNotAgg.end())
+            {
+                if (groupTable.find(group) != groupTable.end()) // already have an entry
+                {
+                    pk = groupTable.at(group)->agg(pk);
+                }
+                else
+                {
+                    // * the first time we see the group, generate an entry for it
+                    if (usedBuffer + pk->getByteLength() <= bufferSize)
+                    {
+                        auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
+                         // TODO now every group use whole memory
+                        groupTable[group] = new AggGroupEntry(bufferSize, indegree);
+                        usedBuffer += pk->getByteLength();
+                        // but a group may have its own restriction
+                        pk = groupTable.at(group)->agg(pk); // ! this line must be put at last as pk is changed
+                    }
+                    else
+                    {
+                        // ! not enough buffer to hold it , it must be sent out immediately,
+                        // ! the following packets of the same <groupAddr, seq> cannot be aggregated either
+                        markNotAgg.insert(std::make_pair(group, seq));
+                        // ! do nothing to pk, pk will be handled like normal packet below
+                    }
+                }
+                if (pk == nullptr)
+                    return;
             }
-            pk = aggpk;
         }
 
-        if (pk->getKind() == ACK) {
-            auto outGateIndexes = aggPacketHandler.getReversePortIndexes(pk);
-            aggPacketHandler.release(pk); // release store memory
-            broadcast(pk, outGateIndexes);
-            return;
+        if (pk->getKind() == ACK )
+        {   // key not exist is ok
+            markNotAgg.erase(std::make_pair(group, seq));
+            if (groupTable.find(group) != groupTable.end())
+            {
+                auto outGateIndexes = getReversePortIndexes(pk);
+                groupTable[group]->release(pk);
+                // TODO release occupied buffer
+                broadcast(pk, outGateIndexes);
+                return;
+            }
         }
     }
 
@@ -131,7 +188,7 @@ void Routing::finish()
         char buf[30];
         sprintf(buf, "switch-%lld-compEff", myAddress);
         // I dont want the time's unit too big, otherwise the efficiency will be too big
-        recordScalar(buf, aggPacketHandler.getComputationCount() / double(aggPacketHandler.getUsedTime().inUnit(SIMTIME_US))); // TODO will resource * usedTime better?
+        recordScalar(buf, getComputationCount() / double(getUsedTime().inUnit(SIMTIME_US))); // TODO will resource * usedTime better?
     }
 
 }

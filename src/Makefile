@@ -39,7 +39,6 @@ OBJS = \
     $O/simnet/common/AddressResolver.o \
     $O/simnet/common/NedFunctions.o \
     $O/simnet/common/ResultFilters.o \
-    $O/simnet/mod/AggPacketHandler.o \
     $O/simnet/mod/Connection.o \
     $O/simnet/mod/Controller.o \
     $O/simnet/mod/L2Queue.o \

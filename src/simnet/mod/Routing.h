@@ -10,7 +10,12 @@
 
 using namespace omnetpp;
 
-
+struct hashFunction
+{
+    size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
+        return x.first ^ x.second;
+    }
+};
 /**
  * Demonstrates static routing, utilizing the cTopology class.
  */
@@ -31,39 +36,20 @@ private:
     simsignal_t outputIfSignal;
     simsignal_t outputPacketSignal;
 
+    B bufferSize{0};
+    B usedBuffer{0};
+    std::unordered_set< std::pair<IntAddress, SeqNumber>, hashFunction > markNotAgg;
+    std::unordered_map<IntAddress, AggGroupEntry*> groupTable;
+
 private:
-    //! for dealing with agg groups
-    class AggPacketHandler
-    {
-    public:
-        IntAddress switchAddress;
-        Packet* agg(Packet* pk);
-        B getUsedBufferSize() const;
-        simtime_t getUsedTime() const;
-        int getComputationCount() const;
-        void release(const Packet* pk);
-        const std::unordered_set<int>& getReversePortIndexes(Packet* pk) const;
-
-
-    private:
-        struct hashFunction
-        {
-            size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
-                return x.first ^ x.second;
-            }
-        };
-        // void registerGroup(IntAddress group, B bufferSize); // ? what for
-    public:
-        GlobalGroupManager* groupManager{nullptr};
-        std::unordered_map<IntAddress, AggGroupEntry*> groupTable;
-        B bufferSize{0}; // the max buffer size that in network computation/aggregation can use
-        std::unordered_set< std::pair<IntAddress, SeqNumber>, hashFunction > markNotAgg;
-    };
-    AggPacketHandler aggPacketHandler;
+    // AggPacketHandler aggPacketHandler;
     int getRouteGateIndex(int srcAddr, int destAddr);
     bool isGroupAddr(IntAddress addr) const { return (GROUPADDR_START <= addr && addr < GROUPADDR_END);};
     bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
     void broadcast(Packet* pk, const std::unordered_set<int>& outGateIndexes);
+    std::unordered_set<int> getReversePortIndexes(Packet *pk) const;
+    int getComputationCount() const;
+    simtime_t getUsedTime() const;
 
 protected:
     virtual void initialize(int stage) override;

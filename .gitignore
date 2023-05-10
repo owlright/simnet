@@ -10,3 +10,4 @@ results/
 *.dll
 *.dll.a
 *.dylib
+.DS_Store
