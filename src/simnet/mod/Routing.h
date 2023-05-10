@@ -10,17 +10,19 @@
 
 using namespace omnetpp;
 
-struct hashFunction
-{
-    size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
-        return x.first ^ x.second;
-    }
-};
 /**
  * Demonstrates static routing, utilizing the cTopology class.
  */
 class Routing : public cSimpleModule
 {
+    struct hashFunction
+    {
+        size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
+            return x.first ^ x.second;
+        }
+    };
+    typedef std::pair<IntAddress, SeqNumber> GroupSeqType;
+
 private:
     bool isSwitch;
     IntAddress myAddress{INVALID_ADDRESS};
@@ -38,7 +40,9 @@ private:
 
     B bufferSize{0};
     B usedBuffer{0};
-    std::unordered_set< std::pair<IntAddress, SeqNumber>, hashFunction > markNotAgg;
+
+    std::unordered_set<GroupSeqType, hashFunction> markNotAgg;
+    std::unordered_map<GroupSeqType, std::vector<int>, hashFunction> incomingPortIndexes;
     std::unordered_map<IntAddress, AggGroupEntry*> groupTable;
 
 private:
@@ -46,8 +50,8 @@ private:
     int getRouteGateIndex(int srcAddr, int destAddr);
     bool isGroupAddr(IntAddress addr) const { return (GROUPADDR_START <= addr && addr < GROUPADDR_END);};
     bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
-    void broadcast(Packet* pk, const std::unordered_set<int>& outGateIndexes);
-    std::unordered_set<int> getReversePortIndexes(Packet *pk) const;
+    void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
+    std::vector<int> getReversePortIndexes(const GroupSeqType& groupSeqKey) const;
     int getComputationCount() const;
     simtime_t getUsedTime() const;
 

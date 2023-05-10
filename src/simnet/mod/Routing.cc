@@ -50,7 +50,7 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr)
     }
 }
 
-void Routing::broadcast(Packet *pk, const std::unordered_set<int>& outGateIndexes) {
+void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
     for (auto& gateIndex : outGateIndexes ) {
         auto packet = pk->dup();
         EV_INFO << "Forwarding broadcast packet " << pk->getName() << " on gate index " << gateIndex << endl;
@@ -59,13 +59,13 @@ void Routing::broadcast(Packet *pk, const std::unordered_set<int>& outGateIndexe
     delete pk;
 }
 
-std::unordered_set<int> Routing::getReversePortIndexes(Packet *pk) const
+std::vector<int> Routing::getReversePortIndexes(const GroupSeqType& groupSeqKey) const
 {
-    auto group = pk->getDestAddr();
-    auto seq = pk->getSeqNumber();
-    if (groupTable.find(group)==groupTable.end())
-        throw cRuntimeError("GroupPacketHandler::getReversePortIndexes: not find the group");
-    return groupTable.at(group)->getIncomingPortIndexes(seq);
+    //TODO: now the port only related to group, but the treeIndex may also related
+    if (incomingPortIndexes.find(groupSeqKey) == incomingPortIndexes.end())
+        throw cRuntimeError("Routing::getReversePortIndexes: group %lld seq %lld not found!",
+                                    groupSeqKey.first, groupSeqKey.second);
+    return incomingPortIndexes.at(groupSeqKey);
 }
 
 int Routing::getComputationCount() const
@@ -114,12 +114,16 @@ void Routing::handleMessage(cMessage *msg)
     if (isSwitch && isGroupAddr(destAddr) ) {
         auto group = pk->getDestAddr();
         auto seq = pk->getSeqNumber();
+        auto groupSeqKey = std::make_pair(group, seq);
+
         if (pk->getKind() == DATA) {
-            if (markNotAgg.find(std::make_pair(group, seq)) == markNotAgg.end())
+            incomingPortIndexes[groupSeqKey].push_back(pk->getArrivalGate()->getIndex());
+            if (markNotAgg.find(groupSeqKey) == markNotAgg.end())
             {
                 if (groupTable.find(group) != groupTable.end()) // already have an entry
                 {
-                    pk = groupTable.at(group)->agg(pk);
+                    if (groupTable.at(group)->getLeftBuffer() > 0) // ! a group may have its own restriction
+                        pk = groupTable.at(group)->agg(pk);
                 }
                 else
                 {
@@ -129,15 +133,20 @@ void Routing::handleMessage(cMessage *msg)
                         auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
                          // TODO now every group use whole memory
                         groupTable[group] = new AggGroupEntry(bufferSize, indegree);
-                        usedBuffer += pk->getByteLength();
-                        // but a group may have its own restriction
-                        pk = groupTable.at(group)->agg(pk); // ! this line must be put at last as pk is changed
+
+                        if (groupTable.at(group)->getLeftBuffer() > pk->getByteLength())
+                        {// ! this check maybe not necessary, unless you set bufferSize < pk->getByteLength()
+                            usedBuffer += pk->getByteLength();
+                            pk = groupTable.at(group)->agg(pk); // ! this line must be put at last as pk is changed
+                        }
+                        else
+                            markNotAgg.insert(groupSeqKey);
                     }
                     else
                     {
                         // ! not enough buffer to hold it , it must be sent out immediately,
                         // ! the following packets of the same <groupAddr, seq> cannot be aggregated either
-                        markNotAgg.insert(std::make_pair(group, seq));
+                        markNotAgg.insert(groupSeqKey);
                         // ! do nothing to pk, pk will be handled like normal packet below
                     }
                 }
@@ -148,12 +157,13 @@ void Routing::handleMessage(cMessage *msg)
 
         if (pk->getKind() == ACK )
         {   // key not exist is ok
-            markNotAgg.erase(std::make_pair(group, seq));
+            markNotAgg.erase(groupSeqKey);
             if (groupTable.find(group) != groupTable.end())
             {
-                auto outGateIndexes = getReversePortIndexes(pk);
-                groupTable[group]->release(pk);
-                // TODO release occupied buffer
+                auto outGateIndexes = getReversePortIndexes(groupSeqKey);
+                incomingPortIndexes.erase(groupSeqKey);
+                auto releasedBuffer = groupTable[group]->release(pk);
+                usedBuffer -= releasedBuffer;
                 broadcast(pk, outGateIndexes);
                 return;
             }

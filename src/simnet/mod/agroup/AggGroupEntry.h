@@ -10,18 +10,14 @@ struct AggGroupEntry
 {
 public:
     friend GlobalGroupManager;
-    // const Packet* getAggPacket(SeqNumber seq) const;
+
     explicit AggGroupEntry(B size, int indegree);
     Packet* agg(Packet* pk);
-    void release(const Packet* pk);
+    B release(const Packet* pk);
 
-    B getUsedBufferSize() const;
     simtime_t getUsedTime() const { return accumulatedTime;};
     int getComputationCount() const {return computationCount;};
-    const std::unordered_set<int>& getIncomingPortIndexes(SeqNumber seq) const {
-        return packetTable.at(seq)->incomingPortIndexes;
-    };
-
+    B getLeftBuffer() const {return bufferSize - usedBuffer;};
 
 private:
     struct AggPacketEntry {
@@ -31,9 +27,9 @@ private:
 
         SeqNumber seq{INVALID_ID};
         Packet* packet{nullptr};
+        B usedBytes{0};
         int fanIndegree{0};
         int counter{0};
-        std::unordered_set<int> incomingPortIndexes;
         int computationCount{0};
         simtime_t startTime;
     };
@@ -43,9 +39,9 @@ private:
     simtime_t accumulatedTime;
     IntAddress groupAddr{INVALID_ADDRESS};
     B bufferSize{0};
+    B usedBuffer{0};
     int indegree;
     // * store packets of the same seq
     std::unordered_map<SeqNumber, AggPacketEntry*> packetTable;
-    std::unordered_set<SeqNumber> markNotAgg;
 };
 
