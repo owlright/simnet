@@ -15,9 +15,10 @@ UnicastSenderApp::~UnicastSenderApp() {
 void UnicastSenderApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
-    if (stage==INITSTAGE_LOCAL) {
+    if (stage == INITSTAGE_LOCAL) {
         // two ways to set destAddr
         destAddr = par("destAddress");
+        numRounds = par("numRounds");
         if (destAddr == -1) {
             std::vector<std::string> v = cStringTokenizer(par("destAddresses").stringValue()).asVector();
             destAddresses = AddressResolver::resolve(v);
@@ -92,13 +93,15 @@ void UnicastSenderApp::onFlowStart()
     flowStartTime = simTime();
     currentFlowSize = flowSize->intValue();
     cong->reset();
-    emit(idealFctSignal, SimTime((8.0*currentFlowSize)/bandwidth));
+    emit(idealFctSignal, SimTime((8.0*currentFlowSize)/bandwidth).inUnit(SIMTIME_US));
 }
 
 void UnicastSenderApp::onFlowStop()
 {
-    emit(fctSignal, simTime() - flowStartTime);
-    scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
+    currentRound += 1;
+    emit(fctSignal, (simTime() - flowStartTime).inUnit(SIMTIME_US));
+    if (currentRound < numRounds) // note it's '<' here
+        scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
 }
 
 void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *msg)

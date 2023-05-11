@@ -19,11 +19,12 @@ module UnicastSenderApp extends UnicastApp {
         int destPort = default(1001);
         int messageLength @unit(B) = default(1kB);
         int flowSize @unit(B) = default(8kB);
+        int numRounds = default(1);
         volatile double flowInterval @unit(s) = default(10us);
         @signal[fct](type=simtime_t);
         @signal[idealFct](type=simtime_t);
-        @statistic[fct](title="flow complete time"; source=fct; record=count,mean,max,min,vector; interpolationmode=none);
-        @statistic[idealFct](title="ideal flow complete time"; source=idealFct; record=count,mean,max,min,vector; interpolationmode=none);
+        @statistic[fct](title="flow complete time"; source=fct; unit=us; record=count,mean,max,min,vector; interpolationmode=none);
+        @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=us; record=count,mean,max,min,vector; interpolationmode=none);
    submodules:
         cong: <default("Reno")> like Cong;
 }

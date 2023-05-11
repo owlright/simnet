@@ -22,6 +22,7 @@ protected:
     std::vector<IntAddress> destAddresses;
     IntAddress destAddr{INVALID_ADDRESS};
     PortNumber destPort{INVALID_PORT};
+    int numRounds{0};
     TrafficPatternManager* tpManager;
 
     B messageLength{0};
@@ -33,6 +34,7 @@ protected:
     B sentBytes{0};
     B confirmedBytes{0};
     B currentFlowSize{0};
+    int currentRound{0};
 
     // signals
     static simsignal_t cwndSignal;
