@@ -50,7 +50,7 @@ OBJS = \
     $O/simnet/mod/manager/GlobalGroupManager.o \
     $O/simnet/mod/manager/GlobalRouteManager.o \
     $O/simnet/mod/manager/GLobalView.o \
-    $O/simnet/trafficpattern/SimpleTrafficPattern.o \
+    $O/simnet/mod/manager/TrafficPatternManager.o \
     $O/simnet/mod/Packet_m.o
 
 # Message files

@@ -1,6 +1,7 @@
 #pragma once
 #include "UnicastApp.h"
 #include "simnet/mod/cong/CongAlgo.h"
+#include "simnet/mod/manager/TrafficPatternManager.h"
 class UnicastSenderApp : public UnicastApp
 {
 protected:
@@ -21,6 +22,7 @@ protected:
     std::vector<IntAddress> destAddresses;
     IntAddress destAddr{INVALID_ADDRESS};
     PortNumber destPort{INVALID_PORT};
+    TrafficPatternManager* tpManager;
 
     B messageLength{0};
     cPar* flowSize{nullptr};

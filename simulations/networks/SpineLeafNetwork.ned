@@ -3,6 +3,7 @@ import simnet.mod.Host;
 import simnet.mod.Switch;
 import ned.DatarateChannel;
 import simnet.mod.manager.GlobalRouteManager;
+import simnet.mod.manager.TrafficPatternManager;
 
 network SpineLeafNetwork {
     parameters:
@@ -32,6 +33,7 @@ network SpineLeafNetwork {
             @display("p=50,80,r,50");
         }
         routeManager: GlobalRouteManager;
+        trafficPatternManager: TrafficPatternManager;
 
     connections:
         for i=0..podNumber-1, for j=0..spineNumber-1 {

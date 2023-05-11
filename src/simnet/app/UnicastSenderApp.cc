@@ -1,5 +1,6 @@
 #include "UnicastSenderApp.h"
 #include "simnet/common/AddressResolver.h"
+#include "simnet/common/ModuleAccess.h"
 Define_Module(UnicastSenderApp);
 //signals
 simsignal_t UnicastSenderApp::cwndSignal = registerSignal("cwnd");
@@ -23,6 +24,11 @@ void UnicastSenderApp::initialize(int stage)
             if (destAddresses.size() > 0) // TODO
                 destAddr = destAddresses[0];
         }
+    }
+
+    if (stage == INITSTAGE_ASSIGN) {
+        tpManager = findModuleFromTopLevel<TrafficPatternManager>("trafficPatternManager", this);
+        destAddr = tpManager->getDestAddr(localAddr);
     }
 
     if (stage == INITSTAGE_LAST) {
