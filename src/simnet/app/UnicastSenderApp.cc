@@ -26,7 +26,7 @@ void UnicastSenderApp::initialize(int stage)
     }
 
     if (stage == INITSTAGE_LAST) {
-        if (destAddr > 0) {
+        if (destAddr >= 0) {
             destPort = par("destPort");
             messageLength = par("messageLength");
             flowSize = &par("flowSize");
