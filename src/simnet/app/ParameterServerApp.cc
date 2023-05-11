@@ -21,7 +21,7 @@ void ParameterServerApp::initialize(int stage)
 {
     UnicastEchoApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
+        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
         if (groupManager==nullptr)
             throw cRuntimeError("ParameterServerApp::initialize: groupManager not found!");
     }

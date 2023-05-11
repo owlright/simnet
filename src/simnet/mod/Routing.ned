@@ -16,12 +16,12 @@ module Routing
 {
     parameters:
         // ! these parameters are set in Node.ned
-        string routeManager;
+        // string routeManager = default("");
         bool ecmpFlow = default(false);
 
-        string groupManager = default("");
+        // string groupManager = default("");
         int bufferSize @unit(B) = default(10MB);
-        
+
         @class(Routing);
         @display("i=block/switch");
         @signal[drop](type="long");

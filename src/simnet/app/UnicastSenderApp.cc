@@ -45,7 +45,7 @@ void UnicastSenderApp::initialize(int stage)
             EV << "destAddr: " << destAddr << " destPort: " << destPort << endl;
         }
         else {
-            EV_WARN << "this app has no destAddress" << endl;
+            EV_WARN << "address " << localAddr << "'s app has no destAddress" << endl;
         }
 
     }

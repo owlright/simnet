@@ -21,7 +21,9 @@ void WorkerApp::initialize(int stage)
 {
     UnicastSenderApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
+        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
+        if (groupManager==nullptr)
+            throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
     }
     if (stage == INITSTAGE_ASSIGN) {
         groupAddr = groupManager->getGroupAddress(localAddr);

@@ -39,14 +39,12 @@ module WorkerApp extends UnicastSenderApp {
         port = default(2000);
         destPort = default(2001);
         int groupAddress = default(this.destAddress);
-        string groupManager;
         @class(WorkerApp);
 }
 
 module ParameterServerApp extends UnicastEchoApp {
     parameters:
         port = default(2001);
-        string groupManager;
         @class(ParameterServerApp);
 
 }

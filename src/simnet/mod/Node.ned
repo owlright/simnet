@@ -11,24 +11,11 @@ moduleinterface INode
         inout port[];
 }
 
-module ManagerListener
-{
-    parameters:
-        string routeManager = default("^.routeManager");
-        string groupManager = default("^.groupManager");
-        *.routeManager = default(absPath(this.routeManager));
-        *.groupManager = default(absPath(this.groupManager));
-}
-//
-// A "Host" consists of a Routing plus an App module which represents the
-// aggregate traffic of the subnets connected to that router.
-//
-module Host extends ManagerListener like INode
+module Host like INode
 {
     parameters:
         int address;
         int numApps = default(0);
-        
         @node;
         @host;
         @display("i=abstract/server_s;bgb=276,324");
@@ -71,7 +58,7 @@ module Host extends ManagerListener like INode
         }
 }
 
-module Switch extends ManagerListener like INode
+module Switch like INode
 {
     parameters:
         int address;
@@ -83,7 +70,6 @@ module Switch extends ManagerListener like INode
     submodules:
         routing: Routing {
             parameters:
-                // globalRouteManager = parent.globalRouteManager;
                 @display("p=140,130");
             gates:
                 in[sizeof(parent.port)];

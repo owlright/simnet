@@ -11,9 +11,12 @@ void Routing::initialize(int stage)
         outputPacketSignal = registerSignal("outputPacket");
         isSwitch = (getParentModule()->getProperties()->get("switch") != nullptr);
         // WATCH_MAP(rtable); // ! this causes error if value is vector
-        routeManager = getModuleFromPar<GlobalRouteManager>(par("routeManager"), this);
-        if (strcmp(par("groupManager").stringValue(), "") != 0)
-            groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
+        routeManager = findModuleFromTopLevel<GlobalRouteManager>("routeManager", this);
+        if (!routeManager) // ! this module is necessary
+            throw cRuntimeError("no routeManager!");
+
+//        if (strcmp(par("groupManager").stringValue(), "") != 0)
+        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
 
         if (isSwitch) {
             bufferSize = par("bufferSize");
