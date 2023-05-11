@@ -8,6 +8,8 @@ PROJECT_TARGET_DBG := src/lib$(PROJECT_NAME)_dbg.dll
 # check system
 ifeq ($(shell uname),Darwin)
     CPU_COUNT = $(shell sysctl -n hw.logicalcpu)
+    PROJECT_TARGET := src/lib$(PROJECT_NAME).dylib
+    PROJECT_TARGET_DBG := src/lib$(PROJECT_NAME)_dbg.dylib
 else
     CPU_COUNT = $(shell nproc)
 endif
