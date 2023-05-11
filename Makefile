@@ -9,7 +9,7 @@ PROJECT_TARGET_DBG := src/lib$(PROJECT_NAME)_dbg.dll
 ifeq ($(shell uname),Darwin)
     CPU_COUNT = $(shell sysctl -n hw.logicalcpu)
 else
-    CPU_COUNT = $(CPU_COUNT)
+    CPU_COUNT = $(shell nproc)
 endif
 
 # default target
