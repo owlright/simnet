@@ -93,13 +93,13 @@ void UnicastSenderApp::onFlowStart()
     flowStartTime = simTime();
     currentFlowSize = flowSize->intValue();
     cong->reset();
-    emit(idealFctSignal, SimTime((8.0*currentFlowSize)/bandwidth).inUnit(SIMTIME_US));
+    emit(idealFctSignal, SimTime((8.0*currentFlowSize)/bandwidth));
 }
 
 void UnicastSenderApp::onFlowStop()
 {
     currentRound += 1;
-    emit(fctSignal, (simTime() - flowStartTime).inUnit(SIMTIME_US));
+    emit(fctSignal, (simTime() - flowStartTime));
     if (currentRound < numRounds) // note it's '<' here
         scheduleAfter(flowInterval, flowStartTimer);
 }
