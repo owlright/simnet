@@ -27,7 +27,7 @@ protected:
 
     B messageLength{0};
     cPar* flowSize{nullptr};
-    cPar* flowInterval{nullptr};
+    double flowInterval{-1};
     // state
     IdNumber flowId{-1};
     cMessage *flowStartTimer = nullptr;

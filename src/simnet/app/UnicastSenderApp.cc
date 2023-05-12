@@ -37,7 +37,7 @@ void UnicastSenderApp::initialize(int stage)
             destPort = par("destPort");
             messageLength = par("messageLength");
             flowSize = &par("flowSize");
-            flowInterval = &par("flowInterval");
+            flowInterval = par("flowInterval");
             connection->bindRemote(destAddr, destPort); // ! note to bind remote before using send
             cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
             cong->setSegmentSize(messageLength);
@@ -48,7 +48,7 @@ void UnicastSenderApp::initialize(int stage)
                                         ->getChannel())->getDatarate();
             //schedule sending event
             flowStartTimer = new cMessage("flowStart");
-            scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
+            scheduleAfter(flowInterval, flowStartTimer);
             EV << "destAddr: " << destAddr << " destPort: " << destPort << endl;
         }
         else {
@@ -101,7 +101,7 @@ void UnicastSenderApp::onFlowStop()
     currentRound += 1;
     emit(fctSignal, (simTime() - flowStartTime).inUnit(SIMTIME_US));
     if (currentRound < numRounds) // note it's '<' here
-        scheduleAfter(flowInterval->doubleValue(), flowStartTimer);
+        scheduleAfter(flowInterval, flowStartTimer);
 }
 
 void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *msg)
