@@ -31,7 +31,6 @@ protected:
     double load;
     bool loadMode{false};
     // state
-    IdNumber flowId{-1};
     cMessage *flowStartTimer = nullptr;
     B sentBytes{0};
     B confirmedBytes{0};

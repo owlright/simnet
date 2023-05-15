@@ -7,7 +7,6 @@ enum PacketType
 packet Packet
 {
     int64_t connectionId;
-    int64_t flowId;
     int64_t srcAddr;
     uint16_t localPort;
     int64_t destAddr;
