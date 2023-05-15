@@ -63,3 +63,19 @@ Packet *WorkerApp::createDataPacket(B packetBytes)
     pk->setECN(false);
     return pk;
 }
+
+class TimerWorkerApp : public WorkerApp
+{
+protected:
+    virtual Packet* createDataPacket(B packetBytes) override;
+};
+
+Define_Module(TimerWorkerApp);
+
+Packet *TimerWorkerApp::createDataPacket(B packetBytes)
+{
+    auto pk = WorkerApp::createDataPacket(packetBytes);
+    pk->setAggCounter(0);
+    pk->setTimer(0);
+    return pk;
+}
