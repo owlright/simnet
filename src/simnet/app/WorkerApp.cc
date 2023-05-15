@@ -8,6 +8,7 @@ protected:
     void initialize(int stage) override;
     void onFlowStart() override;
     void onFlowStop() override;
+    virtual Packet* createDataPacket(B packetBytes) override;
 
 private:
     IntAddress groupAddr{INVALID_ADDRESS};
@@ -48,4 +49,17 @@ void WorkerApp::onFlowStop()
 {
     UnicastSenderApp::onFlowStop();
     groupManager->reportFlowStop(groupAddr, simTime());
+}
+
+Packet *WorkerApp::createDataPacket(B packetBytes)
+{
+    char pkname[40];
+    sprintf(pkname, "agg%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
+            connection->getConnectionId(), localAddr, destAddr, sentBytes);
+    auto pk = new Packet(pkname);
+    pk->setKind(DATA);
+    pk->setSeqNumber(sentBytes);
+    pk->setByteLength(packetBytes);
+    pk->setECN(false);
+    return pk;
 }
