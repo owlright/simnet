@@ -7,7 +7,7 @@ using namespace omnetpp;
 class GlobalView : public cSimpleModule
 {
 public:
-    virtual ~GlobalView() {delete topo;topo=nullptr;};
+    virtual ~GlobalView();
 
 protected:
     virtual void initialize(int stage) override;

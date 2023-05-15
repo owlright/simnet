@@ -6,6 +6,16 @@ std::unordered_map<int, IntAddress> GlobalView::node2addr;
 std::unordered_map<IntAddress, int> GlobalView::addr2node;
 bool GlobalView::isInitialized = false;
 
+GlobalView::~GlobalView()
+{
+    delete topo;
+    topo = nullptr;
+    // ! FIXME
+    // ! it's important to reset the isInitialized to false,
+    // ! otherwise topo will not load again, I don't know why
+    isInitialized = false;
+}
+
 void GlobalView::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {

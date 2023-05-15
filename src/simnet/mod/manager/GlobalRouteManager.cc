@@ -5,6 +5,8 @@ Define_Module(GlobalRouteManager);
 void GlobalRouteManager::initialize(int stage)
 {
     GlobalView::initialize(stage);
+    if (stage == INITSTAGE_LAST)
+        ASSERT(topo);
 }
 
 cTopology::Node* GlobalRouteManager::getNode(IntAddress address) const

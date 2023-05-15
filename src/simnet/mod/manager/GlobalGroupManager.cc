@@ -83,6 +83,8 @@ void GlobalGroupManager::initialize(int stage)
     if (stage == INITSTAGE_COLLECT) {
         prepareAggGroup(par("groupPolicy").stringValue());
     }
+    if (stage == INITSTAGE_LAST)
+        ASSERT(topo);
 }
 
 void GlobalGroupManager::readSwitchConfig(const char * fileName)

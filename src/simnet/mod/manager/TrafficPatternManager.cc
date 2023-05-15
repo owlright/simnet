@@ -29,4 +29,6 @@ void TrafficPatternManager::initialize(int stage)
     {
         trafficPattern = par("trafficPattern").stdstringValue();
     }
+    if (stage == INITSTAGE_LAST)
+        ASSERT(topo);
 }
