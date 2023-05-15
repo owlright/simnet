@@ -9,8 +9,7 @@ class GlobalGroupManager;
 struct AggGroupEntry
 {
 public:
-    friend GlobalGroupManager;
-
+    // friend GlobalGroupManager;
     explicit AggGroupEntry(B size, int indegree);
     Packet* agg(Packet* pk);
     B release(const Packet* pk);
@@ -23,13 +22,14 @@ private:
     struct AggPacketEntry {
     public:
         Packet* agg(Packet *pk);
-        explicit AggPacketEntry(SeqNumber seq, int indegree);
+        explicit AggPacketEntry(SeqNumber seq);
 
         SeqNumber seq{INVALID_ID};
         Packet* packet{nullptr};
         B usedBytes{0};
         int fanIndegree{0};
         int counter{0};
+        int32_t timer{0};
         int computationCount{0};
         simtime_t startTime;
     };

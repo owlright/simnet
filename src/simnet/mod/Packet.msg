@@ -1,25 +1,8 @@
-
-//
-// Represents a packet in the network.
-//
-//packet Packet
-//{
-//    int srcAddr @packetData;
-//    int destAddr @packetData;
-//    int groupAddr @packetData;
-//    int aggrCounter @packetData;
-//    int aggWin @packetData; // TODO is here right
-//    int aggNum @packetData;
-//    int hopCount @packetData;
-//    unsigned int seq @packetData;
-//    unsigned int ackSeq @packetData;
-//    bool ECN @packetData;
-//}
 enum PacketType
 {
     ACK = 0;
     DATA = 1;
-};
+} // TODO: I just use pk->getKind() for now, it's not shown in Packet
 
 packet Packet
 {
@@ -30,6 +13,8 @@ packet Packet
     int64_t destAddr;
     uint16_t destPort;
     int64_t seqNumber;
+    int32_t timer;
+    int32_t aggCounter;
     bool ECN;
     bool ECE;
 }

@@ -146,7 +146,7 @@ void Routing::handleMessage(cMessage *msg)
 //                            markNotAgg.insert(groupSeqKey);
 //
 //                        }
-                         // TODO now every group use whole memory
+                         // TODO now every group use whole memory for now
                         groupTable[group] = new AggGroupEntry(bufferSize, indegree);
 
                         if (groupTable.at(group)->getLeftBuffer() > pk->getByteLength())

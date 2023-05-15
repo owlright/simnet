@@ -4,14 +4,16 @@
 AggGroupEntry::AggGroupEntry(B size, int indegree)
 {
     this->bufferSize = size;
-    this->indegree = indegree;
+    this->indegree = indegree; // TODO: indegree is only related to group for now
 }
 
 Packet *AggGroupEntry::agg(Packet *pk)
 {
     auto seq = pk->getSeqNumber();
     if (packetTable.find(seq) == packetTable.end()) {
-        packetTable[seq] = new AggPacketEntry(seq, indegree);
+        packetTable[seq] = new AggPacketEntry(seq);
+        packetTable[seq]->fanIndegree = indegree;
+        packetTable[seq]->timer = pk->getTimer();
         packetTable[seq]->startTime = pk->getArrivalTime();
         packetTable[seq]->computationCount = 0;
         packetTable[seq]->usedBytes = pk->getByteLength();
@@ -53,10 +55,9 @@ Packet *AggGroupEntry::AggPacketEntry::agg(Packet *pk)
 
 }
 
-AggGroupEntry::AggPacketEntry::AggPacketEntry(SeqNumber seq, int indegree)
+AggGroupEntry::AggPacketEntry::AggPacketEntry(SeqNumber seq)
 {
     this->seq = seq;
-    fanIndegree = indegree;
     packet = nullptr;
     counter = 0;
 }
