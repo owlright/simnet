@@ -42,7 +42,8 @@ void UnicastSenderApp::initialize(int stage)
 
     if (stage == INITSTAGE_ASSIGN) {
         tpManager = findModuleFromTopLevel<TrafficPatternManager>("trafficPatternManager", this);
-        destAddr = tpManager->getDestAddr(localAddr);
+        if (tpManager!=nullptr)
+            destAddr = tpManager->getDestAddr(localAddr);
     }
 
     if (stage == INITSTAGE_LAST) {

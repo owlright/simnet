@@ -147,7 +147,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             EV << "groupAddress:" << groupAddr
             << " treeIndex:" << treeIndex
             << " hostAddress:" << hostAddr
-            << " isHost:" << isRoot
+            << " isRoot:" << isRoot
             << endl;
         }
     }
@@ -281,6 +281,6 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
     }
     else
     {
-        // do nothing;
+        throw cRuntimeError("you must specify a policy.");
     }
 }
