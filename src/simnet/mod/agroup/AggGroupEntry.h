@@ -37,7 +37,7 @@ private:
 private:
     int computationCount{0};
     simtime_t accumulatedTime;
-    IntAddress groupAddr{INVALID_ADDRESS};
+    IntAddress groupAddr{INVALID_ADDRESS}; // TODO do I need groupAddr?
     B bufferSize{0};
     B usedBuffer{0};
     int indegree;
