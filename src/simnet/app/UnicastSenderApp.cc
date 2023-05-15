@@ -7,6 +7,7 @@ simsignal_t UnicastSenderApp::cwndSignal = registerSignal("cwnd");
 simsignal_t UnicastSenderApp::rttSignal = registerSignal("rtt");
 simsignal_t UnicastSenderApp::fctSignal = registerSignal("fct");
 simsignal_t UnicastSenderApp::idealFctSignal = registerSignal("idealFct");
+simsignal_t UnicastSenderApp::flowSizeSignal = registerSignal("flowSize");
 
 UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(flowStartTimer);
@@ -25,6 +26,18 @@ void UnicastSenderApp::initialize(int stage)
             if (destAddresses.size() > 0) // TODO
                 destAddr = destAddresses[0];
         }
+        //HACK
+        bandwidth = check_and_cast<cDatarateChannel *>(
+                                    getParentModule()
+                                    ->gateHalf("port", cGate::Type::OUTPUT, 0)
+                                    ->getChannel())->getDatarate();
+        load = par("load");
+        if (0.0 < load && load <= 1.0)
+        {
+            loadMode = true;
+        }
+        flowSize = &par("flowSize");
+
     }
 
     if (stage == INITSTAGE_ASSIGN) {
@@ -36,16 +49,24 @@ void UnicastSenderApp::initialize(int stage)
         if (destAddr >= 0) {
             destPort = par("destPort");
             messageLength = par("messageLength");
-            flowSize = &par("flowSize");
-            flowInterval = par("flowInterval");
-            connection->bindRemote(destAddr, destPort); // ! note to bind remote before using send
+            if (!loadMode)
+            {
+                currentFlowSize = flowSize->intValue();
+                flowInterval = par("flowInterval");
+            }
+            else
+            {
+                // flowSize will change every time, only flowSizeMean is known
+                B flowSizeMean = par("flowSizeMean").intValue();
+                // calc interval by load
+                ASSERT(flowSizeMean > 0 && load > 0);
+                flowInterval = SimTime(flowSizeMean / (bandwidth * load)); // load cannot be zero
+            }
+
+            connection->bindRemote(destAddr, destPort); // ! bind remote before using send
             cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
             cong->setSegmentSize(messageLength);
-            //HACK
-            bandwidth = check_and_cast<cDatarateChannel *>(
-                                        getParentModule()
-                                        ->gateHalf("port", cGate::Type::OUTPUT, 0)
-                                        ->getChannel())->getDatarate();
+
             //schedule sending event
             flowStartTimer = new cMessage("flowStart");
             scheduleAfter(flowInterval, flowStartTimer);
@@ -74,8 +95,8 @@ void UnicastSenderApp::sendPendingData()
 {
     while (cong->getcWnd() > inflightBytes() && sentBytes < currentFlowSize) {
         auto packetSize = messageLength;
-        if (flowSize != 0 && messageLength + sentBytes > currentFlowSize) {
-            packetSize = currentFlowSize - sentBytes; // the data about to send is too small.
+        if (messageLength + sentBytes > currentFlowSize) {
+            packetSize = currentFlowSize - sentBytes; // ! incase the data about to send is too small, such as the last packet or flowSize is too small
         }
         sentBytes += packetSize;
         auto packet = createDataPacket(packetSize);
@@ -91,8 +112,10 @@ void UnicastSenderApp::onFlowStart()
     sentBytes = 0;
     confirmedBytes = 0;
     flowStartTime = simTime();
-    currentFlowSize = flowSize->intValue();
+    if (loadMode) //flowSize will change only in loadMode
+        currentFlowSize = flowSize->intValue();
     cong->reset();
+    emit(flowSizeSignal, currentFlowSize);
     emit(idealFctSignal, SimTime((8.0*currentFlowSize)/bandwidth));
 }
 

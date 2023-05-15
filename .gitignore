@@ -11,3 +11,4 @@ results/
 *.dll.a
 *.dylib
 .DS_Store
+*.pyc
