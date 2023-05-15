@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
 //
 
 #ifndef __PACKET_M_H
@@ -18,7 +18,7 @@
 
 class Packet;
 /**
- * Enum generated from <tt>simnet/mod/../mod/Packet.msg:19</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/Packet.msg:19</tt> by opp_msgtool.
  * <pre>
  * //
  * // Represents a packet in the network.
@@ -52,7 +52,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:25</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:25</tt> by opp_msgtool.
  * <pre>
  * packet Packet
  * {
