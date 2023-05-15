@@ -35,8 +35,9 @@ int GlobalGroupManager::getFanIndegree(IntAddress group, int treeIndex, IntAddre
 {
     auto it = switchFanIndegree.find(std::make_tuple(group, treeIndex, switchAddress));
     if (it == switchFanIndegree.end())
-        throw cRuntimeError("fanIndegree not found.");
-    return it->second;
+        return -1;
+    else
+        return it->second;
 
 }
 

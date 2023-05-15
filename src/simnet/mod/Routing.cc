@@ -64,7 +64,7 @@ void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
 
 std::vector<int> Routing::getReversePortIndexes(const GroupSeqType& groupSeqKey) const
 {
-    //TODO: now the port only related to group, but the treeIndex may also related
+
     if (incomingPortIndexes.find(groupSeqKey) == incomingPortIndexes.end())
         throw cRuntimeError("Routing::getReversePortIndexes: group %lld seq %lld not found!",
                                     groupSeqKey.first, groupSeqKey.second);
@@ -119,6 +119,14 @@ void Routing::handleMessage(cMessage *msg)
         auto seq = pk->getSeqNumber();
         auto groupSeqKey = std::make_pair(group, seq);
 
+        auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
+        if (indegree == -1) {
+            // ! this switch doesn't deal with this group
+            // ! but it still need to record incoming ports because the ACK packet
+            // ! have to be sent reversely.
+            markNotAgg.insert(groupSeqKey);
+        }
+
         if (pk->getKind() == DATA) {
             incomingPortIndexes[groupSeqKey].push_back(pk->getArrivalGate()->getIndex());
             if (markNotAgg.find(groupSeqKey) == markNotAgg.end())
@@ -133,7 +141,11 @@ void Routing::handleMessage(cMessage *msg)
                     // * the first time we see the group, generate an entry for it
                     if (usedBuffer + pk->getByteLength() <= bufferSize)
                     {
-                        auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
+//                        auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
+//                        if (indegree == -1) { // this switch doesn't deal with this group
+//                            markNotAgg.insert(groupSeqKey);
+//
+//                        }
                          // TODO now every group use whole memory
                         groupTable[group] = new AggGroupEntry(bufferSize, indegree);
 
@@ -167,6 +179,16 @@ void Routing::handleMessage(cMessage *msg)
                 incomingPortIndexes.erase(groupSeqKey);
                 auto releasedBuffer = groupTable[group]->release(pk);
                 usedBuffer -= releasedBuffer;
+                broadcast(pk, outGateIndexes);
+                return;
+            }
+
+            if (incomingPortIndexes.find(groupSeqKey) != incomingPortIndexes.end())
+            {
+                // ! this will happen when this switch doesn't deal with this group
+                auto outGateIndexes = getReversePortIndexes(groupSeqKey);
+                ASSERT(outGateIndexes.size() == 1);
+                incomingPortIndexes.erase(groupSeqKey);
                 broadcast(pk, outGateIndexes);
                 return;
             }
