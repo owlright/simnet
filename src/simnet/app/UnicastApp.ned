@@ -24,8 +24,8 @@ module UnicastSenderApp extends UnicastApp {
         int flowSizeMean @unit(B) = default(0B);
         // ! in case you want to set flowSize and flowInterval manually
         volatile int flowSize @unit(B) = default(8kB); // in bytes
-        double flowInterval @unit(s) = default(0us); // this means load = 1.0
-
+        volatile double flowInterval @unit(s) = default(0s); // this means load = 1.0
+        volatile double jitterBeforeSending @unit(s) = default(0s);
         @signal[fct](type=simtime_t);
         @signal[idealFct](type=simtime_t);
         @signal[flowSize](type=int);
