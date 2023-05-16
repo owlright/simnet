@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from src/simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -279,12 +279,12 @@ void Packet::setSeqNumber(int64_t seqNumber)
     this->seqNumber = seqNumber;
 }
 
-int32_t Packet::getTimer() const
+int64_t Packet::getTimer() const
 {
     return this->timer;
 }
 
-void Packet::setTimer(int32_t timer)
+void Packet::setTimer(int64_t timer)
 {
     this->timer = timer;
 }
@@ -481,7 +481,7 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "int64_t",    // FIELD_destAddr
         "uint16_t",    // FIELD_destPort
         "int64_t",    // FIELD_seqNumber
-        "int32_t",    // FIELD_timer
+        "int64_t",    // FIELD_timer
         "int32_t",    // FIELD_aggCounter
         "bool",    // FIELD_ECN
         "bool",    // FIELD_ECE
@@ -575,7 +575,7 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
         case FIELD_destAddr: return int642string(pp->getDestAddr());
         case FIELD_destPort: return ulong2string(pp->getDestPort());
         case FIELD_seqNumber: return int642string(pp->getSeqNumber());
-        case FIELD_timer: return long2string(pp->getTimer());
+        case FIELD_timer: return int642string(pp->getTimer());
         case FIELD_aggCounter: return long2string(pp->getAggCounter());
         case FIELD_ECN: return bool2string(pp->getECN());
         case FIELD_ECE: return bool2string(pp->getECE());
@@ -601,7 +601,7 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
         case FIELD_destAddr: pp->setDestAddr(string2int64(value)); break;
         case FIELD_destPort: pp->setDestPort(string2ulong(value)); break;
         case FIELD_seqNumber: pp->setSeqNumber(string2int64(value)); break;
-        case FIELD_timer: pp->setTimer(string2long(value)); break;
+        case FIELD_timer: pp->setTimer(string2int64(value)); break;
         case FIELD_aggCounter: pp->setAggCounter(string2long(value)); break;
         case FIELD_ECN: pp->setECN(string2bool(value)); break;
         case FIELD_ECE: pp->setECE(string2bool(value)); break;
@@ -651,7 +651,7 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
         case FIELD_destAddr: pp->setDestAddr(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_destPort: pp->setDestPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
         case FIELD_seqNumber: pp->setSeqNumber(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
-        case FIELD_timer: pp->setTimer(omnetpp::checked_int_cast<int32_t>(value.intValue())); break;
+        case FIELD_timer: pp->setTimer(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_aggCounter: pp->setAggCounter(omnetpp::checked_int_cast<int32_t>(value.intValue())); break;
         case FIELD_ECN: pp->setECN(value.boolValue()); break;
         case FIELD_ECE: pp->setECE(value.boolValue()); break;

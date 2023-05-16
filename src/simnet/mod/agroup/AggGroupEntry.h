@@ -33,7 +33,7 @@ private:
         B usedBytes{0};
         int fanIndegree{0};
         int counter{0};
-        int32_t timer{0};
+        simtime_t timer{0};
         int computationCount{0};
         simtime_t startTime;
     };
