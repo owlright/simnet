@@ -10,7 +10,7 @@ protected:
     void onFlowStop() override;
     virtual Packet* createDataPacket(B packetBytes) override;
 
-private:
+protected:
     IntAddress groupAddr{INVALID_ADDRESS};
     int treeIndex{INVALID_ID};
     GlobalGroupManager* groupManager;
@@ -68,6 +68,10 @@ class TimerWorkerApp : public WorkerApp
 {
 protected:
     virtual Packet* createDataPacket(B packetBytes) override;
+    virtual void initialize(int stage) override;
+
+private:
+    int numSenders{0};
 };
 
 Define_Module(TimerWorkerApp);
@@ -76,6 +80,16 @@ Packet *TimerWorkerApp::createDataPacket(B packetBytes)
 {
     auto pk = WorkerApp::createDataPacket(packetBytes);
     pk->setAggCounter(0);
-    pk->setTimer(0);
+    pk->setAggNumber(numSenders);
+    pk->setTimer(80); // in unit ns
     return pk;
+}
+
+void TimerWorkerApp::initialize(int stage)
+{
+    WorkerApp::initialize(stage);
+    if (stage == INITSTAGE_ASSIGN) {
+        if (groupAddr > 0)
+            numSenders = groupManager->getSendersNumber(groupAddr);
+    }
 }

@@ -11,6 +11,7 @@ public:
     // for switch node use
     IntAddress getGroupAddress(IntAddress fromNode) const;
     IntAddress getGroupRootAddress(IntAddress groupAddr) const;
+    int getSendersNumber(IntAddress groupAddr) const;
     // for host node use
     int getTreeIndex(IntAddress fromNode) const;
     int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;

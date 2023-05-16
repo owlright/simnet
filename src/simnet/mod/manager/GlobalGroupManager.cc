@@ -22,6 +22,11 @@ IntAddress GlobalGroupManager::getGroupRootAddress(IntAddress groupAddr) const
     return it->second;
 }
 
+int GlobalGroupManager::getSendersNumber(IntAddress groupAddr) const
+{
+    return groupSources.at(std::make_pair(groupAddr, 0)).size(); // minus the parameter server
+}
+
 int GlobalGroupManager::getTreeIndex(IntAddress fromNode) const
 {
     if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())

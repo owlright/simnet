@@ -9,6 +9,9 @@ protected:
     virtual void onNewConnectionArrived(const Packet* const packet) override;
     virtual Packet* createAckPacket(const Packet* const pk) override;
 
+protected:
+
+
 private:
     GlobalGroupManager* groupManager;
     IntAddress groupAddr{INVALID_ADDRESS};
@@ -27,9 +30,9 @@ void ParameterServerApp::initialize(int stage)
     }
     if (stage == INITSTAGE_ASSIGN) {
         groupAddr = groupManager->getGroupAddress(localAddr);
-        treeIndex = groupManager->getTreeIndex(localAddr);
+        treeIndex = groupManager->getTreeIndex(localAddr); // TODO for what here?
         if (groupManager->getGroupRootAddress(groupAddr) == localAddr) {
-            EV << "(receiver) groupAddr: " << groupAddr <<" localAddr:" << localAddr  << endl;
+            EV << "(receiver) groupAddr: " << groupAddr <<" localAddr:" << localAddr;
         }
         else
         {
