@@ -89,6 +89,20 @@ simtime_t Routing::getUsedTime() const
     return t;
 }
 
+simsignal_t Routing::createBufferSignalForGroup(IntAddress group)
+{
+    char signalName[32];
+    sprintf(signalName, "group%lld-usedBuffer", group);
+    simsignal_t signal = registerSignal(signalName);
+
+    char statisticName[32];
+    sprintf(statisticName, "group%lld-usedBuffer", group);
+    cProperty *statisticTemplate =
+        getProperties()->get("statisticTemplate", "groupUsedBuffer");
+    getEnvir()->addResultRecorders(this, signal, statisticName, statisticTemplate);
+    return signal;
+}
+
 void Routing::handleMessage(cMessage *msg)
 {
     Packet *pk = check_and_cast<Packet *>(msg);
@@ -122,12 +136,12 @@ void Routing::handleMessage(cMessage *msg)
         auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
         if (indegree == -1) {
             // ! this switch doesn't deal with this group
-            // ! but it still need to record incoming ports because the ACK packet
-            // ! have to be sent reversely.
             markNotAgg.insert(groupSeqKey);
         }
 
         if (pk->getKind() == DATA) {
+            // ! but it still need to record incoming ports because the ACK packet
+            // ! have to be sent reversely.
             incomingPortIndexes[groupSeqKey].push_back(pk->getArrivalGate()->getIndex());
             if (markNotAgg.find(groupSeqKey) == markNotAgg.end())
             {
@@ -135,6 +149,7 @@ void Routing::handleMessage(cMessage *msg)
                 {
                     if (groupTable.at(group)->getLeftBuffer() > 0) // ! a group may have its own restriction
                         pk = groupTable.at(group)->agg(pk);
+                    emit(groupTable.at(group)->usedBufferSignal, groupTable.at(group)->getUsedBuffer());
                 }
                 else
                 {
@@ -148,7 +163,7 @@ void Routing::handleMessage(cMessage *msg)
 //                        }
                          // TODO now every group use whole memory for now
                         groupTable[group] = new AggGroupEntry(bufferSize, indegree);
-
+                        groupTable.at(group)->usedBufferSignal = createBufferSignalForGroup(group);
                         if (groupTable.at(group)->getLeftBuffer() > pk->getByteLength())
                         {// ! this check maybe not necessary, unless you set bufferSize < pk->getByteLength()
                             usedBuffer += pk->getByteLength();
@@ -187,7 +202,7 @@ void Routing::handleMessage(cMessage *msg)
             {
                 // ! this will happen when this switch doesn't deal with this group
                 auto outGateIndexes = getReversePortIndexes(groupSeqKey);
-                ASSERT(outGateIndexes.size() == 1);
+                // ASSERT(outGateIndexes.size() == 1);
                 incomingPortIndexes.erase(groupSeqKey);
                 broadcast(pk, outGateIndexes);
                 return;

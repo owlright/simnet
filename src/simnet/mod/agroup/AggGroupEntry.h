@@ -4,7 +4,7 @@
 #include "simnet/mod/Packet_m.h"
 using namespace omnetpp;
 
-class GlobalGroupManager;
+// class GlobalGroupManager;
 
 struct AggGroupEntry
 {
@@ -17,6 +17,10 @@ public:
     simtime_t getUsedTime() const { return accumulatedTime;};
     int getComputationCount() const {return computationCount;};
     B getLeftBuffer() const {return bufferSize - usedBuffer;};
+    B getUsedBuffer() const {return usedBuffer;};
+
+public:
+    simsignal_t usedBufferSignal;
 
 private:
     struct AggPacketEntry {
