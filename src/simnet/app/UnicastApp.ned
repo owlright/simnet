@@ -57,3 +57,8 @@ module ParameterServerApp extends UnicastEchoApp {
         @class(ParameterServerApp);
 
 }
+
+module TimerWorkerApp extends WorkerApp {
+    parameters:
+        @class(TimerWorkerApp);
+}

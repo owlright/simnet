@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from src/simnet/mod/Packet.msg.
 //
 
 #ifndef __PACKET_M_H
@@ -18,29 +18,13 @@
 
 class Packet;
 /**
- * Enum generated from <tt>simnet/mod/Packet.msg:19</tt> by opp_msgtool.
+ * Enum generated from <tt>src/simnet/mod/Packet.msg:2</tt> by opp_msgtool.
  * <pre>
- * //
- * // Represents a packet in the network.
- * //
- * //packet Packet
- * //{
- * //    int srcAddr \@packetData;
- * //    int destAddr \@packetData;
- * //    int groupAddr \@packetData;
- * //    int aggrCounter \@packetData;
- * //    int aggWin \@packetData; // TODO is here right
- * //    int aggNum \@packetData;
- * //    int hopCount \@packetData;
- * //    unsigned int seq \@packetData;
- * //    unsigned int ackSeq \@packetData;
- * //    bool ECN \@packetData;
- * //}
  * enum PacketType
  * {
  *     ACK = 0;
  *     DATA = 1;
- * }
+ * } // TODO: I just use pk->getKind() for now, it's not shown in Packet
  * </pre>
  */
 enum PacketType {
@@ -52,17 +36,18 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:25</tt> by opp_msgtool.
+ * Class generated from <tt>src/simnet/mod/Packet.msg:8</tt> by opp_msgtool.
  * <pre>
  * packet Packet
  * {
  *     int64_t connectionId;
- *     int64_t flowId;
  *     int64_t srcAddr;
  *     uint16_t localPort;
  *     int64_t destAddr;
  *     uint16_t destPort;
  *     int64_t seqNumber;
+ *     int32_t timer;
+ *     int32_t aggCounter;
  *     bool ECN;
  *     bool ECE;
  * }
@@ -72,12 +57,13 @@ class Packet : public ::omnetpp::cPacket
 {
   protected:
     int64_t connectionId = 0;
-    int64_t flowId = 0;
     int64_t srcAddr = 0;
     uint16_t localPort = 0;
     int64_t destAddr = 0;
     uint16_t destPort = 0;
     int64_t seqNumber = 0;
+    int32_t timer = 0;
+    int32_t aggCounter = 0;
     bool ECN = false;
     bool ECE = false;
 
@@ -99,9 +85,6 @@ class Packet : public ::omnetpp::cPacket
     virtual int64_t getConnectionId() const;
     virtual void setConnectionId(int64_t connectionId);
 
-    virtual int64_t getFlowId() const;
-    virtual void setFlowId(int64_t flowId);
-
     virtual int64_t getSrcAddr() const;
     virtual void setSrcAddr(int64_t srcAddr);
 
@@ -116,6 +99,12 @@ class Packet : public ::omnetpp::cPacket
 
     virtual int64_t getSeqNumber() const;
     virtual void setSeqNumber(int64_t seqNumber);
+
+    virtual int32_t getTimer() const;
+    virtual void setTimer(int32_t timer);
+
+    virtual int32_t getAggCounter() const;
+    virtual void setAggCounter(int32_t aggCounter);
 
     virtual bool getECN() const;
     virtual void setECN(bool ECN);

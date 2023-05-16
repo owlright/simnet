@@ -109,7 +109,6 @@ void UnicastSenderApp::sendPendingData()
 
 void UnicastSenderApp::onFlowStart()
 {
-    flowId++;
     sentBytes = 0;
     confirmedBytes = 0;
     flowStartTime = simTime();

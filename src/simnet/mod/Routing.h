@@ -54,6 +54,7 @@ private:
     std::vector<int> getReversePortIndexes(const GroupSeqType& groupSeqKey) const;
     int getComputationCount() const;
     simtime_t getUsedTime() const;
+    simsignal_t createBufferSignalForGroup(IntAddress group);
 
 protected:
     virtual void initialize(int stage) override;
