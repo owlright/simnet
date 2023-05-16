@@ -14,6 +14,7 @@ packet Packet
     int64_t seqNumber;
     int64_t timer;
     int32_t aggCounter;
+    int32_t aggNumber;
     bool ECN;
     bool ECE;
 }

@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
 //
 
 #ifndef __PACKET_M_H
@@ -18,7 +18,7 @@
 
 class Packet;
 /**
- * Enum generated from <tt>simnet/mod/../mod/Packet.msg:2</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/Packet.msg:2</tt> by opp_msgtool.
  * <pre>
  * enum PacketType
  * {
@@ -36,7 +36,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:8</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:8</tt> by opp_msgtool.
  * <pre>
  * packet Packet
  * {
@@ -48,6 +48,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b
  *     int64_t seqNumber;
  *     int64_t timer;
  *     int32_t aggCounter;
+ *     int32_t aggNumber;
  *     bool ECN;
  *     bool ECE;
  * }
@@ -64,6 +65,7 @@ class Packet : public ::omnetpp::cPacket
     int64_t seqNumber = 0;
     int64_t timer = 0;
     int32_t aggCounter = 0;
+    int32_t aggNumber = 0;
     bool ECN = false;
     bool ECE = false;
 
@@ -105,6 +107,9 @@ class Packet : public ::omnetpp::cPacket
 
     virtual int32_t getAggCounter() const;
     virtual void setAggCounter(int32_t aggCounter);
+
+    virtual int32_t getAggNumber() const;
+    virtual void setAggNumber(int32_t aggNumber);
 
     virtual bool getECN() const;
     virtual void setECN(bool ECN);
