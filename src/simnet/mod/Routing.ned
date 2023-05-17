@@ -18,7 +18,7 @@ module Routing
         // ! these parameters are set in Node.ned
         // string routeManager = default("");
         bool ecmpFlow = default(false);
-
+        string aggPolicy = default("Count");
         // string groupManager = default("");
         int bufferSize @unit(B) = default(10MB);
 
