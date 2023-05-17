@@ -95,7 +95,7 @@ void L2Queue::initialize()
 
 void L2Queue::startTransmitting(cMessage *msg)
 {
-    EV << "Starting transmission of " << msg << endl;
+    EV_TRACE << "Starting transmission of " << msg << endl;
     isBusy = true;
     int64_t numBytes = check_and_cast<cPacket *>(msg)->getByteLength();
     send(msg, "line$o");
@@ -111,7 +111,7 @@ void L2Queue::handleMessage(cMessage *msg)
 {
     if (msg == endTransmissionEvent) {
         // Transmission finished, we can start next one.
-        EV << "Transmission finished.\n";
+        EV_TRACE << "Transmission finished.\n";
         isBusy = false;
         if (queue.isEmpty()) {
             emit(busySignal, false);
@@ -136,7 +136,7 @@ void L2Queue::handleMessage(cMessage *msg)
                     getParentModule()->bubble("congestion!");
                 }
                 emit(congestionSignal, ecnThreshold);
-                EV << "Current queue length " << queue.getLength()
+                EV_TRACE << "Current queue length " << queue.getLength()
                     << " and ECN threshold is " << ecnThreshold <<". Mark ECN!\n";
                 check_and_cast<Packet *>(msg)->setECN(true); // TODO how to avoid using Packet here?
             }
@@ -145,12 +145,12 @@ void L2Queue::handleMessage(cMessage *msg)
             }
             // We are currently busy, so just queue up the packet.
             if (capacity && getQueueBytes() >= capacity) {
-                EV << "Received " << msg << " but transmitter busy and queue full: discarding\n";
+                EV_TRACE << "Received " << msg << " but transmitter busy and queue full: discarding\n";
                 emit(dropSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());
                 delete msg;
             }
             else {
-                EV << "Received " << msg << " but transmitter busy: queueing up\n";
+                EV_TRACE << "Received " << msg << " but transmitter busy: queueing up\n";
                 msg->setTimestamp();
                 // queue.insert(msg);
                 insertQueue(msg);
@@ -160,7 +160,7 @@ void L2Queue::handleMessage(cMessage *msg)
         }
         else {
             // We are idle, so we can start transmitting right away.
-            EV << "Received " << msg << endl;
+            EV_TRACE << "Received " << msg << endl;
             emit(queueingTimeSignal, SIMTIME_ZERO);
             startTransmitting(msg);
             emit(busySignal, true);
