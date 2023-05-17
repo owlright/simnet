@@ -49,20 +49,26 @@ void ParameterServerApp::onNewConnectionArrived(const Packet* const pk)
     SeqNumber addr = pk->getDestAddr();
     ASSERT(addr == groupAddr); // TODO: this app can only handle one group
     connection->bindRemote(groupAddr, pk->getLocalPort()); // note here is dest addr not src addr
-    aggCounters[pk->getSeqNumber()] = 0;
 }
 
 void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
+
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind() == PacketType::DATA);
     ASSERT(pk->getConnectionId() == connection->getConnectionId());
-    aggCounters.at(pk->getSeqNumber()) += pk->getAggCounter();
-    if (aggCounters.at(pk->getSeqNumber()) == pk->getAggNumber())
+    auto seq = pk->getSeqNumber();
+    if (aggCounters.find(seq) == aggCounters.end())
+       aggCounters[seq] = 0;
+    aggCounters.at(seq) += pk->getAggCounter();
+    EV_DEBUG << "Seq " << seq << " aggregated " << aggCounters.at(seq) << endl;
+    if (aggCounters.at(seq) == pk->getAggNumber())
     {
         auto packet = createAckPacket(pk);
         connection->send(packet);
-        aggCounters.at(pk->getSeqNumber()) = 0; // reset the counter for next seq
+        aggCounters.erase(seq);
+        EV_DEBUG << "Seq " << seq << " finished." << endl;
+        // TODO destroy this connection
     }
     delete pk;
 }
