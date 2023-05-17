@@ -8,8 +8,9 @@ protected:
     void initialize(int stage) override;
     void onFlowStart() override;
     void onFlowStop() override;
+    virtual Packet* createDataPacket(B packetBytes) override;
 
-private:
+protected:
     IntAddress groupAddr{INVALID_ADDRESS};
     int treeIndex{INVALID_ID};
     GlobalGroupManager* groupManager;
@@ -21,7 +22,9 @@ void WorkerApp::initialize(int stage)
 {
     UnicastSenderApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        groupManager = getModuleFromPar<GlobalGroupManager>(par("groupManager"), this);
+        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
+        if (groupManager==nullptr)
+            throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
     }
     if (stage == INITSTAGE_ASSIGN) {
         groupAddr = groupManager->getGroupAddress(localAddr);
@@ -46,4 +49,47 @@ void WorkerApp::onFlowStop()
 {
     UnicastSenderApp::onFlowStop();
     groupManager->reportFlowStop(groupAddr, simTime());
+}
+
+Packet *WorkerApp::createDataPacket(B packetBytes)
+{
+    char pkname[40];
+    sprintf(pkname, "agg%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
+            connection->getConnectionId(), localAddr, destAddr, sentBytes);
+    auto pk = new Packet(pkname);
+    pk->setKind(DATA);
+    pk->setSeqNumber(sentBytes);
+    pk->setByteLength(packetBytes);
+    pk->setECN(false);
+    return pk;
+}
+
+class TimerWorkerApp : public WorkerApp
+{
+protected:
+    virtual Packet* createDataPacket(B packetBytes) override;
+    virtual void initialize(int stage) override;
+
+private:
+    int numSenders{0};
+};
+
+Define_Module(TimerWorkerApp);
+
+Packet *TimerWorkerApp::createDataPacket(B packetBytes)
+{
+    auto pk = WorkerApp::createDataPacket(packetBytes);
+    pk->setAggCounter(0);
+    pk->setAggNumber(numSenders);
+    pk->setTimer(80); // in unit ns
+    return pk;
+}
+
+void TimerWorkerApp::initialize(int stage)
+{
+    WorkerApp::initialize(stage);
+    if (stage == INITSTAGE_ASSIGN) {
+        if (groupAddr > 0)
+            numSenders = groupManager->getSendersNumber(groupAddr);
+    }
 }

@@ -40,7 +40,6 @@ OBJS = \
     $O/simnet/common/NedFunctions.o \
     $O/simnet/common/ResultFilters.o \
     $O/simnet/mod/Connection.o \
-    $O/simnet/mod/Controller.o \
     $O/simnet/mod/L2Queue.o \
     $O/simnet/mod/Routing.o \
     $O/simnet/mod/agroup/AggGroupEntry.o \
@@ -50,7 +49,7 @@ OBJS = \
     $O/simnet/mod/manager/GlobalGroupManager.o \
     $O/simnet/mod/manager/GlobalRouteManager.o \
     $O/simnet/mod/manager/GLobalView.o \
-    $O/simnet/trafficpattern/SimpleTrafficPattern.o \
+    $O/simnet/mod/manager/TrafficPatternManager.o \
     $O/simnet/mod/Packet_m.o
 
 # Message files

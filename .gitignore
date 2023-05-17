@@ -4,10 +4,11 @@
 .qtenvrc
 out/
 results/
-.vscode/
+# .vscode/
 .settings/
 *.def
 *.dll
 *.dll.a
 *.dylib
 .DS_Store
+*.pyc

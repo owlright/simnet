@@ -18,12 +18,21 @@ module UnicastSenderApp extends UnicastApp {
         string destAddresses = default("");
         int destPort = default(1001);
         int messageLength @unit(B) = default(1kB);
-        int flowSize @unit(B) = default(8kB);
-        volatile double flowInterval @unit(s) = default(10us);
+        int numRounds = default(1);
+
+        double load = default(0.0);
+        int flowSizeMean @unit(B) = default(0B);
+        // ! in case you want to set flowSize and flowInterval manually
+        volatile int flowSize @unit(B) = default(8kB); // in bytes
+        volatile double flowInterval @unit(s) = default(0s); // this means load = 1.0
+        volatile double jitterBeforeSending @unit(s) = default(0s);
         @signal[fct](type=simtime_t);
         @signal[idealFct](type=simtime_t);
-        @statistic[fct](title="flow complete time"; source=fct; record=count,mean,max,min,vector; interpolationmode=none);
-        @statistic[idealFct](title="ideal flow complete time"; source=idealFct; record=count,mean,max,min,vector; interpolationmode=none);
+        @signal[flowSize](type=int);
+        @statistic[fct](title="flow complete time"; source=fct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[flowSize](title="ideal flow complete time"; source=flowSize; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+
    submodules:
         cong: <default("Reno")> like Cong;
 }
@@ -39,14 +48,17 @@ module WorkerApp extends UnicastSenderApp {
         port = default(2000);
         destPort = default(2001);
         int groupAddress = default(this.destAddress);
-        string groupManager;
         @class(WorkerApp);
 }
 
 module ParameterServerApp extends UnicastEchoApp {
     parameters:
         port = default(2001);
-        string groupManager;
         @class(ParameterServerApp);
 
+}
+
+module TimerWorkerApp extends WorkerApp {
+    parameters:
+        @class(TimerWorkerApp);
 }

@@ -22,6 +22,11 @@ IntAddress GlobalGroupManager::getGroupRootAddress(IntAddress groupAddr) const
     return it->second;
 }
 
+int GlobalGroupManager::getSendersNumber(IntAddress groupAddr) const
+{
+    return groupSources.at(std::make_pair(groupAddr, 0)).size(); // minus the parameter server
+}
+
 int GlobalGroupManager::getTreeIndex(IntAddress fromNode) const
 {
     if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
@@ -35,8 +40,9 @@ int GlobalGroupManager::getFanIndegree(IntAddress group, int treeIndex, IntAddre
 {
     auto it = switchFanIndegree.find(std::make_tuple(group, treeIndex, switchAddress));
     if (it == switchFanIndegree.end())
-        throw cRuntimeError("fanIndegree not found.");
-    return it->second;
+        return -1;
+    else
+        return it->second;
 
 }
 
@@ -83,6 +89,8 @@ void GlobalGroupManager::initialize(int stage)
     if (stage == INITSTAGE_COLLECT) {
         prepareAggGroup(par("groupPolicy").stringValue());
     }
+    if (stage == INITSTAGE_LAST)
+        ASSERT(topo);
 }
 
 void GlobalGroupManager::readSwitchConfig(const char * fileName)
@@ -145,7 +153,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             EV << "groupAddress:" << groupAddr
             << " treeIndex:" << treeIndex
             << " hostAddress:" << hostAddr
-            << " isHost:" << isRoot
+            << " isRoot:" << isRoot
             << endl;
         }
     }
@@ -279,6 +287,6 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
     }
     else
     {
-        // do nothing;
+        throw cRuntimeError("you must specify a policy.");
     }
 }

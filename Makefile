@@ -8,8 +8,10 @@ PROJECT_TARGET_DBG := src/lib$(PROJECT_NAME)_dbg.dll
 # check system
 ifeq ($(shell uname),Darwin)
     CPU_COUNT = $(shell sysctl -n hw.logicalcpu)
+    PROJECT_TARGET := src/lib$(PROJECT_NAME).dylib
+    PROJECT_TARGET_DBG := src/lib$(PROJECT_NAME)_dbg.dylib
 else
-    CPU_COUNT = $(CPU_COUNT)
+    CPU_COUNT = $(shell nproc)
 endif
 
 # default target
@@ -84,16 +86,17 @@ $(1)-%: $(PROJECT_TARGET)
 	opp_runall -j $(CPU_COUNT) \
 	opp_run $(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_OPTIONS)
 
+export-$(1)-%:
 	opp_scavetool export -o simulations/$(1)/results/$$*.csv -F CSV-R --type vs --allow-nonmatching \
 	simulations/$(1)/results/$$**.vec \
 	simulations/$(1)/results/$$**.sca
 
-	$(RM) \
-	simulations/$(1)/results/$$**.vec \
-	simulations/$(1)/results/$$**.vci \
-	simulations/$(1)/results/$$**.sca
+# $(RM) \
+# simulations/$(1)/results/$$**.vec \
+# simulations/$(1)/results/$$**.vci \
+# simulations/$(1)/results/$$**.sca
 
-	python3 simulations/$(1)/plot.py $$*
+#	python3 simulations/$(1)/plot.py $$*
 
 $(1)-%-plt:
 	python3 simulations/$(1)/plot.py $$*

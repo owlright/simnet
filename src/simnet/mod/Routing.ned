@@ -16,21 +16,23 @@ module Routing
 {
     parameters:
         // ! these parameters are set in Node.ned
-        string routeManager;
+        // string routeManager = default("");
         bool ecmpFlow = default(false);
-
-        string groupManager = default("");
+        string aggPolicy = default("Count");
+        // string groupManager = default("");
         int bufferSize @unit(B) = default(10MB);
-        
+
         @class(Routing);
         @display("i=block/switch");
         @signal[drop](type="long");
         @signal[outputIf](type="long");
         @signal[outputPacket](type=Packet);
+        @signal[group*-usedBuffer](type=long);
         @statistic[packets](title="outputPackets"; source=outputPacket; record=count; unit=pk);
         @statistic[dataRate](title="data rate"; source=throughput(outputPacket)/1000; record=vector; unit=kbps; interpolationmode=linear);
         @statistic[drop](title="dropped packet byte length";unit=bytes;record=vector?,count,sum;interpolationmode=none);
         @statistic[outputIf](title="output interface for each routed packet";record=histogram;interpolationmode=none);
+        @statisticTemplate[groupUsedBuffer](title="group used buffer on switch";record=mean,vector);
 
     gates:
         input in[];

@@ -21,3 +21,21 @@ T *getModuleFromPar(cPar& par, const cModule *from)
         throw cRuntimeError("Module can not cast to '%s' on path '%s' defined by par '%s'", opp_typename(typeid(T)), path, par.getFullPath().c_str());
     return m;
 }
+
+/**
+ * find a module in the (NetworkName).*
+ */
+template<typename T>
+T *findModuleFromTopLevel(const char* topModuleName, const cModule *from)
+{
+    auto networkName = from->getSystemModule()->getFullName();
+    auto path = std::string(networkName) + "." + std::string(topModuleName);
+    cModule *mod = from->findModuleByPath(path.c_str());
+    if (!mod) {
+        return nullptr;
+    }
+    T *m = dynamic_cast<T *>(mod);
+    if (!m)
+        throw cRuntimeError("Module can not cast to '%s' from '%s'", opp_typename(typeid(T)), path.c_str());
+    return m;
+}
