@@ -23,48 +23,53 @@ void Reno::reset()
 }
 
 void Reno::onRecvAck(SeqNumber seq, bool congestion) {
-    if (ackedBytes + segmentSize < seq) { // ! avoid the last packet is smaller than a segmentSize, so >= is possible
-        // ! there is no dealing with seq between cwndleft and cwndright other than next seq
-        throw cRuntimeError("Can't deal with disordering packets.");
+    if (seq > ackedBytes)
+    {
+        ackedBytes = seq;
+        // * do calculations after each RTT finished
+        if (ackedBytes == firstWndSeq) {
+            emit(cwndSignal, cWnd);
+        }
+
+        if (!congestion) {
+            increaseWindow(); // no congestion happened, we can increase anyway
+            switch (congState) {
+                case OPEN: // keep this state to OPEN
+                    break;
+                case CWR: // congestion happened last time
+                    congState = OPEN; // change to OPEN
+                    break;
+                default:
+                    throw cRuntimeError("Unknown congetsion state type");
+            }
+        } else {
+            EV_DEBUG << "Received congestion signal on packet " << seq << endl;
+            switch (congState) {
+                case OPEN:
+                    ssThresh = getSsThresh();
+                    cWnd = ssThresh; // half the window(most of the time)
+                    EV_DEBUG << "Reduce ssThresh and cWnd to " << cWnd << endl;
+                    recover = sentBytes; // * assume sentBytes is about a RTT away
+                    EV << "ssThresh will not be updated until packet " << recover << " is received" << endl;
+                    congState = CWR;
+                    break;
+                case CWR: // * continus congestion events
+                    if (ackedBytes >= recover) { // only half once a RTT/window
+                        cWnd = getSsThresh(); // half the window(most of the time)
+                        congState = OPEN; // reset the state after a RTT
+                    }
+                    break;
+                default:
+                    throw cRuntimeError("unknow congetsion state type");
+            }
+        }
     }
-    ackedBytes = seq;
-    // * do calculations after each RTT finished
-    if (ackedBytes == firstWndSeq) {
-        emit(cwndSignal, cWnd);
+    else
+    {
+        // TODO: improve disordering packets
+        EV_WARN << "Received disordering packets." << endl;
     }
 
-    if (!congestion) {
-        increaseWindow(); // no congestion happened, we can increase anyway
-        switch (congState) {
-            case OPEN: // keep this state to OPEN
-                break;
-            case CWR: // congestion happened last time
-                congState = OPEN; // change to OPEN
-                break;
-            default:
-                throw cRuntimeError("Unknown congetsion state type");
-        }
-    } else {
-        EV_DEBUG << "Received congestion signal on packet " << seq << endl;
-        switch (congState) {
-            case OPEN:
-                ssThresh = getSsThresh();
-                cWnd = ssThresh; // half the window(most of the time)
-                EV_DEBUG << "Reduce ssThresh and cWnd to " << cWnd << endl;
-                recover = sentBytes; // * assume sentBytes is about a RTT away
-                EV << "ssThresh will not be updated until packet " << recover << " is received" << endl;
-                congState = CWR;
-                break;
-            case CWR: // * continus congestion events
-                if (ackedBytes >= recover) { // only half once a RTT/window
-                    cWnd = getSsThresh(); // half the window(most of the time)
-                    congState = OPEN; // reset the state after a RTT
-                }
-                break;
-            default:
-                throw cRuntimeError("unknow congetsion state type");
-        }
-    }
 
 
 }
