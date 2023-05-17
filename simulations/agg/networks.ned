@@ -78,7 +78,7 @@ network RTTVariance
         }
         source[numberOfbgflows]: Host {
             address = index + 3000;
-            *.destAddress = index + 4000;
+            *.destAddress = default(index + 4000);
             @display("p=161,50");
         }
         sink[numberOfbgflows]: Host {

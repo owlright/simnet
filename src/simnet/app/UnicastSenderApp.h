@@ -27,14 +27,17 @@ protected:
 
     B messageLength{0};
     cPar* flowSize{nullptr};
-    simtime_t flowInterval{0};
+    cPar* flowInterval{nullptr};
+    cPar* jitterBeforeSending{nullptr};
     double load;
     bool loadMode{false};
     // state
     cMessage *flowStartTimer = nullptr;
+    cMessage *jitterTimeout = nullptr;
     B sentBytes{0};
     B confirmedBytes{0};
     B currentFlowSize{0};
+    simtime_t currentFlowInterval{0};
     int currentRound{0};
 
     // signals

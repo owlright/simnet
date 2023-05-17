@@ -23,11 +23,18 @@ class Routing : public cSimpleModule
     };
     typedef std::pair<IntAddress, SeqNumber> GroupSeqType;
 
+public:
+    virtual ~Routing();
+
 private:
     bool isSwitch;
     IntAddress myAddress{INVALID_ADDRESS};
     IntAddress myGroupAddress{INVALID_ADDRESS};
     bool ecmpFlow = false;
+    // TODO improve the code
+    std::string aggPolicy;
+    bool isTimerPolicy{false};
+
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
 
@@ -44,6 +51,7 @@ private:
     std::unordered_set<GroupSeqType, hashFunction> markNotAgg;
     std::unordered_map<GroupSeqType, std::vector<int>, hashFunction> incomingPortIndexes;
     std::unordered_map<IntAddress, AggGroupEntry*> groupTable;
+    std::unordered_map<GroupSeqType, int64_t, hashFunction> seqDeadline;
 
 private:
     // AggPacketHandler aggPacketHandler;
@@ -55,6 +63,7 @@ private:
     int getComputationCount() const;
     simtime_t getUsedTime() const;
     simsignal_t createBufferSignalForGroup(IntAddress group);
+    cMessage* aggTimeOut{nullptr};
 
 protected:
     virtual void initialize(int stage) override;

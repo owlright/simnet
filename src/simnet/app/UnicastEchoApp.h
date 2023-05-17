@@ -27,6 +27,6 @@ protected:
     virtual void onNewConnectionArrived(const Packet* const packet);
 
     // for callback function use
-    void connectionDataArrived(Connection *connection, cMessage *msg) override;
+    virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
     virtual Packet* createAckPacket(const Packet* const pk);
 };

@@ -12,8 +12,9 @@ packet Packet
     int64_t destAddr;
     uint16_t destPort;
     int64_t seqNumber;
-    int32_t timer;
+    int64_t timer;
     int32_t aggCounter;
+    int32_t aggNumber;
     bool ECN;
     bool ECE;
 }

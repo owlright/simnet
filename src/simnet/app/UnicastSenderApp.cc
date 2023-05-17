@@ -11,6 +11,7 @@ simsignal_t UnicastSenderApp::flowSizeSignal = registerSignal("flowSize");
 
 UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(flowStartTimer);
+    cancelAndDelete(jitterTimeout);
 }
 
 void UnicastSenderApp::initialize(int stage)
@@ -37,7 +38,8 @@ void UnicastSenderApp::initialize(int stage)
             loadMode = true;
         }
         flowSize = &par("flowSize");
-
+        flowInterval = &par("flowInterval");
+        jitterBeforeSending = &par("jitterBeforeSending");
     }
 
     if (stage == INITSTAGE_ASSIGN) {
@@ -53,7 +55,7 @@ void UnicastSenderApp::initialize(int stage)
             if (!loadMode)
             {
                 currentFlowSize = flowSize->intValue();
-                flowInterval = par("flowInterval");
+                currentFlowInterval = flowInterval->doubleValueInUnit("s"); // convert any unit into s
             }
             else
             {
@@ -61,7 +63,7 @@ void UnicastSenderApp::initialize(int stage)
                 B flowSizeMean = par("flowSizeMean").intValue();
                 // calc interval by load
                 ASSERT(flowSizeMean > 0 && load > 0);
-                flowInterval = SimTime(flowSizeMean / (bandwidth * load)); // load cannot be zero
+                currentFlowInterval = SimTime(flowSizeMean / (bandwidth * load)); // load cannot be zero
             }
 
             connection->bindRemote(destAddr, destPort); // ! bind remote before using send
@@ -70,7 +72,8 @@ void UnicastSenderApp::initialize(int stage)
 
             //schedule sending event
             flowStartTimer = new cMessage("flowStart");
-            scheduleAfter(flowInterval, flowStartTimer);
+            jitterTimeout = new cMessage("jitterTimeout");
+            scheduleAfter(currentFlowInterval, flowStartTimer);
             EV << "destAddr: " << destAddr << " destPort: " << destPort << endl;
         }
         else {
@@ -82,10 +85,12 @@ void UnicastSenderApp::initialize(int stage)
 
 void UnicastSenderApp::handleMessage(cMessage *msg)
 {
-    if (msg == flowStartTimer) {
+    if (msg == flowStartTimer) { // new flow
         if (!getEnvir()->isExpressMode())
             getParentModule()->bubble("a new flow!");
         onFlowStart();
+        sendPendingData();
+    } else if (msg == jitterTimeout) { // most times is a new window
         sendPendingData();
     } else {
         UnicastApp::handleMessage(msg);
@@ -123,8 +128,13 @@ void UnicastSenderApp::onFlowStop()
 {
     currentRound += 1;
     emit(fctSignal, (simTime() - flowStartTime));
-    if (currentRound < numRounds) // note it's '<' here
-        scheduleAfter(flowInterval, flowStartTimer);
+    if (currentRound < numRounds) {// note it's '<' here
+        if (!loadMode) {
+            ASSERT(flowInterval != nullptr);
+            currentFlowInterval = flowInterval->doubleValueInUnit("s");
+        }
+        scheduleAfter(currentFlowInterval, flowStartTimer);
+    }
 }
 
 void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *msg)
@@ -137,7 +147,8 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 
 
     if (sentBytes < currentFlowSize) {
-        sendPendingData();
+        if (!jitterTimeout->isScheduled()) // ! in case multiple acks arrived at the same time
+            scheduleAfter(jitterBeforeSending->doubleValueInUnit("s"), jitterTimeout);
     } else {
         //TODO if all packets sended
 
