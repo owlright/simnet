@@ -18,6 +18,7 @@ public:
     int getComputationCount() const {return computationCount;};
     B getLeftBuffer() const {return bufferSize - usedBuffer;};
     B getUsedBuffer() const {return usedBuffer;};
+    void setAggPolicy(std::string& aggPolicy);
 
 public:
     simsignal_t usedBufferSignal;
@@ -36,6 +37,7 @@ private:
         simtime_t timer{0};
         int computationCount{0};
         simtime_t startTime;
+        bool isTimerPolicy{false};
     };
 
 private:
@@ -47,5 +49,6 @@ private:
     int indegree;
     // * store packets of the same seq
     std::unordered_map<SeqNumber, AggPacketEntry*> packetTable;
+    bool isTimerPolicy{false};
 };
 
