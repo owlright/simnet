@@ -180,16 +180,17 @@ void Routing::handleMessage(cMessage *msg)
                 if (groupTable.find(group) != groupTable.end()) // already have an entry
                 {
                     if (groupTable.at(group)->getLeftBuffer() > 0) { // ! a group may have its own restriction
-                        // ! in case the last packet of aggregation not leaving
-                        if (!pk->isSelfMessage()) { // ! in case this is a dummy packet
-                            auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
-                            auto deadline = simTime() + timeout;
-                            seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
-                            if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
-                                scheduleAfter(timeout, aggTimeOut);
+                        if (isTimerPolicy) {
+                            // ! in case the last packet of aggregation not leaving
+                            if (!pk->isSelfMessage()) { // ! in case this is a dummy packet
+                                auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
+                                auto deadline = simTime() + timeout;
+                                seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
+                                if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
+                                    scheduleAfter(timeout, aggTimeOut);
+                                }
                             }
                         }
-
                         pk = groupTable.at(group)->agg(pk);
                     }
                     emit(groupTable.at(group)->usedBufferSignal, groupTable.at(group)->getUsedBuffer());
@@ -208,18 +209,18 @@ void Routing::handleMessage(cMessage *msg)
                         groupTable[group] = new AggGroupEntry(bufferSize, indegree);
                         groupTable.at(group)->usedBufferSignal = createBufferSignalForGroup(group);
                         groupTable.at(group)->setAggPolicy(aggPolicy);
-
-                        // ! in case the last packet of aggregation not leaving
-                        auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
-                        auto deadline = simTime() + timeout;
-                        seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
-                        if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
-                            scheduleAfter(timeout, aggTimeOut);
+                        if (isTimerPolicy) {
+                            // ! in case the last packet of aggregation not leaving
+                            auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
+                            auto deadline = simTime() + timeout;
+                            seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
+                            if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
+                                scheduleAfter(timeout, aggTimeOut);
+                            }
+                            // ASSERT(seqDeadline.find(groupSeqKey) != seqDeadline.end());
+                            // store the timeout value for each <group, addr> pair
+                            seqDeadline[groupSeqKey] = simTime().inUnit(SIMTIME_NS) + pk->getTimer();
                         }
-                        // ASSERT(seqDeadline.find(groupSeqKey) != seqDeadline.end());
-                        // store the timeout value for each <group, addr> pair
-                        seqDeadline[groupSeqKey] = simTime().inUnit(SIMTIME_NS) + pk->getTimer();
-
                         if (groupTable.at(group)->getLeftBuffer() > pk->getByteLength())
                         {// ! this check maybe not necessary, unless you set bufferSize < pk->getByteLength()
                             usedBuffer += pk->getByteLength();
@@ -287,7 +288,7 @@ void Routing::handleMessage(cMessage *msg)
         return;
     }
     EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-
+    emit(outputPacketSignal, pk);
     send(pk, "out", outGateIndex);
 }
 

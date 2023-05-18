@@ -79,6 +79,7 @@ Packet *AggGroupEntry::AggPacketEntry::agg(Packet *pk)
         }
     } else {
         if (counter == fanIndegree) {
+            packet->setAggCounter(packet->getAggCounter()+counter);
             isAggFinished = true;
         }
     }
