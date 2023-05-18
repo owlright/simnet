@@ -41,8 +41,6 @@ protected:
     int currentRound{0};
 
     // signals
-    static simsignal_t cwndSignal;
-    static simsignal_t rttSignal;
     static simsignal_t fctSignal;
     static simsignal_t idealFctSignal;
     static simsignal_t flowSizeSignal;

@@ -8,12 +8,7 @@ class UnicastEchoApp : public UnicastApp
 protected:
     // configuration
     std::unordered_map<IdNumber, Connection*> connections;
-
     B receivedBytes;
-
-    // signals
-    simsignal_t cwndSignal;
-    simsignal_t rttSignal;
 
 public:
     ~UnicastEchoApp() {};

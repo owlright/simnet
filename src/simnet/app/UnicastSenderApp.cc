@@ -3,8 +3,6 @@
 #include "simnet/common/ModuleAccess.h"
 Define_Module(UnicastSenderApp);
 //signals
-simsignal_t UnicastSenderApp::cwndSignal = registerSignal("cwnd");
-simsignal_t UnicastSenderApp::rttSignal = registerSignal("rtt");
 simsignal_t UnicastSenderApp::fctSignal = registerSignal("fct");
 simsignal_t UnicastSenderApp::idealFctSignal = registerSignal("idealFct");
 simsignal_t UnicastSenderApp::flowSizeSignal = registerSignal("flowSize");
@@ -32,6 +30,7 @@ void UnicastSenderApp::initialize(int stage)
                                     getParentModule()
                                     ->gateHalf("port", cGate::Type::OUTPUT, 0)
                                     ->getChannel())->getDatarate();
+        EV_DEBUG << "port bandwidth: " << bandwidth << " bps" << endl;
         load = par("load");
         if (0.0 < load && load <= 1.0)
         {
