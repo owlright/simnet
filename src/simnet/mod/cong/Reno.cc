@@ -14,7 +14,7 @@ void Reno::initialize(int stage) {
 void Reno::reset()
 {
     cWnd = par("initWinSize");
-    firstWndSeq = 0;
+    markSeq = 0;
     ackedBytes = 0;
     sentBytes = 0;
     ssThresh = INT64_MAX;
@@ -27,7 +27,7 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion) {
     {
         ackedBytes = seq;
         // * do calculations after each RTT finished
-        if (ackedBytes == firstWndSeq) {
+        if (ackedBytes == markSeq) {
             emit(cwndSignal, cWnd);
         }
 
@@ -40,7 +40,7 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion) {
                     congState = OPEN; // change to OPEN
                     break;
                 default:
-                    throw cRuntimeError("Unknown congetsion state type");
+                    throw cRuntimeError("Unknown congestion state type");
             }
         } else {
             EV_DEBUG << "Received congestion signal on packet " << seq << endl;
@@ -53,14 +53,14 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion) {
                     EV << "ssThresh will not be updated until packet " << recover << " is received" << endl;
                     congState = CWR;
                     break;
-                case CWR: // * continus congestion events
+                case CWR: // * continuous congestion events
                     if (ackedBytes >= recover) { // only half once a RTT/window
                         cWnd = getSsThresh(); // half the window(most of the time)
                         congState = OPEN; // reset the state after a RTT
                     }
                     break;
                 default:
-                    throw cRuntimeError("unknow congetsion state type");
+                    throw cRuntimeError("unknow congestion state type");
             }
         }
     }
@@ -69,9 +69,6 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion) {
         // TODO: improve disordering packets
         EV_WARN << "Received disordering packets." << endl;
     }
-
-
-
 }
 
 void Reno::increaseWindow() {
@@ -114,7 +111,7 @@ B Reno::getSsThresh() {
 
 void Reno::onSendData(B numBytes) {
     sentBytes += numBytes;
-    if (ackedBytes >= firstWndSeq) {
-        firstWndSeq = sentBytes;
+    if (ackedBytes >= markSeq) {
+        markSeq = sentBytes; // current window's right edge
     }
 };

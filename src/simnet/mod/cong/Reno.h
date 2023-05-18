@@ -16,10 +16,10 @@ public:
     virtual void onSendData(SeqNumber seq) override;
 
 protected:
-    SeqNumber recover;
-    SeqNumber firstWndSeq{0};
-    SeqNumber ackedBytes{0}; // sent but not acked
-    SeqNumber sentBytes{0}; //max seq sent by now
+    SeqNumber recover; // the same use as markSeq, but it's only triggered when seeing congestion
+    SeqNumber markSeq{0}; // when you wanna update something every rtt interval
+    SeqNumber ackedBytes{0}; // max seq acked by now
+    SeqNumber sentBytes{0}; // max seq sent by now
     B cWnd{INT64_MAX};
     SeqNumber ssThresh{INT64_MAX};
 
