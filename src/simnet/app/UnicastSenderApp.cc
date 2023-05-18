@@ -140,9 +140,10 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 {
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::ACK);
-    // let cong algo update state
-    confirmedBytes = pk->getSeqNumber();
-    cong->onRecvAck(pk->getSeqNumber(), pk->getECE());
+    
+    if (pk->getSeqNumber() > confirmedBytes)
+        confirmedBytes = pk->getSeqNumber(); // ! ignore disordering packets, but window still grows in cong
+    cong->onRecvAck(pk->getSeqNumber(), pk->getECE()); // let cong algo update state
 
 
     if (sentBytes < currentFlowSize) {
