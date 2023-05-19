@@ -171,5 +171,8 @@ Packet* UnicastSenderApp::createDataPacket(B packetBytes)
     pk->setSeqNumber(sentBytes);
     pk->setByteLength(packetBytes);
     pk->setECN(false);
+    pk->setStartTime(simTime().dbl());
+    pk->setTransmitTime(0);
+    pk->setQueueTime(0);
     return pk;
 }

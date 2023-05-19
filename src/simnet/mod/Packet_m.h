@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from src/simnet/mod/Packet.msg.
 //
 
 #ifndef __PACKET_M_H
@@ -18,13 +18,13 @@
 
 class Packet;
 /**
- * Enum generated from <tt>simnet/mod/Packet.msg:2</tt> by opp_msgtool.
+ * Enum generated from <tt>src/simnet/mod/Packet.msg:2</tt> by opp_msgtool.
  * <pre>
  * enum PacketType
  * {
  *     ACK = 0;
  *     DATA = 1;
- * } // TODO: I just use pk->getKind() for now, it's not shown in Packet
+ * } // TODO: I just use pk->getKind() for now, so it's not shown in Packet fields
  * </pre>
  */
 enum PacketType {
@@ -36,7 +36,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:8</tt> by opp_msgtool.
+ * Class generated from <tt>src/simnet/mod/Packet.msg:8</tt> by opp_msgtool.
  * <pre>
  * packet Packet
  * {
@@ -49,6 +49,9 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b
  *     int64_t timer;
  *     int32_t aggCounter;
  *     int32_t aggNumber;
+ *     double startTime;
+ *     double transmitTime;
+ *     double queueTime;
  *     bool ECN;
  *     bool ECE;
  * }
@@ -66,6 +69,9 @@ class Packet : public ::omnetpp::cPacket
     int64_t timer = 0;
     int32_t aggCounter = 0;
     int32_t aggNumber = 0;
+    double startTime = 0;
+    double transmitTime = 0;
+    double queueTime = 0;
     bool ECN = false;
     bool ECE = false;
 
@@ -110,6 +116,15 @@ class Packet : public ::omnetpp::cPacket
 
     virtual int32_t getAggNumber() const;
     virtual void setAggNumber(int32_t aggNumber);
+
+    virtual double getStartTime() const;
+    virtual void setStartTime(double startTime);
+
+    virtual double getTransmitTime() const;
+    virtual void setTransmitTime(double transmitTime);
+
+    virtual double getQueueTime() const;
+    virtual void setQueueTime(double queueTime);
 
     virtual bool getECN() const;
     virtual void setECN(bool ECN);

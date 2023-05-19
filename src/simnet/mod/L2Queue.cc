@@ -98,6 +98,9 @@ void L2Queue::startTransmitting(cMessage *msg)
     EV_TRACE << "Starting transmission of " << msg << endl;
     isBusy = true;
     int64_t numBytes = check_and_cast<cPacket *>(msg)->getByteLength();
+    auto speed = check_and_cast<cDatarateChannel*> (gate("line$o")->getTransmissionChannel())->getDatarate();
+    auto pk = check_and_cast<Packet*> (msg);
+    pk->setTransmitTime(pk->getTransmitTime() + (numBytes*8)/speed);
     send(msg, "line$o");
 
     emit(txBytesSignal, numBytes);
@@ -118,7 +121,10 @@ void L2Queue::handleMessage(cMessage *msg)
         }
         else {
             msg = popQueue();
-            emit(queueingTimeSignal, simTime() - msg->getTimestamp());
+            auto qTime = simTime() - msg->getTimestamp();
+            auto pk = check_and_cast<Packet *> (msg);
+            pk->setQueueTime(pk->getQueueTime() + qTime.dbl()); // accumulate queue time
+            emit(queueingTimeSignal, qTime);
             emit(qlenSignal, getQueueBytes());
             startTransmitting(msg);
         }
