@@ -29,9 +29,11 @@ module UnicastSenderApp extends UnicastApp {
         @signal[fct](type=simtime_t);
         @signal[idealFct](type=simtime_t);
         @signal[flowSize](type=int);
+        @signal[rtt](type=simtime_t);
         @statistic[fct](title="flow complete time"; source=fct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[flowSize](title="ideal flow complete time"; source=flowSize; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[rtt](title="rtt"; source=rtt; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
 
    submodules:
         cong: <default("Reno")> like Cong;

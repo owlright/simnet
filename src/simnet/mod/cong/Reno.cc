@@ -3,7 +3,7 @@
 Define_Module(Reno);
 
 simsignal_t Reno::cwndSignal = registerSignal("cwnd");
-simsignal_t Reno::rttSignal = registerSignal("rtt");
+// simsignal_t Reno::rttSignal = registerSignal("rtt");
 
 void Reno::initialize(int stage) {
     if (stage==INITSTAGE_LOCAL) {

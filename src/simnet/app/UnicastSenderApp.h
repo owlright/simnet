@@ -37,6 +37,7 @@ protected:
     B sentBytes{0};
     B confirmedBytes{0};
     B currentFlowSize{0};
+    simtime_t currentBaseRTT{0};
     simtime_t currentFlowInterval{0};
     int currentRound{0};
 
@@ -44,6 +45,7 @@ protected:
     static simsignal_t fctSignal;
     static simsignal_t idealFctSignal;
     static simsignal_t flowSizeSignal;
+    static simsignal_t rttSignal;
     simtime_t flowStartTime;
 
     CongAlgo* cong;

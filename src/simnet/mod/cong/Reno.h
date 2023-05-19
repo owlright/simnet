@@ -29,7 +29,7 @@ protected:
 private:
     // signals
     static simsignal_t cwndSignal;
-    static simsignal_t rttSignal;
+    // static simsignal_t rttSignal;
 
 private:
     void increaseWindow();
