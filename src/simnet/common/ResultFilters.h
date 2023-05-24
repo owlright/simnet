@@ -32,4 +32,10 @@ class ThroughputFilter : public cObjectResultFilter
     virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, intval_t value, cObject *details) override;
     virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
     virtual void finish(cComponent *component, simsignal_t signalID) override;
+    // ! not implemented, just to suppress the compiler warning: note: hidden overloaded virtual function
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, bool b, cObject *details) override{};
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, uintval_t l, cObject *details) override{};
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, double d, cObject *details) override{};
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, const SimTime& v, cObject *details) override{};
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, const char *s, cObject *details) override{};
 };
