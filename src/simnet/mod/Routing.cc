@@ -8,7 +8,6 @@ void Routing::initialize(int stage)
         ecmpFlow = par("ecmpFlow").boolValue();
         dropSignal = registerSignal("drop");
         outputIfSignal = registerSignal("outputIf");
-        outputPacketSignal = registerSignal("outputPacket");
         isSwitch = (getParentModule()->getProperties()->get("switch") != nullptr);
         // WATCH_MAP(rtable); // ! this causes error if value is vector
         routeManager = findModuleFromTopLevel<GlobalRouteManager>("routeManager", this);
@@ -288,7 +287,6 @@ void Routing::handleMessage(cMessage *msg)
         return;
     }
     EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-    emit(outputPacketSignal, pk);
     send(pk, "out", outGateIndex);
 }
 

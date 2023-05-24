@@ -37,6 +37,7 @@ class L2Queue : public cSimpleModule
     simsignal_t txBytesSignal;
     simsignal_t rxBytesSignal;
     simsignal_t congestionSignal;
+    simsignal_t outputPacketSignal;
 
   public:
     B getQueueBytes() const {return queueBytes;};
@@ -88,6 +89,7 @@ void L2Queue::initialize()
     txBytesSignal = registerSignal("txBytes");
     rxBytesSignal = registerSignal("rxBytes");
     congestionSignal = registerSignal("congestion");
+    outputPacketSignal = registerSignal("outputPacket");
     emit(qlenSignal, getQueueBytes());
     emit(busySignal, false);
     isBusy = false;
@@ -102,7 +104,7 @@ void L2Queue::startTransmitting(cMessage *msg)
     auto pk = check_and_cast<Packet*> (msg);
     pk->setTransmitTime(pk->getTransmitTime() + (numBytes*8)/speed);
     send(msg, "line$o");
-
+    emit(outputPacketSignal, check_and_cast<Packet*>(msg));
     emit(txBytesSignal, numBytes);
 
     // Schedule an event for the time when last bit will leave the gate.
@@ -167,7 +169,7 @@ void L2Queue::handleMessage(cMessage *msg)
         else {
             // We are idle, so we can start transmitting right away.
             EV_TRACE << "Received " << msg << endl;
-            emit(queueingTimeSignal, SIMTIME_ZERO);
+            emit(queueingTimeSignal, SIMTIME_ZERO); // TODO: what is the signal used for?
             startTransmitting(msg);
             emit(busySignal, true);
         }
