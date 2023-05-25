@@ -207,7 +207,7 @@ void Routing::handleMessage(cMessage *msg)
                                 auto deadline = simTime() + timeout;
                                 seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
                                 if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
-                                    scheduleAfter(timeout, aggTimeOut);
+                                    rescheduleAfter(timeout, aggTimeOut);
                                 }
                             }
                         }
