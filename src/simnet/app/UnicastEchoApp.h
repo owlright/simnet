@@ -16,10 +16,10 @@ public:
 protected:
     // inherited functions
     void initialize(int stage) override;
-    void handleMessage(cMessage *msg) override;
+    virtual void handleMessage(cMessage *msg) override;
     int numInitStages() const override { return Stage::NUM_INIT_STAGES; }
     // helper functions
-    virtual void onNewConnectionArrived(const Packet* const packet);
+    virtual void onNewConnectionArrived(IdNumber connId, const Packet* const packet);
 
     // for callback function use
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;

@@ -6,7 +6,8 @@ class ParameterServerApp : public UnicastEchoApp
 {
 protected:
     void initialize(int stage) override;
-    virtual void onNewConnectionArrived(const Packet* const packet) override;
+    virtual void handleMessage(cMessage *msg) override;
+    virtual void onNewConnectionArrived(IdNumber connId, const Packet* const packet) override;
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
     virtual Packet* createAckPacket(const Packet* const pk) override;
 
@@ -42,21 +43,29 @@ void ParameterServerApp::initialize(int stage)
     }
 }
 
-void ParameterServerApp::onNewConnectionArrived(const Packet* const pk)
+void ParameterServerApp::handleMessage(cMessage *msg)
 {
-    UnicastEchoApp::onNewConnectionArrived(pk);
-    auto connection = connections.at(pk->getConnectionId());
-    SeqNumber addr = pk->getDestAddr();
-    ASSERT(addr == groupAddr); // TODO: this app can only handle one group
-    connection->bindRemote(groupAddr, pk->getLocalPort()); // note here is dest addr not src addr
+    auto pk = check_and_cast<Packet*>(msg);
+    auto connectionId = pk->getDestAddr(); // ! use groupAddr as connectionId
+    auto it = connections.find(connectionId);
+    if (it == connections.end()) {
+        onNewConnectionArrived(connectionId, pk);
+    }
+    connections.at(connectionId)->processMessage(pk);
+}
+
+void ParameterServerApp::onNewConnectionArrived(IdNumber connId, const Packet* const pk)
+{
+    connections[connId] = createConnection(connId);
+    auto connection = connections.at(connId);
+    connection->bindRemote(connId, pk->getLocalPort());
 }
 
 void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
-
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind() == PacketType::DATA);
-    ASSERT(pk->getConnectionId() == connection->getConnectionId());
+    ASSERT(pk->getDestAddr() == connection->getConnectionId());
     auto seq = pk->getSeqNumber();
     if (aggCounters.find(seq) == aggCounters.end())
        aggCounters[seq] = 0;
@@ -77,7 +86,7 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
 {
     auto packet = UnicastEchoApp::createAckPacket(pk);
     char pkname[40];
-    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
+    sprintf(pkname, "ACK-%lld-to-%lld-seq%lld",
             localAddr, pk->getDestAddr(), pk->getSeqNumber());
     packet->setName(pkname);
     return packet;
