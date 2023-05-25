@@ -66,7 +66,7 @@ void ThroughputFilter::finish(cComponent *component, simsignal_t signalID)
 {
     const simtime_t now = simTime();
     if (lastSignalTime < now) {
-        cObject *details = nullptr;
+        // cObject *details = nullptr;
         // ! Do not output these zeros
         // if (lastSignalTime + interval < now) {
         //     emitThroughput(lastSignalTime + interval, details);

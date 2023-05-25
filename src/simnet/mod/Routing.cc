@@ -170,8 +170,8 @@ void Routing::handleMessage(cMessage *msg)
         }
 
         if (pk->getKind() == DATA) {
-//             ! but it still need to record incoming ports because the ACK packet
-            // ! have to be sent reversely.
+            // ! but it still need to record incoming ports because the ACK packet
+            // ! has to be sent reversely.
             if (!pk->isSelfMessage()) // ! in case this is a dummy packet
                 incomingPortIndexes[groupSeqKey].push_back(pk->getArrivalGate()->getIndex());
             if (markNotAgg.find(groupSeqKey) == markNotAgg.end())
