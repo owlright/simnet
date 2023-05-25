@@ -172,8 +172,17 @@ void Routing::handleMessage(cMessage *msg)
         if (pk->getKind() == DATA) {
             // ! but it still need to record incoming ports because the ACK packet
             // ! has to be sent reversely.
-            if (!pk->isSelfMessage()) // ! in case this is a dummy packet
-                incomingPortIndexes[groupSeqKey].push_back(pk->getArrivalGate()->getIndex());
+            if (!pk->isSelfMessage()) {// ! in case this is a dummy packet
+                auto newPort = pk->getArrivalGate()->getIndex();
+                bool found = false;
+                for (auto& port: incomingPortIndexes[groupSeqKey])
+                {
+                    if (newPort == port)
+                        found = true;
+                }
+                if (!found)
+                    incomingPortIndexes[groupSeqKey].push_back(newPort);
+            }
             if (markNotAgg.find(groupSeqKey) == markNotAgg.end())
             {
                 if (groupTable.find(group) != groupTable.end()) // already have an entry
