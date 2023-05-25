@@ -11,6 +11,13 @@ Packet *AggGroupEntry::agg(Packet *pk)
 {
     auto seq = pk->getSeqNumber();
     if (pk->isSelfMessage())
+    {
+        if (packetTable.find(seq) == packetTable.end())
+        { // the same dummy packet is triggered multiple times, ignore these packets
+            delete pk;
+            return nullptr;
+        }
+    }
         ASSERT(packetTable.find(seq) != packetTable.end());
 
     if (packetTable.find(seq) == packetTable.end()) {

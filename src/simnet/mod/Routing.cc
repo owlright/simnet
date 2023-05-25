@@ -115,12 +115,14 @@ void Routing::handleMessage(cMessage *msg)
 {
     if (msg == aggTimeOut)
     {
+        int count = 0;
         for (auto& groupSeqTimeout : seqDeadline) {
             GroupSeqType groupSeq = groupSeqTimeout.first;
             auto group = groupSeq.first;
             auto seq = groupSeq.second;
             auto timeout = SimTime(groupSeqTimeout.second, SIMTIME_NS);
             if (timeout <= simTime()) {
+                count += 1;
                 EV_DEBUG <<"group " << group << " seq " << seq << " reaches its deadline." << endl;
                 // make a fake packet
                 auto pk = new Packet("dummy");
@@ -130,6 +132,16 @@ void Routing::handleMessage(cMessage *msg)
                 pk->setAggCounter(0);
                 scheduleAt(simTime(), pk);
             }
+        }
+        if (count < seqDeadline.size())
+        {
+            // ! Relying solely on setting a timeout when data packets arrive is not enough.
+            // ! Consider this scenario: when the last few seq packets of the aggregated stream arrive,
+            // ! the timeout has been set to a relatively small value by the previous seq packets.
+            // ! Therefore, these last few seq packets will not update the timeout to a larger value.
+            // ! As a result, when the timeout expires and no more packets arrive, the timeout will never receive a new value.
+            auto timeout = SimTime(1, SIMTIME_US);
+            scheduleAfter(timeout, aggTimeOut);
         }
         return;
     }
@@ -252,6 +264,7 @@ void Routing::handleMessage(cMessage *msg)
                         usedBuffer -= releasedBuffer;
                         seqDeadline.erase(groupSeqKey);
                         EV_DEBUG <<"group " << group << " seq " << seq << " release buffer " << releasedBuffer << " bytes" << endl;
+
                     }
                 }
                 else
