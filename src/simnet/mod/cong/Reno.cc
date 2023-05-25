@@ -34,7 +34,7 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion) {
     else
     {
         // TODO: improve dealing with disordering packets
-        EV_WARN << "Received disordering packets." << endl;
+        EV_WARN << "Disordering packets! current acked seq " << ackedBytes << " but get " << seq << endl;
     }
 
     if (!congestion) {

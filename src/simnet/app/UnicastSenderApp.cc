@@ -118,6 +118,7 @@ void UnicastSenderApp::onFlowStart()
     confirmedBytes = 0;
     currentBaseRTT = 0;
     flowStartTime = simTime();
+    EV_INFO << "Current round seq: " << currentRound << endl;
     if (loadMode) //flowSize will change only in loadMode
         currentFlowSize = flowSize->intValue();
     cong->reset();

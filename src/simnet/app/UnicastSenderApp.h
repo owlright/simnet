@@ -34,7 +34,7 @@ protected:
     // state
     cMessage *flowStartTimer = nullptr;
     cMessage *jitterTimeout = nullptr;
-    B sentBytes{0};
+    B sentBytes{0}; // TODO: maybe rename to maxSentSeq is better
     B confirmedBytes{0};
     B currentFlowSize{0};
     simtime_t currentBaseRTT{0};
