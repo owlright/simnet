@@ -57,7 +57,8 @@ module ParameterServerApp extends UnicastEchoApp {
     parameters:
         port = default(2001);
         @class(ParameterServerApp);
-
+        @signal[aggRatio](type=double);
+        @statistic[aggRatio](title="aggegation ratio of a packet"; source=aggRatio; record=count,mean,max,min,vector; interpolationmode=linear);
 }
 
 module TimerWorkerApp extends WorkerApp {

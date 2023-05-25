@@ -13,6 +13,8 @@ protected:
 
 protected:
     std::unordered_map<SeqNumber, int> aggCounters;
+    std::unordered_map<SeqNumber, int> receivedNumber;
+    static simsignal_t aggRatioSignal;
 
 private:
     GlobalGroupManager* groupManager;
@@ -21,6 +23,8 @@ private:
 };
 
 Define_Module(ParameterServerApp);
+
+simsignal_t ParameterServerApp::aggRatioSignal = registerSignal("aggRatio");
 
 void ParameterServerApp::initialize(int stage)
 {
@@ -56,6 +60,7 @@ void ParameterServerApp::handleMessage(cMessage *msg)
 
 void ParameterServerApp::onNewConnectionArrived(IdNumber connId, const Packet* const pk)
 {
+    EV_DEBUG << "Create new connection id " << connId << endl;
     connections[connId] = createConnection(connId);
     auto connection = connections.at(connId);
     connection->bindRemote(connId, pk->getLocalPort());
@@ -68,14 +73,21 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
     ASSERT(pk->getDestAddr() == connection->getConnectionId());
     auto seq = pk->getSeqNumber();
     if (aggCounters.find(seq) == aggCounters.end())
-       aggCounters[seq] = 0;
+    {
+        aggCounters[seq] = 0;
+        receivedNumber[seq] = 0;
+    }
+
     aggCounters.at(seq) += pk->getAggCounter();
+    receivedNumber.at(seq) += 1;
     EV_DEBUG << "Seq " << seq << " aggregated " << aggCounters.at(seq) << endl;
     if (aggCounters.at(seq) == pk->getAggNumber())
     {
         auto packet = createAckPacket(pk);
         connection->send(packet);
+        emit(aggRatioSignal, receivedNumber.at(seq) / double(aggCounters.at(seq)) );
         aggCounters.erase(seq);
+        receivedNumber.erase(seq);
         EV_DEBUG << "Seq " << seq << " finished." << endl;
         // TODO destroy this connection
     }
