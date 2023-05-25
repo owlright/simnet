@@ -54,8 +54,8 @@ void WorkerApp::onFlowStop()
 Packet *WorkerApp::createDataPacket(B packetBytes)
 {
     char pkname[40];
-    sprintf(pkname, "agg%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            connection->getConnectionId(), localAddr, destAddr, sentBytes);
+    sprintf(pkname, " %lld-to-%lld-seq%lld",
+            localAddr, destAddr, sentBytes);
     auto pk = new Packet(pkname);
     pk->setKind(DATA);
     pk->setSeqNumber(sentBytes);
