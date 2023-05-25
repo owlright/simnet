@@ -34,13 +34,13 @@ void Dctcp::onRecvAck(SeqNumber seq, bool congestion)
     }
 
     // update every window
-    if (ackedBytes > nextSeq) { // finish an oberserve window
+    if (ackedBytes > nextSeq) { // finish an observe window
         auto congestionRatio = 0.0;
         if (lastAckedBytes > 0) {
             congestionRatio = static_cast<double>(ackedBytesWithECE * 1.0 / lastAckedBytes);
         }
         emit(bytesWithECERatio, congestionRatio);
-        alpha = (1.0 - g) * alpha + g * congestionRatio; // the window will be halfed in getSsThress() below
+        alpha = (1.0 - g) * alpha + g * congestionRatio; // the window will be halved in getSsThresh() below
         emit(alphaSignal, alpha);
         resetCounter();
     }
