@@ -15,7 +15,7 @@ void Reno::reset()
 {
     cWnd = par("initWinSize");
     markSeq = 0;
-    ackedBytes = 0;
+    maxAckedSeqNumber = 0;
     sentBytes = 0;
     ssThresh = INT64_MAX;
     congState = OPEN;
@@ -23,18 +23,18 @@ void Reno::reset()
 }
 
 void Reno::onRecvAck(SeqNumber seq, bool congestion) {
-    if (seq > ackedBytes)
+    if (seq > maxAckedSeqNumber)
     {
-        ackedBytes = seq;
+        maxAckedSeqNumber = seq;
         // * do calculations after each RTT finished
-        if (ackedBytes == markSeq) {
+        if (maxAckedSeqNumber == markSeq) {
             emit(cwndSignal, cWnd);
         }
     }
     else
     {
         // TODO: improve dealing with disordering packets
-        EV_WARN << "Disordering packets! current acked seq " << ackedBytes << " but get " << seq << endl;
+        EV_WARN << "Disordering packets! current acked seq " << maxAckedSeqNumber << " but get " << seq << endl;
     }
 
     if (!congestion) {
@@ -60,7 +60,7 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion) {
                 congState = CWR;
                 break;
             case CWR: // * continuous congestion events
-                if (ackedBytes >= recover) { // only half once a RTT/window
+                if (maxAckedSeqNumber >= recover) { // only half once a RTT/window
                     cWnd = getSsThresh(); // half the window(most of the time)
                     congState = OPEN; // reset the state after a RTT
                 }
@@ -111,7 +111,7 @@ B Reno::getSsThresh() {
 
 void Reno::onSendData(B numBytes) {
     sentBytes += numBytes;
-    if (ackedBytes >= markSeq) {
+    if (maxAckedSeqNumber >= markSeq) {
         markSeq = sentBytes; // current window's right edge
     }
 };

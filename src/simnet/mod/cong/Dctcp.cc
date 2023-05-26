@@ -34,7 +34,7 @@ void Dctcp::onRecvAck(SeqNumber seq, bool congestion)
     }
 
     // update every window
-    if (ackedBytes > nextSeq) { // finish an observe window
+    if (maxAckedSeqNumber > nextSeq) { // finish an observe window
         auto congestionRatio = 0.0;
         if (lastAckedBytes > 0) {
             congestionRatio = static_cast<double>(ackedBytesWithECE * 1.0 / lastAckedBytes);

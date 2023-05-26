@@ -18,7 +18,7 @@ public:
 protected:
     SeqNumber recover; // the same use as markSeq, but it's only triggered when seeing congestion
     SeqNumber markSeq{0}; // when you wanna update something every rtt interval
-    SeqNumber ackedBytes{0}; // max seq acked by now
+    SeqNumber maxAckedSeqNumber{0}; // max seq acked by now
     SeqNumber sentBytes{0}; // max seq sent by now
     B cWnd{INT64_MAX};
     SeqNumber ssThresh{INT64_MAX};
