@@ -14,7 +14,7 @@ private:
     SeqNumber nextSeq{0};
     bool nextSeqFlag{true};
     B ackedBytesWithECE{0};
-    B lastAckedBytes{0};
+    B lastRTTAckedBytes{0};
     static simsignal_t alphaSignal;
     static simsignal_t bytesWithECERatio;
 
