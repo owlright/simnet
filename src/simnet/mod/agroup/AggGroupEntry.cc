@@ -11,6 +11,13 @@ Packet *AggGroupEntry::agg(Packet *pk)
 {
     auto seq = pk->getSeqNumber();
     if (pk->isSelfMessage())
+    {
+        if (packetTable.find(seq) == packetTable.end())
+        { // the same dummy packet is triggered multiple times, ignore these packets
+            delete pk;
+            return nullptr;
+        }
+    }
         ASSERT(packetTable.find(seq) != packetTable.end());
 
     if (packetTable.find(seq) == packetTable.end()) {
@@ -63,23 +70,24 @@ Packet *AggGroupEntry::AggPacketEntry::agg(Packet *pk)
         }
         counter++;
         EV_DEBUG << "group " << pk->getDestAddr() << " seq " << pk->getSeqNumber() << " elapsed " << pk->getArrivalTime() - startTime << endl;
+        if (isTimerPolicy)
+        {
+            auto now = pk->getArrivalTime();
+            if (now - startTime >= timer) {
+                packet->setAggCounter(packet->getAggCounter()+counter);
+                isAggFinished = true;
+            }
+        } else {
+            if (counter == fanIndegree) {
+                packet->setAggCounter(packet->getAggCounter()+counter);
+                isAggFinished = true;
+            }
+        }
     }
     else {
+        packet->setAggCounter(packet->getAggCounter()+counter);
         isAggFinished = true;
         EV_DEBUG << "(dummy)group " << pk->getDestAddr() << " seq " << pk->getSeqNumber() << " elapsed " << pk->getArrivalTime() - startTime << endl;
-    }
-
-    if (isTimerPolicy)
-    {
-        auto now = pk->getArrivalTime();
-        if (now - startTime >= timer) {
-            packet->setAggCounter(packet->getAggCounter()+counter);
-            isAggFinished = true;
-        }
-    } else {
-        if (counter == fanIndegree) {
-            isAggFinished = true;
-        }
     }
 
     if (isAggFinished) {

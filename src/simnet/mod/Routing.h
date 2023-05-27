@@ -43,7 +43,6 @@ private:
     // GroupPacketHandler* gpkHandler{nullptr};
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
-    simsignal_t outputPacketSignal;
 
     B bufferSize{0};
     B usedBuffer{0};

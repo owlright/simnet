@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from src/simnet/mod/Packet.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -186,6 +186,10 @@ void Packet::copy(const Packet& other)
     this->timer = other.timer;
     this->aggCounter = other.aggCounter;
     this->aggNumber = other.aggNumber;
+    this->receivedBytes = other.receivedBytes;
+    this->startTime = other.startTime;
+    this->transmitTime = other.transmitTime;
+    this->queueTime = other.queueTime;
     this->ECN = other.ECN;
     this->ECE = other.ECE;
 }
@@ -202,6 +206,10 @@ void Packet::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->timer);
     doParsimPacking(b,this->aggCounter);
     doParsimPacking(b,this->aggNumber);
+    doParsimPacking(b,this->receivedBytes);
+    doParsimPacking(b,this->startTime);
+    doParsimPacking(b,this->transmitTime);
+    doParsimPacking(b,this->queueTime);
     doParsimPacking(b,this->ECN);
     doParsimPacking(b,this->ECE);
 }
@@ -218,6 +226,10 @@ void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->timer);
     doParsimUnpacking(b,this->aggCounter);
     doParsimUnpacking(b,this->aggNumber);
+    doParsimUnpacking(b,this->receivedBytes);
+    doParsimUnpacking(b,this->startTime);
+    doParsimUnpacking(b,this->transmitTime);
+    doParsimUnpacking(b,this->queueTime);
     doParsimUnpacking(b,this->ECN);
     doParsimUnpacking(b,this->ECE);
 }
@@ -312,6 +324,46 @@ void Packet::setAggNumber(int32_t aggNumber)
     this->aggNumber = aggNumber;
 }
 
+int64_t Packet::getReceivedBytes() const
+{
+    return this->receivedBytes;
+}
+
+void Packet::setReceivedBytes(int64_t receivedBytes)
+{
+    this->receivedBytes = receivedBytes;
+}
+
+double Packet::getStartTime() const
+{
+    return this->startTime;
+}
+
+void Packet::setStartTime(double startTime)
+{
+    this->startTime = startTime;
+}
+
+double Packet::getTransmitTime() const
+{
+    return this->transmitTime;
+}
+
+void Packet::setTransmitTime(double transmitTime)
+{
+    this->transmitTime = transmitTime;
+}
+
+double Packet::getQueueTime() const
+{
+    return this->queueTime;
+}
+
+void Packet::setQueueTime(double queueTime)
+{
+    this->queueTime = queueTime;
+}
+
 bool Packet::getECN() const
 {
     return this->ECN;
@@ -346,6 +398,10 @@ class PacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_timer,
         FIELD_aggCounter,
         FIELD_aggNumber,
+        FIELD_receivedBytes,
+        FIELD_startTime,
+        FIELD_transmitTime,
+        FIELD_queueTime,
         FIELD_ECN,
         FIELD_ECE,
     };
@@ -414,7 +470,7 @@ const char *PacketDescriptor::getProperty(const char *propertyName) const
 int PacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 11+base->getFieldCount() : 11;
+    return base ? 15+base->getFieldCount() : 15;
 }
 
 unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
@@ -435,10 +491,14 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_timer
         FD_ISEDITABLE,    // FIELD_aggCounter
         FD_ISEDITABLE,    // FIELD_aggNumber
+        FD_ISEDITABLE,    // FIELD_receivedBytes
+        FD_ISEDITABLE,    // FIELD_startTime
+        FD_ISEDITABLE,    // FIELD_transmitTime
+        FD_ISEDITABLE,    // FIELD_queueTime
         FD_ISEDITABLE,    // FIELD_ECN
         FD_ISEDITABLE,    // FIELD_ECE
     };
-    return (field >= 0 && field < 11) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 15) ? fieldTypeFlags[field] : 0;
 }
 
 const char *PacketDescriptor::getFieldName(int field) const
@@ -459,10 +519,14 @@ const char *PacketDescriptor::getFieldName(int field) const
         "timer",
         "aggCounter",
         "aggNumber",
+        "receivedBytes",
+        "startTime",
+        "transmitTime",
+        "queueTime",
         "ECN",
         "ECE",
     };
-    return (field >= 0 && field < 11) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 15) ? fieldNames[field] : nullptr;
 }
 
 int PacketDescriptor::findField(const char *fieldName) const
@@ -478,8 +542,12 @@ int PacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "timer") == 0) return baseIndex + 6;
     if (strcmp(fieldName, "aggCounter") == 0) return baseIndex + 7;
     if (strcmp(fieldName, "aggNumber") == 0) return baseIndex + 8;
-    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 9;
-    if (strcmp(fieldName, "ECE") == 0) return baseIndex + 10;
+    if (strcmp(fieldName, "receivedBytes") == 0) return baseIndex + 9;
+    if (strcmp(fieldName, "startTime") == 0) return baseIndex + 10;
+    if (strcmp(fieldName, "transmitTime") == 0) return baseIndex + 11;
+    if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 12;
+    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 13;
+    if (strcmp(fieldName, "ECE") == 0) return baseIndex + 14;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -501,10 +569,14 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "int64_t",    // FIELD_timer
         "int32_t",    // FIELD_aggCounter
         "int32_t",    // FIELD_aggNumber
+        "int64_t",    // FIELD_receivedBytes
+        "double",    // FIELD_startTime
+        "double",    // FIELD_transmitTime
+        "double",    // FIELD_queueTime
         "bool",    // FIELD_ECN
         "bool",    // FIELD_ECE
     };
-    return (field >= 0 && field < 11) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 15) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **PacketDescriptor::getFieldPropertyNames(int field) const
@@ -596,6 +668,10 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
         case FIELD_timer: return int642string(pp->getTimer());
         case FIELD_aggCounter: return long2string(pp->getAggCounter());
         case FIELD_aggNumber: return long2string(pp->getAggNumber());
+        case FIELD_receivedBytes: return int642string(pp->getReceivedBytes());
+        case FIELD_startTime: return double2string(pp->getStartTime());
+        case FIELD_transmitTime: return double2string(pp->getTransmitTime());
+        case FIELD_queueTime: return double2string(pp->getQueueTime());
         case FIELD_ECN: return bool2string(pp->getECN());
         case FIELD_ECE: return bool2string(pp->getECE());
         default: return "";
@@ -623,6 +699,10 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
         case FIELD_timer: pp->setTimer(string2int64(value)); break;
         case FIELD_aggCounter: pp->setAggCounter(string2long(value)); break;
         case FIELD_aggNumber: pp->setAggNumber(string2long(value)); break;
+        case FIELD_receivedBytes: pp->setReceivedBytes(string2int64(value)); break;
+        case FIELD_startTime: pp->setStartTime(string2double(value)); break;
+        case FIELD_transmitTime: pp->setTransmitTime(string2double(value)); break;
+        case FIELD_queueTime: pp->setQueueTime(string2double(value)); break;
         case FIELD_ECN: pp->setECN(string2bool(value)); break;
         case FIELD_ECE: pp->setECE(string2bool(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
@@ -648,6 +728,10 @@ omnetpp::cValue PacketDescriptor::getFieldValue(omnetpp::any_ptr object, int fie
         case FIELD_timer: return pp->getTimer();
         case FIELD_aggCounter: return pp->getAggCounter();
         case FIELD_aggNumber: return pp->getAggNumber();
+        case FIELD_receivedBytes: return pp->getReceivedBytes();
+        case FIELD_startTime: return pp->getStartTime();
+        case FIELD_transmitTime: return pp->getTransmitTime();
+        case FIELD_queueTime: return pp->getQueueTime();
         case FIELD_ECN: return pp->getECN();
         case FIELD_ECE: return pp->getECE();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'Packet' as cValue -- field index out of range?", field);
@@ -675,6 +759,10 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
         case FIELD_timer: pp->setTimer(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_aggCounter: pp->setAggCounter(omnetpp::checked_int_cast<int32_t>(value.intValue())); break;
         case FIELD_aggNumber: pp->setAggNumber(omnetpp::checked_int_cast<int32_t>(value.intValue())); break;
+        case FIELD_receivedBytes: pp->setReceivedBytes(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
+        case FIELD_startTime: pp->setStartTime(value.doubleValue()); break;
+        case FIELD_transmitTime: pp->setTransmitTime(value.doubleValue()); break;
+        case FIELD_queueTime: pp->setQueueTime(value.doubleValue()); break;
         case FIELD_ECN: pp->setECN(value.boolValue()); break;
         case FIELD_ECE: pp->setECE(value.boolValue()); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);

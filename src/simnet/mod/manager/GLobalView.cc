@@ -33,10 +33,15 @@ void GlobalView::initialize(int stage)
 void GlobalView::collectNodes(cTopology *topo)
 {
     node2addr.reserve(topo->getNumNodes());
+    std::unordered_set<IntAddress> used;
     for (int i = 0; i < topo->getNumNodes(); i++)
     {
         auto node = topo->getNode(i)->getModule();
         IntAddress address = node->par("address");
+        if (used.find(address) != used.end()){
+            throw cRuntimeError("GlobalView::collectNodes: duplicate address %lld", address);
+        }
+        used.insert(address);
         auto isHost = node->getProperties()->get("host") != nullptr;
         if (isHost) {
             hostNodes.push_back(i);

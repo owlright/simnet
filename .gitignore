@@ -10,5 +10,6 @@ results/
 *.dll
 *.dll.a
 *.dylib
+*.so
 .DS_Store
 *.pyc

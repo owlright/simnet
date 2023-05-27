@@ -31,7 +31,7 @@ void ThroughputFilter::emitThroughput(simtime_t endInterval, cObject *details)
 
 void ThroughputFilter::receiveSignal(cResultFilter *prev, simtime_t_cref t, intval_t length, cObject *details)
 {
-    const simtime_t now = simTime();
+    const simtime_t now = simTime(); // TODO: why not use t
     numLengths++;
     ASSERT(numLengths <= numLengthLimit);
     if (numLengthLimit > 0 && numLengths == numLengthLimit) {
@@ -66,14 +66,15 @@ void ThroughputFilter::finish(cComponent *component, simsignal_t signalID)
 {
     const simtime_t now = simTime();
     if (lastSignalTime < now) {
-        cObject *details = nullptr;
-        if (lastSignalTime + interval < now) {
-            emitThroughput(lastSignalTime + interval, details);
-            if (emitIntermediateZeros) {
-                while (lastSignalTime + interval < now)
-                    emitThroughput(lastSignalTime + interval, details);
-            }
-        }
-        emitThroughput(now, details);
+        // cObject *details = nullptr;
+        // ! Do not output these zeros
+        // if (lastSignalTime + interval < now) {
+        //     emitThroughput(lastSignalTime + interval, details);
+        //     if (emitIntermediateZeros) {
+        //         while (lastSignalTime + interval < now)
+        //             emitThroughput(lastSignalTime + interval, details);
+        //     }
+        // }
+        // emitThroughput(now, details);
     }
 }

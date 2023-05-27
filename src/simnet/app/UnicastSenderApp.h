@@ -34,18 +34,18 @@ protected:
     // state
     cMessage *flowStartTimer = nullptr;
     cMessage *jitterTimeout = nullptr;
-    B sentBytes{0};
+    B sentBytes{0}; // TODO: maybe rename to maxSentSeq is better
     B confirmedBytes{0};
     B currentFlowSize{0};
+    simtime_t currentBaseRTT{0};
     simtime_t currentFlowInterval{0};
     int currentRound{0};
 
     // signals
-    static simsignal_t cwndSignal;
-    static simsignal_t rttSignal;
     static simsignal_t fctSignal;
     static simsignal_t idealFctSignal;
     static simsignal_t flowSizeSignal;
+    static simsignal_t rttSignal;
     simtime_t flowStartTime;
 
     CongAlgo* cong;

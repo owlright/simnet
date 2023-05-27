@@ -13,16 +13,15 @@ void UnicastEchoApp::handleMessage(cMessage *msg)
     auto connectionId = pk->getConnectionId();
     auto it = connections.find(connectionId);
     if (it == connections.end()) {
-        onNewConnectionArrived(pk);
+        onNewConnectionArrived(connectionId, pk);
     }
     connections.at(connectionId)->processMessage(pk);
 }
 
-void UnicastEchoApp::onNewConnectionArrived(const Packet* const pk)
+void UnicastEchoApp::onNewConnectionArrived(IdNumber connId, const Packet* const pk)
 {
-    IdNumber connectionId = pk->getConnectionId();
-    connections[connectionId] = createConnection(connectionId);
-    connections[connectionId]->bindRemote(pk->getSrcAddr(), pk->getLocalPort());
+    connections[connId] = createConnection(connId);
+    connections[connId]->bindRemote(pk->getSrcAddr(), pk->getLocalPort());
 }
 
 void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg)
@@ -45,6 +44,10 @@ Packet *UnicastEchoApp::createAckPacket(const Packet* const pk)
     packet->setSeqNumber(pk->getSeqNumber());
     packet->setKind(PacketType::ACK);
     packet->setByteLength(64);
+    packet->setReceivedBytes(pk->getByteLength());
+    packet->setStartTime(pk->getStartTime());
+    packet->setQueueTime(pk->getQueueTime());
+    packet->setTransmitTime(pk->getTransmitTime());
     if (pk->getECN()) {
         packet->setECE(true);
     }

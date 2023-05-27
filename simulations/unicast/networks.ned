@@ -4,34 +4,30 @@ import simnet.mod.Host;
 import simnet.mod.Switch;
 import ned.DatarateChannel;
 import simnet.mod.manager.GlobalRouteManager;
-import simnet.mod.manager.GlobalGroupManager;
+
+channel C extends DatarateChannel
+{
+    delay = 2us;
+    datarate = 10Gbps;
+}
 
 network Nto1
 {
     parameters:
         int numberOfSenders = default(2);
 
-    types:
-        channel C extends DatarateChannel
-        {
-            delay = 2us;
-            datarate = 10Gbps;
-        }
     submodules:
         sender[numberOfSenders]: Host {
-            @node;
             address = index;
         }
         gate: Switch {
-            @node;
             address = 1234;
         }
         sink: Host {
-            @node;
             address = parent.numberOfSenders;
         }
         routeManager: GlobalRouteManager;
-        groupManager: GlobalGroupManager;
+
     connections:
         gate.port++ <--> C <--> sink.port++;
         for i=0..numberOfSenders-1{
@@ -39,3 +35,26 @@ network Nto1
         }
 }
 
+network straightline
+{
+    parameters:
+        int numSwitches = default(1);
+    submodules:
+        sender: Host {
+        	address = 0;
+        }
+        switch[numSwitches]: Switch {
+            address = index + 1;
+        }
+        sink: Host {
+            address = parent.numSwitches + 1;
+        }
+        routeManager: GlobalRouteManager;
+   connections:
+       sender.port++ <--> C <--> switch[0].port++;
+       sink.port++ <--> C <--> switch[numSwitches-1].port++;
+       for i=0..numSwitches-2 {
+           switch[i].port++ <--> C <--> switch[i+1].port++;
+       }
+           
+}

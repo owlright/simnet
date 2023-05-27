@@ -3,11 +3,10 @@
 #include "simnet/common/ModuleAccess.h"
 Define_Module(UnicastSenderApp);
 //signals
-simsignal_t UnicastSenderApp::cwndSignal = registerSignal("cwnd");
-simsignal_t UnicastSenderApp::rttSignal = registerSignal("rtt");
 simsignal_t UnicastSenderApp::fctSignal = registerSignal("fct");
 simsignal_t UnicastSenderApp::idealFctSignal = registerSignal("idealFct");
 simsignal_t UnicastSenderApp::flowSizeSignal = registerSignal("flowSize");
+simsignal_t UnicastSenderApp::rttSignal = registerSignal("rtt");
 
 UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(flowStartTimer);
@@ -32,6 +31,7 @@ void UnicastSenderApp::initialize(int stage)
                                     getParentModule()
                                     ->gateHalf("port", cGate::Type::OUTPUT, 0)
                                     ->getChannel())->getDatarate();
+        EV_DEBUG << "port bandwidth: " << bandwidth << " bps" << endl;
         load = par("load");
         if (0.0 < load && load <= 1.0)
         {
@@ -116,18 +116,21 @@ void UnicastSenderApp::onFlowStart()
 {
     sentBytes = 0;
     confirmedBytes = 0;
+    currentBaseRTT = 0;
     flowStartTime = simTime();
+    EV_INFO << "Current round seq: " << currentRound << endl;
     if (loadMode) //flowSize will change only in loadMode
         currentFlowSize = flowSize->intValue();
     cong->reset();
     emit(flowSizeSignal, currentFlowSize);
-    emit(idealFctSignal, SimTime((8.0*currentFlowSize)/bandwidth));
+
 }
 
 void UnicastSenderApp::onFlowStop()
 {
     currentRound += 1;
     emit(fctSignal, (simTime() - flowStartTime));
+    emit(idealFctSignal, currentBaseRTT + SimTime((currentFlowSize*8) / bandwidth));
     if (currentRound < numRounds) {// note it's '<' here
         if (!loadMode) {
             ASSERT(flowInterval != nullptr);
@@ -141,11 +144,12 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 {
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::ACK);
-    // let cong algo update state
-    confirmedBytes = pk->getSeqNumber();
-    cong->onRecvAck(pk->getSeqNumber(), pk->getECE());
+    confirmedBytes += pk->getReceivedBytes();
+    cong->onRecvAck(pk->getSeqNumber(), pk->getReceivedBytes(), pk->getECE()); // let cong algo update state
 
-
+    auto pkRTT = simTime() - SimTime(pk->getStartTime());
+    emit(rttSignal, pkRTT);
+    currentBaseRTT = pkRTT - pk->getQueueTime() - pk->getTransmitTime();
     if (sentBytes < currentFlowSize) {
         if (!jitterTimeout->isScheduled()) // ! in case multiple acks arrived at the same time
             scheduleAfter(jitterBeforeSending->doubleValueInUnit("s"), jitterTimeout);
@@ -171,5 +175,8 @@ Packet* UnicastSenderApp::createDataPacket(B packetBytes)
     pk->setSeqNumber(sentBytes);
     pk->setByteLength(packetBytes);
     pk->setECN(false);
+    pk->setStartTime(simTime().dbl());
+    pk->setTransmitTime(0);
+    pk->setQueueTime(0);
     return pk;
 }

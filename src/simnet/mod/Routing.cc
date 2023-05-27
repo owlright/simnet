@@ -8,7 +8,6 @@ void Routing::initialize(int stage)
         ecmpFlow = par("ecmpFlow").boolValue();
         dropSignal = registerSignal("drop");
         outputIfSignal = registerSignal("outputIf");
-        outputPacketSignal = registerSignal("outputPacket");
         isSwitch = (getParentModule()->getProperties()->get("switch") != nullptr);
         // WATCH_MAP(rtable); // ! this causes error if value is vector
         routeManager = findModuleFromTopLevel<GlobalRouteManager>("routeManager", this);
@@ -116,12 +115,14 @@ void Routing::handleMessage(cMessage *msg)
 {
     if (msg == aggTimeOut)
     {
+        int count = 0;
         for (auto& groupSeqTimeout : seqDeadline) {
             GroupSeqType groupSeq = groupSeqTimeout.first;
             auto group = groupSeq.first;
             auto seq = groupSeq.second;
             auto timeout = SimTime(groupSeqTimeout.second, SIMTIME_NS);
             if (timeout <= simTime()) {
+                count += 1;
                 EV_DEBUG <<"group " << group << " seq " << seq << " reaches its deadline." << endl;
                 // make a fake packet
                 auto pk = new Packet("dummy");
@@ -131,6 +132,16 @@ void Routing::handleMessage(cMessage *msg)
                 pk->setAggCounter(0);
                 scheduleAt(simTime(), pk);
             }
+        }
+        if (count < seqDeadline.size())
+        {
+            // ! Relying solely on setting a timeout when data packets arrive is not enough.
+            // ! Consider this scenario: when the last few seq packets of the aggregated stream arrive,
+            // ! the timeout has been set to a relatively small value by the previous seq packets.
+            // ! Therefore, these last few seq packets will not update the timeout to a larger value.
+            // ! As a result, when the timeout expires and no more packets arrive, the timeout will never receive a new value.
+            auto timeout = SimTime(1, SIMTIME_US);
+            scheduleAfter(timeout, aggTimeOut);
         }
         return;
     }
@@ -171,25 +182,35 @@ void Routing::handleMessage(cMessage *msg)
         }
 
         if (pk->getKind() == DATA) {
-//             ! but it still need to record incoming ports because the ACK packet
-            // ! have to be sent reversely.
-            if (!pk->isSelfMessage()) // ! in case this is a dummy packet
-                incomingPortIndexes[groupSeqKey].push_back(pk->getArrivalGate()->getIndex());
+            // ! but it still need to record incoming ports because the ACK packet
+            // ! has to be sent reversely.
+            if (!pk->isSelfMessage()) {// ! in case this is a dummy packet
+                auto newPort = pk->getArrivalGate()->getIndex();
+                bool found = false;
+                for (auto& port: incomingPortIndexes[groupSeqKey])
+                {
+                    if (newPort == port)
+                        found = true;
+                }
+                if (!found)
+                    incomingPortIndexes[groupSeqKey].push_back(newPort);
+            }
             if (markNotAgg.find(groupSeqKey) == markNotAgg.end())
             {
                 if (groupTable.find(group) != groupTable.end()) // already have an entry
                 {
                     if (groupTable.at(group)->getLeftBuffer() > 0) { // ! a group may have its own restriction
-                        // ! in case the last packet of aggregation not leaving
-                        if (!pk->isSelfMessage()) { // ! in case this is a dummy packet
-                            auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
-                            auto deadline = simTime() + timeout;
-                            seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
-                            if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
-                                scheduleAfter(timeout, aggTimeOut);
+                        if (isTimerPolicy) {
+                            // ! in case the last packet of aggregation not leaving
+                            if (!pk->isSelfMessage()) { // ! in case this is a dummy packet
+                                auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
+                                auto deadline = simTime() + timeout;
+                                seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
+                                if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
+                                    rescheduleAfter(timeout, aggTimeOut);
+                                }
                             }
                         }
-
                         pk = groupTable.at(group)->agg(pk);
                     }
                     emit(groupTable.at(group)->usedBufferSignal, groupTable.at(group)->getUsedBuffer());
@@ -208,18 +229,18 @@ void Routing::handleMessage(cMessage *msg)
                         groupTable[group] = new AggGroupEntry(bufferSize, indegree);
                         groupTable.at(group)->usedBufferSignal = createBufferSignalForGroup(group);
                         groupTable.at(group)->setAggPolicy(aggPolicy);
-
-                        // ! in case the last packet of aggregation not leaving
-                        auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
-                        auto deadline = simTime() + timeout;
-                        seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
-                        if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
-                            scheduleAfter(timeout, aggTimeOut);
+                        if (isTimerPolicy) {
+                            // ! in case the last packet of aggregation not leaving
+                            auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
+                            auto deadline = simTime() + timeout;
+                            seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
+                            if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
+                                scheduleAfter(timeout, aggTimeOut);
+                            }
+                            // ASSERT(seqDeadline.find(groupSeqKey) != seqDeadline.end());
+                            // store the timeout value for each <group, addr> pair
+                            seqDeadline[groupSeqKey] = simTime().inUnit(SIMTIME_NS) + pk->getTimer();
                         }
-                        // ASSERT(seqDeadline.find(groupSeqKey) != seqDeadline.end());
-                        // store the timeout value for each <group, addr> pair
-                        seqDeadline[groupSeqKey] = simTime().inUnit(SIMTIME_NS) + pk->getTimer();
-
                         if (groupTable.at(group)->getLeftBuffer() > pk->getByteLength())
                         {// ! this check maybe not necessary, unless you set bufferSize < pk->getByteLength()
                             usedBuffer += pk->getByteLength();
@@ -243,6 +264,7 @@ void Routing::handleMessage(cMessage *msg)
                         usedBuffer -= releasedBuffer;
                         seqDeadline.erase(groupSeqKey);
                         EV_DEBUG <<"group " << group << " seq " << seq << " release buffer " << releasedBuffer << " bytes" << endl;
+
                     }
                 }
                 else
@@ -287,7 +309,6 @@ void Routing::handleMessage(cMessage *msg)
         return;
     }
     EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-
     send(pk, "out", outGateIndex);
 }
 

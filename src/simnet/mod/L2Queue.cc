@@ -37,6 +37,7 @@ class L2Queue : public cSimpleModule
     simsignal_t txBytesSignal;
     simsignal_t rxBytesSignal;
     simsignal_t congestionSignal;
+    simsignal_t outputPacketSignal;
 
   public:
     B getQueueBytes() const {return queueBytes;};
@@ -88,6 +89,7 @@ void L2Queue::initialize()
     txBytesSignal = registerSignal("txBytes");
     rxBytesSignal = registerSignal("rxBytes");
     congestionSignal = registerSignal("congestion");
+    outputPacketSignal = registerSignal("outputPacket");
     emit(qlenSignal, getQueueBytes());
     emit(busySignal, false);
     isBusy = false;
@@ -98,8 +100,11 @@ void L2Queue::startTransmitting(cMessage *msg)
     EV_TRACE << "Starting transmission of " << msg << endl;
     isBusy = true;
     int64_t numBytes = check_and_cast<cPacket *>(msg)->getByteLength();
+    auto speed = check_and_cast<cDatarateChannel*> (gate("line$o")->getTransmissionChannel())->getDatarate();
+    auto pk = check_and_cast<Packet*> (msg);
+    pk->setTransmitTime(pk->getTransmitTime() + (numBytes*8)/speed);
     send(msg, "line$o");
-
+    emit(outputPacketSignal, check_and_cast<Packet*>(msg));
     emit(txBytesSignal, numBytes);
 
     // Schedule an event for the time when last bit will leave the gate.
@@ -118,7 +123,10 @@ void L2Queue::handleMessage(cMessage *msg)
         }
         else {
             msg = popQueue();
-            emit(queueingTimeSignal, simTime() - msg->getTimestamp());
+            auto qTime = simTime() - msg->getTimestamp();
+            auto pk = check_and_cast<Packet *> (msg);
+            pk->setQueueTime(pk->getQueueTime() + qTime.dbl()); // accumulate queue time
+            emit(queueingTimeSignal, qTime);
             emit(qlenSignal, getQueueBytes());
             startTransmitting(msg);
         }
@@ -145,6 +153,7 @@ void L2Queue::handleMessage(cMessage *msg)
             }
             // We are currently busy, so just queue up the packet.
             if (capacity && getQueueBytes() >= capacity) {
+                throw cRuntimeError("Not ready for dealing with packet loss.");
                 EV_TRACE << "Received " << msg << " but transmitter busy and queue full: discarding\n";
                 emit(dropSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());
                 delete msg;
@@ -161,7 +170,7 @@ void L2Queue::handleMessage(cMessage *msg)
         else {
             // We are idle, so we can start transmitting right away.
             EV_TRACE << "Received " << msg << endl;
-            emit(queueingTimeSignal, SIMTIME_ZERO);
+            emit(queueingTimeSignal, SIMTIME_ZERO); // TODO: what is the signal used for?
             startTransmitting(msg);
             emit(busySignal, true);
         }

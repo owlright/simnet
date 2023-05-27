@@ -16,36 +16,36 @@ void Dctcp::initialize(int stage)
 
 void Dctcp::resetCounter()
 {
-    lastAckedBytes = 0;
+    lastRTTAckedBytes = 0;
     ackedBytesWithECE = 0;
     nextSeq = sentBytes; // begin a new observe window
 }
 
-void Dctcp::onRecvAck(SeqNumber seq, bool congestion)
+void Dctcp::onRecvAck(SeqNumber seq, B segmentSize, bool congestion)
 {
-    lastAckedBytes += segmentSize;
+    lastRTTAckedBytes += segmentSize;
     if (congestion) {
         ackedBytesWithECE += segmentSize;
     }
     if (nextSeqFlag == false) {
         nextSeq = sentBytes;
         nextSeqFlag = true;
-        lastAckedBytes = 0;
+        lastRTTAckedBytes = 0;
     }
 
     // update every window
-    if (ackedBytes > nextSeq) { // finish an oberserve window
+    if (maxAckedSeqNumber > nextSeq) { // finish an observe window
         auto congestionRatio = 0.0;
-        if (lastAckedBytes > 0) {
-            congestionRatio = static_cast<double>(ackedBytesWithECE * 1.0 / lastAckedBytes);
+        if (lastRTTAckedBytes > 0) {
+            congestionRatio = static_cast<double>(ackedBytesWithECE * 1.0 / lastRTTAckedBytes);
         }
         emit(bytesWithECERatio, congestionRatio);
-        alpha = (1.0 - g) * alpha + g * congestionRatio; // the window will be halfed in getSsThress() below
+        alpha = (1.0 - g) * alpha + g * congestionRatio; // the window will be halved in getSsThresh() below
         emit(alphaSignal, alpha);
         resetCounter();
     }
 
-    Reno::onRecvAck(seq, congestion);
+    Reno::onRecvAck(seq, segmentSize, congestion);
 }
 
 B Dctcp::getSsThresh()
