@@ -70,25 +70,24 @@ Packet *AggGroupEntry::AggPacketEntry::agg(Packet *pk)
         }
         counter++;
         EV_DEBUG << "group " << pk->getDestAddr() << " seq " << pk->getSeqNumber() << " elapsed " << pk->getArrivalTime() - startTime << endl;
+        if (isTimerPolicy)
+        {
+            auto now = pk->getArrivalTime();
+            if (now - startTime >= timer) {
+                packet->setAggCounter(packet->getAggCounter()+counter);
+                isAggFinished = true;
+            }
+        } else {
+            if (counter == fanIndegree) {
+                packet->setAggCounter(packet->getAggCounter()+counter);
+                isAggFinished = true;
+            }
+        }
     }
     else {
         packet->setAggCounter(packet->getAggCounter()+counter);
         isAggFinished = true;
         EV_DEBUG << "(dummy)group " << pk->getDestAddr() << " seq " << pk->getSeqNumber() << " elapsed " << pk->getArrivalTime() - startTime << endl;
-    }
-
-    if (isTimerPolicy)
-    {
-        auto now = pk->getArrivalTime();
-        if (now - startTime >= timer) {
-            packet->setAggCounter(packet->getAggCounter()+counter);
-            isAggFinished = true;
-        }
-    } else {
-        if (counter == fanIndegree) {
-            packet->setAggCounter(packet->getAggCounter()+counter);
-            isAggFinished = true;
-        }
     }
 
     if (isAggFinished) {
