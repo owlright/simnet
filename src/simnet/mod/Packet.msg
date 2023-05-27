@@ -15,6 +15,8 @@ packet Packet
     int64_t timer;
     int32_t aggCounter;
     int32_t aggNumber;
+
+    int64_t receivedBytes;
     double startTime;
     double transmitTime;
     double queueTime;

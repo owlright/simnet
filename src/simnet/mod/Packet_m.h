@@ -49,6 +49,8 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b
  *     int64_t timer;
  *     int32_t aggCounter;
  *     int32_t aggNumber;
+ * 
+ *     int64_t receivedBytes;
  *     double startTime;
  *     double transmitTime;
  *     double queueTime;
@@ -69,6 +71,7 @@ class Packet : public ::omnetpp::cPacket
     int64_t timer = 0;
     int32_t aggCounter = 0;
     int32_t aggNumber = 0;
+    int64_t receivedBytes = 0;
     double startTime = 0;
     double transmitTime = 0;
     double queueTime = 0;
@@ -116,6 +119,9 @@ class Packet : public ::omnetpp::cPacket
 
     virtual int32_t getAggNumber() const;
     virtual void setAggNumber(int32_t aggNumber);
+
+    virtual int64_t getReceivedBytes() const;
+    virtual void setReceivedBytes(int64_t receivedBytes);
 
     virtual double getStartTime() const;
     virtual void setStartTime(double startTime);
