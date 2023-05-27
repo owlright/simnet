@@ -150,7 +150,7 @@ void doParsimUnpacking(omnetpp::cCommBuffer *, T& t)
 
 }  // namespace omnetpp
 
-Register_Enum(PacketType, (PacketType::ACK, PacketType::DATA));
+Register_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::REMIND));
 
 Register_Class(Packet)
 

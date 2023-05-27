@@ -2,6 +2,7 @@ enum PacketType
 {
     ACK = 0;
     DATA = 1;
+    REMIND = 2;
 } // TODO: I just use pk->getKind() for now, so it's not shown in Packet fields
 
 packet Packet

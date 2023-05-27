@@ -24,19 +24,21 @@ class Packet;
  * {
  *     ACK = 0;
  *     DATA = 1;
+ *     REMIND = 2;
  * } // TODO: I just use pk->getKind() for now, so it's not shown in Packet fields
  * </pre>
  */
 enum PacketType {
     ACK = 0,
-    DATA = 1
+    DATA = 1,
+    REMIND = 2
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->pack(static_cast<int>(e)); }
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Class generated from <tt>src/simnet/mod/Packet.msg:8</tt> by opp_msgtool.
+ * Class generated from <tt>src/simnet/mod/Packet.msg:9</tt> by opp_msgtool.
  * <pre>
  * packet Packet
  * {
