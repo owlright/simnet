@@ -20,7 +20,7 @@ private:
 
 private:
     void resetCounter();
-    void onRecvAck(SeqNumber seq, bool congestion) override;
+    void onRecvAck(SeqNumber seq, B segmentSize, bool congestion) override;
     B getSsThresh() override;
 
 };

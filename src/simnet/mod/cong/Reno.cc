@@ -16,13 +16,15 @@ void Reno::reset()
     cWnd = par("initWinSize");
     markSeq = 0;
     maxAckedSeqNumber = 0;
+    confirmedBytes = 0;
     sentBytes = 0;
     ssThresh = INT64_MAX;
     congState = OPEN;
     cWndCnt = 0;
 }
 
-void Reno::onRecvAck(SeqNumber seq, bool congestion) {
+void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
+    confirmedBytes += segmentSize;
     if (seq > maxAckedSeqNumber)
     {
         maxAckedSeqNumber = seq;
@@ -31,10 +33,15 @@ void Reno::onRecvAck(SeqNumber seq, bool congestion) {
             emit(cwndSignal, cWnd);
         }
     }
-    else
-    {
+    else if (confirmedBytes < maxAckedSeqNumber)
+    {   // ! received an older seq, '==' is not possible either as no dup ack implemented
         // TODO: improve dealing with disordering packets
-        EV_WARN << "Disordering packets! current acked seq " << maxAckedSeqNumber << " but get " << seq << endl;
+        EV_WARN << "Disordering packets! current max acked seq " << maxAckedSeqNumber << " but get " << seq << endl;
+    }
+    else
+    {   // ! '>=' is impossible
+        throw cRuntimeError("confirmed %lld bytes, maxAcked %lld, received seq %lld",
+                            confirmedBytes, maxAckedSeqNumber, seq);
     }
 
     if (!congestion) {

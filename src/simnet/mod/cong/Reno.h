@@ -11,7 +11,7 @@ using namespace omnetpp;
 class Reno : public CongAlgo {
 public:
     virtual B getcWnd() override {return cWnd;};
-    virtual void onRecvAck(SeqNumber seq, bool congestion) override;
+    virtual void onRecvAck(SeqNumber seq, B segmentSize, bool congestion) override;
     // virtual void onRecvData(SeqNumber seq, B pkSize) override {};
     virtual void onSendData(SeqNumber seq) override;
 
@@ -19,7 +19,8 @@ protected:
     SeqNumber recover; // the same use as markSeq, but it's only triggered when seeing congestion
     SeqNumber markSeq{0}; // when you wanna update something every rtt interval
     SeqNumber maxAckedSeqNumber{0}; // max seq acked by now
-    SeqNumber sentBytes{0}; // max seq sent by now
+    B confirmedBytes{0};
+    B sentBytes{0}; // max seq sent by now
     B cWnd{INT64_MAX};
     SeqNumber ssThresh{INT64_MAX};
 

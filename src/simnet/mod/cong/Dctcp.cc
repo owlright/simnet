@@ -21,7 +21,7 @@ void Dctcp::resetCounter()
     nextSeq = sentBytes; // begin a new observe window
 }
 
-void Dctcp::onRecvAck(SeqNumber seq, bool congestion)
+void Dctcp::onRecvAck(SeqNumber seq, B segmentSize, bool congestion)
 {
     lastRTTAckedBytes += segmentSize;
     if (congestion) {
@@ -45,7 +45,7 @@ void Dctcp::onRecvAck(SeqNumber seq, bool congestion)
         resetCounter();
     }
 
-    Reno::onRecvAck(seq, congestion);
+    Reno::onRecvAck(seq, segmentSize, congestion);
 }
 
 B Dctcp::getSsThresh()
