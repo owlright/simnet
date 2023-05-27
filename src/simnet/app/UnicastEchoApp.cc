@@ -44,6 +44,7 @@ Packet *UnicastEchoApp::createAckPacket(const Packet* const pk)
     packet->setSeqNumber(pk->getSeqNumber());
     packet->setKind(PacketType::ACK);
     packet->setByteLength(64);
+    packet->setReceivedBytes(pk->getByteLength());
     packet->setStartTime(pk->getStartTime());
     packet->setQueueTime(pk->getQueueTime());
     packet->setTransmitTime(pk->getTransmitTime());
