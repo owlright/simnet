@@ -63,6 +63,11 @@ private:
     simtime_t getUsedTime() const;
     simsignal_t createBufferSignalForGroup(IntAddress group);
     cMessage* aggTimeOut{nullptr};
+    void forwardIncoming(Packet* pk);
+    Packet* doAggregation(Packet* pk);
+    bool addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree);
+    bool tryAddSeqEntry(const Packet* pk);
+    void recordIncomingPorts(GroupSeqType& groupSeqKey, int port);
 
 protected:
     virtual void initialize(int stage) override;

@@ -111,6 +111,192 @@ simsignal_t Routing::createBufferSignalForGroup(IntAddress group)
     return signal;
 }
 
+void Routing::forwardIncoming(Packet *pk)
+{
+    auto destAddr = pk->getDestAddr();
+    if (isGroupAddr(destAddr))
+    {
+        auto group = destAddr;
+        auto seq = pk->getSeqNumber();
+        auto groupSeqKey = std::make_pair(group, seq);
+
+        if (pk->getKind() == DATA)
+        {
+            auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
+            // ! even if this switch doesn't deal with this group
+            // ! it still need to record incoming ports
+            // ! because the ACK packet has to be sent reversely.
+            recordIncomingPorts(groupSeqKey, pk->getArrivalGate()->getIndex());
+            if (indegree == -1) {
+                markNotAgg.insert(groupSeqKey);
+            }
+            else
+            {
+                // ! I'm responsible for this group and the <group, seq> is not
+                // ! forbidden before for some reason (most likely is not enough buffer)
+                if (markNotAgg.find(groupSeqKey) == markNotAgg.end())
+                {
+                    if (groupTable.find(group) != groupTable.end()) // the group entry exists
+                    {
+                        if (groupTable.at(group)->isSeqPresent(seq) || tryAddSeqEntry(pk))
+                            pk = doAggregation(pk);
+                    }
+                    else if (addGroupEntry(group, bufferSize, pk->getByteLength(), indegree) && tryAddSeqEntry(pk))  // ! first time we see this group
+                    {
+                        // TODO all group share the whole buffer size for now
+                        // TODO some memory allocation policy maybe implemented in the future
+                        pk = doAggregation(pk);
+                    }
+                    else
+                    {
+                        markNotAgg.insert(groupSeqKey);
+                    }
+                }
+
+            }
+        }
+        else if(pk->getKind() == REMIND)
+        {
+            pk = doAggregation(pk);
+        }
+        else if(pk->getKind() == ACK)
+        {
+            markNotAgg.erase(groupSeqKey); // key not exist is ok
+            // clear responsible group stuff
+
+            if (groupTable.find(group) != groupTable.end())
+            {
+                if (!isTimerPolicy) {
+                    auto releasedBuffer = groupTable[group]->release(pk);
+                    usedBuffer -= releasedBuffer;
+                    seqDeadline.erase(std::make_pair(group, seq));
+                    EV_DEBUG <<"group " << group << "seq " << seq << " release buffer " << releasedBuffer << " bytes" << endl;
+                }
+            }
+            // ! if group does not deal with this group, then its group table is empty
+            // ! but it still need to send ACK reversely back to incoming ports
+            if (incomingPortIndexes.find(groupSeqKey) != incomingPortIndexes.end())
+            {
+                // ! this will happen when this switch doesn't deal with this group
+                auto outGateIndexes = getReversePortIndexes(groupSeqKey);
+                // ASSERT(outGateIndexes.size() == 1);
+                incomingPortIndexes.erase(groupSeqKey);
+                broadcast(pk, outGateIndexes);
+                return;
+            }
+        }
+        else
+        {
+            throw cRuntimeError("Unknown packet type.");
+        }
+    }
+
+    if (pk == nullptr)
+        return;
+    // route this packet, packet may be:
+    // 1. unicast packet
+    // 2. group packet not responsible for
+    // 3. group packet failed to be aggregated
+    auto srcAddr = pk->getSrcAddr();
+    int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
+    if (outGateIndex == -1) { // ! TODO if not found, routeManager will throw an error, the code is useless
+        EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
+        emit(dropSignal, (intval_t)pk->getByteLength());
+        delete pk;
+        return;
+    }
+    EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
+    send(pk, "out", outGateIndex);
+}
+
+Packet* Routing::doAggregation(Packet *pk)
+{
+    auto group = pk->getDestAddr();
+    auto seq = pk->getSeqNumber();
+    auto groupSeqKey = std::make_pair(group, seq);
+    ASSERT(groupTable.find(group) != groupTable.end());
+    ASSERT(groupTable.at(group)->isSeqPresent(seq));
+    if (pk->getKind() == REMIND) // a dummy packet to remind aggregation is over
+    {
+        ASSERT(pk->isSelfMessage());
+        ASSERT(groupTable.find(group) != groupTable.end());
+        pk = groupTable.at(group)->agg(pk);
+        ASSERT(pk!=nullptr);
+    }
+    else if (pk->getKind() == DATA) {
+        // ! before aggregation do things here
+        if (isTimerPolicy) {
+            // ! in case the last packet of aggregation not leaving
+            auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
+            auto deadline = simTime() + timeout;
+            seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
+            if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
+                rescheduleAfter(timeout, aggTimeOut);
+            }
+            seqDeadline[groupSeqKey] = simTime().inUnit(SIMTIME_NS) + pk->getTimer();
+        }
+        // ! aggregation is always the last thing to do as it change the pk pointer
+        pk = groupTable.at(group)->agg(pk);
+    }
+
+    // aggregation is finished
+    if (pk != nullptr) {
+        if (isTimerPolicy) {
+            auto releasedBuffer = groupTable[group]->release(pk);
+            usedBuffer -= releasedBuffer;
+            seqDeadline.erase(groupSeqKey);
+            EV_DEBUG <<"group " << group << " seq " << seq << " release buffer " << releasedBuffer << " bytes" << endl;
+        }
+    }
+    return pk;
+}
+
+bool Routing::addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree)
+{
+    ASSERT(groupTable.find(group) == groupTable.end());
+    // setup for the group
+    groupTable[group] = new AggGroupEntry(bufferSize, indegree);
+    groupTable.at(group)->usedBufferSignal = createBufferSignalForGroup(group);
+    // TODO all group use the same aggPolicy for now
+    groupTable.at(group)->setAggPolicy(aggPolicy);
+    if (bufferSize - usedBuffer >= firstDataSize)
+    {
+        // ! this check maybe unnecessary, unless you set group canUsedBufferSize < pk->getByteLength() which makes no sense
+        if (groupTable.at(group)->getLeftBuffer() >= firstDataSize)
+        {
+            usedBuffer += firstDataSize;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Routing::tryAddSeqEntry(const Packet* pk)
+{
+    auto group = pk->getDestAddr();
+    auto seq = pk->getSeqNumber();
+    // ! make sure the seq not exist
+    ASSERT(groupTable.find(group) != groupTable.end()
+            && !groupTable.at(group)->isSeqPresent(seq));
+    return groupTable.at(group)->addSeqEntry(pk);
+}
+
+void Routing::recordIncomingPorts(GroupSeqType& groupSeqKey, int port)
+{
+    // TODO maybe use unordered_set?
+    bool found = false;
+    for (auto& p: incomingPortIndexes[groupSeqKey])
+    {
+        if (port == p)
+        {
+            found = true;
+            break;
+        }
+    }
+    if (!found)
+        incomingPortIndexes[groupSeqKey].push_back(port);
+}
+
 void Routing::handleMessage(cMessage *msg)
 {
     if (msg == aggTimeOut)
@@ -146,187 +332,33 @@ void Routing::handleMessage(cMessage *msg)
         return;
     }
     Packet *pk = check_and_cast<Packet *>(msg);
-    auto srcAddr = pk->getSrcAddr();
     auto destAddr = pk->getDestAddr();
-    // ! If the packet destAddr is me(unicast) or my address is the group root
-    // ! send the packet to upperLayer
-    if ((destAddr == myAddress || destAddr == myGroupAddress)
-            && strcmp(pk->getArrivalGate()->getName(),"in")==0)
+    if (pk->getArrivalGate() == gate("localIn"))
     {
-        // the group root is me
-        // packet must come from lower layer
-        EV << "local delivery of packet " << pk->getName() << endl;
-        send(pk, "localOut");
-        return;
-    }
-
-    // ! If I'm a host, the packet comes from upperLayer
-    if (!isSwitch) {
-    // HACK: if this node is host, only gate out[0] can be sent to
-    // TODO: save the time to ask route manager, but if this is always right?
-        EV << "Forwarding packet " << pk->getName() << " on gate index " << 0 << endl;
+        // ! only host has localIn, so save the time to ask route manager
+        // TODO: but if this is always right?
+        EV << "Send out packet " << pk->getName() << " on gate index " << 0 << endl;
         send(pk, "out", 0);
         return;
     }
-
-
-    if (isSwitch && isGroupAddr(destAddr) ) // ! Only switch deal with group address
-    {
-        auto group = pk->getDestAddr();
-        auto seq = pk->getSeqNumber();
-        auto groupSeqKey = std::make_pair(group, seq);
-
-        auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
-        if (indegree == -1) {
-            // ! this switch doesn't deal with this group
-            markNotAgg.insert(groupSeqKey);
-        }
-        if (pk->getKind() == REMIND) // a dummy packet to remind aggregation is over
-        {
-            auto group = pk->getDestAddr();
-            ASSERT(pk->isSelfMessage());
-            ASSERT(groupTable.find(group) != groupTable.end());
-            pk = groupTable.at(group)->agg(pk);
-            ASSERT(pk!=nullptr);
-        }
-        else if (pk->getKind() == DATA) {
-            // ! but it still need to record incoming ports because the ACK packet
-            // ! has to be sent reversely.
-            // if (!pk->isSelfMessage()) {// ! in case this is a dummy packet
-            // TODO improve this
-                auto newPort = pk->getArrivalGate()->getIndex();
-                bool found = false;
-                for (auto& port: incomingPortIndexes[groupSeqKey])
-                {
-                    if (newPort == port)
-                        found = true;
-                }
-                if (!found)
-                    incomingPortIndexes[groupSeqKey].push_back(newPort);
-            // }
-            if (markNotAgg.find(groupSeqKey) == markNotAgg.end())
-            {
-                if (groupTable.find(group) != groupTable.end()) // already have an entry
-                {
-                    if (groupTable.at(group)->getLeftBuffer() > 0) { // ! a group may have its own restriction
-                        if (isTimerPolicy) {
-                         // ! in case the last packet of aggregation not leaving
-                        //     if (!pk->isSelfMessage()) { // ! in case this is a dummy packet
-                                auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
-                                auto deadline = simTime() + timeout;
-                                seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
-                                if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
-                                    rescheduleAfter(timeout, aggTimeOut);
-                                }
-                        //     }
-                        }
-                        pk = groupTable.at(group)->agg(pk);
-                    }
-                    emit(groupTable.at(group)->usedBufferSignal, groupTable.at(group)->getUsedBuffer());
-                }
-                else
-                {
-                    // * the first time we see the group, generate an entry for it
-                    if (usedBuffer + pk->getByteLength() <= bufferSize)
-                    {
-//                        auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
-//                        if (indegree == -1) { // this switch doesn't deal with this group
-//                            markNotAgg.insert(groupSeqKey);
-//
-//                        }
-                         // TODO now every group use whole memory for now
-                        groupTable[group] = new AggGroupEntry(bufferSize, indegree);
-                        groupTable.at(group)->usedBufferSignal = createBufferSignalForGroup(group);
-                        groupTable.at(group)->setAggPolicy(aggPolicy);
-                        if (isTimerPolicy) {
-                            // ! in case the last packet of aggregation not leaving
-                            auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
-                            auto deadline = simTime() + timeout;
-                            seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
-                            if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
-                                scheduleAfter(timeout, aggTimeOut);
-                            }
-                            // ASSERT(seqDeadline.find(groupSeqKey) != seqDeadline.end());
-                            // store the timeout value for each <group, addr> pair
-                            seqDeadline[groupSeqKey] = simTime().inUnit(SIMTIME_NS) + pk->getTimer();
-                        }
-                        if (groupTable.at(group)->getLeftBuffer() > pk->getByteLength())
-                        {// ! this check maybe not necessary, unless you set bufferSize < pk->getByteLength()
-                            usedBuffer += pk->getByteLength();
-                            pk = groupTable.at(group)->agg(pk); // ! this line must be put at last as pk is changed
-                        }
-                        else
-                            markNotAgg.insert(groupSeqKey);
-                    }
-                    else
-                    {
-                        // ! not enough buffer to hold it , it must be sent out immediately,
-                        // ! the following packets of the same <groupAddr, seq> cannot be aggregated either
-                        markNotAgg.insert(groupSeqKey);
-                        // ! do nothing to pk, pk will be handled like normal packet below
-                    }
-                }
-            }
-        }
-        else if (pk->getKind() == ACK )
-        {
-            // markNotAgg.erase(groupSeqKey); // key not exist is ok
-            if (groupTable.find(group) != groupTable.end())
-            {
-                auto outGateIndexes = getReversePortIndexes(groupSeqKey);
-                incomingPortIndexes.erase(groupSeqKey);
-                if (!isTimerPolicy) {
-                    auto releasedBuffer = groupTable[group]->release(pk);
-                    usedBuffer -= releasedBuffer;
-                    seqDeadline.erase(std::make_pair(group, seq));
-                    EV_DEBUG <<"group " << group << "seq " << seq << " release buffer " << releasedBuffer << " bytes" << endl;
-                }
-                broadcast(pk, outGateIndexes);
-                return;
-            }
-
-            if (incomingPortIndexes.find(groupSeqKey) != incomingPortIndexes.end())
-            {
-                // ! this will happen when this switch doesn't deal with this group
-                auto outGateIndexes = getReversePortIndexes(groupSeqKey);
-                // ASSERT(outGateIndexes.size() == 1);
-                incomingPortIndexes.erase(groupSeqKey);
-                broadcast(pk, outGateIndexes);
-                return;
-            }
-        }
-
-        if (pk == nullptr)
-        {
-            // aggregation is not finished
-            return;
-        }
-        else if (markNotAgg.find(groupSeqKey) == markNotAgg.end()) { // I'm currently handling this group
-            if (isTimerPolicy) {
-                auto releasedBuffer = groupTable[group]->release(pk);
-                usedBuffer -= releasedBuffer;
-                seqDeadline.erase(groupSeqKey);
-                EV_DEBUG <<"group " << group << " seq " << seq << " release buffer " << releasedBuffer << " bytes" << endl;
-
-            }
-        }
-
-    }
     else
     {
-        ASSERT(!isGroupAddr(destAddr)); // this must be a unicast address
+        if (destAddr == myAddress || destAddr == myGroupAddress)
+        {
+            // destination is me
+            EV_TRACE << "deliver packet to upperLayer" << pk->getName() << endl;
+            send(pk, "localOut");
+            return;
+        }
+        else if (isSwitch)
+        {
+            forwardIncoming(pk);
+        }
+        else
+        {
+            throw cRuntimeError("%lld is not a router", myAddress);
+        }
     }
-
-    // ! destAddr may be unicast addr or group data packet
-    int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
-    if (outGateIndex == -1) { // ! if not found, routeManager will throw an error, the code is useless
-        EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
-        emit(dropSignal, (intval_t)pk->getByteLength());
-        delete pk;
-        return;
-    }
-    EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-    send(pk, "out", outGateIndex);
 }
 
 void Routing::refreshDisplay() const
