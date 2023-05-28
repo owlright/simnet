@@ -19,6 +19,8 @@ public:
     B getLeftBuffer() const {return bufferSize - usedBuffer;};
     B getUsedBuffer() const {return usedBuffer;};
     void setAggPolicy(std::string& aggPolicy);
+    bool isSeqPresent(SeqNumber seq) const {return packetTable.find(seq) != packetTable.end();};
+    bool addSeqEntry(const Packet* pk);
 
 public:
     simsignal_t usedBufferSignal;

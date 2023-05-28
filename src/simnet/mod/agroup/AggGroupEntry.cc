@@ -10,25 +10,13 @@ AggGroupEntry::AggGroupEntry(B size, int indegree)
 Packet *AggGroupEntry::agg(Packet *pk)
 {
     auto seq = pk->getSeqNumber();
-    if (pk->isSelfMessage())
+    if (pk->getKind() == REMIND)
     {
         if (packetTable.find(seq) == packetTable.end())
         { // the same dummy packet is triggered multiple times, ignore these packets
             delete pk;
             return nullptr;
         }
-    }
-        ASSERT(packetTable.find(seq) != packetTable.end());
-
-    if (packetTable.find(seq) == packetTable.end()) {
-        packetTable[seq] = new AggPacketEntry(seq);
-        packetTable[seq]->fanIndegree = indegree;
-        packetTable[seq]->timer = SimTime(pk->getTimer(), SIMTIME_NS);
-        packetTable[seq]->startTime = pk->getArrivalTime();
-        packetTable[seq]->computationCount = 0;
-        packetTable[seq]->usedBytes = pk->getByteLength();
-        packetTable[seq]->isTimerPolicy = isTimerPolicy;
-        usedBuffer += packetTable[seq]->usedBytes; // ! only subtract the first packet size
     }
     return packetTable[seq]->agg(pk);
 }
@@ -54,6 +42,25 @@ void AggGroupEntry::setAggPolicy(std::string &aggPolicy)
     else if (aggPolicy == "Timer") {
         isTimerPolicy = true;
     }
+}
+
+bool AggGroupEntry::addSeqEntry(const Packet* pk)
+{
+    auto seq = pk->getSeqNumber();
+    ASSERT (packetTable.find(seq) == packetTable.end());
+    if (bufferSize - usedBuffer >= pk->getByteLength()) {
+        packetTable[seq] = new AggPacketEntry(seq);
+        packetTable[seq]->fanIndegree = indegree;
+        packetTable[seq]->timer = SimTime(pk->getTimer(), SIMTIME_NS);
+        packetTable[seq]->startTime = pk->getArrivalTime();
+        packetTable[seq]->computationCount = 0;
+        packetTable[seq]->usedBytes = pk->getByteLength();
+        packetTable[seq]->isTimerPolicy = isTimerPolicy;
+        usedBuffer += packetTable[seq]->usedBytes; // ! only subtract the first packet size
+        return true;
+    }
+    else
+        return false;
 }
 
 Packet *AggGroupEntry::AggPacketEntry::agg(Packet *pk)
