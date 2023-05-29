@@ -152,7 +152,11 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     currentBaseRTT = pkRTT - pk->getQueueTime() - pk->getTransmitTime();
     if (sentBytes < currentFlowSize) {
         if (!jitterTimeout->isScheduled()) // ! in case multiple acks arrived at the same time
-            scheduleAfter(jitterBeforeSending->doubleValueInUnit("s"), jitterTimeout);
+        {
+            auto jitter = jitterBeforeSending->doubleValueInUnit("s");
+            scheduleAfter(jitter, jitterTimeout);
+        }
+
     } else {
         //TODO if all packets sended
 
