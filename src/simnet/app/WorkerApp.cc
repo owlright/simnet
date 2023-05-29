@@ -56,11 +56,8 @@ Packet *WorkerApp::createDataPacket(B packetBytes)
     char pkname[40];
     sprintf(pkname, " %lld-to-%lld-seq%lld",
             localAddr, destAddr, sentBytes);
-    auto pk = new Packet(pkname);
-    pk->setKind(DATA);
-    pk->setSeqNumber(sentBytes);
-    pk->setByteLength(packetBytes);
-    pk->setECN(false);
+    auto pk = UnicastSenderApp::createDataPacket(packetBytes);
+    pk->setName(pkname);
     return pk;
 }
 
