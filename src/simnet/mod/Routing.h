@@ -53,17 +53,25 @@ private:
     std::unordered_map<GroupSeqType, int64_t, hashFunction> seqDeadline;
 
 private:
-    // AggPacketHandler aggPacketHandler;
+    // ! self messages
+    cMessage* aggTimeOut{nullptr};
+
+    // ! common router functions
     int getRouteGateIndex(int srcAddr, int destAddr);
     bool isGroupAddr(IntAddress addr) const { return (GROUPADDR_START <= addr && addr < GROUPADDR_END);};
     bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
+
+    // ! common forwarding functions
     void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
-    std::vector<int> getReversePortIndexes(const GroupSeqType& groupSeqKey) const;
+    void forwardIncoming(Packet* pk);
+
+    // ! for data collection
+    simsignal_t createBufferSignalForGroup(IntAddress group);
     int getComputationCount() const;
     simtime_t getUsedTime() const;
-    simsignal_t createBufferSignalForGroup(IntAddress group);
-    cMessage* aggTimeOut{nullptr};
-    void forwardIncoming(Packet* pk);
+
+    // ! for aggregation
+    std::vector<int> getReversePortIndexes(const GroupSeqType& groupSeqKey) const;
     Packet* doAggregation(Packet* pk);
     bool addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree);
     bool tryAddSeqEntry(const Packet* pk);
