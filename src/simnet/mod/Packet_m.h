@@ -58,6 +58,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b
  *     double queueTime;
  *     bool ECN;
  *     bool ECE;
+ *     bool isFlowFinished;
  * }
  * </pre>
  */
@@ -79,6 +80,7 @@ class Packet : public ::omnetpp::cPacket
     double queueTime = 0;
     bool ECN = false;
     bool ECE = false;
+    bool isFlowFinished_ = false;
 
   private:
     void copy(const Packet& other);
@@ -139,6 +141,9 @@ class Packet : public ::omnetpp::cPacket
 
     virtual bool getECE() const;
     virtual void setECE(bool ECE);
+
+    virtual bool isFlowFinished() const;
+    virtual void setIsFlowFinished(bool isFlowFinished);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Packet& obj) {obj.parsimPack(b);}

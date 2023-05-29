@@ -182,6 +182,9 @@ void Routing::forwardIncoming(Packet *pk)
                     seqDeadline.erase(std::make_pair(group, seq));
                     EV_DEBUG <<"group " << group << "seq " << seq << " release buffer " << releasedBuffer << " bytes" << endl;
                 }
+                if (pk->isFlowFinished()) {
+                    groupTable.erase(group); // this turn is finished, group entry will be set at next turn beginning
+                }
             }
             // ! if group does not deal with this group, then its group table is empty
             // ! but it still need to send ACK reversely back to incoming ports

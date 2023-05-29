@@ -23,4 +23,5 @@ packet Packet
     double queueTime;
     bool ECN;
     bool ECE;
+    bool isFlowFinished;
 }

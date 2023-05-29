@@ -182,5 +182,7 @@ Packet* UnicastSenderApp::createDataPacket(B packetBytes)
     pk->setStartTime(simTime().dbl());
     pk->setTransmitTime(0);
     pk->setQueueTime(0);
+    if (sentBytes == currentFlowSize)
+        pk->setIsFlowFinished(true);
     return pk;
 }

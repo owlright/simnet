@@ -192,6 +192,7 @@ void Packet::copy(const Packet& other)
     this->queueTime = other.queueTime;
     this->ECN = other.ECN;
     this->ECE = other.ECE;
+    this->isFlowFinished_ = other.isFlowFinished_;
 }
 
 void Packet::parsimPack(omnetpp::cCommBuffer *b) const
@@ -212,6 +213,7 @@ void Packet::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->queueTime);
     doParsimPacking(b,this->ECN);
     doParsimPacking(b,this->ECE);
+    doParsimPacking(b,this->isFlowFinished_);
 }
 
 void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -232,6 +234,7 @@ void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->queueTime);
     doParsimUnpacking(b,this->ECN);
     doParsimUnpacking(b,this->ECE);
+    doParsimUnpacking(b,this->isFlowFinished_);
 }
 
 int64_t Packet::getConnectionId() const
@@ -384,6 +387,16 @@ void Packet::setECE(bool ECE)
     this->ECE = ECE;
 }
 
+bool Packet::isFlowFinished() const
+{
+    return this->isFlowFinished_;
+}
+
+void Packet::setIsFlowFinished(bool isFlowFinished)
+{
+    this->isFlowFinished_ = isFlowFinished;
+}
+
 class PacketDescriptor : public omnetpp::cClassDescriptor
 {
   private:
@@ -404,6 +417,7 @@ class PacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_queueTime,
         FIELD_ECN,
         FIELD_ECE,
+        FIELD_isFlowFinished,
     };
   public:
     PacketDescriptor();
@@ -470,7 +484,7 @@ const char *PacketDescriptor::getProperty(const char *propertyName) const
 int PacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 15+base->getFieldCount() : 15;
+    return base ? 16+base->getFieldCount() : 16;
 }
 
 unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
@@ -497,8 +511,9 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_queueTime
         FD_ISEDITABLE,    // FIELD_ECN
         FD_ISEDITABLE,    // FIELD_ECE
+        FD_ISEDITABLE,    // FIELD_isFlowFinished
     };
-    return (field >= 0 && field < 15) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 16) ? fieldTypeFlags[field] : 0;
 }
 
 const char *PacketDescriptor::getFieldName(int field) const
@@ -525,8 +540,9 @@ const char *PacketDescriptor::getFieldName(int field) const
         "queueTime",
         "ECN",
         "ECE",
+        "isFlowFinished",
     };
-    return (field >= 0 && field < 15) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 16) ? fieldNames[field] : nullptr;
 }
 
 int PacketDescriptor::findField(const char *fieldName) const
@@ -548,6 +564,7 @@ int PacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 12;
     if (strcmp(fieldName, "ECN") == 0) return baseIndex + 13;
     if (strcmp(fieldName, "ECE") == 0) return baseIndex + 14;
+    if (strcmp(fieldName, "isFlowFinished") == 0) return baseIndex + 15;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -575,8 +592,9 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "double",    // FIELD_queueTime
         "bool",    // FIELD_ECN
         "bool",    // FIELD_ECE
+        "bool",    // FIELD_isFlowFinished
     };
-    return (field >= 0 && field < 15) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 16) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **PacketDescriptor::getFieldPropertyNames(int field) const
@@ -674,6 +692,7 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
         case FIELD_queueTime: return double2string(pp->getQueueTime());
         case FIELD_ECN: return bool2string(pp->getECN());
         case FIELD_ECE: return bool2string(pp->getECE());
+        case FIELD_isFlowFinished: return bool2string(pp->isFlowFinished());
         default: return "";
     }
 }
@@ -705,6 +724,7 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
         case FIELD_queueTime: pp->setQueueTime(string2double(value)); break;
         case FIELD_ECN: pp->setECN(string2bool(value)); break;
         case FIELD_ECE: pp->setECE(string2bool(value)); break;
+        case FIELD_isFlowFinished: pp->setIsFlowFinished(string2bool(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
     }
 }
@@ -734,6 +754,7 @@ omnetpp::cValue PacketDescriptor::getFieldValue(omnetpp::any_ptr object, int fie
         case FIELD_queueTime: return pp->getQueueTime();
         case FIELD_ECN: return pp->getECN();
         case FIELD_ECE: return pp->getECE();
+        case FIELD_isFlowFinished: return pp->isFlowFinished();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'Packet' as cValue -- field index out of range?", field);
     }
 }
@@ -765,6 +786,7 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
         case FIELD_queueTime: pp->setQueueTime(value.doubleValue()); break;
         case FIELD_ECN: pp->setECN(value.boolValue()); break;
         case FIELD_ECE: pp->setECE(value.boolValue()); break;
+        case FIELD_isFlowFinished: pp->setIsFlowFinished(value.boolValue()); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
     }
 }

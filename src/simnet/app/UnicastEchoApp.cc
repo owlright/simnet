@@ -51,5 +51,6 @@ Packet *UnicastEchoApp::createAckPacket(const Packet* const pk)
     if (pk->getECN()) {
         packet->setECE(true);
     }
+    packet->setIsFlowFinished(pk->isFlowFinished());
     return packet;
 }
