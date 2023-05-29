@@ -31,6 +31,7 @@ private:
     IntAddress myAddress{INVALID_ADDRESS};
     IntAddress myGroupAddress{INVALID_ADDRESS};
     bool ecmpFlow = false;
+    double collectionPeriod;
     // TODO improve the code
     std::string aggPolicy;
     bool isTimerPolicy{false};
@@ -55,6 +56,7 @@ private:
 private:
     // ! self messages
     cMessage* aggTimeOut{nullptr};
+    cMessage* dataCollectTimer{nullptr};
 
     // ! common router functions
     int getRouteGateIndex(int srcAddr, int destAddr);

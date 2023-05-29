@@ -19,9 +19,11 @@ void Routing::initialize(int stage)
 
         if (isSwitch) {
             bufferSize = par("bufferSize");
+            collectionPeriod = par("collectPeriod").doubleValueInUnit("s");
             aggPolicy = par("aggPolicy").stdstringValue();
             isTimerPolicy = (aggPolicy == "Timer");
             aggTimeOut = new cMessage("aggTimeOut");
+            dataCollectTimer = new cMessage("dataCollector");
         }
 
     }
@@ -29,12 +31,20 @@ void Routing::initialize(int stage)
         if (!isSwitch && groupManager != nullptr)
             myGroupAddress = groupManager->getGroupAddress(myAddress);
     }
+    if (stage == INITSTAGE_LAST) {
+        if (isSwitch) {
+            scheduleAfter(collectionPeriod, dataCollectTimer);
+        }
+    }
 }
 
 Routing::~Routing()
 {
-    if (isSwitch)
+    if (isSwitch) {
         cancelAndDelete(aggTimeOut);
+        cancelAndDelete(dataCollectTimer);
+    }
+
 }
 
 int Routing::getRouteGateIndex(int srcAddr, int destAddr)
@@ -257,6 +267,8 @@ bool Routing::addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, 
     // setup for the group
     groupTable[group] = new AggGroupEntry(bufferSize, indegree);
     groupTable.at(group)->usedBufferSignal = createBufferSignalForGroup(group);
+    if (!dataCollectTimer->isScheduled())
+        scheduleAfter(collectionPeriod, dataCollectTimer);
     // TODO all group use the same aggPolicy for now
     groupTable.at(group)->setAggPolicy(aggPolicy);
     if (bufferSize - usedBuffer >= firstDataSize)
@@ -329,6 +341,18 @@ void Routing::handleMessage(cMessage *msg)
             auto timeout = SimTime(1, SIMTIME_US);
             scheduleAfter(timeout, aggTimeOut);
         }
+        return;
+    }
+    if (msg == dataCollectTimer)
+    {
+        for (auto const& p : groupTable)
+        {
+            auto entry = p.second;
+            auto used = entry->getUsedBuffer();
+            emit(entry->usedBufferSignal, used);
+        }
+        if (!groupTable.empty())
+            scheduleAfter(collectionPeriod, dataCollectTimer);
         return;
     }
     Packet *pk = check_and_cast<Packet *>(msg);
