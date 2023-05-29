@@ -33,7 +33,7 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
             emit(cwndSignal, cWnd);
         }
     }
-    else if (confirmedBytes < maxAckedSeqNumber)
+    else if (confirmedBytes <= maxAckedSeqNumber)
     {   // ! received an older seq, '==' is not possible either as no dup ack implemented
         // TODO: improve dealing with disordering packets
         EV_WARN << "Disordering packets! current max acked seq " << maxAckedSeqNumber << " but get " << seq << endl;
