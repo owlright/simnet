@@ -63,5 +63,6 @@ module ParameterServerApp extends UnicastEchoApp {
 
 module TimerWorkerApp extends WorkerApp {
     parameters:
+        double initDwellTime @unit(s) = default(1us);
         @class(TimerWorkerApp);
 }

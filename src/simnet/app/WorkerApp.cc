@@ -69,6 +69,7 @@ protected:
 
 private:
     int numSenders{0};
+    intval_t dwellTime{0};
 };
 
 Define_Module(TimerWorkerApp);
@@ -78,14 +79,18 @@ Packet *TimerWorkerApp::createDataPacket(B packetBytes)
     auto pk = WorkerApp::createDataPacket(packetBytes);
     pk->setAggCounter(0);
     pk->setAggNumber(numSenders);
-    pk->setTimer(80); // in unit ns
+    pk->setTimer(dwellTime); // in unit ns
     return pk;
 }
 
 void TimerWorkerApp::initialize(int stage)
 {
     WorkerApp::initialize(stage);
-    if (stage == INITSTAGE_ASSIGN) {
+    if (stage == INITSTAGE_LOCAL) {
+        auto t = par("initDwellTime").doubleValueInUnit("s");
+        dwellTime = SimTime(t).inUnit(SIMTIME_NS);
+    }
+    else if (stage == INITSTAGE_ASSIGN) {
         if (groupAddr > 0)
             numSenders = groupManager->getSendersNumber(groupAddr);
     }
