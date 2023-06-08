@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from src/simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from ../../src/simnet/mod/Packet.msg.
 //
 
 #ifndef __PACKET_M_H
@@ -17,8 +17,11 @@
 #endif
 
 class Packet;
+class commonHeader;
+class ATPHeader;
+class MTATPHeader;
 /**
- * Enum generated from <tt>src/simnet/mod/Packet.msg:2</tt> by opp_msgtool.
+ * Enum generated from <tt>../../src/simnet/mod/Packet.msg:2</tt> by opp_msgtool.
  * <pre>
  * enum PacketType
  * {
@@ -38,7 +41,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Class generated from <tt>src/simnet/mod/Packet.msg:9</tt> by opp_msgtool.
+ * Class generated from <tt>../../src/simnet/mod/Packet.msg:9</tt> by opp_msgtool.
  * <pre>
  * packet Packet
  * {
@@ -149,10 +152,254 @@ class Packet : public ::omnetpp::cPacket
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Packet& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Packet& obj) {obj.parsimUnpack(b);}
 
+/**
+ * Class generated from <tt>../../src/simnet/mod/Packet.msg:30</tt> by opp_msgtool.
+ * <pre>
+ * packet commonHeader
+ * {
+ *     byteLength = 14 + 20;
+ *     int64_t connectionId;
+ *     int64_t srcAddr;
+ *     int64_t destAddr;
+ *     uint16_t localPort;
+ *     uint16_t destPort;
+ *     int64_t seqNumber;
+ *     bool ECN;
+ *     bool ECE;
+ * 
+ *     int64_t receivedBytes;
+ *     double startTime;
+ *     double transmitTime;
+ *     double queueTime;
+ *     bool isFlowFinished;
+ * }
+ * </pre>
+ */
+class commonHeader : public ::omnetpp::cPacket
+{
+  protected:
+    int64_t connectionId = 0;
+    int64_t srcAddr = 0;
+    int64_t destAddr = 0;
+    uint16_t localPort = 0;
+    uint16_t destPort = 0;
+    int64_t seqNumber = 0;
+    bool ECN = false;
+    bool ECE = false;
+    int64_t receivedBytes = 0;
+    double startTime = 0;
+    double transmitTime = 0;
+    double queueTime = 0;
+    bool isFlowFinished_ = false;
+
+  private:
+    void copy(const commonHeader& other);
+
+  protected:
+    bool operator==(const commonHeader&) = delete;
+
+  public:
+    commonHeader(const char *name=nullptr, short kind=0);
+    commonHeader(const commonHeader& other);
+    virtual ~commonHeader();
+    commonHeader& operator=(const commonHeader& other);
+    virtual commonHeader *dup() const override {return new commonHeader(*this);}
+    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
+    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual int64_t getConnectionId() const;
+    virtual void setConnectionId(int64_t connectionId);
+
+    virtual int64_t getSrcAddr() const;
+    virtual void setSrcAddr(int64_t srcAddr);
+
+    virtual int64_t getDestAddr() const;
+    virtual void setDestAddr(int64_t destAddr);
+
+    virtual uint16_t getLocalPort() const;
+    virtual void setLocalPort(uint16_t localPort);
+
+    virtual uint16_t getDestPort() const;
+    virtual void setDestPort(uint16_t destPort);
+
+    virtual int64_t getSeqNumber() const;
+    virtual void setSeqNumber(int64_t seqNumber);
+
+    virtual bool getECN() const;
+    virtual void setECN(bool ECN);
+
+    virtual bool getECE() const;
+    virtual void setECE(bool ECE);
+
+    virtual int64_t getReceivedBytes() const;
+    virtual void setReceivedBytes(int64_t receivedBytes);
+
+    virtual double getStartTime() const;
+    virtual void setStartTime(double startTime);
+
+    virtual double getTransmitTime() const;
+    virtual void setTransmitTime(double transmitTime);
+
+    virtual double getQueueTime() const;
+    virtual void setQueueTime(double queueTime);
+
+    virtual bool isFlowFinished() const;
+    virtual void setIsFlowFinished(bool isFlowFinished);
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const commonHeader& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, commonHeader& obj) {obj.parsimUnpack(b);}
+
+/**
+ * Class generated from <tt>../../src/simnet/mod/Packet.msg:49</tt> by opp_msgtool.
+ * <pre>
+ * class ATPHeader extends commonHeader
+ * {
+ *     int bitmap0;
+ *     int bitmap1;
+ *     int fanIndegree0;
+ *     int fanIndegree1;
+ *     bool flags[6];
+ *     int aggregatorIndex;
+ *     int jobIdSeqNumber;
+ * 
+ *     int workerNumber;
+ * 
+ *     byteLength = 14 + 20 + 16 + 8;
+ * }
+ * </pre>
+ */
+class ATPHeader : public ::commonHeader
+{
+  protected:
+    int bitmap0 = 0;
+    int bitmap1 = 0;
+    int fanIndegree0 = 0;
+    int fanIndegree1 = 0;
+    bool flags[6];
+    int aggregatorIndex = 0;
+    int jobIdSeqNumber = 0;
+    int workerNumber = 0;
+
+  private:
+    void copy(const ATPHeader& other);
+
+  protected:
+    bool operator==(const ATPHeader&) = delete;
+
+  public:
+    ATPHeader(const char *name=nullptr);
+    ATPHeader(const ATPHeader& other);
+    virtual ~ATPHeader();
+    ATPHeader& operator=(const ATPHeader& other);
+    virtual ATPHeader *dup() const override {return new ATPHeader(*this);}
+    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
+    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual int getBitmap0() const;
+    virtual void setBitmap0(int bitmap0);
+
+    virtual int getBitmap1() const;
+    virtual void setBitmap1(int bitmap1);
+
+    virtual int getFanIndegree0() const;
+    virtual void setFanIndegree0(int fanIndegree0);
+
+    virtual int getFanIndegree1() const;
+    virtual void setFanIndegree1(int fanIndegree1);
+
+    virtual size_t getFlagsArraySize() const;
+    virtual bool getFlags(size_t k) const;
+    virtual void setFlags(size_t k, bool flags);
+
+    virtual int getAggregatorIndex() const;
+    virtual void setAggregatorIndex(int aggregatorIndex);
+
+    virtual int getJobIdSeqNumber() const;
+    virtual void setJobIdSeqNumber(int jobIdSeqNumber);
+
+    virtual int getWorkerNumber() const;
+    virtual void setWorkerNumber(int workerNumber);
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const ATPHeader& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ATPHeader& obj) {obj.parsimUnpack(b);}
+
+/**
+ * Class generated from <tt>../../src/simnet/mod/Packet.msg:64</tt> by opp_msgtool.
+ * <pre>
+ * class MTATPHeader extends commonHeader
+ * {
+ *     int timer;
+ *     int workerNumber;
+ *     int aggCounter;
+ *     bool flags[5];
+ *     int aggregatorIndex;
+ *     int jobIdSeqNumber;
+ *     int treeCost;
+ *     byteLength = 14 + 20 + 16 + 4;
+ * }
+ * </pre>
+ */
+class MTATPHeader : public ::commonHeader
+{
+  protected:
+    int timer = 0;
+    int workerNumber = 0;
+    int aggCounter = 0;
+    bool flags[5];
+    int aggregatorIndex = 0;
+    int jobIdSeqNumber = 0;
+    int treeCost = 0;
+
+  private:
+    void copy(const MTATPHeader& other);
+
+  protected:
+    bool operator==(const MTATPHeader&) = delete;
+
+  public:
+    MTATPHeader(const char *name=nullptr);
+    MTATPHeader(const MTATPHeader& other);
+    virtual ~MTATPHeader();
+    MTATPHeader& operator=(const MTATPHeader& other);
+    virtual MTATPHeader *dup() const override {return new MTATPHeader(*this);}
+    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
+    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual int getTimer() const;
+    virtual void setTimer(int timer);
+
+    virtual int getWorkerNumber() const;
+    virtual void setWorkerNumber(int workerNumber);
+
+    virtual int getAggCounter() const;
+    virtual void setAggCounter(int aggCounter);
+
+    virtual size_t getFlagsArraySize() const;
+    virtual bool getFlags(size_t k) const;
+    virtual void setFlags(size_t k, bool flags);
+
+    virtual int getAggregatorIndex() const;
+    virtual void setAggregatorIndex(int aggregatorIndex);
+
+    virtual int getJobIdSeqNumber() const;
+    virtual void setJobIdSeqNumber(int jobIdSeqNumber);
+
+    virtual int getTreeCost() const;
+    virtual void setTreeCost(int treeCost);
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const MTATPHeader& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, MTATPHeader& obj) {obj.parsimUnpack(b);}
+
 
 namespace omnetpp {
 
 template<> inline Packet *fromAnyPtr(any_ptr ptr) { return check_and_cast<Packet*>(ptr.get<cObject>()); }
+template<> inline commonHeader *fromAnyPtr(any_ptr ptr) { return check_and_cast<commonHeader*>(ptr.get<cObject>()); }
+template<> inline ATPHeader *fromAnyPtr(any_ptr ptr) { return check_and_cast<ATPHeader*>(ptr.get<cObject>()); }
+template<> inline MTATPHeader *fromAnyPtr(any_ptr ptr) { return check_and_cast<MTATPHeader*>(ptr.get<cObject>()); }
 
 }  // namespace omnetpp
 

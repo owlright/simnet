@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for $(LIB_PREFIX)simnet
 #
 # This file was generated with the command:
-#  opp_makemake --make-so -f --deep -O out -I.
+#  opp_makemake --make-so -f --deep -o simnet -O out -I.
 #
 
 # Name of target to be created (-o option)
