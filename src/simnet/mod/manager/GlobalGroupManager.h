@@ -5,6 +5,33 @@
 #include "GlobalView.h"
 using namespace omnetpp;
 
+struct GroupHostInfo
+{
+    uint16_t jobId;
+    IntAddress groupAddress;
+    std::vector<IntAddress> PSes;
+    std::vector<IntAddress> workers;
+};
+
+struct GroupSwitchInfo
+{
+    // for manually set
+    std::vector<IntAddress> switchAddrs;
+    std::vector<B> bufferSizes;
+};
+
+struct GroupHostInfoWithKey
+{
+    int key;
+    GroupHostInfo* hostInfo;
+};
+
+struct GroupSwitchInfoWithKey
+{
+    int key;
+    GroupSwitchInfo* switchInfo;
+};
+
 class GlobalGroupManager : public GlobalView
 {
 public:
@@ -32,23 +59,8 @@ private:
     simsignal_t createSignalForGroup(IntAddress group);
 
 private:
-    struct hashFunctionInt2
-    {
-        size_t operator()(const std::pair<IntAddress , int64_t> &x) const{
-            return x.first ^ x.second;
-        }
-    };
-    struct hashFunctionInt3
-    {
-        size_t operator()(const std::tuple<IntAddress, IntAddress, int64_t> &x) const{
-            return std::get<0>(x) ^ std::get<1>(x) ^ std::get<2>(x);
-        }
-    };
-    std::unordered_map<IntAddress, std::vector<int64_t> > hostGroupInfo;
-    std::unordered_map<std::pair<IntAddress, int64_t>, IntAddress, hashFunctionInt2> groupRoot;
-    std::unordered_map<std::pair<IntAddress, int64_t>, std::vector<int64_t>, hashFunctionInt2> groupSources;
-    std::unordered_map<std::tuple<IntAddress, IntAddress, int64_t>, int, hashFunctionInt3> switchFanIndegree;
-    std::unordered_map<std::pair<IntAddress, IntAddress>, B, hashFunctionInt2> switchBufferSize;
+    std::unordered_map<IntAddress, GroupHostInfoWithKey> hostGroupInfo;
+    std::unordered_map<IntAddress, GroupSwitchInfoWithKey> switchGroupInfo;
 
     struct groupRoundFinishInfo {
         size_t counter{0};
@@ -56,7 +68,9 @@ private:
         simsignal_t roundFctSignal;
     };
     std::unordered_map<IntAddress, groupRoundFinishInfo*> groupRoundStartTime;
-
+private:
+    std::vector<GroupHostInfo*> groupHostInfodb;
+    std::vector<GroupSwitchInfo*> GroupSwitchInfodb;
 private:
     // for aggregation job
     void prepareAggGroup(const char* policyName);

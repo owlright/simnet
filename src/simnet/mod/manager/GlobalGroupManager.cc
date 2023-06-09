@@ -138,10 +138,11 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             if (tokens.size() != 4)
                 throw cRuntimeError("wrong line in module file: 3 items required, line: \"%s\"", line.c_str());
             // get fields from tokens
-            long groupAddr = atol(tokens[0].c_str());
-            long treeIndex = atol(tokens[1].c_str());
-            long hostAddr = atol(tokens[2].c_str());
-            long isRoot = atol(tokens[3].c_str());
+            long jobId = atol(tokens[0].c_str());
+            long groupAddr = atol(tokens[1].c_str());
+            auto workerAddrs = tokens[2].c_str();
+            long PSAddr = atol(tokens[3].c_str());
+            auto addresses = cStringTokenizer(workerAddrs, "[,]").asIntVector();
             hostGroupInfo[hostAddr].push_back(groupAddr);
             hostGroupInfo[hostAddr].push_back(treeIndex);
             if (isRoot == 0) {
