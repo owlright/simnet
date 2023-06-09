@@ -44,7 +44,14 @@ class Packet extends TcpLikeHeader
     bool isFlowFinished;
 }
 
-class ATPHeader extends TcpLikeHeader
+class AggPacket extends Packet
+{
+    int aggregatorIndex;
+    int64_t jobId;
+    int workerNumber;
+}
+
+class ATPPacket extends AggPacket
 {
     byteLength = 14 + 20 + 16 + 8; // ATP header total size is 58 Bytes
     int bitmap0;
@@ -52,19 +59,13 @@ class ATPHeader extends TcpLikeHeader
     int fanIndegree0;
     int fanIndegree1;
     bool flags[6];
-    int aggregatorIndex;
-    int jobIdSeqNumber;
-    int workerNumber;
 }
 
-class MTATPHeader extends TcpLikeHeader
+class MTATPPacket extends AggPacket
 {
     byteLength = 14 + 20 + 16 + 4;
     int timer;
-    int workerNumber;
     int aggCounter;
     bool flags[5];
-    int aggregatorIndex;
-    int jobIdSeqNumber;
     int treeCost;
 }
