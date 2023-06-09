@@ -37,6 +37,7 @@ OBJS = \
     $O/simnet/app/UnicastSenderApp.o \
     $O/simnet/app/WorkerApp.o \
     $O/simnet/common/AddressResolver.o \
+    $O/simnet/common/HashTable.o \
     $O/simnet/common/NedFunctions.o \
     $O/simnet/common/ResultFilters.o \
     $O/simnet/mod/Connection.o \

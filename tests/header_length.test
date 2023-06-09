@@ -2,13 +2,24 @@
 Test packet Length
 %includes:
 #include "simnet/mod/Packet_m.h"
+
 %activity:
-commonHeader pk;
-EV << "length: " << pk.getByteLength() << endl;
-ATPHeader pk1;
-EV << "length: " << pk1.getByteLength() << endl;
-MTATPHeader pk2;
-EV << "length: " << pk2.getByteLength() << endl;
+auto pk = new Packet();
+EV << "length: " << pk->getByteLength() << endl;
+
+auto atppk = new ATPPacket();
+pk->encapsulate(atppk);
+EV << "length: " << pk->getByteLength() << endl;
+pk->decapsulate();
+delete atppk;
+
+auto mtatppk = new MTATPPacket();
+pk->encapsulate(mtatppk);
+EV << "length: " << pk->getByteLength() << endl;
+pk->decapsulate();
+delete mtatppk;
+
+delete pk;
 
 %contains: stdout
 length: 34

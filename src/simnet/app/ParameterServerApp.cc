@@ -78,10 +78,11 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
         receivedNumber[seq] = 0;
     }
 
-    aggCounters.at(seq) += pk->getAggCounter();
+    auto aggpk = check_and_cast<MTATPPacket*>(pk->decapsulate());
+    aggCounters.at(seq) += aggpk->getAggCounter();
     receivedNumber.at(seq) += 1;
     EV_DEBUG << "Seq " << seq << " aggregated " << aggCounters.at(seq) << endl;
-    if (aggCounters.at(seq) == pk->getAggNumber())
+    if (aggCounters.at(seq) == aggpk->getWorkerNumber())
     {
         auto packet = createAckPacket(pk);
         connection->send(packet);
@@ -92,6 +93,7 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
         // TODO destroy this connection
     }
     delete pk;
+    delete aggpk;
 }
 
 Packet* ParameterServerApp::createAckPacket(const Packet* const pk)

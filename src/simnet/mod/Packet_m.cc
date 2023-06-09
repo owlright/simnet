@@ -2528,7 +2528,7 @@ Register_Class(ATPPacket)
 
 ATPPacket::ATPPacket(const char *name) : ::AggPacket(name)
 {
-    this->setByteLength(14 + 20 + 16 + 8);
+    this->setByteLength(16 + 8);
 
     std::fill(this->flags, this->flags + 6, false);
 }
@@ -2981,7 +2981,7 @@ Register_Class(MTATPPacket)
 
 MTATPPacket::MTATPPacket(const char *name) : ::AggPacket(name)
 {
-    this->setByteLength(14 + 20 + 16 + 4);
+    this->setByteLength(16 + 4);
 
     std::fill(this->flags, this->flags + 5, false);
 }

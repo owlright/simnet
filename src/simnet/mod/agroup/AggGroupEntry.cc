@@ -51,7 +51,9 @@ bool AggGroupEntry::addSeqEntry(const Packet* pk)
     if (bufferSize - usedBuffer >= pk->getByteLength()) {
         packetTable[seq] = new AggPacketEntry(seq);
         packetTable[seq]->fanIndegree = indegree;
-        packetTable[seq]->timer = SimTime(pk->getTimer(), SIMTIME_NS);
+        if (isTimerPolicy) {
+            packetTable[seq]->timer = SimTime(check_and_cast<const MTATPPacket*>(pk)->getTimer(), SIMTIME_NS);
+        }
         packetTable[seq]->startTime = pk->getArrivalTime();
         packetTable[seq]->computationCount = 0;
         packetTable[seq]->usedBytes = pk->getByteLength();
@@ -80,19 +82,21 @@ Packet *AggGroupEntry::AggPacketEntry::agg(Packet *pk)
         if (isTimerPolicy)
         {
             auto now = pk->getArrivalTime();
+            auto timerpk = check_and_cast<MTATPPacket*>(packet);
             if (now - startTime >= timer) {
-                packet->setAggCounter(packet->getAggCounter()+counter);
+                timerpk->setWorkerNumber(timerpk->getAggCounter()+counter);
                 isAggFinished = true;
             }
         } else {
             if (counter == fanIndegree) {
-                packet->setAggCounter(packet->getAggCounter()+counter);
+                // timerpk->setWorkerNumber(timerpk->getAggCounter()+counter);
                 isAggFinished = true;
             }
         }
     }
     else {
-        packet->setAggCounter(packet->getAggCounter()+counter);
+        auto timerpk = check_and_cast<MTATPPacket*>(packet);
+        timerpk->setAggCounter(timerpk->getAggCounter()+counter);
         isAggFinished = true;
         EV_DEBUG << "(dummy)group " << pk->getDestAddr() << " seq " << pk->getSeqNumber() << " elapsed " << pk->getArrivalTime() - startTime << endl;
     }

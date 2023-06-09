@@ -240,13 +240,13 @@ Packet* Routing::doAggregation(Packet *pk)
         // ! before aggregation do things here
         if (isTimerPolicy) {
             // ! in case the last packet of aggregation not leaving
-            auto timeout = SimTime(pk->getTimer(), SIMTIME_NS);
+            auto timeout = SimTime(check_and_cast<MTATPPacket*>(pk)->getTimer(), SIMTIME_NS);
             auto deadline = simTime() + timeout;
             seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
             if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
                 rescheduleAfter(timeout, aggTimeOut);
             }
-            seqDeadline[groupSeqKey] = simTime().inUnit(SIMTIME_NS) + pk->getTimer();
+            seqDeadline[groupSeqKey] = simTime().inUnit(SIMTIME_NS) + check_and_cast<MTATPPacket*>(pk)->getTimer();
         }
         // ! aggregation is always the last thing to do as it change the pk pointer
         pk = groupTable.at(group)->agg(pk);
@@ -330,7 +330,7 @@ void Routing::handleMessage(cMessage *msg)
                 pk->setKind(REMIND);
                 pk->setDestAddr(group);
                 pk->setSeqNumber(seq);
-                pk->setAggCounter(0);
+                // pk->setAggCounter(0);
                 scheduleAt(simTime(), pk);
             }
         }

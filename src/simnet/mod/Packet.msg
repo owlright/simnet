@@ -53,7 +53,7 @@ class AggPacket extends Packet
 
 class ATPPacket extends AggPacket
 {
-    byteLength = 14 + 20 + 16 + 8; // ATP header total size is 58 Bytes
+    byteLength = 16 + 8; // ATP header total size is 58 Bytes
     int bitmap0;
     int bitmap1;
     int fanIndegree0;
@@ -63,7 +63,7 @@ class ATPPacket extends AggPacket
 
 class MTATPPacket extends AggPacket
 {
-    byteLength = 14 + 20 + 16 + 4;
+    byteLength = 16 + 4;
     int timer;
     int aggCounter;
     bool flags[5];

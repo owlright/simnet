@@ -66,7 +66,12 @@ Packet* ATPWorker::createDataPacket(B packetBytes)
     pk->setQueueTime(0);
     if (sentBytes == currentFlowSize)
         pk->setIsFlowFinished(true);
-
+    // TODO avoid overflow
+    auto seqNumber = pk->getSeqNumber();
+    auto jobID = pk->getDestAddr();
+    auto seq = reinterpret_cast<uint16_t&>(seqNumber);
+    auto jobid = reinterpret_cast<uint16_t&>(jobID);
+    pk->setAggregatorIndex(hashAggrIndex(jobid, seq));
     return pk;
 }
 
