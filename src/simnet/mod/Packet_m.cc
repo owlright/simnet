@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from ../../src/simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -834,24 +834,23 @@ void PacketDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object, int f
     }
 }
 
-Register_Class(commonHeader)
+Register_Class(EthernetMacHeader)
 
-commonHeader::commonHeader(const char *name, short kind) : ::omnetpp::cPacket(name, kind)
+EthernetMacHeader::EthernetMacHeader(const char *name, short kind) : ::omnetpp::cPacket(name, kind)
 {
-    this->setByteLength(14 + 20);
-
+    this->setByteLength(14);
 }
 
-commonHeader::commonHeader(const commonHeader& other) : ::omnetpp::cPacket(other)
+EthernetMacHeader::EthernetMacHeader(const EthernetMacHeader& other) : ::omnetpp::cPacket(other)
 {
     copy(other);
 }
 
-commonHeader::~commonHeader()
+EthernetMacHeader::~EthernetMacHeader()
 {
 }
 
-commonHeader& commonHeader::operator=(const commonHeader& other)
+EthernetMacHeader& EthernetMacHeader::operator=(const EthernetMacHeader& other)
 {
     if (this == &other) return *this;
     ::omnetpp::cPacket::operator=(other);
@@ -859,211 +858,29 @@ commonHeader& commonHeader::operator=(const commonHeader& other)
     return *this;
 }
 
-void commonHeader::copy(const commonHeader& other)
+void EthernetMacHeader::copy(const EthernetMacHeader& other)
 {
-    this->connectionId = other.connectionId;
-    this->srcAddr = other.srcAddr;
-    this->destAddr = other.destAddr;
-    this->localPort = other.localPort;
-    this->destPort = other.destPort;
-    this->seqNumber = other.seqNumber;
-    this->ECN = other.ECN;
-    this->ECE = other.ECE;
-    this->receivedBytes = other.receivedBytes;
-    this->startTime = other.startTime;
-    this->transmitTime = other.transmitTime;
-    this->queueTime = other.queueTime;
-    this->isFlowFinished_ = other.isFlowFinished_;
 }
 
-void commonHeader::parsimPack(omnetpp::cCommBuffer *b) const
+void EthernetMacHeader::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::omnetpp::cPacket::parsimPack(b);
-    doParsimPacking(b,this->connectionId);
-    doParsimPacking(b,this->srcAddr);
-    doParsimPacking(b,this->destAddr);
-    doParsimPacking(b,this->localPort);
-    doParsimPacking(b,this->destPort);
-    doParsimPacking(b,this->seqNumber);
-    doParsimPacking(b,this->ECN);
-    doParsimPacking(b,this->ECE);
-    doParsimPacking(b,this->receivedBytes);
-    doParsimPacking(b,this->startTime);
-    doParsimPacking(b,this->transmitTime);
-    doParsimPacking(b,this->queueTime);
-    doParsimPacking(b,this->isFlowFinished_);
 }
 
-void commonHeader::parsimUnpack(omnetpp::cCommBuffer *b)
+void EthernetMacHeader::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::omnetpp::cPacket::parsimUnpack(b);
-    doParsimUnpacking(b,this->connectionId);
-    doParsimUnpacking(b,this->srcAddr);
-    doParsimUnpacking(b,this->destAddr);
-    doParsimUnpacking(b,this->localPort);
-    doParsimUnpacking(b,this->destPort);
-    doParsimUnpacking(b,this->seqNumber);
-    doParsimUnpacking(b,this->ECN);
-    doParsimUnpacking(b,this->ECE);
-    doParsimUnpacking(b,this->receivedBytes);
-    doParsimUnpacking(b,this->startTime);
-    doParsimUnpacking(b,this->transmitTime);
-    doParsimUnpacking(b,this->queueTime);
-    doParsimUnpacking(b,this->isFlowFinished_);
 }
 
-int64_t commonHeader::getConnectionId() const
-{
-    return this->connectionId;
-}
-
-void commonHeader::setConnectionId(int64_t connectionId)
-{
-    this->connectionId = connectionId;
-}
-
-int64_t commonHeader::getSrcAddr() const
-{
-    return this->srcAddr;
-}
-
-void commonHeader::setSrcAddr(int64_t srcAddr)
-{
-    this->srcAddr = srcAddr;
-}
-
-int64_t commonHeader::getDestAddr() const
-{
-    return this->destAddr;
-}
-
-void commonHeader::setDestAddr(int64_t destAddr)
-{
-    this->destAddr = destAddr;
-}
-
-uint16_t commonHeader::getLocalPort() const
-{
-    return this->localPort;
-}
-
-void commonHeader::setLocalPort(uint16_t localPort)
-{
-    this->localPort = localPort;
-}
-
-uint16_t commonHeader::getDestPort() const
-{
-    return this->destPort;
-}
-
-void commonHeader::setDestPort(uint16_t destPort)
-{
-    this->destPort = destPort;
-}
-
-int64_t commonHeader::getSeqNumber() const
-{
-    return this->seqNumber;
-}
-
-void commonHeader::setSeqNumber(int64_t seqNumber)
-{
-    this->seqNumber = seqNumber;
-}
-
-bool commonHeader::getECN() const
-{
-    return this->ECN;
-}
-
-void commonHeader::setECN(bool ECN)
-{
-    this->ECN = ECN;
-}
-
-bool commonHeader::getECE() const
-{
-    return this->ECE;
-}
-
-void commonHeader::setECE(bool ECE)
-{
-    this->ECE = ECE;
-}
-
-int64_t commonHeader::getReceivedBytes() const
-{
-    return this->receivedBytes;
-}
-
-void commonHeader::setReceivedBytes(int64_t receivedBytes)
-{
-    this->receivedBytes = receivedBytes;
-}
-
-double commonHeader::getStartTime() const
-{
-    return this->startTime;
-}
-
-void commonHeader::setStartTime(double startTime)
-{
-    this->startTime = startTime;
-}
-
-double commonHeader::getTransmitTime() const
-{
-    return this->transmitTime;
-}
-
-void commonHeader::setTransmitTime(double transmitTime)
-{
-    this->transmitTime = transmitTime;
-}
-
-double commonHeader::getQueueTime() const
-{
-    return this->queueTime;
-}
-
-void commonHeader::setQueueTime(double queueTime)
-{
-    this->queueTime = queueTime;
-}
-
-bool commonHeader::isFlowFinished() const
-{
-    return this->isFlowFinished_;
-}
-
-void commonHeader::setIsFlowFinished(bool isFlowFinished)
-{
-    this->isFlowFinished_ = isFlowFinished;
-}
-
-class commonHeaderDescriptor : public omnetpp::cClassDescriptor
+class EthernetMacHeaderDescriptor : public omnetpp::cClassDescriptor
 {
   private:
     mutable const char **propertyNames;
     enum FieldConstants {
-        FIELD_connectionId,
-        FIELD_srcAddr,
-        FIELD_destAddr,
-        FIELD_localPort,
-        FIELD_destPort,
-        FIELD_seqNumber,
-        FIELD_ECN,
-        FIELD_ECE,
-        FIELD_receivedBytes,
-        FIELD_startTime,
-        FIELD_transmitTime,
-        FIELD_queueTime,
-        FIELD_isFlowFinished,
     };
   public:
-    commonHeaderDescriptor();
-    virtual ~commonHeaderDescriptor();
+    EthernetMacHeaderDescriptor();
+    virtual ~EthernetMacHeaderDescriptor();
 
     virtual bool doesSupport(omnetpp::cObject *obj) const override;
     virtual const char **getPropertyNames() const override;
@@ -1089,24 +906,24 @@ class commonHeaderDescriptor : public omnetpp::cClassDescriptor
     virtual void setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const override;
 };
 
-Register_ClassDescriptor(commonHeaderDescriptor)
+Register_ClassDescriptor(EthernetMacHeaderDescriptor)
 
-commonHeaderDescriptor::commonHeaderDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(commonHeader)), "omnetpp::cPacket")
+EthernetMacHeaderDescriptor::EthernetMacHeaderDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(EthernetMacHeader)), "omnetpp::cPacket")
 {
     propertyNames = nullptr;
 }
 
-commonHeaderDescriptor::~commonHeaderDescriptor()
+EthernetMacHeaderDescriptor::~EthernetMacHeaderDescriptor()
 {
     delete[] propertyNames;
 }
 
-bool commonHeaderDescriptor::doesSupport(omnetpp::cObject *obj) const
+bool EthernetMacHeaderDescriptor::doesSupport(omnetpp::cObject *obj) const
 {
-    return dynamic_cast<commonHeader *>(obj)!=nullptr;
+    return dynamic_cast<EthernetMacHeader *>(obj)!=nullptr;
 }
 
-const char **commonHeaderDescriptor::getPropertyNames() const
+const char **EthernetMacHeaderDescriptor::getPropertyNames() const
 {
     if (!propertyNames) {
         static const char *names[] = {  nullptr };
@@ -1117,19 +934,19 @@ const char **commonHeaderDescriptor::getPropertyNames() const
     return propertyNames;
 }
 
-const char *commonHeaderDescriptor::getProperty(const char *propertyName) const
+const char *EthernetMacHeaderDescriptor::getProperty(const char *propertyName) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     return base ? base->getProperty(propertyName) : nullptr;
 }
 
-int commonHeaderDescriptor::getFieldCount() const
+int EthernetMacHeaderDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 13+base->getFieldCount() : 13;
+    return base ? 0+base->getFieldCount() : 0;
 }
 
-unsigned int commonHeaderDescriptor::getFieldTypeFlags(int field) const
+unsigned int EthernetMacHeaderDescriptor::getFieldTypeFlags(int field) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1137,25 +954,10 @@ unsigned int commonHeaderDescriptor::getFieldTypeFlags(int field) const
             return base->getFieldTypeFlags(field);
         field -= base->getFieldCount();
     }
-    static unsigned int fieldTypeFlags[] = {
-        FD_ISEDITABLE,    // FIELD_connectionId
-        FD_ISEDITABLE,    // FIELD_srcAddr
-        FD_ISEDITABLE,    // FIELD_destAddr
-        FD_ISEDITABLE,    // FIELD_localPort
-        FD_ISEDITABLE,    // FIELD_destPort
-        FD_ISEDITABLE,    // FIELD_seqNumber
-        FD_ISEDITABLE,    // FIELD_ECN
-        FD_ISEDITABLE,    // FIELD_ECE
-        FD_ISEDITABLE,    // FIELD_receivedBytes
-        FD_ISEDITABLE,    // FIELD_startTime
-        FD_ISEDITABLE,    // FIELD_transmitTime
-        FD_ISEDITABLE,    // FIELD_queueTime
-        FD_ISEDITABLE,    // FIELD_isFlowFinished
-    };
-    return (field >= 0 && field < 13) ? fieldTypeFlags[field] : 0;
+    return 0;
 }
 
-const char *commonHeaderDescriptor::getFieldName(int field) const
+const char *EthernetMacHeaderDescriptor::getFieldName(int field) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1163,45 +965,16 @@ const char *commonHeaderDescriptor::getFieldName(int field) const
             return base->getFieldName(field);
         field -= base->getFieldCount();
     }
-    static const char *fieldNames[] = {
-        "connectionId",
-        "srcAddr",
-        "destAddr",
-        "localPort",
-        "destPort",
-        "seqNumber",
-        "ECN",
-        "ECE",
-        "receivedBytes",
-        "startTime",
-        "transmitTime",
-        "queueTime",
-        "isFlowFinished",
-    };
-    return (field >= 0 && field < 13) ? fieldNames[field] : nullptr;
+    return nullptr;
 }
 
-int commonHeaderDescriptor::findField(const char *fieldName) const
+int EthernetMacHeaderDescriptor::findField(const char *fieldName) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    int baseIndex = base ? base->getFieldCount() : 0;
-    if (strcmp(fieldName, "connectionId") == 0) return baseIndex + 0;
-    if (strcmp(fieldName, "srcAddr") == 0) return baseIndex + 1;
-    if (strcmp(fieldName, "destAddr") == 0) return baseIndex + 2;
-    if (strcmp(fieldName, "localPort") == 0) return baseIndex + 3;
-    if (strcmp(fieldName, "destPort") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "seqNumber") == 0) return baseIndex + 5;
-    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 6;
-    if (strcmp(fieldName, "ECE") == 0) return baseIndex + 7;
-    if (strcmp(fieldName, "receivedBytes") == 0) return baseIndex + 8;
-    if (strcmp(fieldName, "startTime") == 0) return baseIndex + 9;
-    if (strcmp(fieldName, "transmitTime") == 0) return baseIndex + 10;
-    if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 11;
-    if (strcmp(fieldName, "isFlowFinished") == 0) return baseIndex + 12;
     return base ? base->findField(fieldName) : -1;
 }
 
-const char *commonHeaderDescriptor::getFieldTypeString(int field) const
+const char *EthernetMacHeaderDescriptor::getFieldTypeString(int field) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1209,25 +982,10 @@ const char *commonHeaderDescriptor::getFieldTypeString(int field) const
             return base->getFieldTypeString(field);
         field -= base->getFieldCount();
     }
-    static const char *fieldTypeStrings[] = {
-        "int64_t",    // FIELD_connectionId
-        "int64_t",    // FIELD_srcAddr
-        "int64_t",    // FIELD_destAddr
-        "uint16_t",    // FIELD_localPort
-        "uint16_t",    // FIELD_destPort
-        "int64_t",    // FIELD_seqNumber
-        "bool",    // FIELD_ECN
-        "bool",    // FIELD_ECE
-        "int64_t",    // FIELD_receivedBytes
-        "double",    // FIELD_startTime
-        "double",    // FIELD_transmitTime
-        "double",    // FIELD_queueTime
-        "bool",    // FIELD_isFlowFinished
-    };
-    return (field >= 0 && field < 13) ? fieldTypeStrings[field] : nullptr;
+    return nullptr;
 }
 
-const char **commonHeaderDescriptor::getFieldPropertyNames(int field) const
+const char **EthernetMacHeaderDescriptor::getFieldPropertyNames(int field) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1240,7 +998,7 @@ const char **commonHeaderDescriptor::getFieldPropertyNames(int field) const
     }
 }
 
-const char *commonHeaderDescriptor::getFieldProperty(int field, const char *propertyName) const
+const char *EthernetMacHeaderDescriptor::getFieldProperty(int field, const char *propertyName) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1253,7 +1011,7 @@ const char *commonHeaderDescriptor::getFieldProperty(int field, const char *prop
     }
 }
 
-int commonHeaderDescriptor::getFieldArraySize(omnetpp::any_ptr object, int field) const
+int EthernetMacHeaderDescriptor::getFieldArraySize(omnetpp::any_ptr object, int field) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1261,13 +1019,13 @@ int commonHeaderDescriptor::getFieldArraySize(omnetpp::any_ptr object, int field
             return base->getFieldArraySize(object, field);
         field -= base->getFieldCount();
     }
-    commonHeader *pp = omnetpp::fromAnyPtr<commonHeader>(object); (void)pp;
+    EthernetMacHeader *pp = omnetpp::fromAnyPtr<EthernetMacHeader>(object); (void)pp;
     switch (field) {
         default: return 0;
     }
 }
 
-void commonHeaderDescriptor::setFieldArraySize(omnetpp::any_ptr object, int field, int size) const
+void EthernetMacHeaderDescriptor::setFieldArraySize(omnetpp::any_ptr object, int field, int size) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1277,13 +1035,13 @@ void commonHeaderDescriptor::setFieldArraySize(omnetpp::any_ptr object, int fiel
         }
         field -= base->getFieldCount();
     }
-    commonHeader *pp = omnetpp::fromAnyPtr<commonHeader>(object); (void)pp;
+    EthernetMacHeader *pp = omnetpp::fromAnyPtr<EthernetMacHeader>(object); (void)pp;
     switch (field) {
-        default: throw omnetpp::cRuntimeError("Cannot set array size of field %d of class 'commonHeader'", field);
+        default: throw omnetpp::cRuntimeError("Cannot set array size of field %d of class 'EthernetMacHeader'", field);
     }
 }
 
-const char *commonHeaderDescriptor::getFieldDynamicTypeString(omnetpp::any_ptr object, int field, int i) const
+const char *EthernetMacHeaderDescriptor::getFieldDynamicTypeString(omnetpp::any_ptr object, int field, int i) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1291,13 +1049,13 @@ const char *commonHeaderDescriptor::getFieldDynamicTypeString(omnetpp::any_ptr o
             return base->getFieldDynamicTypeString(object,field,i);
         field -= base->getFieldCount();
     }
-    commonHeader *pp = omnetpp::fromAnyPtr<commonHeader>(object); (void)pp;
+    EthernetMacHeader *pp = omnetpp::fromAnyPtr<EthernetMacHeader>(object); (void)pp;
     switch (field) {
         default: return nullptr;
     }
 }
 
-std::string commonHeaderDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int field, int i) const
+std::string EthernetMacHeaderDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int field, int i) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1305,26 +1063,13 @@ std::string commonHeaderDescriptor::getFieldValueAsString(omnetpp::any_ptr objec
             return base->getFieldValueAsString(object,field,i);
         field -= base->getFieldCount();
     }
-    commonHeader *pp = omnetpp::fromAnyPtr<commonHeader>(object); (void)pp;
+    EthernetMacHeader *pp = omnetpp::fromAnyPtr<EthernetMacHeader>(object); (void)pp;
     switch (field) {
-        case FIELD_connectionId: return int642string(pp->getConnectionId());
-        case FIELD_srcAddr: return int642string(pp->getSrcAddr());
-        case FIELD_destAddr: return int642string(pp->getDestAddr());
-        case FIELD_localPort: return ulong2string(pp->getLocalPort());
-        case FIELD_destPort: return ulong2string(pp->getDestPort());
-        case FIELD_seqNumber: return int642string(pp->getSeqNumber());
-        case FIELD_ECN: return bool2string(pp->getECN());
-        case FIELD_ECE: return bool2string(pp->getECE());
-        case FIELD_receivedBytes: return int642string(pp->getReceivedBytes());
-        case FIELD_startTime: return double2string(pp->getStartTime());
-        case FIELD_transmitTime: return double2string(pp->getTransmitTime());
-        case FIELD_queueTime: return double2string(pp->getQueueTime());
-        case FIELD_isFlowFinished: return bool2string(pp->isFlowFinished());
         default: return "";
     }
 }
 
-void commonHeaderDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field, int i, const char *value) const
+void EthernetMacHeaderDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field, int i, const char *value) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1334,26 +1079,13 @@ void commonHeaderDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int 
         }
         field -= base->getFieldCount();
     }
-    commonHeader *pp = omnetpp::fromAnyPtr<commonHeader>(object); (void)pp;
+    EthernetMacHeader *pp = omnetpp::fromAnyPtr<EthernetMacHeader>(object); (void)pp;
     switch (field) {
-        case FIELD_connectionId: pp->setConnectionId(string2int64(value)); break;
-        case FIELD_srcAddr: pp->setSrcAddr(string2int64(value)); break;
-        case FIELD_destAddr: pp->setDestAddr(string2int64(value)); break;
-        case FIELD_localPort: pp->setLocalPort(string2ulong(value)); break;
-        case FIELD_destPort: pp->setDestPort(string2ulong(value)); break;
-        case FIELD_seqNumber: pp->setSeqNumber(string2int64(value)); break;
-        case FIELD_ECN: pp->setECN(string2bool(value)); break;
-        case FIELD_ECE: pp->setECE(string2bool(value)); break;
-        case FIELD_receivedBytes: pp->setReceivedBytes(string2int64(value)); break;
-        case FIELD_startTime: pp->setStartTime(string2double(value)); break;
-        case FIELD_transmitTime: pp->setTransmitTime(string2double(value)); break;
-        case FIELD_queueTime: pp->setQueueTime(string2double(value)); break;
-        case FIELD_isFlowFinished: pp->setIsFlowFinished(string2bool(value)); break;
-        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'commonHeader'", field);
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'EthernetMacHeader'", field);
     }
 }
 
-omnetpp::cValue commonHeaderDescriptor::getFieldValue(omnetpp::any_ptr object, int field, int i) const
+omnetpp::cValue EthernetMacHeaderDescriptor::getFieldValue(omnetpp::any_ptr object, int field, int i) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1361,26 +1093,13 @@ omnetpp::cValue commonHeaderDescriptor::getFieldValue(omnetpp::any_ptr object, i
             return base->getFieldValue(object,field,i);
         field -= base->getFieldCount();
     }
-    commonHeader *pp = omnetpp::fromAnyPtr<commonHeader>(object); (void)pp;
+    EthernetMacHeader *pp = omnetpp::fromAnyPtr<EthernetMacHeader>(object); (void)pp;
     switch (field) {
-        case FIELD_connectionId: return pp->getConnectionId();
-        case FIELD_srcAddr: return pp->getSrcAddr();
-        case FIELD_destAddr: return pp->getDestAddr();
-        case FIELD_localPort: return (omnetpp::intval_t)(pp->getLocalPort());
-        case FIELD_destPort: return (omnetpp::intval_t)(pp->getDestPort());
-        case FIELD_seqNumber: return pp->getSeqNumber();
-        case FIELD_ECN: return pp->getECN();
-        case FIELD_ECE: return pp->getECE();
-        case FIELD_receivedBytes: return pp->getReceivedBytes();
-        case FIELD_startTime: return pp->getStartTime();
-        case FIELD_transmitTime: return pp->getTransmitTime();
-        case FIELD_queueTime: return pp->getQueueTime();
-        case FIELD_isFlowFinished: return pp->isFlowFinished();
-        default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'commonHeader' as cValue -- field index out of range?", field);
+        default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'EthernetMacHeader' as cValue -- field index out of range?", field);
     }
 }
 
-void commonHeaderDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, const omnetpp::cValue& value) const
+void EthernetMacHeaderDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, const omnetpp::cValue& value) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1390,26 +1109,387 @@ void commonHeaderDescriptor::setFieldValue(omnetpp::any_ptr object, int field, i
         }
         field -= base->getFieldCount();
     }
-    commonHeader *pp = omnetpp::fromAnyPtr<commonHeader>(object); (void)pp;
+    EthernetMacHeader *pp = omnetpp::fromAnyPtr<EthernetMacHeader>(object); (void)pp;
     switch (field) {
-        case FIELD_connectionId: pp->setConnectionId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
-        case FIELD_srcAddr: pp->setSrcAddr(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
-        case FIELD_destAddr: pp->setDestAddr(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
-        case FIELD_localPort: pp->setLocalPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
-        case FIELD_destPort: pp->setDestPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
-        case FIELD_seqNumber: pp->setSeqNumber(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
-        case FIELD_ECN: pp->setECN(value.boolValue()); break;
-        case FIELD_ECE: pp->setECE(value.boolValue()); break;
-        case FIELD_receivedBytes: pp->setReceivedBytes(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
-        case FIELD_startTime: pp->setStartTime(value.doubleValue()); break;
-        case FIELD_transmitTime: pp->setTransmitTime(value.doubleValue()); break;
-        case FIELD_queueTime: pp->setQueueTime(value.doubleValue()); break;
-        case FIELD_isFlowFinished: pp->setIsFlowFinished(value.boolValue()); break;
-        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'commonHeader'", field);
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'EthernetMacHeader'", field);
     }
 }
 
-const char *commonHeaderDescriptor::getFieldStructName(int field) const
+const char *EthernetMacHeaderDescriptor::getFieldStructName(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldStructName(field);
+        field -= base->getFieldCount();
+    }
+    return nullptr;
+}
+
+omnetpp::any_ptr EthernetMacHeaderDescriptor::getFieldStructValuePointer(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldStructValuePointer(object, field, i);
+        field -= base->getFieldCount();
+    }
+    EthernetMacHeader *pp = omnetpp::fromAnyPtr<EthernetMacHeader>(object); (void)pp;
+    switch (field) {
+        default: return omnetpp::any_ptr(nullptr);
+    }
+}
+
+void EthernetMacHeaderDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldStructValuePointer(object, field, i, ptr);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    EthernetMacHeader *pp = omnetpp::fromAnyPtr<EthernetMacHeader>(object); (void)pp;
+    switch (field) {
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'EthernetMacHeader'", field);
+    }
+}
+
+Register_Class(IpHeader)
+
+IpHeader::IpHeader(const char *name) : ::EthernetMacHeader(name)
+{
+    this->setByteLength(14 + 20);
+
+}
+
+IpHeader::IpHeader(const IpHeader& other) : ::EthernetMacHeader(other)
+{
+    copy(other);
+}
+
+IpHeader::~IpHeader()
+{
+}
+
+IpHeader& IpHeader::operator=(const IpHeader& other)
+{
+    if (this == &other) return *this;
+    ::EthernetMacHeader::operator=(other);
+    copy(other);
+    return *this;
+}
+
+void IpHeader::copy(const IpHeader& other)
+{
+    this->srcAddr = other.srcAddr;
+    this->destAddr = other.destAddr;
+}
+
+void IpHeader::parsimPack(omnetpp::cCommBuffer *b) const
+{
+    ::EthernetMacHeader::parsimPack(b);
+    doParsimPacking(b,this->srcAddr);
+    doParsimPacking(b,this->destAddr);
+}
+
+void IpHeader::parsimUnpack(omnetpp::cCommBuffer *b)
+{
+    ::EthernetMacHeader::parsimUnpack(b);
+    doParsimUnpacking(b,this->srcAddr);
+    doParsimUnpacking(b,this->destAddr);
+}
+
+int64_t IpHeader::getSrcAddr() const
+{
+    return this->srcAddr;
+}
+
+void IpHeader::setSrcAddr(int64_t srcAddr)
+{
+    this->srcAddr = srcAddr;
+}
+
+int64_t IpHeader::getDestAddr() const
+{
+    return this->destAddr;
+}
+
+void IpHeader::setDestAddr(int64_t destAddr)
+{
+    this->destAddr = destAddr;
+}
+
+class IpHeaderDescriptor : public omnetpp::cClassDescriptor
+{
+  private:
+    mutable const char **propertyNames;
+    enum FieldConstants {
+        FIELD_srcAddr,
+        FIELD_destAddr,
+    };
+  public:
+    IpHeaderDescriptor();
+    virtual ~IpHeaderDescriptor();
+
+    virtual bool doesSupport(omnetpp::cObject *obj) const override;
+    virtual const char **getPropertyNames() const override;
+    virtual const char *getProperty(const char *propertyName) const override;
+    virtual int getFieldCount() const override;
+    virtual const char *getFieldName(int field) const override;
+    virtual int findField(const char *fieldName) const override;
+    virtual unsigned int getFieldTypeFlags(int field) const override;
+    virtual const char *getFieldTypeString(int field) const override;
+    virtual const char **getFieldPropertyNames(int field) const override;
+    virtual const char *getFieldProperty(int field, const char *propertyName) const override;
+    virtual int getFieldArraySize(omnetpp::any_ptr object, int field) const override;
+    virtual void setFieldArraySize(omnetpp::any_ptr object, int field, int size) const override;
+
+    virtual const char *getFieldDynamicTypeString(omnetpp::any_ptr object, int field, int i) const override;
+    virtual std::string getFieldValueAsString(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldValueAsString(omnetpp::any_ptr object, int field, int i, const char *value) const override;
+    virtual omnetpp::cValue getFieldValue(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldValue(omnetpp::any_ptr object, int field, int i, const omnetpp::cValue& value) const override;
+
+    virtual const char *getFieldStructName(int field) const override;
+    virtual omnetpp::any_ptr getFieldStructValuePointer(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const override;
+};
+
+Register_ClassDescriptor(IpHeaderDescriptor)
+
+IpHeaderDescriptor::IpHeaderDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(IpHeader)), "EthernetMacHeader")
+{
+    propertyNames = nullptr;
+}
+
+IpHeaderDescriptor::~IpHeaderDescriptor()
+{
+    delete[] propertyNames;
+}
+
+bool IpHeaderDescriptor::doesSupport(omnetpp::cObject *obj) const
+{
+    return dynamic_cast<IpHeader *>(obj)!=nullptr;
+}
+
+const char **IpHeaderDescriptor::getPropertyNames() const
+{
+    if (!propertyNames) {
+        static const char *names[] = {  nullptr };
+        omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+        const char **baseNames = base ? base->getPropertyNames() : nullptr;
+        propertyNames = mergeLists(baseNames, names);
+    }
+    return propertyNames;
+}
+
+const char *IpHeaderDescriptor::getProperty(const char *propertyName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    return base ? base->getProperty(propertyName) : nullptr;
+}
+
+int IpHeaderDescriptor::getFieldCount() const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    return base ? 2+base->getFieldCount() : 2;
+}
+
+unsigned int IpHeaderDescriptor::getFieldTypeFlags(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldTypeFlags(field);
+        field -= base->getFieldCount();
+    }
+    static unsigned int fieldTypeFlags[] = {
+        FD_ISEDITABLE,    // FIELD_srcAddr
+        FD_ISEDITABLE,    // FIELD_destAddr
+    };
+    return (field >= 0 && field < 2) ? fieldTypeFlags[field] : 0;
+}
+
+const char *IpHeaderDescriptor::getFieldName(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldName(field);
+        field -= base->getFieldCount();
+    }
+    static const char *fieldNames[] = {
+        "srcAddr",
+        "destAddr",
+    };
+    return (field >= 0 && field < 2) ? fieldNames[field] : nullptr;
+}
+
+int IpHeaderDescriptor::findField(const char *fieldName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    int baseIndex = base ? base->getFieldCount() : 0;
+    if (strcmp(fieldName, "srcAddr") == 0) return baseIndex + 0;
+    if (strcmp(fieldName, "destAddr") == 0) return baseIndex + 1;
+    return base ? base->findField(fieldName) : -1;
+}
+
+const char *IpHeaderDescriptor::getFieldTypeString(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldTypeString(field);
+        field -= base->getFieldCount();
+    }
+    static const char *fieldTypeStrings[] = {
+        "int64_t",    // FIELD_srcAddr
+        "int64_t",    // FIELD_destAddr
+    };
+    return (field >= 0 && field < 2) ? fieldTypeStrings[field] : nullptr;
+}
+
+const char **IpHeaderDescriptor::getFieldPropertyNames(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldPropertyNames(field);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+const char *IpHeaderDescriptor::getFieldProperty(int field, const char *propertyName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldProperty(field, propertyName);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+int IpHeaderDescriptor::getFieldArraySize(omnetpp::any_ptr object, int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldArraySize(object, field);
+        field -= base->getFieldCount();
+    }
+    IpHeader *pp = omnetpp::fromAnyPtr<IpHeader>(object); (void)pp;
+    switch (field) {
+        default: return 0;
+    }
+}
+
+void IpHeaderDescriptor::setFieldArraySize(omnetpp::any_ptr object, int field, int size) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldArraySize(object, field, size);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    IpHeader *pp = omnetpp::fromAnyPtr<IpHeader>(object); (void)pp;
+    switch (field) {
+        default: throw omnetpp::cRuntimeError("Cannot set array size of field %d of class 'IpHeader'", field);
+    }
+}
+
+const char *IpHeaderDescriptor::getFieldDynamicTypeString(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldDynamicTypeString(object,field,i);
+        field -= base->getFieldCount();
+    }
+    IpHeader *pp = omnetpp::fromAnyPtr<IpHeader>(object); (void)pp;
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+std::string IpHeaderDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldValueAsString(object,field,i);
+        field -= base->getFieldCount();
+    }
+    IpHeader *pp = omnetpp::fromAnyPtr<IpHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_srcAddr: return int642string(pp->getSrcAddr());
+        case FIELD_destAddr: return int642string(pp->getDestAddr());
+        default: return "";
+    }
+}
+
+void IpHeaderDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field, int i, const char *value) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldValueAsString(object, field, i, value);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    IpHeader *pp = omnetpp::fromAnyPtr<IpHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_srcAddr: pp->setSrcAddr(string2int64(value)); break;
+        case FIELD_destAddr: pp->setDestAddr(string2int64(value)); break;
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'IpHeader'", field);
+    }
+}
+
+omnetpp::cValue IpHeaderDescriptor::getFieldValue(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldValue(object,field,i);
+        field -= base->getFieldCount();
+    }
+    IpHeader *pp = omnetpp::fromAnyPtr<IpHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_srcAddr: return pp->getSrcAddr();
+        case FIELD_destAddr: return pp->getDestAddr();
+        default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'IpHeader' as cValue -- field index out of range?", field);
+    }
+}
+
+void IpHeaderDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, const omnetpp::cValue& value) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldValue(object, field, i, value);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    IpHeader *pp = omnetpp::fromAnyPtr<IpHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_srcAddr: pp->setSrcAddr(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
+        case FIELD_destAddr: pp->setDestAddr(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'IpHeader'", field);
+    }
+}
+
+const char *IpHeaderDescriptor::getFieldStructName(int field) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1422,7 +1502,7 @@ const char *commonHeaderDescriptor::getFieldStructName(int field) const
     };
 }
 
-omnetpp::any_ptr commonHeaderDescriptor::getFieldStructValuePointer(omnetpp::any_ptr object, int field, int i) const
+omnetpp::any_ptr IpHeaderDescriptor::getFieldStructValuePointer(omnetpp::any_ptr object, int field, int i) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1430,13 +1510,13 @@ omnetpp::any_ptr commonHeaderDescriptor::getFieldStructValuePointer(omnetpp::any
             return base->getFieldStructValuePointer(object, field, i);
         field -= base->getFieldCount();
     }
-    commonHeader *pp = omnetpp::fromAnyPtr<commonHeader>(object); (void)pp;
+    IpHeader *pp = omnetpp::fromAnyPtr<IpHeader>(object); (void)pp;
     switch (field) {
         default: return omnetpp::any_ptr(nullptr);
     }
 }
 
-void commonHeaderDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const
+void IpHeaderDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     if (base) {
@@ -1446,22 +1526,970 @@ void commonHeaderDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object,
         }
         field -= base->getFieldCount();
     }
-    commonHeader *pp = omnetpp::fromAnyPtr<commonHeader>(object); (void)pp;
+    IpHeader *pp = omnetpp::fromAnyPtr<IpHeader>(object); (void)pp;
     switch (field) {
-        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'commonHeader'", field);
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'IpHeader'", field);
+    }
+}
+
+Register_Class(UdpHeader)
+
+UdpHeader::UdpHeader(const char *name) : ::IpHeader(name)
+{
+    this->setByteLength(14 + 20 + 8);
+
+}
+
+UdpHeader::UdpHeader(const UdpHeader& other) : ::IpHeader(other)
+{
+    copy(other);
+}
+
+UdpHeader::~UdpHeader()
+{
+}
+
+UdpHeader& UdpHeader::operator=(const UdpHeader& other)
+{
+    if (this == &other) return *this;
+    ::IpHeader::operator=(other);
+    copy(other);
+    return *this;
+}
+
+void UdpHeader::copy(const UdpHeader& other)
+{
+    this->localPort = other.localPort;
+    this->destPort = other.destPort;
+}
+
+void UdpHeader::parsimPack(omnetpp::cCommBuffer *b) const
+{
+    ::IpHeader::parsimPack(b);
+    doParsimPacking(b,this->localPort);
+    doParsimPacking(b,this->destPort);
+}
+
+void UdpHeader::parsimUnpack(omnetpp::cCommBuffer *b)
+{
+    ::IpHeader::parsimUnpack(b);
+    doParsimUnpacking(b,this->localPort);
+    doParsimUnpacking(b,this->destPort);
+}
+
+uint16_t UdpHeader::getLocalPort() const
+{
+    return this->localPort;
+}
+
+void UdpHeader::setLocalPort(uint16_t localPort)
+{
+    this->localPort = localPort;
+}
+
+uint16_t UdpHeader::getDestPort() const
+{
+    return this->destPort;
+}
+
+void UdpHeader::setDestPort(uint16_t destPort)
+{
+    this->destPort = destPort;
+}
+
+class UdpHeaderDescriptor : public omnetpp::cClassDescriptor
+{
+  private:
+    mutable const char **propertyNames;
+    enum FieldConstants {
+        FIELD_localPort,
+        FIELD_destPort,
+    };
+  public:
+    UdpHeaderDescriptor();
+    virtual ~UdpHeaderDescriptor();
+
+    virtual bool doesSupport(omnetpp::cObject *obj) const override;
+    virtual const char **getPropertyNames() const override;
+    virtual const char *getProperty(const char *propertyName) const override;
+    virtual int getFieldCount() const override;
+    virtual const char *getFieldName(int field) const override;
+    virtual int findField(const char *fieldName) const override;
+    virtual unsigned int getFieldTypeFlags(int field) const override;
+    virtual const char *getFieldTypeString(int field) const override;
+    virtual const char **getFieldPropertyNames(int field) const override;
+    virtual const char *getFieldProperty(int field, const char *propertyName) const override;
+    virtual int getFieldArraySize(omnetpp::any_ptr object, int field) const override;
+    virtual void setFieldArraySize(omnetpp::any_ptr object, int field, int size) const override;
+
+    virtual const char *getFieldDynamicTypeString(omnetpp::any_ptr object, int field, int i) const override;
+    virtual std::string getFieldValueAsString(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldValueAsString(omnetpp::any_ptr object, int field, int i, const char *value) const override;
+    virtual omnetpp::cValue getFieldValue(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldValue(omnetpp::any_ptr object, int field, int i, const omnetpp::cValue& value) const override;
+
+    virtual const char *getFieldStructName(int field) const override;
+    virtual omnetpp::any_ptr getFieldStructValuePointer(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const override;
+};
+
+Register_ClassDescriptor(UdpHeaderDescriptor)
+
+UdpHeaderDescriptor::UdpHeaderDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(UdpHeader)), "IpHeader")
+{
+    propertyNames = nullptr;
+}
+
+UdpHeaderDescriptor::~UdpHeaderDescriptor()
+{
+    delete[] propertyNames;
+}
+
+bool UdpHeaderDescriptor::doesSupport(omnetpp::cObject *obj) const
+{
+    return dynamic_cast<UdpHeader *>(obj)!=nullptr;
+}
+
+const char **UdpHeaderDescriptor::getPropertyNames() const
+{
+    if (!propertyNames) {
+        static const char *names[] = {  nullptr };
+        omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+        const char **baseNames = base ? base->getPropertyNames() : nullptr;
+        propertyNames = mergeLists(baseNames, names);
+    }
+    return propertyNames;
+}
+
+const char *UdpHeaderDescriptor::getProperty(const char *propertyName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    return base ? base->getProperty(propertyName) : nullptr;
+}
+
+int UdpHeaderDescriptor::getFieldCount() const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    return base ? 2+base->getFieldCount() : 2;
+}
+
+unsigned int UdpHeaderDescriptor::getFieldTypeFlags(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldTypeFlags(field);
+        field -= base->getFieldCount();
+    }
+    static unsigned int fieldTypeFlags[] = {
+        FD_ISEDITABLE,    // FIELD_localPort
+        FD_ISEDITABLE,    // FIELD_destPort
+    };
+    return (field >= 0 && field < 2) ? fieldTypeFlags[field] : 0;
+}
+
+const char *UdpHeaderDescriptor::getFieldName(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldName(field);
+        field -= base->getFieldCount();
+    }
+    static const char *fieldNames[] = {
+        "localPort",
+        "destPort",
+    };
+    return (field >= 0 && field < 2) ? fieldNames[field] : nullptr;
+}
+
+int UdpHeaderDescriptor::findField(const char *fieldName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    int baseIndex = base ? base->getFieldCount() : 0;
+    if (strcmp(fieldName, "localPort") == 0) return baseIndex + 0;
+    if (strcmp(fieldName, "destPort") == 0) return baseIndex + 1;
+    return base ? base->findField(fieldName) : -1;
+}
+
+const char *UdpHeaderDescriptor::getFieldTypeString(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldTypeString(field);
+        field -= base->getFieldCount();
+    }
+    static const char *fieldTypeStrings[] = {
+        "uint16_t",    // FIELD_localPort
+        "uint16_t",    // FIELD_destPort
+    };
+    return (field >= 0 && field < 2) ? fieldTypeStrings[field] : nullptr;
+}
+
+const char **UdpHeaderDescriptor::getFieldPropertyNames(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldPropertyNames(field);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+const char *UdpHeaderDescriptor::getFieldProperty(int field, const char *propertyName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldProperty(field, propertyName);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+int UdpHeaderDescriptor::getFieldArraySize(omnetpp::any_ptr object, int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldArraySize(object, field);
+        field -= base->getFieldCount();
+    }
+    UdpHeader *pp = omnetpp::fromAnyPtr<UdpHeader>(object); (void)pp;
+    switch (field) {
+        default: return 0;
+    }
+}
+
+void UdpHeaderDescriptor::setFieldArraySize(omnetpp::any_ptr object, int field, int size) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldArraySize(object, field, size);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    UdpHeader *pp = omnetpp::fromAnyPtr<UdpHeader>(object); (void)pp;
+    switch (field) {
+        default: throw omnetpp::cRuntimeError("Cannot set array size of field %d of class 'UdpHeader'", field);
+    }
+}
+
+const char *UdpHeaderDescriptor::getFieldDynamicTypeString(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldDynamicTypeString(object,field,i);
+        field -= base->getFieldCount();
+    }
+    UdpHeader *pp = omnetpp::fromAnyPtr<UdpHeader>(object); (void)pp;
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+std::string UdpHeaderDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldValueAsString(object,field,i);
+        field -= base->getFieldCount();
+    }
+    UdpHeader *pp = omnetpp::fromAnyPtr<UdpHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_localPort: return ulong2string(pp->getLocalPort());
+        case FIELD_destPort: return ulong2string(pp->getDestPort());
+        default: return "";
+    }
+}
+
+void UdpHeaderDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field, int i, const char *value) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldValueAsString(object, field, i, value);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    UdpHeader *pp = omnetpp::fromAnyPtr<UdpHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_localPort: pp->setLocalPort(string2ulong(value)); break;
+        case FIELD_destPort: pp->setDestPort(string2ulong(value)); break;
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'UdpHeader'", field);
+    }
+}
+
+omnetpp::cValue UdpHeaderDescriptor::getFieldValue(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldValue(object,field,i);
+        field -= base->getFieldCount();
+    }
+    UdpHeader *pp = omnetpp::fromAnyPtr<UdpHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_localPort: return (omnetpp::intval_t)(pp->getLocalPort());
+        case FIELD_destPort: return (omnetpp::intval_t)(pp->getDestPort());
+        default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'UdpHeader' as cValue -- field index out of range?", field);
+    }
+}
+
+void UdpHeaderDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, const omnetpp::cValue& value) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldValue(object, field, i, value);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    UdpHeader *pp = omnetpp::fromAnyPtr<UdpHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_localPort: pp->setLocalPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
+        case FIELD_destPort: pp->setDestPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'UdpHeader'", field);
+    }
+}
+
+const char *UdpHeaderDescriptor::getFieldStructName(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldStructName(field);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    };
+}
+
+omnetpp::any_ptr UdpHeaderDescriptor::getFieldStructValuePointer(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldStructValuePointer(object, field, i);
+        field -= base->getFieldCount();
+    }
+    UdpHeader *pp = omnetpp::fromAnyPtr<UdpHeader>(object); (void)pp;
+    switch (field) {
+        default: return omnetpp::any_ptr(nullptr);
+    }
+}
+
+void UdpHeaderDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldStructValuePointer(object, field, i, ptr);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    UdpHeader *pp = omnetpp::fromAnyPtr<UdpHeader>(object); (void)pp;
+    switch (field) {
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'UdpHeader'", field);
+    }
+}
+
+Register_Class(TcpLikeHeader)
+
+TcpLikeHeader::TcpLikeHeader(const char *name) : ::IpHeader(name)
+{
+}
+
+TcpLikeHeader::TcpLikeHeader(const TcpLikeHeader& other) : ::IpHeader(other)
+{
+    copy(other);
+}
+
+TcpLikeHeader::~TcpLikeHeader()
+{
+}
+
+TcpLikeHeader& TcpLikeHeader::operator=(const TcpLikeHeader& other)
+{
+    if (this == &other) return *this;
+    ::IpHeader::operator=(other);
+    copy(other);
+    return *this;
+}
+
+void TcpLikeHeader::copy(const TcpLikeHeader& other)
+{
+    this->connectionId = other.connectionId;
+    this->seqNumber = other.seqNumber;
+    this->localPort = other.localPort;
+    this->destPort = other.destPort;
+    this->ECN = other.ECN;
+    this->ECE = other.ECE;
+    this->receivedBytes = other.receivedBytes;
+    this->startTime = other.startTime;
+    this->transmitTime = other.transmitTime;
+    this->queueTime = other.queueTime;
+    this->isFlowFinished_ = other.isFlowFinished_;
+}
+
+void TcpLikeHeader::parsimPack(omnetpp::cCommBuffer *b) const
+{
+    ::IpHeader::parsimPack(b);
+    doParsimPacking(b,this->connectionId);
+    doParsimPacking(b,this->seqNumber);
+    doParsimPacking(b,this->localPort);
+    doParsimPacking(b,this->destPort);
+    doParsimPacking(b,this->ECN);
+    doParsimPacking(b,this->ECE);
+    doParsimPacking(b,this->receivedBytes);
+    doParsimPacking(b,this->startTime);
+    doParsimPacking(b,this->transmitTime);
+    doParsimPacking(b,this->queueTime);
+    doParsimPacking(b,this->isFlowFinished_);
+}
+
+void TcpLikeHeader::parsimUnpack(omnetpp::cCommBuffer *b)
+{
+    ::IpHeader::parsimUnpack(b);
+    doParsimUnpacking(b,this->connectionId);
+    doParsimUnpacking(b,this->seqNumber);
+    doParsimUnpacking(b,this->localPort);
+    doParsimUnpacking(b,this->destPort);
+    doParsimUnpacking(b,this->ECN);
+    doParsimUnpacking(b,this->ECE);
+    doParsimUnpacking(b,this->receivedBytes);
+    doParsimUnpacking(b,this->startTime);
+    doParsimUnpacking(b,this->transmitTime);
+    doParsimUnpacking(b,this->queueTime);
+    doParsimUnpacking(b,this->isFlowFinished_);
+}
+
+int64_t TcpLikeHeader::getConnectionId() const
+{
+    return this->connectionId;
+}
+
+void TcpLikeHeader::setConnectionId(int64_t connectionId)
+{
+    this->connectionId = connectionId;
+}
+
+int64_t TcpLikeHeader::getSeqNumber() const
+{
+    return this->seqNumber;
+}
+
+void TcpLikeHeader::setSeqNumber(int64_t seqNumber)
+{
+    this->seqNumber = seqNumber;
+}
+
+uint16_t TcpLikeHeader::getLocalPort() const
+{
+    return this->localPort;
+}
+
+void TcpLikeHeader::setLocalPort(uint16_t localPort)
+{
+    this->localPort = localPort;
+}
+
+uint16_t TcpLikeHeader::getDestPort() const
+{
+    return this->destPort;
+}
+
+void TcpLikeHeader::setDestPort(uint16_t destPort)
+{
+    this->destPort = destPort;
+}
+
+bool TcpLikeHeader::getECN() const
+{
+    return this->ECN;
+}
+
+void TcpLikeHeader::setECN(bool ECN)
+{
+    this->ECN = ECN;
+}
+
+bool TcpLikeHeader::getECE() const
+{
+    return this->ECE;
+}
+
+void TcpLikeHeader::setECE(bool ECE)
+{
+    this->ECE = ECE;
+}
+
+int64_t TcpLikeHeader::getReceivedBytes() const
+{
+    return this->receivedBytes;
+}
+
+void TcpLikeHeader::setReceivedBytes(int64_t receivedBytes)
+{
+    this->receivedBytes = receivedBytes;
+}
+
+double TcpLikeHeader::getStartTime() const
+{
+    return this->startTime;
+}
+
+void TcpLikeHeader::setStartTime(double startTime)
+{
+    this->startTime = startTime;
+}
+
+double TcpLikeHeader::getTransmitTime() const
+{
+    return this->transmitTime;
+}
+
+void TcpLikeHeader::setTransmitTime(double transmitTime)
+{
+    this->transmitTime = transmitTime;
+}
+
+double TcpLikeHeader::getQueueTime() const
+{
+    return this->queueTime;
+}
+
+void TcpLikeHeader::setQueueTime(double queueTime)
+{
+    this->queueTime = queueTime;
+}
+
+bool TcpLikeHeader::isFlowFinished() const
+{
+    return this->isFlowFinished_;
+}
+
+void TcpLikeHeader::setIsFlowFinished(bool isFlowFinished)
+{
+    this->isFlowFinished_ = isFlowFinished;
+}
+
+class TcpLikeHeaderDescriptor : public omnetpp::cClassDescriptor
+{
+  private:
+    mutable const char **propertyNames;
+    enum FieldConstants {
+        FIELD_connectionId,
+        FIELD_seqNumber,
+        FIELD_localPort,
+        FIELD_destPort,
+        FIELD_ECN,
+        FIELD_ECE,
+        FIELD_receivedBytes,
+        FIELD_startTime,
+        FIELD_transmitTime,
+        FIELD_queueTime,
+        FIELD_isFlowFinished,
+    };
+  public:
+    TcpLikeHeaderDescriptor();
+    virtual ~TcpLikeHeaderDescriptor();
+
+    virtual bool doesSupport(omnetpp::cObject *obj) const override;
+    virtual const char **getPropertyNames() const override;
+    virtual const char *getProperty(const char *propertyName) const override;
+    virtual int getFieldCount() const override;
+    virtual const char *getFieldName(int field) const override;
+    virtual int findField(const char *fieldName) const override;
+    virtual unsigned int getFieldTypeFlags(int field) const override;
+    virtual const char *getFieldTypeString(int field) const override;
+    virtual const char **getFieldPropertyNames(int field) const override;
+    virtual const char *getFieldProperty(int field, const char *propertyName) const override;
+    virtual int getFieldArraySize(omnetpp::any_ptr object, int field) const override;
+    virtual void setFieldArraySize(omnetpp::any_ptr object, int field, int size) const override;
+
+    virtual const char *getFieldDynamicTypeString(omnetpp::any_ptr object, int field, int i) const override;
+    virtual std::string getFieldValueAsString(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldValueAsString(omnetpp::any_ptr object, int field, int i, const char *value) const override;
+    virtual omnetpp::cValue getFieldValue(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldValue(omnetpp::any_ptr object, int field, int i, const omnetpp::cValue& value) const override;
+
+    virtual const char *getFieldStructName(int field) const override;
+    virtual omnetpp::any_ptr getFieldStructValuePointer(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const override;
+};
+
+Register_ClassDescriptor(TcpLikeHeaderDescriptor)
+
+TcpLikeHeaderDescriptor::TcpLikeHeaderDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(TcpLikeHeader)), "IpHeader")
+{
+    propertyNames = nullptr;
+}
+
+TcpLikeHeaderDescriptor::~TcpLikeHeaderDescriptor()
+{
+    delete[] propertyNames;
+}
+
+bool TcpLikeHeaderDescriptor::doesSupport(omnetpp::cObject *obj) const
+{
+    return dynamic_cast<TcpLikeHeader *>(obj)!=nullptr;
+}
+
+const char **TcpLikeHeaderDescriptor::getPropertyNames() const
+{
+    if (!propertyNames) {
+        static const char *names[] = {  nullptr };
+        omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+        const char **baseNames = base ? base->getPropertyNames() : nullptr;
+        propertyNames = mergeLists(baseNames, names);
+    }
+    return propertyNames;
+}
+
+const char *TcpLikeHeaderDescriptor::getProperty(const char *propertyName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    return base ? base->getProperty(propertyName) : nullptr;
+}
+
+int TcpLikeHeaderDescriptor::getFieldCount() const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    return base ? 11+base->getFieldCount() : 11;
+}
+
+unsigned int TcpLikeHeaderDescriptor::getFieldTypeFlags(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldTypeFlags(field);
+        field -= base->getFieldCount();
+    }
+    static unsigned int fieldTypeFlags[] = {
+        FD_ISEDITABLE,    // FIELD_connectionId
+        FD_ISEDITABLE,    // FIELD_seqNumber
+        FD_ISEDITABLE,    // FIELD_localPort
+        FD_ISEDITABLE,    // FIELD_destPort
+        FD_ISEDITABLE,    // FIELD_ECN
+        FD_ISEDITABLE,    // FIELD_ECE
+        FD_ISEDITABLE,    // FIELD_receivedBytes
+        FD_ISEDITABLE,    // FIELD_startTime
+        FD_ISEDITABLE,    // FIELD_transmitTime
+        FD_ISEDITABLE,    // FIELD_queueTime
+        FD_ISEDITABLE,    // FIELD_isFlowFinished
+    };
+    return (field >= 0 && field < 11) ? fieldTypeFlags[field] : 0;
+}
+
+const char *TcpLikeHeaderDescriptor::getFieldName(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldName(field);
+        field -= base->getFieldCount();
+    }
+    static const char *fieldNames[] = {
+        "connectionId",
+        "seqNumber",
+        "localPort",
+        "destPort",
+        "ECN",
+        "ECE",
+        "receivedBytes",
+        "startTime",
+        "transmitTime",
+        "queueTime",
+        "isFlowFinished",
+    };
+    return (field >= 0 && field < 11) ? fieldNames[field] : nullptr;
+}
+
+int TcpLikeHeaderDescriptor::findField(const char *fieldName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    int baseIndex = base ? base->getFieldCount() : 0;
+    if (strcmp(fieldName, "connectionId") == 0) return baseIndex + 0;
+    if (strcmp(fieldName, "seqNumber") == 0) return baseIndex + 1;
+    if (strcmp(fieldName, "localPort") == 0) return baseIndex + 2;
+    if (strcmp(fieldName, "destPort") == 0) return baseIndex + 3;
+    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "ECE") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "receivedBytes") == 0) return baseIndex + 6;
+    if (strcmp(fieldName, "startTime") == 0) return baseIndex + 7;
+    if (strcmp(fieldName, "transmitTime") == 0) return baseIndex + 8;
+    if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 9;
+    if (strcmp(fieldName, "isFlowFinished") == 0) return baseIndex + 10;
+    return base ? base->findField(fieldName) : -1;
+}
+
+const char *TcpLikeHeaderDescriptor::getFieldTypeString(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldTypeString(field);
+        field -= base->getFieldCount();
+    }
+    static const char *fieldTypeStrings[] = {
+        "int64_t",    // FIELD_connectionId
+        "int64_t",    // FIELD_seqNumber
+        "uint16_t",    // FIELD_localPort
+        "uint16_t",    // FIELD_destPort
+        "bool",    // FIELD_ECN
+        "bool",    // FIELD_ECE
+        "int64_t",    // FIELD_receivedBytes
+        "double",    // FIELD_startTime
+        "double",    // FIELD_transmitTime
+        "double",    // FIELD_queueTime
+        "bool",    // FIELD_isFlowFinished
+    };
+    return (field >= 0 && field < 11) ? fieldTypeStrings[field] : nullptr;
+}
+
+const char **TcpLikeHeaderDescriptor::getFieldPropertyNames(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldPropertyNames(field);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+const char *TcpLikeHeaderDescriptor::getFieldProperty(int field, const char *propertyName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldProperty(field, propertyName);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+int TcpLikeHeaderDescriptor::getFieldArraySize(omnetpp::any_ptr object, int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldArraySize(object, field);
+        field -= base->getFieldCount();
+    }
+    TcpLikeHeader *pp = omnetpp::fromAnyPtr<TcpLikeHeader>(object); (void)pp;
+    switch (field) {
+        default: return 0;
+    }
+}
+
+void TcpLikeHeaderDescriptor::setFieldArraySize(omnetpp::any_ptr object, int field, int size) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldArraySize(object, field, size);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    TcpLikeHeader *pp = omnetpp::fromAnyPtr<TcpLikeHeader>(object); (void)pp;
+    switch (field) {
+        default: throw omnetpp::cRuntimeError("Cannot set array size of field %d of class 'TcpLikeHeader'", field);
+    }
+}
+
+const char *TcpLikeHeaderDescriptor::getFieldDynamicTypeString(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldDynamicTypeString(object,field,i);
+        field -= base->getFieldCount();
+    }
+    TcpLikeHeader *pp = omnetpp::fromAnyPtr<TcpLikeHeader>(object); (void)pp;
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+std::string TcpLikeHeaderDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldValueAsString(object,field,i);
+        field -= base->getFieldCount();
+    }
+    TcpLikeHeader *pp = omnetpp::fromAnyPtr<TcpLikeHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_connectionId: return int642string(pp->getConnectionId());
+        case FIELD_seqNumber: return int642string(pp->getSeqNumber());
+        case FIELD_localPort: return ulong2string(pp->getLocalPort());
+        case FIELD_destPort: return ulong2string(pp->getDestPort());
+        case FIELD_ECN: return bool2string(pp->getECN());
+        case FIELD_ECE: return bool2string(pp->getECE());
+        case FIELD_receivedBytes: return int642string(pp->getReceivedBytes());
+        case FIELD_startTime: return double2string(pp->getStartTime());
+        case FIELD_transmitTime: return double2string(pp->getTransmitTime());
+        case FIELD_queueTime: return double2string(pp->getQueueTime());
+        case FIELD_isFlowFinished: return bool2string(pp->isFlowFinished());
+        default: return "";
+    }
+}
+
+void TcpLikeHeaderDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field, int i, const char *value) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldValueAsString(object, field, i, value);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    TcpLikeHeader *pp = omnetpp::fromAnyPtr<TcpLikeHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_connectionId: pp->setConnectionId(string2int64(value)); break;
+        case FIELD_seqNumber: pp->setSeqNumber(string2int64(value)); break;
+        case FIELD_localPort: pp->setLocalPort(string2ulong(value)); break;
+        case FIELD_destPort: pp->setDestPort(string2ulong(value)); break;
+        case FIELD_ECN: pp->setECN(string2bool(value)); break;
+        case FIELD_ECE: pp->setECE(string2bool(value)); break;
+        case FIELD_receivedBytes: pp->setReceivedBytes(string2int64(value)); break;
+        case FIELD_startTime: pp->setStartTime(string2double(value)); break;
+        case FIELD_transmitTime: pp->setTransmitTime(string2double(value)); break;
+        case FIELD_queueTime: pp->setQueueTime(string2double(value)); break;
+        case FIELD_isFlowFinished: pp->setIsFlowFinished(string2bool(value)); break;
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'TcpLikeHeader'", field);
+    }
+}
+
+omnetpp::cValue TcpLikeHeaderDescriptor::getFieldValue(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldValue(object,field,i);
+        field -= base->getFieldCount();
+    }
+    TcpLikeHeader *pp = omnetpp::fromAnyPtr<TcpLikeHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_connectionId: return pp->getConnectionId();
+        case FIELD_seqNumber: return pp->getSeqNumber();
+        case FIELD_localPort: return (omnetpp::intval_t)(pp->getLocalPort());
+        case FIELD_destPort: return (omnetpp::intval_t)(pp->getDestPort());
+        case FIELD_ECN: return pp->getECN();
+        case FIELD_ECE: return pp->getECE();
+        case FIELD_receivedBytes: return pp->getReceivedBytes();
+        case FIELD_startTime: return pp->getStartTime();
+        case FIELD_transmitTime: return pp->getTransmitTime();
+        case FIELD_queueTime: return pp->getQueueTime();
+        case FIELD_isFlowFinished: return pp->isFlowFinished();
+        default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'TcpLikeHeader' as cValue -- field index out of range?", field);
+    }
+}
+
+void TcpLikeHeaderDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, const omnetpp::cValue& value) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldValue(object, field, i, value);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    TcpLikeHeader *pp = omnetpp::fromAnyPtr<TcpLikeHeader>(object); (void)pp;
+    switch (field) {
+        case FIELD_connectionId: pp->setConnectionId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
+        case FIELD_seqNumber: pp->setSeqNumber(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
+        case FIELD_localPort: pp->setLocalPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
+        case FIELD_destPort: pp->setDestPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
+        case FIELD_ECN: pp->setECN(value.boolValue()); break;
+        case FIELD_ECE: pp->setECE(value.boolValue()); break;
+        case FIELD_receivedBytes: pp->setReceivedBytes(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
+        case FIELD_startTime: pp->setStartTime(value.doubleValue()); break;
+        case FIELD_transmitTime: pp->setTransmitTime(value.doubleValue()); break;
+        case FIELD_queueTime: pp->setQueueTime(value.doubleValue()); break;
+        case FIELD_isFlowFinished: pp->setIsFlowFinished(value.boolValue()); break;
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'TcpLikeHeader'", field);
+    }
+}
+
+const char *TcpLikeHeaderDescriptor::getFieldStructName(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldStructName(field);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    };
+}
+
+omnetpp::any_ptr TcpLikeHeaderDescriptor::getFieldStructValuePointer(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldStructValuePointer(object, field, i);
+        field -= base->getFieldCount();
+    }
+    TcpLikeHeader *pp = omnetpp::fromAnyPtr<TcpLikeHeader>(object); (void)pp;
+    switch (field) {
+        default: return omnetpp::any_ptr(nullptr);
+    }
+}
+
+void TcpLikeHeaderDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldStructValuePointer(object, field, i, ptr);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    TcpLikeHeader *pp = omnetpp::fromAnyPtr<TcpLikeHeader>(object); (void)pp;
+    switch (field) {
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'TcpLikeHeader'", field);
     }
 }
 
 Register_Class(ATPHeader)
 
-ATPHeader::ATPHeader(const char *name) : ::commonHeader(name)
+ATPHeader::ATPHeader(const char *name) : ::TcpLikeHeader(name)
 {
     this->setByteLength(14 + 20 + 16 + 8);
 
     std::fill(this->flags, this->flags + 6, false);
 }
 
-ATPHeader::ATPHeader(const ATPHeader& other) : ::commonHeader(other)
+ATPHeader::ATPHeader(const ATPHeader& other) : ::TcpLikeHeader(other)
 {
     copy(other);
 }
@@ -1473,7 +2501,7 @@ ATPHeader::~ATPHeader()
 ATPHeader& ATPHeader::operator=(const ATPHeader& other)
 {
     if (this == &other) return *this;
-    ::commonHeader::operator=(other);
+    ::TcpLikeHeader::operator=(other);
     copy(other);
     return *this;
 }
@@ -1494,7 +2522,7 @@ void ATPHeader::copy(const ATPHeader& other)
 
 void ATPHeader::parsimPack(omnetpp::cCommBuffer *b) const
 {
-    ::commonHeader::parsimPack(b);
+    ::TcpLikeHeader::parsimPack(b);
     doParsimPacking(b,this->bitmap0);
     doParsimPacking(b,this->bitmap1);
     doParsimPacking(b,this->fanIndegree0);
@@ -1507,7 +2535,7 @@ void ATPHeader::parsimPack(omnetpp::cCommBuffer *b) const
 
 void ATPHeader::parsimUnpack(omnetpp::cCommBuffer *b)
 {
-    ::commonHeader::parsimUnpack(b);
+    ::TcpLikeHeader::parsimUnpack(b);
     doParsimUnpacking(b,this->bitmap0);
     doParsimUnpacking(b,this->bitmap1);
     doParsimUnpacking(b,this->fanIndegree0);
@@ -1649,7 +2677,7 @@ class ATPHeaderDescriptor : public omnetpp::cClassDescriptor
 
 Register_ClassDescriptor(ATPHeaderDescriptor)
 
-ATPHeaderDescriptor::ATPHeaderDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(ATPHeader)), "commonHeader")
+ATPHeaderDescriptor::ATPHeaderDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(ATPHeader)), "TcpLikeHeader")
 {
     propertyNames = nullptr;
 }
@@ -1973,14 +3001,14 @@ void ATPHeaderDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object, in
 
 Register_Class(MTATPHeader)
 
-MTATPHeader::MTATPHeader(const char *name) : ::commonHeader(name)
+MTATPHeader::MTATPHeader(const char *name) : ::TcpLikeHeader(name)
 {
     this->setByteLength(14 + 20 + 16 + 4);
 
     std::fill(this->flags, this->flags + 5, false);
 }
 
-MTATPHeader::MTATPHeader(const MTATPHeader& other) : ::commonHeader(other)
+MTATPHeader::MTATPHeader(const MTATPHeader& other) : ::TcpLikeHeader(other)
 {
     copy(other);
 }
@@ -1992,7 +3020,7 @@ MTATPHeader::~MTATPHeader()
 MTATPHeader& MTATPHeader::operator=(const MTATPHeader& other)
 {
     if (this == &other) return *this;
-    ::commonHeader::operator=(other);
+    ::TcpLikeHeader::operator=(other);
     copy(other);
     return *this;
 }
@@ -2012,7 +3040,7 @@ void MTATPHeader::copy(const MTATPHeader& other)
 
 void MTATPHeader::parsimPack(omnetpp::cCommBuffer *b) const
 {
-    ::commonHeader::parsimPack(b);
+    ::TcpLikeHeader::parsimPack(b);
     doParsimPacking(b,this->timer);
     doParsimPacking(b,this->workerNumber);
     doParsimPacking(b,this->aggCounter);
@@ -2024,7 +3052,7 @@ void MTATPHeader::parsimPack(omnetpp::cCommBuffer *b) const
 
 void MTATPHeader::parsimUnpack(omnetpp::cCommBuffer *b)
 {
-    ::commonHeader::parsimUnpack(b);
+    ::TcpLikeHeader::parsimUnpack(b);
     doParsimUnpacking(b,this->timer);
     doParsimUnpacking(b,this->workerNumber);
     doParsimUnpacking(b,this->aggCounter);
@@ -2154,7 +3182,7 @@ class MTATPHeaderDescriptor : public omnetpp::cClassDescriptor
 
 Register_ClassDescriptor(MTATPHeaderDescriptor)
 
-MTATPHeaderDescriptor::MTATPHeaderDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(MTATPHeader)), "commonHeader")
+MTATPHeaderDescriptor::MTATPHeaderDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(MTATPHeader)), "TcpLikeHeader")
 {
     propertyNames = nullptr;
 }

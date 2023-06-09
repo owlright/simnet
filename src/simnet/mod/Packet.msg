@@ -5,39 +5,38 @@ enum PacketType
     REMIND = 2;
 }; // TODO: I just use pk->getKind() for now, so it's not shown in Packet fields
 
-packet Packet
+packet EthernetMacHeader
 {
-    int64_t connectionId;
-    int64_t srcAddr;
-    uint16_t localPort;
-    int64_t destAddr;
-    uint16_t destPort;
-    int64_t seqNumber;
-    int64_t timer;
-    int32_t aggCounter;
-    int32_t aggNumber;
-
-    int64_t receivedBytes;
-    double startTime;
-    double transmitTime;
-    double queueTime;
-    bool ECN;
-    bool ECE;
-    bool isFlowFinished;
+    byteLength = 14;
 }
 
-packet commonHeader
+class IpHeader extends EthernetMacHeader
 {
     byteLength = 14 + 20;
-    int64_t connectionId;
     int64_t srcAddr;
     int64_t destAddr;
+}
+
+class UdpHeader extends IpHeader
+{
+    byteLength = 14 + 20 + 8;
     uint16_t localPort;
     uint16_t destPort;
+}
+
+class TcpLikeHeader extends IpHeader
+{
+    // ! do not use this class directly, it has no size
     int64_t seqNumber;
+    uint16_t localPort;
+    uint16_t destPort;
     bool ECN;
     bool ECE;
+}
 
+class Packet extends TcpLikeHeader
+{
+    int64_t connectionId;
     int64_t receivedBytes;
     double startTime;
     double transmitTime;
@@ -45,8 +44,9 @@ packet commonHeader
     bool isFlowFinished;
 }
 
-class ATPHeader extends commonHeader
+class ATPHeader extends TcpLikeHeader
 {
+    byteLength = 14 + 20 + 16 + 8; // ATP header total size is 58 Bytes
     int bitmap0;
     int bitmap1;
     int fanIndegree0;
@@ -54,14 +54,12 @@ class ATPHeader extends commonHeader
     bool flags[6];
     int aggregatorIndex;
     int jobIdSeqNumber;
-
     int workerNumber;
-
-    byteLength = 14 + 20 + 16 + 8;
 }
 
-class MTATPHeader extends commonHeader
+class MTATPHeader extends TcpLikeHeader
 {
+    byteLength = 14 + 20 + 16 + 4;
     int timer;
     int workerNumber;
     int aggCounter;
@@ -69,5 +67,4 @@ class MTATPHeader extends commonHeader
     int aggregatorIndex;
     int jobIdSeqNumber;
     int treeCost;
-    byteLength = 14 + 20 + 16 + 4;
 }
