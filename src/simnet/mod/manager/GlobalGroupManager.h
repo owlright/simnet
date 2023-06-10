@@ -26,13 +26,13 @@ class GlobalGroupManager : public GlobalView
 {
 public:
     // for switch node use
-    IntAddress getGroupAddress(IntAddress fromNode) const;
-    IntAddress getGroupRootAddress(IntAddress groupAddr) const;
-    int getSendersNumber(IntAddress groupAddr) const;
+    // IntAddress getGroupAddress(IntAddress fromNode) const;
+    // IntAddress getGroupRootAddress(IntAddress groupAddr) const;
+    // int getSendersNumber(IntAddress groupAddr) const;
     // for host node use
-    int getTreeIndex(IntAddress fromNode) const;
-    int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;
-    int getBufferSize(IntAddress group, IntAddress switchAddress) const;
+    // int getTreeIndex(IntAddress fromNode) const;
+    // int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;
+    // int getBufferSize(IntAddress group, IntAddress switchAddress) const;
     // for signals collection
     void reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime);
     void reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime);
@@ -44,7 +44,7 @@ protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
 
 private:
-    void readSwitchConfig(const char * fileName);
+    // void readSwitchConfig(const char * fileName);
     void readHostConfig(const char * fileName);
     simsignal_t createSignalForGroup(IntAddress group);
 

@@ -28,8 +28,8 @@ void Routing::initialize(int stage)
 
     }
     if (stage == INITSTAGE_ASSIGN) {
-        if (!isSwitch && groupManager != nullptr)
-            myGroupAddress = groupManager->getGroupAddress(myAddress);
+        // if (!isSwitch && groupManager != nullptr)
+            // myGroupAddress = groupManager->getGroupAddress(myAddress);
     }
     if (stage == INITSTAGE_LAST) {
         if (isSwitch) {
@@ -63,7 +63,7 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr)
     else {
         int address = destAddr;
         if (isGroupAddr(destAddr)) {
-            address = groupManager->getGroupRootAddress(destAddr);
+            // address = groupManager->getGroupRootAddress(destAddr);
         }
         auto outGateIndexes = routeManager->getRoutes(myAddress, address); // ! pass switchAddress not srcAddress
         rtable[destAddr] = outGateIndexes;
@@ -132,7 +132,8 @@ void Routing::forwardIncoming(Packet *pk)
 
         if (pk->getKind() == DATA)
         {
-            auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
+            // auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
+            int indegree = 2;
             // ! even if this switch doesn't deal with this group
             // ! it still need to record incoming ports
             // ! because the ACK packet has to be sent reversely.

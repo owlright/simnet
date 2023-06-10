@@ -50,7 +50,7 @@ module WorkerApp extends UnicastSenderApp {
         port = default(2000);
         destPort = default(2001);
         int groupAddress = default(this.destAddress);
-        @class(WorkerApp);
+        @class(ATPWorker);
 }
 
 module ParameterServerApp extends UnicastEchoApp {

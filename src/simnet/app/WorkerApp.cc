@@ -26,17 +26,16 @@ void ATPWorker::initialize(int stage)
         if (groupManager==nullptr)
             throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
     }
-    if (stage == INITSTAGE_ASSIGN) {
-        groupAddr = groupManager->getGroupAddress(localAddr);
-        if (groupAddr > 0 && groupManager->getGroupRootAddress(groupAddr) != localAddr)
-        {
-            destAddr = groupAddr;
-    //        connection->bindRemote(destAddr, destPort); // no need to do this, parent will do this
-            treeIndex = groupManager->getTreeIndex(localAddr);
+    // if (stage == INITSTAGE_ASSIGN) {
+    //     groupAddr = groupManager->getGroupAddress(localAddr);
+    //     if (groupAddr > 0 && groupManager->getGroupRootAddress(groupAddr) != localAddr)
+    //     {
+    //         destAddr = groupAddr;
+    //         treeIndex = groupManager->getTreeIndex(localAddr);
 
-            EV << "(sender) groupAddr: " << groupAddr <<" localAddr:" << localAddr  << endl;
-        }
-    }
+    //         EV << "(sender) groupAddr: " << groupAddr <<" localAddr:" << localAddr  << endl;
+    //     }
+    // }
 }
 
 void ATPWorker::onFlowStart()
@@ -124,15 +123,15 @@ void TimerWorker::initialize(int stage)
         auto t = par("initDwellTime").doubleValueInUnit("s");
         dwellTime = SimTime(t).inUnit(SIMTIME_NS);
     }
-    else if (stage == INITSTAGE_ASSIGN) {
-        groupAddr = groupManager->getGroupAddress(localAddr);
-        if (groupAddr > 0 && groupManager->getGroupRootAddress(groupAddr) != localAddr)
-        {
-            destAddr = groupAddr;
-            treeIndex = groupManager->getTreeIndex(localAddr);
-            EV << "(sender) groupAddr: " << groupAddr <<" localAddr:" << localAddr  << endl;
-        }
-        if (groupAddr > 0)
-            numSenders = groupManager->getSendersNumber(groupAddr);
-    }
+    // else if (stage == INITSTAGE_ASSIGN) {
+    //     groupAddr = groupManager->getGroupAddress(localAddr);
+    //     if (groupAddr > 0 && groupManager->getGroupRootAddress(groupAddr) != localAddr)
+    //     {
+    //         destAddr = groupAddr;
+    //         treeIndex = groupManager->getTreeIndex(localAddr);
+    //         EV << "(sender) groupAddr: " << groupAddr <<" localAddr:" << localAddr  << endl;
+    //     }
+    //     if (groupAddr > 0)
+    //         numSenders = groupManager->getSendersNumber(groupAddr);
+    // }
 }

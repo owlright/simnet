@@ -3,56 +3,56 @@
 
 Define_Module(GlobalGroupManager);
 
-IntAddress GlobalGroupManager::getGroupAddress(IntAddress fromNode) const
-{
-    if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
-    {
-        return INVALID_ADDRESS;
-    }
-    return hostGroupInfo.at(fromNode).at(0);
-}
+// IntAddress GlobalGroupManager::getGroupAddress(IntAddress fromNode) const
+// {
+//     if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
+//     {
+//         return INVALID_ADDRESS;
+//     }
+//     return hostGroupInfo.at(fromNode).at(0);
+// }
 
-IntAddress GlobalGroupManager::getGroupRootAddress(IntAddress groupAddr) const
-{
-    auto it = groupRoot.find(std::make_pair(groupAddr, 0));
-    if (it == groupRoot.end())
-    {
-        return INVALID_ADDRESS;
-    }
-    return it->second;
-}
+// IntAddress GlobalGroupManager::getGroupRootAddress(IntAddress groupAddr) const
+// {
+//     auto it = groupRoot.find(std::make_pair(groupAddr, 0));
+//     if (it == groupRoot.end())
+//     {
+//         return INVALID_ADDRESS;
+//     }
+//     return it->second;
+// }
 
-int GlobalGroupManager::getSendersNumber(IntAddress groupAddr) const
-{
-    return groupSources.at(std::make_pair(groupAddr, 0)).size(); // minus the parameter server
-}
+// int GlobalGroupManager::getSendersNumber(IntAddress groupAddr) const
+// {
+//     return groupSources.at(std::make_pair(groupAddr, 0)).size(); // minus the parameter server
+// }
 
-int GlobalGroupManager::getTreeIndex(IntAddress fromNode) const
-{
-    if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
-    {
-        return INVALID_ADDRESS;
-    }
-    return hostGroupInfo.at(fromNode).at(1);
-}
+// int GlobalGroupManager::getTreeIndex(IntAddress fromNode) const
+// {
+//     if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
+//     {
+//         return INVALID_ADDRESS;
+//     }
+//     return hostGroupInfo.at(fromNode).at(1);
+// }
 
-int GlobalGroupManager::getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const
-{
-    auto it = switchFanIndegree.find(std::make_tuple(group, treeIndex, switchAddress));
-    if (it == switchFanIndegree.end())
-        return -1;
-    else
-        return it->second;
+// int GlobalGroupManager::getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const
+// {
+//     auto it = switchFanIndegree.find(std::make_tuple(group, treeIndex, switchAddress));
+//     if (it == switchFanIndegree.end())
+//         return -1;
+//     else
+//         return it->second;
 
-}
+// }
 
-int GlobalGroupManager::getBufferSize(IntAddress group, IntAddress switchAddress) const
-{
-    auto it = switchBufferSize.find(std::make_pair(group, switchAddress));
-    if (it == switchBufferSize.end())
-        throw cRuntimeError("bufferSize not found.");
-    return it->second;
-}
+// int GlobalGroupManager::getBufferSize(IntAddress group, IntAddress switchAddress) const
+// {
+//     auto it = switchBufferSize.find(std::make_pair(group, switchAddress));
+//     if (it == switchBufferSize.end())
+//         throw cRuntimeError("bufferSize not found.");
+//     return it->second;
+// }
 
 void GlobalGroupManager::reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime)
 {
@@ -94,36 +94,36 @@ void GlobalGroupManager::initialize(int stage)
         ASSERT(topo);
 }
 
-void GlobalGroupManager::readSwitchConfig(const char * fileName)
-{
-    std::fstream switchConfig(fileName, std::ios::in);
-    if (!switchConfig) {
-        throw cRuntimeError("%s not found!", fileName);
-    } else {
-        std::string line;
-        while (getline(switchConfig, line, '\n')) {
-            if (line.empty() || line[0] == '#')
-                continue;
-            std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
-            if (tokens.size() != 5)
-                throw cRuntimeError("wrong line in module file: 5 items required, line: \"%s\"", line.c_str());
-            // get fields from tokens
-            long groupAddr = atol(tokens[0].c_str());
-            long treeIndex = atol(tokens[1].c_str());
-            long switchAddr = atol(tokens[2].c_str());
-            long bufferSize = atol(tokens[3].c_str());
-            long fanIndegree = atol(tokens[4].c_str());
-            switchFanIndegree[std::make_tuple(groupAddr, treeIndex, switchAddr)] = fanIndegree;
-            switchBufferSize[std::make_pair(groupAddr, switchAddr)] = bufferSize;
-            EV << "groupAddress:" << groupAddr
-            << " treeIndex:" << treeIndex
-            << " switchAddress:" << switchAddr
-            << " bufferSize:" << bufferSize
-            << " fanIndegree:" << fanIndegree
-            << endl;
-        }
-    }
-}
+// void GlobalGroupManager::readSwitchConfig(const char * fileName)
+// {
+//     std::fstream switchConfig(fileName, std::ios::in);
+//     if (!switchConfig) {
+//         throw cRuntimeError("%s not found!", fileName);
+//     } else {
+//         std::string line;
+//         while (getline(switchConfig, line, '\n')) {
+//             if (line.empty() || line[0] == '#')
+//                 continue;
+//             std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
+//             if (tokens.size() != 5)
+//                 throw cRuntimeError("wrong line in module file: 5 items required, line: \"%s\"", line.c_str());
+//             // get fields from tokens
+//             long groupAddr = atol(tokens[0].c_str());
+//             long treeIndex = atol(tokens[1].c_str());
+//             long switchAddr = atol(tokens[2].c_str());
+//             long bufferSize = atol(tokens[3].c_str());
+//             long fanIndegree = atol(tokens[4].c_str());
+//             switchFanIndegree[std::make_tuple(groupAddr, treeIndex, switchAddr)] = fanIndegree;
+//             switchBufferSize[std::make_pair(groupAddr, switchAddr)] = bufferSize;
+//             EV << "groupAddress:" << groupAddr
+//             << " treeIndex:" << treeIndex
+//             << " switchAddress:" << switchAddr
+//             << " bufferSize:" << bufferSize
+//             << " fanIndegree:" << fanIndegree
+//             << endl;
+//         }
+//     }
+// }
 
 void GlobalGroupManager::readHostConfig(const char * fileName)
 {
@@ -234,62 +234,62 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
 {
     if (strcmp(policyName, "manual") == 0)
     {
-        readSwitchConfig(par("groupSwitchFile").stringValue());
+        // readSwitchConfig(par("groupSwitchFile").stringValue());
         readHostConfig(par("groupHostFile").stringValue());
     }
     else if (strcmp(policyName, "random") == 0)
     {
-        int groupNum = 2;
-        int groupMembers = 4;
-        IntAddress groupAddr = GROUPADDR_START - 1;
-        std::unordered_set<int> visited; // TODO may not necessary
-        for (auto i = 0; i < groupNum; i++)
-        {
-            groupAddr++;
-            auto gkey = std::make_pair(groupAddr, 0);
-            std::vector<int> members;
-            // * choose group members randomly without repetition
-            for (auto j = 0; j < groupMembers ; j++)
-            {
-                int index = hostNodes.size();
-                if (groupMembers > index)
-                    throw cRuntimeError("too many group members!");
-                do {
-                    index = intrand(hostNodes.size());
-                }
-                while (visited.find(index) != visited.end());
-                auto node = hostNodes.at(index);
-                members.push_back(node);
-                visited.insert(node);
-                auto addr = node2addr.at(node);
-                hostGroupInfo[addr].push_back(groupAddr);
-                hostGroupInfo[addr].push_back(0); // TODO treeIndex is always 0 so far
-            }
-            auto root = members.back();
-            members.pop_back();
-            groupRoot[gkey] = node2addr.at(root);
-            for (auto& m:members)
-                groupSources[gkey].push_back(node2addr.at(m));
+        // int groupNum = 2;
+        // int groupMembers = 4;
+        // IntAddress groupAddr = GROUPADDR_START - 1;
+        // std::unordered_set<int> visited; // TODO may not necessary
+        // for (auto i = 0; i < groupNum; i++)
+        // {
+        //     groupAddr++;
+        //     auto gkey = std::make_pair(groupAddr, 0);
+        //     std::vector<int> members;
+        //     // * choose group members randomly without repetition
+        //     for (auto j = 0; j < groupMembers ; j++)
+        //     {
+        //         int index = hostNodes.size();
+        //         if (groupMembers > index)
+        //             throw cRuntimeError("too many group members!");
+        //         do {
+        //             index = intrand(hostNodes.size());
+        //         }
+        //         while (visited.find(index) != visited.end());
+        //         auto node = hostNodes.at(index);
+        //         members.push_back(node);
+        //         visited.insert(node);
+        //         auto addr = node2addr.at(node);
+        //         hostGroupInfo[addr].push_back(groupAddr);
+        //         hostGroupInfo[addr].push_back(0); // TODO treeIndex is always 0 so far
+        //     }
+        //     auto root = members.back();
+        //     members.pop_back();
+        //     groupRoot[gkey] = node2addr.at(root);
+        //     for (auto& m:members)
+        //         groupSources[gkey].push_back(node2addr.at(m));
 
-            // * get steiner tree for each group
-            cTopology tree = cTopology("steiner");
-            buildSteinerTree(tree, members, root);
-            // * tree construction is finished
-            // * now assign tree to routers
-            for (auto i = 0; i < tree.getNumNodes(); i++) {
-                auto node = tree.getNode(i);
-                auto mod = node->getModule();
-                if (mod->getProperties()->get("switch")!=nullptr) {
-                    auto indegree = node->getNumInLinks();
-                    auto switchAddr = mod->par("address").intValue();
-                    EV_DEBUG <<"switchAddr:" << std::setw(6) << switchAddr << " indegree:" << indegree << endl;
-                    if (indegree >= 2) {
-                        switchFanIndegree[std::make_tuple(groupAddr, 0, switchAddr)] = indegree;
-                        switchBufferSize[std::make_pair(groupAddr, switchAddr)] = 10000;
-                    }
-                }
-            }
-        }
+        //     // * get steiner tree for each group
+        //     cTopology tree = cTopology("steiner");
+        //     buildSteinerTree(tree, members, root);
+        //     // * tree construction is finished
+        //     // * now assign tree to routers
+        //     for (auto i = 0; i < tree.getNumNodes(); i++) {
+        //         auto node = tree.getNode(i);
+        //         auto mod = node->getModule();
+        //         if (mod->getProperties()->get("switch")!=nullptr) {
+        //             auto indegree = node->getNumInLinks();
+        //             auto switchAddr = mod->par("address").intValue();
+        //             EV_DEBUG <<"switchAddr:" << std::setw(6) << switchAddr << " indegree:" << indegree << endl;
+        //             if (indegree >= 2) {
+        //                 switchFanIndegree[std::make_tuple(groupAddr, 0, switchAddr)] = indegree;
+        //                 switchBufferSize[std::make_pair(groupAddr, switchAddr)] = 10000;
+        //             }
+        //         }
+        //     }
+        // }
     }
     else
     {

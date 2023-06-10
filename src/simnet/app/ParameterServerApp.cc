@@ -34,17 +34,17 @@ void ParameterServerApp::initialize(int stage)
         if (groupManager==nullptr)
             throw cRuntimeError("ParameterServerApp::initialize: groupManager not found!");
     }
-    if (stage == INITSTAGE_ASSIGN) {
-        groupAddr = groupManager->getGroupAddress(localAddr);
-        treeIndex = groupManager->getTreeIndex(localAddr); // TODO for what here?
-        if (groupManager->getGroupRootAddress(groupAddr) == localAddr) {
-            EV << "(receiver) groupAddr: " << groupAddr <<" localAddr:" << localAddr << endl;
-        }
-        else
-        {
-            groupAddr = -1;
-        }
-    }
+    // if (stage == INITSTAGE_ASSIGN) {
+    //     groupAddr = groupManager->getGroupAddress(localAddr);
+    //     treeIndex = groupManager->getTreeIndex(localAddr); // TODO for what here?
+    //     if (groupManager->getGroupRootAddress(groupAddr) == localAddr) {
+    //         EV << "(receiver) groupAddr: " << groupAddr <<" localAddr:" << localAddr << endl;
+    //     }
+    //     else
+    //     {
+    //         groupAddr = -1;
+    //     }
+    // }
 }
 
 void ParameterServerApp::handleMessage(cMessage *msg)
