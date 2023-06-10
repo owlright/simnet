@@ -6,17 +6,16 @@ import ned.DatarateChannel;
 import simnet.mod.manager.GlobalRouteManager;
 import simnet.mod.manager.GlobalGroupManager;
 
+channel C extends DatarateChannel
+{
+    delay = 2us;
+    datarate = 10Gbps;
+}
+
 network AggNto1
 {
     parameters:
         int numberOfSenders = default(2);
-
-    types:
-        channel C extends DatarateChannel
-        {
-            delay = 2us;
-            datarate = 10Gbps;
-        }
 
     submodules:
         sender[numberOfSenders]: Host {
@@ -43,13 +42,6 @@ network RTTVariance
         int g1numOfWorkers;
         int g2numOfWorkers;
         int numberOfbgflows;
-
-    types:
-        channel C extends DatarateChannel
-        {
-            delay = 2us;
-            datarate = 10Gbps;
-        }
 
     submodules:
         g1Worker[g1numOfWorkers]: Host {
@@ -110,3 +102,70 @@ network RTTVariance
         g2PS.port++ <--> C <--> localSwitch.port++;
 }
 
+network MinFatTree
+{
+    parameters:
+        int podNumber = 2;
+        int coreNumber = 2;
+
+    submodules:
+        pods[podNumber]: Pod {
+            @display("p=166,112,r,50");
+        }
+        coreSwitches[coreNumber]: Switch {
+            address = 1000*index;
+            @display("p=166,32,r,50");
+        }
+
+        routeManager: GlobalRouteManager;
+        groupManager: GlobalGroupManager {
+
+            @display("p=295,106");
+        }
+    connections:
+        coreSwitches[0].port++ <--> C <--> pods[0].port[0];
+        coreSwitches[1].port++ <--> C <--> pods[0].port[1];
+        coreSwitches[0].port++ <--> C <--> pods[0].port[2];
+        coreSwitches[1].port++ <--> C <--> pods[0].port[3];
+        coreSwitches[0].port++ <--> C <--> pods[1].port[0];
+        coreSwitches[1].port++ <--> C <--> pods[1].port[1];
+        coreSwitches[0].port++ <--> C <--> pods[1].port[2];
+        coreSwitches[1].port++ <--> C <--> pods[1].port[3];
+}
+
+module Pod
+{
+    parameters:
+        int k = default(4); // port number of switch
+        int hostNumber = int(k^2/4);
+        int switchLevelNumber = int(k/2);
+        int halfPorts = int(k/2);
+
+        @display("bgb=400,400");
+    gates:
+        inout port[halfPorts*switchLevelNumber];
+
+    submodules:        
+        level1[switchLevelNumber]: Switch {
+            address = parent.index*100 + (index) + 20;
+            @display("p=101,50,r,100");
+        }
+        level0[switchLevelNumber]: Switch {
+            address = parent.index*100 + (index) + 10;
+            @display("p=101,150,r,100");
+        }
+        hosts[hostNumber]: Host {
+            address = parent.index*100 + (index) + 30;
+            @display("p=78,250,r,50");
+        }
+    connections:
+        for i=0..switchLevelNumber-1, for j=0..halfPorts-1 {
+            level0[i].port++ <--> C <--> hosts[i*halfPorts + j].port++;
+        }
+        for i=0..switchLevelNumber-1, for j=0..switchLevelNumber-1 {
+            level0[i].port++ <--> C <--> level1[j].port++;
+        }
+        for i=0..halfPorts-1, for j=0..switchLevelNumber-1 {
+            port[j*halfPorts+i] <--> level1[j].port++;
+        }
+}
