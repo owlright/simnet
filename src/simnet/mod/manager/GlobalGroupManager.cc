@@ -141,8 +141,10 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
                 throw cRuntimeError("wrong line in module file: 3 items required, line: \"%s\"", line.c_str());
             // get fields from tokens
             auto groupAddr = atol(tokens[0].c_str());
-            auto workerAddrs = cStringTokenizer(tokens[1].c_str(), "[,]").asIntVector();
-            auto PSAddrs = cStringTokenizer(tokens[2].c_str(), "[,]").asIntVector();
+            auto workerAddrsStr = tokens[1].c_str();
+            auto workerAddrs = cStringTokenizer(workerAddrsStr, "[,]").asIntVector();
+            auto PSAddrsStr = tokens[2].c_str();
+            auto PSAddrs = cStringTokenizer(PSAddrsStr, "[,]").asIntVector();
             auto entry = new GroupHostInfo();
             entry->jobId = jobId++;
             entry->groupAddress = groupAddr;
@@ -151,6 +153,8 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             entry->numWorkers = workerAddrs.size();
             entry->numPSes = PSAddrs.size();
             groupHostInfodb.push_back(entry);
+            EV << std::setw(20) << "groupAddress" << std::setw(30) << "workers" << std::setw(30) << "PSes" << endl;
+            EV << std::setw(20) << groupAddr << std::setw(30) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
             for (auto& w: workerAddrs)
             {
                 ASSERT(hostGroupInfo.find(w) == hostGroupInfo.end()); // one host only in one group
