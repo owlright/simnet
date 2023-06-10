@@ -9,8 +9,10 @@ struct GroupHostInfo
 {
     uint16_t jobId;
     IntAddress groupAddress;
-    std::vector<IntAddress> PSes;
-    std::vector<IntAddress> workers;
+    std::vector<int> PSes;
+    std::vector<int> workers;
+    int numWorkers;
+    int numPSes;
 };
 
 struct GroupSwitchInfo
@@ -18,18 +20,6 @@ struct GroupSwitchInfo
     // for manually set
     std::vector<IntAddress> switchAddrs;
     std::vector<B> bufferSizes;
-};
-
-struct GroupHostInfoWithKey
-{
-    int key;
-    GroupHostInfo* hostInfo;
-};
-
-struct GroupSwitchInfoWithKey
-{
-    int key;
-    GroupSwitchInfo* switchInfo;
 };
 
 class GlobalGroupManager : public GlobalView
@@ -59,8 +49,8 @@ private:
     simsignal_t createSignalForGroup(IntAddress group);
 
 private:
-    std::unordered_map<IntAddress, GroupHostInfoWithKey> hostGroupInfo;
-    std::unordered_map<IntAddress, GroupSwitchInfoWithKey> switchGroupInfo;
+    std::unordered_map<IntAddress, GroupHostInfo*> hostGroupInfo;
+    std::unordered_map<IntAddress, GroupSwitchInfo*> switchGroupInfo;
 
     struct groupRoundFinishInfo {
         size_t counter{0};

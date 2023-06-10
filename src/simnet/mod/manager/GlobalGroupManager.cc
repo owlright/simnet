@@ -76,7 +76,8 @@ void GlobalGroupManager::reportFlowStop(IntAddress groupAddr, simtime_t roundSto
 
     auto roundMeter = it->second;
     roundMeter->counter++;
-    if (roundMeter->counter == groupSources.at(std::make_pair(groupAddr, 0)).size()) {
+
+    if (roundMeter->counter == groupHostInfodb.at(groupAddr)->numWorkers) {
         emit(roundMeter->roundFctSignal, simTime() - roundMeter->startTime);
         roundMeter->startTime = simTime();
         roundMeter->counter = 0;
@@ -131,31 +132,35 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
         throw cRuntimeError("%s not found!", fileName);
     } else {
         std::string line;
+        int jobId = 0; // which is also the index in database
         while (getline(hostConfig, line, '\n')) {
             if (line.empty() || line[0] == '#')
                 continue;
             std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
-            if (tokens.size() != 4)
+            if (tokens.size() != 3)
                 throw cRuntimeError("wrong line in module file: 3 items required, line: \"%s\"", line.c_str());
             // get fields from tokens
-            long jobId = atol(tokens[0].c_str());
-            long groupAddr = atol(tokens[1].c_str());
-            auto workerAddrs = tokens[2].c_str();
-            long PSAddr = atol(tokens[3].c_str());
-            auto addresses = cStringTokenizer(workerAddrs, "[,]").asIntVector();
-            hostGroupInfo[hostAddr].push_back(groupAddr);
-            hostGroupInfo[hostAddr].push_back(treeIndex);
-            if (isRoot == 0) {
-                groupSources[std::make_pair(groupAddr, treeIndex)].push_back(hostAddr);
-            } else {
-                groupRoot[std::make_pair(groupAddr, treeIndex)] = hostAddr;
+            auto groupAddr = atol(tokens[0].c_str());
+            auto workerAddrs = cStringTokenizer(tokens[1].c_str(), "[,]").asIntVector();
+            auto PSAddrs = cStringTokenizer(tokens[2].c_str(), "[,]").asIntVector();
+            auto entry = new GroupHostInfo();
+            entry->jobId = jobId++;
+            entry->groupAddress = groupAddr;
+            entry->workers = workerAddrs;
+            entry->PSes = PSAddrs;
+            entry->numWorkers = workerAddrs.size();
+            entry->numPSes = PSAddrs.size();
+            groupHostInfodb.push_back(entry);
+            for (auto& w: workerAddrs)
+            {
+                ASSERT(hostGroupInfo.find(w) == hostGroupInfo.end()); // one host only in one group
+                hostGroupInfo[w] = entry;
             }
-
-            EV << "groupAddress:" << groupAddr
-            << " treeIndex:" << treeIndex
-            << " hostAddress:" << hostAddr
-            << " isRoot:" << isRoot
-            << endl;
+            for (auto& s: PSAddrs)
+            {
+                ASSERT(hostGroupInfo.find(s) == hostGroupInfo.end()); // a server only in one group
+                hostGroupInfo[s] = entry;
+            }
         }
     }
 }
