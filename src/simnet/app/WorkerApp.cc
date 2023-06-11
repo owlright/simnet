@@ -77,6 +77,10 @@ Packet* ATPWorker::createDataPacket(B packetBytes)
     auto agtrIndex = hashAggrIndex(jobid, seq);
     EV_DEBUG << "aggregator index: " << agtrIndex << endl;
     pk->setAggregatorIndex(agtrIndex);
+    pk->setBitmap0(groupInfo->switchinfo->bitmap0);
+    pk->setBitmap1(groupInfo->switchinfo->bitmap1);
+    pk->setFanIndegree0(groupInfo->switchinfo->fanIndegree0);
+    pk->setFanIndegree1(groupInfo->switchinfo->fanIndegree1);
     return pk;
 }
 

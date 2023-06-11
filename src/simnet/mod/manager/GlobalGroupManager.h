@@ -19,10 +19,12 @@ struct GroupHostInfo
 struct GroupSwitchInfo
 {
     // for manually set
-    IntAddress switch0;
-    IntAddress switch1;
-    int fanIndegree0;
-    int fanIndegree1;
+    IntAddress switch0{-1};
+    IntAddress switch1{-1};
+    int fanIndegree0{-1};
+    int fanIndegree1{-1};
+    int bitmap0;
+    int bitmap1;
 };
 
 struct GroupInfoWithIndex

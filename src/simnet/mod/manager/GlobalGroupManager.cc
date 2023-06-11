@@ -110,34 +110,49 @@ void GlobalGroupManager::readSwitchConfig(const char * fileName)
         throw cRuntimeError("%s not found!", fileName);
     } else {
         std::string line;
-        EV << std::left << std::setw(20) << "groupAddress"
-            << std::setw(30) << "workers"
+        EV << std::left << std::setw(15) << "groupAddress"
+            << std::setw(10) << "worker"
+            << std::setw(10) << "bitmap0"
             << std::setw(10) << "switch0"
-            << std::setw(20) << "fanIndegree0"
+            << std::setw(15) << "fanIndegree0"
+            << std::setw(10) << "bitmap1"
             << std::setw(10) << "switch1"
-            << std::setw(20) << "fanIndegree1"
+            << std::setw(15) << "fanIndegree1"
             << endl;
         while (getline(switchConfig, line, '\n')) {
             if (line.empty() || line[0] == '#')
                 continue;
             std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
-            if (tokens.size() != 6)
-                throw cRuntimeError("wrong line in module file: 6 items required, line: \"%s\"", line.c_str());
-            // get fields from tokens
+            if (tokens.size() != 8)
+                throw cRuntimeError("wrong line in module file: 8 items required, line: \"%s\"", line.c_str());
+            // // get fields from tokens
             auto groupAddr    = atol(tokens[0].c_str());
-            auto workerAddrsStr = tokens[1].c_str();
-            auto workerAddrs    = cStringTokenizer(workerAddrsStr, "[,]").asIntVector();
-            auto switch0Addr  = atol(tokens[2].c_str());
-            auto fanIndegree0 = atol(tokens[3].c_str());
-            auto switch1Addr  = atol(tokens[4].c_str());
-            auto fanIndegree1 = atol(tokens[5].c_str());
-            EV << std::setw(20) << groupAddr
-                << std::setw(30) << workerAddrsStr
+            auto workerAddr   = atol(tokens[1].c_str());
+            auto bitmap0Index = atol(tokens[2].c_str());
+            auto switch0Addr  = atol(tokens[3].c_str());
+            auto fanIndegree0 = atol(tokens[4].c_str());
+            auto bitmap1Index = atol(tokens[5].c_str());
+            auto switch1Addr  = atol(tokens[6].c_str());
+            auto fanIndegree1 = atol(tokens[7].c_str());
+            EV << std::left << std::setw(15) << "groupAddress"
+                << std::setw(10) << workerAddr
+                << std::setw(10) << bitmap0Index
                 << std::setw(10) << switch0Addr
-                << std::setw(20) << fanIndegree0
+                << std::setw(15) << fanIndegree0
+                << std::setw(10) << bitmap1Index
                 << std::setw(10) << switch1Addr
-                << std::setw(20) << fanIndegree1
+                << std::setw(15) << fanIndegree1
                 << endl;
+            std::shared_ptr<GroupSwitchInfo> entry(new GroupSwitchInfo());
+            entry->switch0 = switch0Addr;
+            entry->switch1 = switch1Addr;
+            entry->fanIndegree0 = fanIndegree0;
+            entry->fanIndegree1 = fanIndegree1;
+            entry->bitmap0 = bitmap0Index > 0 ? (1 << bitmap0Index) : bitmap0Index;
+            entry->bitmap1 = bitmap0Index > 0 ? (1 << bitmap1Index) : bitmap1Index;
+            auto it = hostGroupInfo.find(workerAddr);
+            ASSERT(it != hostGroupInfo.end());
+            it->second->switchinfo = entry;
         }
     }
 }

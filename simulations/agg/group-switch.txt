@@ -1,9 +1,10 @@
-# This file decides group's packet aggregation location(switch) and
-# its fanIndegree on that switch.
-# The column "treeIndex" is used for the case when a group has multiple trees,
+# Don't use spacei in every column
 # how to allocate packet seqs to each tree is globalGroupManager or sender's job
-# groupAddr     workers         switch0   fanIndegree0     switch1     fanIndegree1
-   10000        [1000,1001]     4002         2             3003         2
-   10000        [1002,1003]     4003         2             3003         2
-   10000        [2000,2001]     3002         2             3003         2
-   10000        [2002]          3002         2             3003         2
+# groupAddr     worker    bitmap0     switch0   fanIndegree0   bitmap1    switch1     fanIndegree1
+   10000        1000         1          4002         2            1         3003         4
+   10000        1001         2          4002         2            1         3003         4
+   10000        1002         1          4003         2            2         3003         4
+   10000        1003         2          4003         2            2         3003         4
+   10000        2000         1          3002         2            3         3003         4
+   10000        2001         2          3002         2            3         3003         4
+   10000        2002        -1           -1          -1           4         3003         4
