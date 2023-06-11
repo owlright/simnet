@@ -2,6 +2,7 @@
 
 #include <omnetpp.h>
 #include <tuple>
+#include <memory>
 #include "GlobalView.h"
 using namespace omnetpp;
 
