@@ -108,11 +108,11 @@ network testFatTree
         @display("bgb=860,400");
     submodules:
         coreS0: Switch {
-            address = 10000;
+            address = 5000;
             @display("p=300,75");
         }
         coreS1: Switch {
-            address = 10001;
+            address = 5001;
             @display("p=450,75");
         }
         podS0[4]: Switch {

@@ -18,8 +18,8 @@ protected:
 
 private:
     GlobalGroupManager* groupManager;
+    const GroupHostInfoWithIndex* groupInfo;
     IntAddress groupAddr{INVALID_ADDRESS};
-    int treeIndex{INVALID_ID};
 };
 
 Define_Module(ParameterServerApp);
@@ -31,20 +31,22 @@ void ParameterServerApp::initialize(int stage)
     UnicastEchoApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
-        if (groupManager==nullptr)
-            throw cRuntimeError("ParameterServerApp::initialize: groupManager not found!");
+        if (groupManager == nullptr)
+            EV_WARN << "You may forget to set groupManager." << endl;
     }
-    // if (stage == INITSTAGE_ASSIGN) {
-    //     groupAddr = groupManager->getGroupAddress(localAddr);
-    //     treeIndex = groupManager->getTreeIndex(localAddr); // TODO for what here?
-    //     if (groupManager->getGroupRootAddress(groupAddr) == localAddr) {
-    //         EV << "(receiver) groupAddr: " << groupAddr <<" localAddr:" << localAddr << endl;
-    //     }
-    //     else
-    //     {
-    //         groupAddr = -1;
-    //     }
-    // }
+    if (stage == INITSTAGE_ASSIGN) {
+        if (groupManager==nullptr)
+            throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
+        groupInfo = groupManager->getGroupHostInfo(localAddr);
+        if (groupInfo != nullptr && !groupInfo->isWorker) {
+            groupAddr = groupInfo->hostinfo->groupAddress;
+            EV << "server " << localAddr << " accept job " << groupInfo->hostinfo->jobId
+               << " groupAddr: " << groupAddr << endl;
+        }
+        else {
+            EV_WARN << "host " << localAddr << " have an idle ATPServer" << endl;
+        }
+    }
 }
 
 void ParameterServerApp::handleMessage(cMessage *msg)

@@ -11,9 +11,9 @@ protected:
     virtual Packet* createDataPacket(B packetBytes) override;
 
 private:
-    IntAddress groupAddr{INVALID_ADDRESS};
-    int treeIndex{INVALID_ID};
     GlobalGroupManager* groupManager;
+    const GroupHostInfoWithIndex* groupInfo;
+    IntAddress groupAddr{INVALID_ADDRESS};
 };
 
 Define_Module(ATPWorker);
@@ -23,19 +23,23 @@ void ATPWorker::initialize(int stage)
     UnicastSenderApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
+        if (groupManager==nullptr) // sometimes for quick debug
+            EV_WARN << "You may forget to set groupManager." << endl;
+    }
+    if (stage == INITSTAGE_ASSIGN) {
         if (groupManager==nullptr)
             throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
+        groupInfo = groupManager->getGroupHostInfo(localAddr);
+        if (groupInfo != nullptr && groupInfo->isWorker) {
+            groupAddr = groupInfo->hostinfo->groupAddress;
+            EV << "host " << localAddr << " accept job " << groupInfo->hostinfo->jobId
+               << " groupAddr: " << groupAddr << endl;
+        }
+        else {
+            EV_WARN << "host " << localAddr << " have an idle ATPWorker" << endl;
+        }
+        destAddr = groupAddr;
     }
-    // if (stage == INITSTAGE_ASSIGN) {
-    //     groupAddr = groupManager->getGroupAddress(localAddr);
-    //     if (groupAddr > 0 && groupManager->getGroupRootAddress(groupAddr) != localAddr)
-    //     {
-    //         destAddr = groupAddr;
-    //         treeIndex = groupManager->getTreeIndex(localAddr);
-
-    //         EV << "(sender) groupAddr: " << groupAddr <<" localAddr:" << localAddr  << endl;
-    //     }
-    // }
 }
 
 void ATPWorker::onFlowStart()
