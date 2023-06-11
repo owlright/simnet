@@ -129,8 +129,8 @@ void GlobalGroupManager::readSwitchConfig(const char * fileName)
             auto workerAddrs    = cStringTokenizer(workerAddrsStr, "[,]").asIntVector();
             auto switch0Addr  = atol(tokens[2].c_str());
             auto fanIndegree0 = atol(tokens[3].c_str());
-            auto switch1Addr  = atol(tokens[2].c_str());
-            auto fanIndegree1 = atol(tokens[3].c_str());
+            auto switch1Addr  = atol(tokens[4].c_str());
+            auto fanIndegree1 = atol(tokens[5].c_str());
             EV << std::setw(20) << groupAddr
                 << std::setw(30) << workerAddrsStr
                 << std::setw(10) << switch0Addr
