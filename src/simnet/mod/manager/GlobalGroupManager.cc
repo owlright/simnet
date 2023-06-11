@@ -54,7 +54,7 @@ Define_Module(GlobalGroupManager);
 //     return it->second;
 // }
 
-const GroupHostInfoWithIndex*
+const GroupInfoWithIndex*
 GlobalGroupManager::getGroupHostInfo(IntAddress hostAddr) const
 {
     auto it = hostGroupInfo.find(hostAddr);
@@ -166,7 +166,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             EV << std::setw(20) << groupAddr << std::setw(30) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
             for (auto i = 0; i < workerAddrs.size(); i++)
             {
-                auto hostEntry = new GroupHostInfoWithIndex();
+                auto hostEntry = new GroupInfoWithIndex();
                 hostEntry->hostinfo = entry;
                 hostEntry->isWorker = true;
                 hostEntry->index = i;
@@ -176,7 +176,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             }
             for (auto i = 0; i < PSAddrs.size(); i++)
             {
-                auto hostEntry = new GroupHostInfoWithIndex();
+                auto hostEntry = new GroupInfoWithIndex();
                 hostEntry->hostinfo = entry;
                 hostEntry->isWorker = false;
                 hostEntry->index = i;

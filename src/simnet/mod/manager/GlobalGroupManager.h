@@ -22,7 +22,7 @@ struct GroupSwitchInfo
     std::vector<B> bufferSizes;
 };
 
-struct GroupHostInfoWithIndex
+struct GroupInfoWithIndex
 {
     bool isWorker;
     int index;
@@ -48,7 +48,7 @@ public:
     // int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;
     // int getBufferSize(IntAddress group, IntAddress switchAddress) const;
     // for signals collection
-    const GroupHostInfoWithIndex* getGroupHostInfo(IntAddress hostAddr) const;
+    const GroupInfoWithIndex* getGroupHostInfo(IntAddress hostAddr) const;
     void reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime);
     void reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime);
 
@@ -64,7 +64,7 @@ private:
     simsignal_t createSignalForGroup(IntAddress group);
 
 private:
-    std::unordered_map<IntAddress, GroupHostInfoWithIndex* > hostGroupInfo;
+    std::unordered_map<IntAddress, GroupInfoWithIndex* > hostGroupInfo;
     std::unordered_map<IntAddress, GroupSwitchInfoWithIndex* > switchGroupInfo;
 
     struct groupRoundFinishInfo {

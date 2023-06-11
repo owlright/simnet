@@ -18,7 +18,7 @@ protected:
 
 private:
     GlobalGroupManager* groupManager;
-    const GroupHostInfoWithIndex* groupInfo;
+    const GroupInfoWithIndex* groupInfo;
     IntAddress groupAddr{INVALID_ADDRESS};
 };
 
