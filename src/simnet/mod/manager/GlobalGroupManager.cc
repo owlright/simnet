@@ -103,36 +103,44 @@ void GlobalGroupManager::initialize(int stage)
         ASSERT(topo);
 }
 
-// void GlobalGroupManager::readSwitchConfig(const char * fileName)
-// {
-//     std::fstream switchConfig(fileName, std::ios::in);
-//     if (!switchConfig) {
-//         throw cRuntimeError("%s not found!", fileName);
-//     } else {
-//         std::string line;
-//         while (getline(switchConfig, line, '\n')) {
-//             if (line.empty() || line[0] == '#')
-//                 continue;
-//             std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
-//             if (tokens.size() != 5)
-//                 throw cRuntimeError("wrong line in module file: 5 items required, line: \"%s\"", line.c_str());
-//             // get fields from tokens
-//             long groupAddr = atol(tokens[0].c_str());
-//             long treeIndex = atol(tokens[1].c_str());
-//             long switchAddr = atol(tokens[2].c_str());
-//             long bufferSize = atol(tokens[3].c_str());
-//             long fanIndegree = atol(tokens[4].c_str());
-//             switchFanIndegree[std::make_tuple(groupAddr, treeIndex, switchAddr)] = fanIndegree;
-//             switchBufferSize[std::make_pair(groupAddr, switchAddr)] = bufferSize;
-//             EV << "groupAddress:" << groupAddr
-//             << " treeIndex:" << treeIndex
-//             << " switchAddress:" << switchAddr
-//             << " bufferSize:" << bufferSize
-//             << " fanIndegree:" << fanIndegree
-//             << endl;
-//         }
-//     }
-// }
+void GlobalGroupManager::readSwitchConfig(const char * fileName)
+{
+    std::fstream switchConfig(fileName, std::ios::in);
+    if (!switchConfig) {
+        throw cRuntimeError("%s not found!", fileName);
+    } else {
+        std::string line;
+        EV << std::left << std::setw(20) << "groupAddress"
+            << std::setw(30) << "workers"
+            << std::setw(10) << "switch0"
+            << std::setw(20) << "fanIndegree0"
+            << std::setw(10) << "switch1"
+            << std::setw(20) << "fanIndegree1"
+            << endl;
+        while (getline(switchConfig, line, '\n')) {
+            if (line.empty() || line[0] == '#')
+                continue;
+            std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
+            if (tokens.size() != 6)
+                throw cRuntimeError("wrong line in module file: 6 items required, line: \"%s\"", line.c_str());
+            // get fields from tokens
+            auto groupAddr    = atol(tokens[0].c_str());
+            auto workerAddrsStr = tokens[1].c_str();
+            auto workerAddrs    = cStringTokenizer(workerAddrsStr, "[,]").asIntVector();
+            auto switch0Addr  = atol(tokens[2].c_str());
+            auto fanIndegree0 = atol(tokens[3].c_str());
+            auto switch1Addr  = atol(tokens[2].c_str());
+            auto fanIndegree1 = atol(tokens[3].c_str());
+            EV << std::setw(20) << groupAddr
+                << std::setw(30) << workerAddrsStr
+                << std::setw(10) << switch0Addr
+                << std::setw(20) << fanIndegree0
+                << std::setw(10) << switch1Addr
+                << std::setw(20) << fanIndegree1
+                << endl;
+        }
+    }
+}
 
 void GlobalGroupManager::readHostConfig(const char * fileName)
 {
@@ -142,6 +150,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
     } else {
         std::string line;
         int jobId = 0; // which is also the index in database
+        EV << std::left << std::setw(20) << "groupAddress" << std::setw(50) << "workers" << std::setw(30) << "PSes" << endl;
         while (getline(hostConfig, line, '\n')) {
             if (line.empty() || line[0] == '#')
                 continue;
@@ -162,8 +171,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             entry->numWorkers = workerAddrs.size();
             entry->numPSes = PSAddrs.size();
             groupHostInfodb.push_back(entry);
-            EV << std::setw(20) << "groupAddress" << std::setw(30) << "workers" << std::setw(30) << "PSes" << endl;
-            EV << std::setw(20) << groupAddr << std::setw(30) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
+            EV << std::setw(20) << groupAddr << std::setw(50) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
             for (auto i = 0; i < workerAddrs.size(); i++)
             {
                 auto hostEntry = new GroupInfoWithIndex();
@@ -257,8 +265,8 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
 {
     if (strcmp(policyName, "manual") == 0)
     {
-        // readSwitchConfig(par("groupSwitchFile").stringValue());
         readHostConfig(par("groupHostFile").stringValue());
+        readSwitchConfig(par("groupSwitchFile").stringValue());
     }
     else if (strcmp(policyName, "random") == 0)
     {

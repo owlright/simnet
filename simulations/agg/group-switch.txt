@@ -2,5 +2,8 @@
 # its fanIndegree on that switch.
 # The column "treeIndex" is used for the case when a group has multiple trees,
 # how to allocate packet seqs to each tree is globalGroupManager or sender's job
-# groupAddr    treeIndex    switch    bufferSize(MB) fanIndegree
-10000          0            1234      10             2
+# groupAddr     workers         switch0   fanIndegree0     switch1     fanIndegree1
+   10000        [1000,1001]     4002         2             3003         2
+   10000        [1002,1003]     4003         2             3003         2
+   10000        [2000,2001]     3002         2             3003         2
+   10000        [2002]          3002         2             3003         2

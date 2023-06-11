@@ -18,8 +18,10 @@ struct GroupHostInfo
 struct GroupSwitchInfo
 {
     // for manually set
-    std::vector<IntAddress> switchAddrs;
-    std::vector<B> bufferSizes;
+    IntAddress switch0;
+    IntAddress switch1;
+    int fanIndegree0;
+    int fanIndegree1;
 };
 
 struct GroupInfoWithIndex
@@ -27,14 +29,15 @@ struct GroupInfoWithIndex
     bool isWorker;
     int index;
     std::shared_ptr<const GroupHostInfo> hostinfo;
-};
-
-struct GroupSwitchInfoWithIndex
-{
-    bool isWorker;
-    int index;
     std::shared_ptr<const GroupSwitchInfo> switchinfo;
 };
+
+// struct GroupSwitchInfoWithIndex
+// {
+//     bool isWorker;
+//     int index;
+//     std::shared_ptr<const GroupSwitchInfo> switchinfo;
+// };
 
 class GlobalGroupManager : public GlobalView
 {
@@ -59,13 +62,13 @@ protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
 
 private:
-    // void readSwitchConfig(const char * fileName);
+    void readSwitchConfig(const char * fileName);
     void readHostConfig(const char * fileName);
     simsignal_t createSignalForGroup(IntAddress group);
 
 private:
     std::unordered_map<IntAddress, GroupInfoWithIndex* > hostGroupInfo;
-    std::unordered_map<IntAddress, GroupSwitchInfoWithIndex* > switchGroupInfo;
+    // std::unordered_map<IntAddress, GroupSwitchInfoWithIndex* > switchGroupInfo;
 
     struct groupRoundFinishInfo {
         size_t counter{0};
