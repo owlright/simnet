@@ -74,7 +74,9 @@ Packet* ATPWorker::createDataPacket(B packetBytes)
     auto jobID = pk->getDestAddr();
     auto seq = reinterpret_cast<uint16_t&>(seqNumber);
     auto jobid = reinterpret_cast<uint16_t&>(jobID);
-    pk->setAggregatorIndex(hashAggrIndex(jobid, seq));
+    auto agtrIndex = hashAggrIndex(jobid, seq);
+    EV_DEBUG << "aggregator index: " << agtrIndex << endl;
+    pk->setAggregatorIndex(agtrIndex);
     return pk;
 }
 
