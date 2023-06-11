@@ -54,6 +54,15 @@ Define_Module(GlobalGroupManager);
 //     return it->second;
 // }
 
+const GroupHostInfoWithIndex*
+GlobalGroupManager::getGroupHostInfo(IntAddress hostAddr) const
+{
+    auto it = hostGroupInfo.find(hostAddr);
+    if (it != hostGroupInfo.end())
+        return it->second;
+    return nullptr;
+}
+
 void GlobalGroupManager::reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime)
 {
     if (groupRoundStartTime.find(groupAddr) == groupRoundStartTime.end()) {
@@ -145,7 +154,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             auto workerAddrs = cStringTokenizer(workerAddrsStr, "[,]").asIntVector();
             auto PSAddrsStr = tokens[2].c_str();
             auto PSAddrs = cStringTokenizer(PSAddrsStr, "[,]").asIntVector();
-            auto entry = new GroupHostInfo();
+            std::shared_ptr<GroupHostInfo> entry(new GroupHostInfo());
             entry->jobId = jobId++;
             entry->groupAddress = groupAddr;
             entry->workers = workerAddrs;
@@ -155,15 +164,25 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             groupHostInfodb.push_back(entry);
             EV << std::setw(20) << "groupAddress" << std::setw(30) << "workers" << std::setw(30) << "PSes" << endl;
             EV << std::setw(20) << groupAddr << std::setw(30) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
-            for (auto& w: workerAddrs)
+            for (auto i = 0; i < workerAddrs.size(); i++)
             {
-                ASSERT(hostGroupInfo.find(w) == hostGroupInfo.end()); // one host only in one group
-                hostGroupInfo[w] = entry;
+                auto hostEntry = new GroupHostInfoWithIndex();
+                hostEntry->hostinfo = entry;
+                hostEntry->isWorker = true;
+                hostEntry->index = i;
+                auto addr = workerAddrs.at(i);
+                ASSERT(hostGroupInfo.find(addr) == hostGroupInfo.end()); // one host only in one group
+                hostGroupInfo[addr] = hostEntry;
             }
-            for (auto& s: PSAddrs)
+            for (auto i = 0; i < PSAddrs.size(); i++)
             {
-                ASSERT(hostGroupInfo.find(s) == hostGroupInfo.end()); // a server only in one group
-                hostGroupInfo[s] = entry;
+                auto hostEntry = new GroupHostInfoWithIndex();
+                hostEntry->hostinfo = entry;
+                hostEntry->isWorker = false;
+                hostEntry->index = i;
+                auto addr = PSAddrs.at(i);
+                ASSERT(hostGroupInfo.find(addr) == hostGroupInfo.end()); // ! server and worker can't be together
+                hostGroupInfo[addr] = hostEntry;
             }
         }
     }

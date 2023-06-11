@@ -22,6 +22,20 @@ struct GroupSwitchInfo
     std::vector<B> bufferSizes;
 };
 
+struct GroupHostInfoWithIndex
+{
+    bool isWorker;
+    int index;
+    std::shared_ptr<const GroupHostInfo> hostinfo;
+};
+
+struct GroupSwitchInfoWithIndex
+{
+    bool isWorker;
+    int index;
+    std::shared_ptr<const GroupSwitchInfo> switchinfo;
+};
+
 class GlobalGroupManager : public GlobalView
 {
 public:
@@ -34,6 +48,7 @@ public:
     // int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;
     // int getBufferSize(IntAddress group, IntAddress switchAddress) const;
     // for signals collection
+    const GroupHostInfoWithIndex* getGroupHostInfo(IntAddress hostAddr) const;
     void reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime);
     void reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime);
 
@@ -49,8 +64,8 @@ private:
     simsignal_t createSignalForGroup(IntAddress group);
 
 private:
-    std::unordered_map<IntAddress, GroupHostInfo*> hostGroupInfo;
-    std::unordered_map<IntAddress, GroupSwitchInfo*> switchGroupInfo;
+    std::unordered_map<IntAddress, GroupHostInfoWithIndex* > hostGroupInfo;
+    std::unordered_map<IntAddress, GroupSwitchInfoWithIndex* > switchGroupInfo;
 
     struct groupRoundFinishInfo {
         size_t counter{0};
@@ -59,8 +74,8 @@ private:
     };
     std::unordered_map<IntAddress, groupRoundFinishInfo*> groupRoundStartTime;
 private:
-    std::vector<GroupHostInfo*> groupHostInfodb;
-    std::vector<GroupSwitchInfo*> GroupSwitchInfodb;
+    std::vector<std::shared_ptr<GroupHostInfo>> groupHostInfodb;
+    std::vector<std::shared_ptr<GroupSwitchInfo>> GroupSwitchInfodb;
 private:
     // for aggregation job
     void prepareAggGroup(const char* policyName);
