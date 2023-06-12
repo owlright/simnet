@@ -110,7 +110,7 @@ void GlobalGroupManager::readSwitchConfig(const char * fileName)
         throw cRuntimeError("%s not found!", fileName);
     } else {
         std::string line;
-        EV << std::left << std::setw(15) << "groupAddress"
+        EV << std::left
             << std::setw(10) << "worker"
             << std::setw(10) << "bitmap0"
             << std::setw(10) << "switch0"
@@ -123,18 +123,17 @@ void GlobalGroupManager::readSwitchConfig(const char * fileName)
             if (line.empty() || line[0] == '#')
                 continue;
             std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
-            if (tokens.size() != 8)
+            if (tokens.size() != 7)
                 throw cRuntimeError("wrong line in module file: 8 items required, line: \"%s\"", line.c_str());
-            // // get fields from tokens
-            auto groupAddr    = atol(tokens[0].c_str());
-            auto workerAddr   = atol(tokens[1].c_str());
-            auto bitmap0Index = atol(tokens[2].c_str());
-            auto switch0Addr  = atol(tokens[3].c_str());
-            auto fanIndegree0 = atol(tokens[4].c_str());
-            auto bitmap1Index = atol(tokens[5].c_str());
-            auto switch1Addr  = atol(tokens[6].c_str());
-            auto fanIndegree1 = atol(tokens[7].c_str());
-            EV << std::left << std::setw(15) << "groupAddress"
+
+            auto workerAddr   = atol(tokens[0].c_str());
+            auto bitmap0Index = atol(tokens[1].c_str());
+            auto switch0Addr  = atol(tokens[2].c_str());
+            auto fanIndegree0 = atol(tokens[3].c_str());
+            auto bitmap1Index = atol(tokens[4].c_str());
+            auto switch1Addr  = atol(tokens[5].c_str());
+            auto fanIndegree1 = atol(tokens[6].c_str());
+            EV << std::left
                 << std::setw(10) << workerAddr
                 << std::setw(10) << bitmap0Index
                 << std::setw(10) << switch0Addr
@@ -165,28 +164,26 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
     } else {
         std::string line;
         int jobId = 0; // which is also the index in database
-        EV << std::left << std::setw(20) << "groupAddress" << std::setw(50) << "workers" << std::setw(30) << "PSes" << endl;
+        EV << std::left << std::setw(50) << "workers" << std::setw(30) << "PSes" << endl;
         while (getline(hostConfig, line, '\n')) {
             if (line.empty() || line[0] == '#')
                 continue;
             std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
-            if (tokens.size() != 3)
-                throw cRuntimeError("wrong line in module file: 3 items required, line: \"%s\"", line.c_str());
+            if (tokens.size() != 2)
+                throw cRuntimeError("wrong line in module file: 2 items required, line: \"%s\"", line.c_str());
             // get fields from tokens
-            auto groupAddr = atol(tokens[0].c_str());
-            auto workerAddrsStr = tokens[1].c_str();
+            auto workerAddrsStr = tokens[0].c_str();
             auto workerAddrs = cStringTokenizer(workerAddrsStr, "[,]").asIntVector();
-            auto PSAddrsStr = tokens[2].c_str();
+            auto PSAddrsStr = tokens[1].c_str();
             auto PSAddrs = cStringTokenizer(PSAddrsStr, "[,]").asIntVector();
             std::shared_ptr<GroupHostInfo> entry(new GroupHostInfo());
             entry->jobId = jobId++;
-            entry->groupAddress = groupAddr;
             entry->workers = workerAddrs;
             entry->PSes = PSAddrs;
             entry->numWorkers = workerAddrs.size();
             entry->numPSes = PSAddrs.size();
             groupHostInfodb.push_back(entry);
-            EV << std::setw(20) << groupAddr << std::setw(50) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
+            EV << std::setw(50) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
             for (auto i = 0; i < workerAddrs.size(); i++)
             {
                 auto hostEntry = new GroupInfoWithIndex();

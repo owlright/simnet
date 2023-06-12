@@ -1,3 +1,4 @@
 # This file assign job's senders and receivers on hosts
-# groupAddr    workers    ps
-   10000      [1000,1001,1002,1003,2000,2001,2002]   [2003]
+# one job one line, do not use blank sapce in []
+# workers                               ps
+[1000,1001,1002,1003,2000,2001,2002]   [2003]

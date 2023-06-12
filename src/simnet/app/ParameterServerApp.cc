@@ -39,9 +39,7 @@ void ParameterServerApp::initialize(int stage)
             throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
         groupInfo = groupManager->getGroupHostInfo(localAddr);
         if (groupInfo != nullptr && !groupInfo->isWorker) {
-            groupAddr = groupInfo->hostinfo->groupAddress;
-            EV << "server " << localAddr << " accept job " << groupInfo->hostinfo->jobId
-               << " groupAddr: " << groupAddr << endl;
+            EV << "server " << localAddr << " accept job " << groupInfo->hostinfo->jobId << endl;
         }
         else {
             EV_WARN << "host " << localAddr << " have an idle ATPServer" << endl;

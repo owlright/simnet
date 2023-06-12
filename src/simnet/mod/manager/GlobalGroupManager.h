@@ -9,7 +9,6 @@ using namespace omnetpp;
 struct GroupHostInfo
 {
     uint16_t jobId;
-    IntAddress groupAddress;
     std::vector<int> PSes;
     std::vector<int> workers;
     int numWorkers;

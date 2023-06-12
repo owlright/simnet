@@ -13,7 +13,7 @@ protected:
 private:
     GlobalGroupManager* groupManager;
     const GroupInfoWithIndex* groupInfo;
-    IntAddress groupAddr{INVALID_ADDRESS};
+    int jobId;
 };
 
 Define_Module(ATPWorker);
@@ -31,36 +31,42 @@ void ATPWorker::initialize(int stage)
             throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
         groupInfo = groupManager->getGroupHostInfo(localAddr);
         if (groupInfo != nullptr && groupInfo->isWorker) {
-            groupAddr = groupInfo->hostinfo->groupAddress;
-            EV << "host " << localAddr << " accept job " << groupInfo->hostinfo->jobId
-               << " groupAddr: " << groupAddr << endl;
+            jobId = groupInfo->hostinfo->jobId;
+            EV << "host " << localAddr << " accept job " << jobId;
+            EV << " possible PSes: ";
+            for (auto& p: groupInfo->hostinfo->PSes) {
+                EV << p << " ";
+            }
+            EV << endl;
         }
         else {
             EV_WARN << "host " << localAddr << " have an idle ATPWorker" << endl;
         }
-        destAddr = groupAddr;
     }
 }
 
 void ATPWorker::onFlowStart()
 {
     UnicastSenderApp::onFlowStart();
-    groupManager->reportFlowStart(groupAddr, simTime());
+    groupManager->reportFlowStart(jobId, simTime());
 }
 
 void ATPWorker::onFlowStop()
 {
     UnicastSenderApp::onFlowStop();
-    groupManager->reportFlowStop(groupAddr, simTime());
+    groupManager->reportFlowStop(jobId, simTime());
 }
 
 Packet* ATPWorker::createDataPacket(B packetBytes)
 {
+    ASSERT(destAddr == -1); // destAddr is useless
+    IntAddress dest = groupInfo->hostinfo->PSes.at(0); // TODO use more PSes
     char pkname[40];
     sprintf(pkname, " %lld-to-%lld-seq%lld",
-            localAddr, destAddr, sentBytes);
+            localAddr, dest, sentBytes);
     auto pk = new ATPPacket(pkname);
-    pk->setKind(DATA);
+    pk->setJobId(jobId);
+    pk->setDestAddr(dest);
     pk->setSeqNumber(sentBytes);
     pk->setByteLength(packetBytes);
     pk->setECN(false);
@@ -69,9 +75,10 @@ Packet* ATPWorker::createDataPacket(B packetBytes)
     pk->setQueueTime(0);
     if (sentBytes == currentFlowSize)
         pk->setIsFlowFinished(true);
-    // TODO avoid overflow
+
     auto seqNumber = pk->getSeqNumber();
-    auto jobID = pk->getDestAddr();
+    auto jobID = pk->getJobId();
+    // TODO avoid overflow
     auto seq = reinterpret_cast<uint16_t&>(seqNumber);
     auto jobid = reinterpret_cast<uint16_t&>(jobID);
     auto agtrIndex = hashAggrIndex(jobid, seq);
