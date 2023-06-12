@@ -28,13 +28,14 @@ simsignal_t ParameterServerApp::aggRatioSignal = registerSignal("aggRatio");
 
 void ParameterServerApp::initialize(int stage)
 {
-    UnicastEchoApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
+        UnicastEchoApp::initialize(stage);
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
         if (groupManager == nullptr)
             EV_WARN << "You may forget to set groupManager." << endl;
     }
     if (stage == INITSTAGE_ASSIGN) {
+        UnicastEchoApp::initialize(stage);
         if (groupManager==nullptr)
             throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
         groupInfo = groupManager->getGroupHostInfo(localAddr);

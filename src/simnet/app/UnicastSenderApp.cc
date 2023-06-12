@@ -74,10 +74,12 @@ void UnicastSenderApp::initialize(int stage)
             flowStartTimer = new cMessage("flowStart");
             jitterTimeout = new cMessage("jitterTimeout");
             scheduleAfter(currentFlowInterval, flowStartTimer);
-            EV << "destAddr: " << destAddr << " destPort: " << destPort << endl;
+            if (isUnicastSender)
+                EV_DEBUG << "destAddr: " << destAddr << " destPort: " << destPort << endl;
         }
         else {
-            EV_WARN << "address " << localAddr << "'s app has no destAddress" << endl;
+            if (isUnicastSender)
+                EV_WARN << "address " << localAddr << "'s app has no destAddress" << endl;
         }
 
     }

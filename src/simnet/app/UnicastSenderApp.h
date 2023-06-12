@@ -18,6 +18,7 @@ protected:
     void connectionDataArrived(Connection *connection, cMessage *msg) override;
 
 protected:
+    bool isUnicastSender{true};
     // configuration
     std::vector<IntAddress> destAddresses;
     IntAddress destAddr{INVALID_ADDRESS};

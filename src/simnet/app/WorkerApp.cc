@@ -20,13 +20,13 @@ Define_Module(ATPWorker);
 
 void ATPWorker::initialize(int stage)
 {
-    UnicastSenderApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
+        isUnicastSender = false;
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
         if (groupManager==nullptr) // sometimes for quick debug
             EV_WARN << "You may forget to set groupManager." << endl;
     }
-    if (stage == INITSTAGE_ASSIGN) {
+    else if (stage == INITSTAGE_ASSIGN) {
         if (groupManager==nullptr)
             throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
         groupInfo = groupManager->getGroupHostInfo(localAddr);
@@ -43,6 +43,7 @@ void ATPWorker::initialize(int stage)
             EV_WARN << "host " << localAddr << " have an idle ATPWorker" << endl;
         }
     }
+    UnicastSenderApp::initialize(stage);
 }
 
 void ATPWorker::onFlowStart()
@@ -132,8 +133,9 @@ Packet *TimerWorker::createDataPacket(B packetBytes)
 
 void TimerWorker::initialize(int stage)
 {
-    UnicastSenderApp::initialize(stage);
+
     if (stage == INITSTAGE_LOCAL) {
+        isUnicastSender = false;
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
         if (groupManager==nullptr)
             throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
@@ -151,4 +153,5 @@ void TimerWorker::initialize(int stage)
     //     if (groupAddr > 0)
     //         numSenders = groupManager->getSendersNumber(groupAddr);
     // }
+    UnicastSenderApp::initialize(stage);
 }
