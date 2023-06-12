@@ -6,7 +6,7 @@ using namespace omnetpp;
 
 // class GlobalGroupManager;
 
-struct AggGroupEntry
+struct [[deprecated]] AggGroupEntry
 {
 public:
     // friend GlobalGroupManager;

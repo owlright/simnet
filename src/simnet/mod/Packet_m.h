@@ -31,21 +31,43 @@ class MTATPPacket;
  * {
  *     ACK = 0;
  *     DATA = 1;
- *     REMIND = 2;
- * } // TODO: I just use pk->getKind() for now, so it's not shown in Packet fields
+ *     AGG = 2;
+ *     REMIND = 3;
+ *     NOUSE = 4;
+ * }
  * </pre>
  */
 enum PacketType {
     ACK = 0,
     DATA = 1,
-    REMIND = 2
+    AGG = 2,
+    REMIND = 3,
+    NOUSE = 4
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->pack(static_cast<int>(e)); }
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:9</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/Packet.msg:11</tt> by opp_msgtool.
+ * <pre>
+ * enum AggPolicy
+ * {
+ *     ATP = 0;
+ *     MTATP = 1;
+ * }
+ * </pre>
+ */
+enum AggPolicy {
+    ATP = 0,
+    MTATP = 1
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPolicy& e) { b->pack(static_cast<int>(e)); }
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b->unpack(n); e = static_cast<AggPolicy>(n); }
+
+/**
+ * Class generated from <tt>simnet/mod/Packet.msg:17</tt> by opp_msgtool.
  * <pre>
  * packet EthernetMacHeader
  * {
@@ -77,7 +99,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const EthernetMacHeader& ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, EthernetMacHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:14</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:22</tt> by opp_msgtool.
  * <pre>
  * class IpHeader extends EthernetMacHeader
  * {
@@ -119,7 +141,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IpHeader& obj) {obj.p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IpHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:21</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:29</tt> by opp_msgtool.
  * <pre>
  * class UdpHeader extends IpHeader
  * {
@@ -161,7 +183,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const UdpHeader& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, UdpHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:28</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:36</tt> by opp_msgtool.
  * <pre>
  * class TcpLikeHeader extends IpHeader
  * {
@@ -218,10 +240,11 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const TcpLikeHeader& obj) {
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, TcpLikeHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:38</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:46</tt> by opp_msgtool.
  * <pre>
  * class Packet extends TcpLikeHeader
  * {
+ *     PacketType packetType;
  *     int64_t connectionId;
  *     int64_t receivedBytes;
  *     double startTime;
@@ -234,6 +257,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, TcpLikeHeader& obj) {obj.
 class Packet : public ::TcpLikeHeader
 {
   protected:
+    PacketType packetType = static_cast<PacketType>(-1);
     int64_t connectionId = 0;
     int64_t receivedBytes = 0;
     double startTime = 0;
@@ -255,6 +279,9 @@ class Packet : public ::TcpLikeHeader
     virtual Packet *dup() const override {return new Packet(*this);}
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual PacketType getPacketType() const;
+    virtual void setPacketType(PacketType packetType);
 
     virtual int64_t getConnectionId() const;
     virtual void setConnectionId(int64_t connectionId);
@@ -279,22 +306,35 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const Packet& obj) {obj.par
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Packet& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:48</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:57</tt> by opp_msgtool.
  * <pre>
  * class AggPacket extends Packet
  * {
+ *     packetType = AGG;
+ *     AggPolicy aggPolicy;
  *     int aggregatorIndex;
  *     int64_t jobId;
  *     int workerNumber;
+ *     bool overflow;
+ *     bool resend;
+ *     bool collision;
+ *     bool ecn;
+ *     bool isAck;
  * }
  * </pre>
  */
 class AggPacket : public ::Packet
 {
   protected:
+    AggPolicy aggPolicy = static_cast<AggPolicy>(-1);
     int aggregatorIndex = 0;
     int64_t jobId = 0;
     int workerNumber = 0;
+    bool overflow = false;
+    bool resend = false;
+    bool collision = false;
+    bool ecn = false;
+    bool isAck_ = false;
 
   private:
     void copy(const AggPacket& other);
@@ -311,6 +351,9 @@ class AggPacket : public ::Packet
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
 
+    virtual AggPolicy getAggPolicy() const;
+    virtual void setAggPolicy(AggPolicy aggPolicy);
+
     virtual int getAggregatorIndex() const;
     virtual void setAggregatorIndex(int aggregatorIndex);
 
@@ -319,33 +362,49 @@ class AggPacket : public ::Packet
 
     virtual int getWorkerNumber() const;
     virtual void setWorkerNumber(int workerNumber);
+
+    virtual bool getOverflow() const;
+    virtual void setOverflow(bool overflow);
+
+    virtual bool getResend() const;
+    virtual void setResend(bool resend);
+
+    virtual bool getCollision() const;
+    virtual void setCollision(bool collision);
+
+    virtual bool getEcn() const;
+    virtual void setEcn(bool ecn);
+
+    virtual bool isAck() const;
+    virtual void setIsAck(bool isAck);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPacket& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:55</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:71</tt> by opp_msgtool.
  * <pre>
  * class ATPPacket extends AggPacket
  * {
+ *     aggPolicy = ATP;
  *     byteLength = 16 + 8; // ATP header total size is 58 Bytes
- *     int bitmap0;
- *     int bitmap1;
+ *     uint32_t bitmap0;
+ *     uint32_t bitmap1;
  *     int fanIndegree0;
  *     int fanIndegree1;
- *     bool flags[6];
+ *     int switchIdentifier;
  * }
  * </pre>
  */
 class ATPPacket : public ::AggPacket
 {
   protected:
-    int bitmap0 = 0;
-    int bitmap1 = 0;
+    uint32_t bitmap0 = 0;
+    uint32_t bitmap1 = 0;
     int fanIndegree0 = 0;
     int fanIndegree1 = 0;
-    bool flags[6];
+    int switchIdentifier = 0;
 
   private:
     void copy(const ATPPacket& other);
@@ -362,11 +421,11 @@ class ATPPacket : public ::AggPacket
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
 
-    virtual int getBitmap0() const;
-    virtual void setBitmap0(int bitmap0);
+    virtual uint32_t getBitmap0() const;
+    virtual void setBitmap0(uint32_t bitmap0);
 
-    virtual int getBitmap1() const;
-    virtual void setBitmap1(int bitmap1);
+    virtual uint32_t getBitmap1() const;
+    virtual void setBitmap1(uint32_t bitmap1);
 
     virtual int getFanIndegree0() const;
     virtual void setFanIndegree0(int fanIndegree0);
@@ -374,19 +433,19 @@ class ATPPacket : public ::AggPacket
     virtual int getFanIndegree1() const;
     virtual void setFanIndegree1(int fanIndegree1);
 
-    virtual size_t getFlagsArraySize() const;
-    virtual bool getFlags(size_t k) const;
-    virtual void setFlags(size_t k, bool flags);
+    virtual int getSwitchIdentifier() const;
+    virtual void setSwitchIdentifier(int switchIdentifier);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const ATPPacket& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ATPPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:65</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:82</tt> by opp_msgtool.
  * <pre>
  * class MTATPPacket extends AggPacket
  * {
+ *     aggPolicy = MTATP;
  *     byteLength = 16 + 4;
  *     int timer;
  *     int aggCounter;

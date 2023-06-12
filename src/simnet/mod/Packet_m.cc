@@ -150,7 +150,9 @@ void doParsimUnpacking(omnetpp::cCommBuffer *, T& t)
 
 }  // namespace omnetpp
 
-Register_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::REMIND));
+Register_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::AGG, PacketType::REMIND, PacketType::NOUSE));
+
+Register_Enum(AggPolicy, (AggPolicy::ATP, AggPolicy::MTATP));
 
 Register_Class(EthernetMacHeader)
 
@@ -1691,6 +1693,7 @@ Packet& Packet::operator=(const Packet& other)
 
 void Packet::copy(const Packet& other)
 {
+    this->packetType = other.packetType;
     this->connectionId = other.connectionId;
     this->receivedBytes = other.receivedBytes;
     this->startTime = other.startTime;
@@ -1702,6 +1705,7 @@ void Packet::copy(const Packet& other)
 void Packet::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::TcpLikeHeader::parsimPack(b);
+    doParsimPacking(b,this->packetType);
     doParsimPacking(b,this->connectionId);
     doParsimPacking(b,this->receivedBytes);
     doParsimPacking(b,this->startTime);
@@ -1713,12 +1717,23 @@ void Packet::parsimPack(omnetpp::cCommBuffer *b) const
 void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::TcpLikeHeader::parsimUnpack(b);
+    doParsimUnpacking(b,this->packetType);
     doParsimUnpacking(b,this->connectionId);
     doParsimUnpacking(b,this->receivedBytes);
     doParsimUnpacking(b,this->startTime);
     doParsimUnpacking(b,this->transmitTime);
     doParsimUnpacking(b,this->queueTime);
     doParsimUnpacking(b,this->isFlowFinished_);
+}
+
+PacketType Packet::getPacketType() const
+{
+    return this->packetType;
+}
+
+void Packet::setPacketType(PacketType packetType)
+{
+    this->packetType = packetType;
 }
 
 int64_t Packet::getConnectionId() const
@@ -1786,6 +1801,7 @@ class PacketDescriptor : public omnetpp::cClassDescriptor
   private:
     mutable const char **propertyNames;
     enum FieldConstants {
+        FIELD_packetType,
         FIELD_connectionId,
         FIELD_receivedBytes,
         FIELD_startTime,
@@ -1858,7 +1874,7 @@ const char *PacketDescriptor::getProperty(const char *propertyName) const
 int PacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 6+base->getFieldCount() : 6;
+    return base ? 7+base->getFieldCount() : 7;
 }
 
 unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
@@ -1870,6 +1886,7 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         field -= base->getFieldCount();
     }
     static unsigned int fieldTypeFlags[] = {
+        FD_ISEDITABLE,    // FIELD_packetType
         FD_ISEDITABLE,    // FIELD_connectionId
         FD_ISEDITABLE,    // FIELD_receivedBytes
         FD_ISEDITABLE,    // FIELD_startTime
@@ -1877,7 +1894,7 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_queueTime
         FD_ISEDITABLE,    // FIELD_isFlowFinished
     };
-    return (field >= 0 && field < 6) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 7) ? fieldTypeFlags[field] : 0;
 }
 
 const char *PacketDescriptor::getFieldName(int field) const
@@ -1889,6 +1906,7 @@ const char *PacketDescriptor::getFieldName(int field) const
         field -= base->getFieldCount();
     }
     static const char *fieldNames[] = {
+        "packetType",
         "connectionId",
         "receivedBytes",
         "startTime",
@@ -1896,19 +1914,20 @@ const char *PacketDescriptor::getFieldName(int field) const
         "queueTime",
         "isFlowFinished",
     };
-    return (field >= 0 && field < 6) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 7) ? fieldNames[field] : nullptr;
 }
 
 int PacketDescriptor::findField(const char *fieldName) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     int baseIndex = base ? base->getFieldCount() : 0;
-    if (strcmp(fieldName, "connectionId") == 0) return baseIndex + 0;
-    if (strcmp(fieldName, "receivedBytes") == 0) return baseIndex + 1;
-    if (strcmp(fieldName, "startTime") == 0) return baseIndex + 2;
-    if (strcmp(fieldName, "transmitTime") == 0) return baseIndex + 3;
-    if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "isFlowFinished") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "packetType") == 0) return baseIndex + 0;
+    if (strcmp(fieldName, "connectionId") == 0) return baseIndex + 1;
+    if (strcmp(fieldName, "receivedBytes") == 0) return baseIndex + 2;
+    if (strcmp(fieldName, "startTime") == 0) return baseIndex + 3;
+    if (strcmp(fieldName, "transmitTime") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "isFlowFinished") == 0) return baseIndex + 6;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -1921,6 +1940,7 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         field -= base->getFieldCount();
     }
     static const char *fieldTypeStrings[] = {
+        "PacketType",    // FIELD_packetType
         "int64_t",    // FIELD_connectionId
         "int64_t",    // FIELD_receivedBytes
         "double",    // FIELD_startTime
@@ -1928,7 +1948,7 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "double",    // FIELD_queueTime
         "bool",    // FIELD_isFlowFinished
     };
-    return (field >= 0 && field < 6) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 7) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **PacketDescriptor::getFieldPropertyNames(int field) const
@@ -1940,6 +1960,10 @@ const char **PacketDescriptor::getFieldPropertyNames(int field) const
         field -= base->getFieldCount();
     }
     switch (field) {
+        case FIELD_packetType: {
+            static const char *names[] = { "enum",  nullptr };
+            return names;
+        }
         default: return nullptr;
     }
 }
@@ -1953,6 +1977,9 @@ const char *PacketDescriptor::getFieldProperty(int field, const char *propertyNa
         field -= base->getFieldCount();
     }
     switch (field) {
+        case FIELD_packetType:
+            if (!strcmp(propertyName, "enum")) return "PacketType";
+            return nullptr;
         default: return nullptr;
     }
 }
@@ -2011,6 +2038,7 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
     }
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
+        case FIELD_packetType: return enum2string(pp->getPacketType(), "PacketType");
         case FIELD_connectionId: return int642string(pp->getConnectionId());
         case FIELD_receivedBytes: return int642string(pp->getReceivedBytes());
         case FIELD_startTime: return double2string(pp->getStartTime());
@@ -2033,6 +2061,7 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
     }
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
+        case FIELD_packetType: pp->setPacketType((PacketType)string2enum(value, "PacketType")); break;
         case FIELD_connectionId: pp->setConnectionId(string2int64(value)); break;
         case FIELD_receivedBytes: pp->setReceivedBytes(string2int64(value)); break;
         case FIELD_startTime: pp->setStartTime(string2double(value)); break;
@@ -2053,6 +2082,7 @@ omnetpp::cValue PacketDescriptor::getFieldValue(omnetpp::any_ptr object, int fie
     }
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
+        case FIELD_packetType: return static_cast<int>(pp->getPacketType());
         case FIELD_connectionId: return pp->getConnectionId();
         case FIELD_receivedBytes: return pp->getReceivedBytes();
         case FIELD_startTime: return pp->getStartTime();
@@ -2075,6 +2105,7 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
     }
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
+        case FIELD_packetType: pp->setPacketType(static_cast<PacketType>(value.intValue())); break;
         case FIELD_connectionId: pp->setConnectionId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_receivedBytes: pp->setReceivedBytes(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_startTime: pp->setStartTime(value.doubleValue()); break;
@@ -2132,6 +2163,8 @@ Register_Class(AggPacket)
 
 AggPacket::AggPacket(const char *name) : ::Packet(name)
 {
+    this->setPacketType(AGG);
+
 }
 
 AggPacket::AggPacket(const AggPacket& other) : ::Packet(other)
@@ -2153,25 +2186,53 @@ AggPacket& AggPacket::operator=(const AggPacket& other)
 
 void AggPacket::copy(const AggPacket& other)
 {
+    this->aggPolicy = other.aggPolicy;
     this->aggregatorIndex = other.aggregatorIndex;
     this->jobId = other.jobId;
     this->workerNumber = other.workerNumber;
+    this->overflow = other.overflow;
+    this->resend = other.resend;
+    this->collision = other.collision;
+    this->ecn = other.ecn;
+    this->isAck_ = other.isAck_;
 }
 
 void AggPacket::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::Packet::parsimPack(b);
+    doParsimPacking(b,this->aggPolicy);
     doParsimPacking(b,this->aggregatorIndex);
     doParsimPacking(b,this->jobId);
     doParsimPacking(b,this->workerNumber);
+    doParsimPacking(b,this->overflow);
+    doParsimPacking(b,this->resend);
+    doParsimPacking(b,this->collision);
+    doParsimPacking(b,this->ecn);
+    doParsimPacking(b,this->isAck_);
 }
 
 void AggPacket::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::Packet::parsimUnpack(b);
+    doParsimUnpacking(b,this->aggPolicy);
     doParsimUnpacking(b,this->aggregatorIndex);
     doParsimUnpacking(b,this->jobId);
     doParsimUnpacking(b,this->workerNumber);
+    doParsimUnpacking(b,this->overflow);
+    doParsimUnpacking(b,this->resend);
+    doParsimUnpacking(b,this->collision);
+    doParsimUnpacking(b,this->ecn);
+    doParsimUnpacking(b,this->isAck_);
+}
+
+AggPolicy AggPacket::getAggPolicy() const
+{
+    return this->aggPolicy;
+}
+
+void AggPacket::setAggPolicy(AggPolicy aggPolicy)
+{
+    this->aggPolicy = aggPolicy;
 }
 
 int AggPacket::getAggregatorIndex() const
@@ -2204,14 +2265,70 @@ void AggPacket::setWorkerNumber(int workerNumber)
     this->workerNumber = workerNumber;
 }
 
+bool AggPacket::getOverflow() const
+{
+    return this->overflow;
+}
+
+void AggPacket::setOverflow(bool overflow)
+{
+    this->overflow = overflow;
+}
+
+bool AggPacket::getResend() const
+{
+    return this->resend;
+}
+
+void AggPacket::setResend(bool resend)
+{
+    this->resend = resend;
+}
+
+bool AggPacket::getCollision() const
+{
+    return this->collision;
+}
+
+void AggPacket::setCollision(bool collision)
+{
+    this->collision = collision;
+}
+
+bool AggPacket::getEcn() const
+{
+    return this->ecn;
+}
+
+void AggPacket::setEcn(bool ecn)
+{
+    this->ecn = ecn;
+}
+
+bool AggPacket::isAck() const
+{
+    return this->isAck_;
+}
+
+void AggPacket::setIsAck(bool isAck)
+{
+    this->isAck_ = isAck;
+}
+
 class AggPacketDescriptor : public omnetpp::cClassDescriptor
 {
   private:
     mutable const char **propertyNames;
     enum FieldConstants {
+        FIELD_aggPolicy,
         FIELD_aggregatorIndex,
         FIELD_jobId,
         FIELD_workerNumber,
+        FIELD_overflow,
+        FIELD_resend,
+        FIELD_collision,
+        FIELD_ecn,
+        FIELD_isAck,
     };
   public:
     AggPacketDescriptor();
@@ -2278,7 +2395,7 @@ const char *AggPacketDescriptor::getProperty(const char *propertyName) const
 int AggPacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 3+base->getFieldCount() : 3;
+    return base ? 9+base->getFieldCount() : 9;
 }
 
 unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
@@ -2290,11 +2407,17 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         field -= base->getFieldCount();
     }
     static unsigned int fieldTypeFlags[] = {
+        FD_ISEDITABLE,    // FIELD_aggPolicy
         FD_ISEDITABLE,    // FIELD_aggregatorIndex
         FD_ISEDITABLE,    // FIELD_jobId
         FD_ISEDITABLE,    // FIELD_workerNumber
+        FD_ISEDITABLE,    // FIELD_overflow
+        FD_ISEDITABLE,    // FIELD_resend
+        FD_ISEDITABLE,    // FIELD_collision
+        FD_ISEDITABLE,    // FIELD_ecn
+        FD_ISEDITABLE,    // FIELD_isAck
     };
-    return (field >= 0 && field < 3) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 9) ? fieldTypeFlags[field] : 0;
 }
 
 const char *AggPacketDescriptor::getFieldName(int field) const
@@ -2306,20 +2429,32 @@ const char *AggPacketDescriptor::getFieldName(int field) const
         field -= base->getFieldCount();
     }
     static const char *fieldNames[] = {
+        "aggPolicy",
         "aggregatorIndex",
         "jobId",
         "workerNumber",
+        "overflow",
+        "resend",
+        "collision",
+        "ecn",
+        "isAck",
     };
-    return (field >= 0 && field < 3) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 9) ? fieldNames[field] : nullptr;
 }
 
 int AggPacketDescriptor::findField(const char *fieldName) const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     int baseIndex = base ? base->getFieldCount() : 0;
-    if (strcmp(fieldName, "aggregatorIndex") == 0) return baseIndex + 0;
-    if (strcmp(fieldName, "jobId") == 0) return baseIndex + 1;
-    if (strcmp(fieldName, "workerNumber") == 0) return baseIndex + 2;
+    if (strcmp(fieldName, "aggPolicy") == 0) return baseIndex + 0;
+    if (strcmp(fieldName, "aggregatorIndex") == 0) return baseIndex + 1;
+    if (strcmp(fieldName, "jobId") == 0) return baseIndex + 2;
+    if (strcmp(fieldName, "workerNumber") == 0) return baseIndex + 3;
+    if (strcmp(fieldName, "overflow") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "resend") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "collision") == 0) return baseIndex + 6;
+    if (strcmp(fieldName, "ecn") == 0) return baseIndex + 7;
+    if (strcmp(fieldName, "isAck") == 0) return baseIndex + 8;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -2332,11 +2467,17 @@ const char *AggPacketDescriptor::getFieldTypeString(int field) const
         field -= base->getFieldCount();
     }
     static const char *fieldTypeStrings[] = {
+        "AggPolicy",    // FIELD_aggPolicy
         "int",    // FIELD_aggregatorIndex
         "int64_t",    // FIELD_jobId
         "int",    // FIELD_workerNumber
+        "bool",    // FIELD_overflow
+        "bool",    // FIELD_resend
+        "bool",    // FIELD_collision
+        "bool",    // FIELD_ecn
+        "bool",    // FIELD_isAck
     };
-    return (field >= 0 && field < 3) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 9) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **AggPacketDescriptor::getFieldPropertyNames(int field) const
@@ -2348,6 +2489,10 @@ const char **AggPacketDescriptor::getFieldPropertyNames(int field) const
         field -= base->getFieldCount();
     }
     switch (field) {
+        case FIELD_aggPolicy: {
+            static const char *names[] = { "enum",  nullptr };
+            return names;
+        }
         default: return nullptr;
     }
 }
@@ -2361,6 +2506,9 @@ const char *AggPacketDescriptor::getFieldProperty(int field, const char *propert
         field -= base->getFieldCount();
     }
     switch (field) {
+        case FIELD_aggPolicy:
+            if (!strcmp(propertyName, "enum")) return "AggPolicy";
+            return nullptr;
         default: return nullptr;
     }
 }
@@ -2419,9 +2567,15 @@ std::string AggPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, 
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
+        case FIELD_aggPolicy: return enum2string(pp->getAggPolicy(), "AggPolicy");
         case FIELD_aggregatorIndex: return long2string(pp->getAggregatorIndex());
         case FIELD_jobId: return int642string(pp->getJobId());
         case FIELD_workerNumber: return long2string(pp->getWorkerNumber());
+        case FIELD_overflow: return bool2string(pp->getOverflow());
+        case FIELD_resend: return bool2string(pp->getResend());
+        case FIELD_collision: return bool2string(pp->getCollision());
+        case FIELD_ecn: return bool2string(pp->getEcn());
+        case FIELD_isAck: return bool2string(pp->isAck());
         default: return "";
     }
 }
@@ -2438,9 +2592,15 @@ void AggPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int fie
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
+        case FIELD_aggPolicy: pp->setAggPolicy((AggPolicy)string2enum(value, "AggPolicy")); break;
         case FIELD_aggregatorIndex: pp->setAggregatorIndex(string2long(value)); break;
         case FIELD_jobId: pp->setJobId(string2int64(value)); break;
         case FIELD_workerNumber: pp->setWorkerNumber(string2long(value)); break;
+        case FIELD_overflow: pp->setOverflow(string2bool(value)); break;
+        case FIELD_resend: pp->setResend(string2bool(value)); break;
+        case FIELD_collision: pp->setCollision(string2bool(value)); break;
+        case FIELD_ecn: pp->setEcn(string2bool(value)); break;
+        case FIELD_isAck: pp->setIsAck(string2bool(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'AggPacket'", field);
     }
 }
@@ -2455,9 +2615,15 @@ omnetpp::cValue AggPacketDescriptor::getFieldValue(omnetpp::any_ptr object, int 
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
+        case FIELD_aggPolicy: return static_cast<int>(pp->getAggPolicy());
         case FIELD_aggregatorIndex: return pp->getAggregatorIndex();
         case FIELD_jobId: return pp->getJobId();
         case FIELD_workerNumber: return pp->getWorkerNumber();
+        case FIELD_overflow: return pp->getOverflow();
+        case FIELD_resend: return pp->getResend();
+        case FIELD_collision: return pp->getCollision();
+        case FIELD_ecn: return pp->getEcn();
+        case FIELD_isAck: return pp->isAck();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'AggPacket' as cValue -- field index out of range?", field);
     }
 }
@@ -2474,9 +2640,15 @@ void AggPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int 
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
+        case FIELD_aggPolicy: pp->setAggPolicy(static_cast<AggPolicy>(value.intValue())); break;
         case FIELD_aggregatorIndex: pp->setAggregatorIndex(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_jobId: pp->setJobId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_workerNumber: pp->setWorkerNumber(omnetpp::checked_int_cast<int>(value.intValue())); break;
+        case FIELD_overflow: pp->setOverflow(value.boolValue()); break;
+        case FIELD_resend: pp->setResend(value.boolValue()); break;
+        case FIELD_collision: pp->setCollision(value.boolValue()); break;
+        case FIELD_ecn: pp->setEcn(value.boolValue()); break;
+        case FIELD_isAck: pp->setIsAck(value.boolValue()); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'AggPacket'", field);
     }
 }
@@ -2528,9 +2700,9 @@ Register_Class(ATPPacket)
 
 ATPPacket::ATPPacket(const char *name) : ::AggPacket(name)
 {
+    this->setAggPolicy(ATP);
     this->setByteLength(16 + 8);
 
-    std::fill(this->flags, this->flags + 6, false);
 }
 
 ATPPacket::ATPPacket(const ATPPacket& other) : ::AggPacket(other)
@@ -2556,9 +2728,7 @@ void ATPPacket::copy(const ATPPacket& other)
     this->bitmap1 = other.bitmap1;
     this->fanIndegree0 = other.fanIndegree0;
     this->fanIndegree1 = other.fanIndegree1;
-    for (size_t i = 0; i < 6; i++) {
-        this->flags[i] = other.flags[i];
-    }
+    this->switchIdentifier = other.switchIdentifier;
 }
 
 void ATPPacket::parsimPack(omnetpp::cCommBuffer *b) const
@@ -2568,7 +2738,7 @@ void ATPPacket::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->bitmap1);
     doParsimPacking(b,this->fanIndegree0);
     doParsimPacking(b,this->fanIndegree1);
-    doParsimArrayPacking(b,this->flags,6);
+    doParsimPacking(b,this->switchIdentifier);
 }
 
 void ATPPacket::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -2578,25 +2748,25 @@ void ATPPacket::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->bitmap1);
     doParsimUnpacking(b,this->fanIndegree0);
     doParsimUnpacking(b,this->fanIndegree1);
-    doParsimArrayUnpacking(b,this->flags,6);
+    doParsimUnpacking(b,this->switchIdentifier);
 }
 
-int ATPPacket::getBitmap0() const
+uint32_t ATPPacket::getBitmap0() const
 {
     return this->bitmap0;
 }
 
-void ATPPacket::setBitmap0(int bitmap0)
+void ATPPacket::setBitmap0(uint32_t bitmap0)
 {
     this->bitmap0 = bitmap0;
 }
 
-int ATPPacket::getBitmap1() const
+uint32_t ATPPacket::getBitmap1() const
 {
     return this->bitmap1;
 }
 
-void ATPPacket::setBitmap1(int bitmap1)
+void ATPPacket::setBitmap1(uint32_t bitmap1)
 {
     this->bitmap1 = bitmap1;
 }
@@ -2621,21 +2791,14 @@ void ATPPacket::setFanIndegree1(int fanIndegree1)
     this->fanIndegree1 = fanIndegree1;
 }
 
-size_t ATPPacket::getFlagsArraySize() const
+int ATPPacket::getSwitchIdentifier() const
 {
-    return 6;
+    return this->switchIdentifier;
 }
 
-bool ATPPacket::getFlags(size_t k) const
+void ATPPacket::setSwitchIdentifier(int switchIdentifier)
 {
-    if (k >= 6) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)6, (unsigned long)k);
-    return this->flags[k];
-}
-
-void ATPPacket::setFlags(size_t k, bool flags)
-{
-    if (k >= 6) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)6, (unsigned long)k);
-    this->flags[k] = flags;
+    this->switchIdentifier = switchIdentifier;
 }
 
 class ATPPacketDescriptor : public omnetpp::cClassDescriptor
@@ -2647,7 +2810,7 @@ class ATPPacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_bitmap1,
         FIELD_fanIndegree0,
         FIELD_fanIndegree1,
-        FIELD_flags,
+        FIELD_switchIdentifier,
     };
   public:
     ATPPacketDescriptor();
@@ -2730,7 +2893,7 @@ unsigned int ATPPacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_bitmap1
         FD_ISEDITABLE,    // FIELD_fanIndegree0
         FD_ISEDITABLE,    // FIELD_fanIndegree1
-        FD_ISARRAY | FD_ISEDITABLE,    // FIELD_flags
+        FD_ISEDITABLE,    // FIELD_switchIdentifier
     };
     return (field >= 0 && field < 5) ? fieldTypeFlags[field] : 0;
 }
@@ -2748,7 +2911,7 @@ const char *ATPPacketDescriptor::getFieldName(int field) const
         "bitmap1",
         "fanIndegree0",
         "fanIndegree1",
-        "flags",
+        "switchIdentifier",
     };
     return (field >= 0 && field < 5) ? fieldNames[field] : nullptr;
 }
@@ -2761,7 +2924,7 @@ int ATPPacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "bitmap1") == 0) return baseIndex + 1;
     if (strcmp(fieldName, "fanIndegree0") == 0) return baseIndex + 2;
     if (strcmp(fieldName, "fanIndegree1") == 0) return baseIndex + 3;
-    if (strcmp(fieldName, "flags") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "switchIdentifier") == 0) return baseIndex + 4;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -2774,11 +2937,11 @@ const char *ATPPacketDescriptor::getFieldTypeString(int field) const
         field -= base->getFieldCount();
     }
     static const char *fieldTypeStrings[] = {
-        "int",    // FIELD_bitmap0
-        "int",    // FIELD_bitmap1
+        "uint32_t",    // FIELD_bitmap0
+        "uint32_t",    // FIELD_bitmap1
         "int",    // FIELD_fanIndegree0
         "int",    // FIELD_fanIndegree1
-        "bool",    // FIELD_flags
+        "int",    // FIELD_switchIdentifier
     };
     return (field >= 0 && field < 5) ? fieldTypeStrings[field] : nullptr;
 }
@@ -2819,7 +2982,6 @@ int ATPPacketDescriptor::getFieldArraySize(omnetpp::any_ptr object, int field) c
     }
     ATPPacket *pp = omnetpp::fromAnyPtr<ATPPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_flags: return 6;
         default: return 0;
     }
 }
@@ -2864,11 +3026,11 @@ std::string ATPPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, 
     }
     ATPPacket *pp = omnetpp::fromAnyPtr<ATPPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_bitmap0: return long2string(pp->getBitmap0());
-        case FIELD_bitmap1: return long2string(pp->getBitmap1());
+        case FIELD_bitmap0: return ulong2string(pp->getBitmap0());
+        case FIELD_bitmap1: return ulong2string(pp->getBitmap1());
         case FIELD_fanIndegree0: return long2string(pp->getFanIndegree0());
         case FIELD_fanIndegree1: return long2string(pp->getFanIndegree1());
-        case FIELD_flags: return bool2string(pp->getFlags(i));
+        case FIELD_switchIdentifier: return long2string(pp->getSwitchIdentifier());
         default: return "";
     }
 }
@@ -2885,11 +3047,11 @@ void ATPPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int fie
     }
     ATPPacket *pp = omnetpp::fromAnyPtr<ATPPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_bitmap0: pp->setBitmap0(string2long(value)); break;
-        case FIELD_bitmap1: pp->setBitmap1(string2long(value)); break;
+        case FIELD_bitmap0: pp->setBitmap0(string2ulong(value)); break;
+        case FIELD_bitmap1: pp->setBitmap1(string2ulong(value)); break;
         case FIELD_fanIndegree0: pp->setFanIndegree0(string2long(value)); break;
         case FIELD_fanIndegree1: pp->setFanIndegree1(string2long(value)); break;
-        case FIELD_flags: pp->setFlags(i,string2bool(value)); break;
+        case FIELD_switchIdentifier: pp->setSwitchIdentifier(string2long(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'ATPPacket'", field);
     }
 }
@@ -2904,11 +3066,11 @@ omnetpp::cValue ATPPacketDescriptor::getFieldValue(omnetpp::any_ptr object, int 
     }
     ATPPacket *pp = omnetpp::fromAnyPtr<ATPPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_bitmap0: return pp->getBitmap0();
-        case FIELD_bitmap1: return pp->getBitmap1();
+        case FIELD_bitmap0: return (omnetpp::intval_t)(pp->getBitmap0());
+        case FIELD_bitmap1: return (omnetpp::intval_t)(pp->getBitmap1());
         case FIELD_fanIndegree0: return pp->getFanIndegree0();
         case FIELD_fanIndegree1: return pp->getFanIndegree1();
-        case FIELD_flags: return pp->getFlags(i);
+        case FIELD_switchIdentifier: return pp->getSwitchIdentifier();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'ATPPacket' as cValue -- field index out of range?", field);
     }
 }
@@ -2925,11 +3087,11 @@ void ATPPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int 
     }
     ATPPacket *pp = omnetpp::fromAnyPtr<ATPPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_bitmap0: pp->setBitmap0(omnetpp::checked_int_cast<int>(value.intValue())); break;
-        case FIELD_bitmap1: pp->setBitmap1(omnetpp::checked_int_cast<int>(value.intValue())); break;
+        case FIELD_bitmap0: pp->setBitmap0(omnetpp::checked_int_cast<uint32_t>(value.intValue())); break;
+        case FIELD_bitmap1: pp->setBitmap1(omnetpp::checked_int_cast<uint32_t>(value.intValue())); break;
         case FIELD_fanIndegree0: pp->setFanIndegree0(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_fanIndegree1: pp->setFanIndegree1(omnetpp::checked_int_cast<int>(value.intValue())); break;
-        case FIELD_flags: pp->setFlags(i,value.boolValue()); break;
+        case FIELD_switchIdentifier: pp->setSwitchIdentifier(omnetpp::checked_int_cast<int>(value.intValue())); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'ATPPacket'", field);
     }
 }
@@ -2981,6 +3143,7 @@ Register_Class(MTATPPacket)
 
 MTATPPacket::MTATPPacket(const char *name) : ::AggPacket(name)
 {
+    this->setAggPolicy(MTATP);
     this->setByteLength(16 + 4);
 
     std::fill(this->flags, this->flags + 5, false);

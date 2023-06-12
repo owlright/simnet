@@ -1,9 +1,17 @@
 enum PacketType
 {
-    ACK = 0;
-    DATA = 1;
-    REMIND = 2;
-}; // TODO: I just use pk->getKind() for now, so it's not shown in Packet fields
+    ACK      = 0;
+    DATA     = 1;
+    AGG      = 2;
+    REMIND   = 3;
+    NOUSE    = 4;
+};
+
+enum AggPolicy
+{
+    ATP = 0;
+    MTATP = 1;
+}
 
 packet EthernetMacHeader
 {
@@ -36,6 +44,7 @@ class TcpLikeHeader extends IpHeader
 
 class Packet extends TcpLikeHeader
 {
+    PacketType packetType;
     int64_t connectionId;
     int64_t receivedBytes;
     double startTime;
@@ -46,23 +55,32 @@ class Packet extends TcpLikeHeader
 
 class AggPacket extends Packet
 {
+    packetType = AGG;
+    AggPolicy aggPolicy;
     int aggregatorIndex;
     int64_t jobId;
     int workerNumber;
+    bool overflow;
+    bool resend;
+    bool collision;
+    bool ecn;
+    bool isAck;
 }
 
 class ATPPacket extends AggPacket
 {
+    aggPolicy = ATP;
     byteLength = 16 + 8; // ATP header total size is 58 Bytes
-    int bitmap0;
-    int bitmap1;
+    uint32_t bitmap0;
+    uint32_t bitmap1;
     int fanIndegree0;
     int fanIndegree1;
-    bool flags[6];
+    int switchIdentifier;
 }
 
 class MTATPPacket extends AggPacket
 {
+    aggPolicy = MTATP;
     byteLength = 16 + 4;
     int timer;
     int aggCounter;
