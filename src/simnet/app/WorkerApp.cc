@@ -38,10 +38,14 @@ void ATPWorker::initialize(int stage)
                 EV << p << " ";
             }
             EV << endl;
+            // ! TODO FIXME only send to a single sever
+            // ! Split Worker App from UnicastApp or Let UnicastApp have multiple Paramter servers ?
+            destAddr = groupInfo->hostinfo->PSes.at(0);
         }
         else {
             EV_WARN << "host " << localAddr << " have an idle ATPWorker" << endl;
         }
+
     }
     UnicastSenderApp::initialize(stage);
 }
@@ -60,7 +64,7 @@ void ATPWorker::onFlowStop()
 
 Packet* ATPWorker::createDataPacket(B packetBytes)
 {
-    ASSERT(destAddr == -1); // destAddr is useless
+    // ASSERT(destAddr == -1); // destAddr is useless
     IntAddress dest = groupInfo->hostinfo->PSes.at(0); // TODO use more PSes
     char pkname[40];
     sprintf(pkname, " %lld-to-%lld-seq%lld",
