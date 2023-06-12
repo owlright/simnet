@@ -45,7 +45,7 @@ module UnicastEchoApp extends UnicastApp {
         @class(UnicastEchoApp);
 }
 
-module WorkerApp extends UnicastSenderApp {
+module ATPWorker extends UnicastSenderApp {
     parameters:
         port = default(2000);
         destPort = default(2001);
