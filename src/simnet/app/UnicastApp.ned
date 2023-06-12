@@ -61,8 +61,8 @@ module ParameterServerApp extends UnicastEchoApp {
         @statistic[aggRatio](title="aggegation ratio of a packet"; source=aggRatio; record=count,mean,max,min,vector; interpolationmode=linear);
 }
 
-module TimerWorkerApp extends WorkerApp {
-    parameters:
-        double initDwellTime @unit(s) = default(1us);
-        @class(TimerWorkerApp);
-}
+//module TimerWorkerApp extends WorkerApp {
+//    parameters:
+//        double initDwellTime @unit(s) = default(1us);
+//        @class(TimerWorkerApp);
+//}

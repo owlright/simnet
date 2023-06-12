@@ -15,7 +15,7 @@ void Routing::initialize(int stage)
             throw cRuntimeError("no routeManager!");
 
 //        if (strcmp(par("groupManager").stringValue(), "") != 0)
-        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
+        // groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
 
         if (isSwitch) {
             bufferSize = par("bufferSize");
@@ -23,7 +23,7 @@ void Routing::initialize(int stage)
             aggPolicy = par("aggPolicy").stdstringValue();
             isTimerPolicy = (aggPolicy == "Timer");
             aggTimeOut = new cMessage("aggTimeOut");
-            dataCollectTimer = new cMessage("dataCollector");
+            // dataCollectTimer = new cMessage("dataCollector");
         }
 
     }
@@ -33,7 +33,7 @@ void Routing::initialize(int stage)
     }
     if (stage == INITSTAGE_LAST) {
         if (isSwitch) {
-            scheduleAfter(collectionPeriod, dataCollectTimer);
+            // scheduleAfter(collectionPeriod, dataCollectTimer);
         }
     }
 }
@@ -62,9 +62,6 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr)
     }
     else {
         int address = destAddr;
-        if (isGroupAddr(destAddr)) {
-            // address = groupManager->getGroupRootAddress(destAddr);
-        }
         auto outGateIndexes = routeManager->getRoutes(myAddress, address); // ! pass switchAddress not srcAddress
         rtable[destAddr] = outGateIndexes;
         return getRouteGateIndex(srcAddr, destAddr); // ! recursion find outgate index
@@ -80,7 +77,7 @@ void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
     delete pk;
 }
 
-std::vector<int> Routing::getReversePortIndexes(const GroupSeqType& groupSeqKey) const
+std::vector<int> Routing::getReversePortIndexes(const AddrSeqType& groupSeqKey) const
 {
 
     if (incomingPortIndexes.find(groupSeqKey) == incomingPortIndexes.end())
@@ -124,91 +121,44 @@ simsignal_t Routing::createBufferSignalForGroup(IntAddress group)
 void Routing::forwardIncoming(Packet *pk)
 {
     auto destAddr = pk->getDestAddr();
-    if (isGroupAddr(destAddr))
+    if (pk->getPacketType() == AGG)
     {
-        auto group = destAddr;
-        auto seq = pk->getSeqNumber();
-        auto groupSeqKey = std::make_pair(group, seq);
-
-        if (pk->getKind() == DATA)
+        auto apk = check_and_cast<AggPacket*>(pk);
+        auto dest = apk->getDestAddr();
+        auto seq = apk->getSeqNumber();
+        auto destSeqKey = std::make_pair(dest, seq);
+        if (!apk->isAck())
         {
-            // auto indegree = groupManager->getFanIndegree(group, 0, myAddress); // TODO: the treeIndex is fixed to 0
-            int indegree = 2;
-            // ! even if this switch doesn't deal with this group
-            // ! it still need to record incoming ports
-            // ! because the ACK packet has to be sent reversely.
-            recordIncomingPorts(groupSeqKey, pk->getArrivalGate()->getIndex());
-            if (indegree == -1) {
-                markNotAgg.insert(groupSeqKey);
-            }
-            else
-            {
-                // ! I'm responsible for this group and the <group, seq> is not
-                // ! forbidden before for some reason (most likely is not enough buffer)
-                if (markNotAgg.find(groupSeqKey) == markNotAgg.end())
-                {
-                    if (groupTable.find(group) != groupTable.end()) // the group entry exists
-                    {
-                        if (groupTable.at(group)->isSeqPresent(seq) || tryAddSeqEntry(pk))
-                            pk = doAggregation(pk);
-                    }
-                    else if (addGroupEntry(group, bufferSize, pk->getByteLength(), indegree) && tryAddSeqEntry(pk))  // ! first time we see this group
-                    {
-                        // TODO all group share the whole buffer size for now
-                        // TODO some memory allocation policy maybe implemented in the future
-                        pk = doAggregation(pk);
-                    }
-                    else
-                    {
-                        markNotAgg.insert(groupSeqKey);
-                    }
-                }
-
-            }
-        }
-        else if(pk->getKind() == REMIND)
-        {
-            pk = doAggregation(pk);
-        }
-        else if(pk->getKind() == ACK)
-        {
-            markNotAgg.erase(groupSeqKey); // key not exist is ok
-            // clear responsible group stuff
-
-            if (groupTable.find(group) != groupTable.end())
-            {
-                if (!isTimerPolicy) {
-                    auto releasedBuffer = groupTable[group]->release(pk);
-                    usedBuffer -= releasedBuffer;
-                    seqDeadline.erase(std::make_pair(group, seq));
-                    EV_DEBUG <<"group " << group << "seq " << seq << " release buffer " << releasedBuffer << " bytes" << endl;
-                }
-                if (pk->isFlowFinished()) {
-                    groupTable.erase(group); // this turn is finished, group entry will be set at next turn beginning
-                }
-            }
-            // ! if group does not deal with this group, then its group table is empty
-            // ! but it still need to send ACK reversely back to incoming ports
-            if (incomingPortIndexes.find(groupSeqKey) != incomingPortIndexes.end())
-            {
-                // ! this will happen when this switch doesn't deal with this group
-                auto outGateIndexes = getReversePortIndexes(groupSeqKey);
-                // ASSERT(outGateIndexes.size() == 1);
-                incomingPortIndexes.erase(groupSeqKey);
-                broadcast(pk, outGateIndexes);
-                return;
+            auto agtrIndex = apk->getAggregatorIndex();
+            auto entry = aggregators[agtrIndex];
+            if (entry->checkAdmission(apk)) {
+                pk = entry->doAggregation(apk);
+            } else {
+                // this means collision
+                // set these fields before forwarding
+                apk->setCollision(true);
+                apk->setResend(true); // TODO I don't know why ATP set this
+                if (apk->getAggPolicy() == ATP)
+                    check_and_cast<ATPPacket*>(apk)->setSwitchIdentifier(1);
             }
         }
         else
         {
-            throw cRuntimeError("Unknown packet type.");
+            // ! if group does not deal with this group, then its group table is empty
+            // ! but it still need to send ACK reversely back to incoming ports
+            auto outGateIndexes = getReversePortIndexes(destSeqKey);
+            incomingPortIndexes.erase(destSeqKey); // ! avoid comsuming too much memory
+            broadcast(pk, outGateIndexes);
+            return;
         }
+
+        if (pk == nullptr) // ! Aggregation is not finished;
+            return;
     }
 
-    if (pk == nullptr)
-        return;
-    // route this packet, packet may be:
+    // route this packet which may be:
     // 1. unicast packet
+    // 2. finished aggregated packet
     // 2. group packet not responsible for
     // 3. group packet failed to be aggregated
     auto srcAddr = pk->getSrcAddr();
@@ -271,8 +221,8 @@ bool Routing::addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, 
     // setup for the group
     groupTable[group] = new AggGroupEntry(bufferSize, indegree);
     groupTable.at(group)->usedBufferSignal = createBufferSignalForGroup(group);
-    if (!dataCollectTimer->isScheduled())
-        scheduleAfter(collectionPeriod, dataCollectTimer);
+    // if (!dataCollectTimer->isScheduled())
+    //     scheduleAfter(collectionPeriod, dataCollectTimer);
     // TODO all group use the same aggPolicy for now
     groupTable.at(group)->setAggPolicy(aggPolicy);
     if (bufferSize - usedBuffer >= firstDataSize)
@@ -297,7 +247,7 @@ bool Routing::tryAddSeqEntry(const Packet* pk)
     return groupTable.at(group)->addSeqEntry(pk);
 }
 
-void Routing::recordIncomingPorts(GroupSeqType& groupSeqKey, int port)
+void Routing::recordIncomingPorts(AddrSeqType& groupSeqKey, int port)
 {
     // TODO maybe use unordered_set?
     bool found = false;
@@ -319,7 +269,7 @@ void Routing::handleMessage(cMessage *msg)
     {
         int count = 0;
         for (auto& groupSeqTimeout : seqDeadline) {
-            GroupSeqType groupSeq = groupSeqTimeout.first;
+            AddrSeqType groupSeq = groupSeqTimeout.first;
             auto group = groupSeq.first;
             auto seq = groupSeq.second;
             auto timeout = SimTime(groupSeqTimeout.second, SIMTIME_NS);
@@ -347,46 +297,45 @@ void Routing::handleMessage(cMessage *msg)
         }
         return;
     }
-    if (msg == dataCollectTimer)
-    {
-        for (auto const& p : groupTable)
-        {
-            auto entry = p.second;
-            auto used = entry->getUsedBuffer();
-            emit(entry->usedBufferSignal, used);
-        }
-        if (!groupTable.empty())
-            scheduleAfter(collectionPeriod, dataCollectTimer);
-        return;
-    }
+    // if (msg == dataCollectTimer)
+    // {
+    //     for (auto const& p : groupTable)
+    //     {
+    //         auto entry = p.second;
+    //         auto used = entry->getUsedBuffer();
+    //         emit(entry->usedBufferSignal, used);
+    //     }
+    //     if (!groupTable.empty())
+    //         scheduleAfter(collectionPeriod, dataCollectTimer);
+    //     return;
+    // }
     Packet *pk = check_and_cast<Packet *>(msg);
     auto destAddr = pk->getDestAddr();
     if (pk->getArrivalGate() == gate("localIn"))
     {
         // ! only host has localIn, so save the time to ask route manager
-        // TODO: but if this is always right?
+        // TODO: but if this is always right? such as sending to another app
         EV << "Send out packet " << pk->getName() << " on gate index " << 0 << endl;
         send(pk, "out", 0);
         return;
     }
+
+    if (destAddr == myAddress)
+    {
+        // destination is me
+        EV_TRACE << "deliver packet to upperLayer" << pk->getName() << endl;
+        send(pk, "localOut");
+        return;
+    }
+    else if (isSwitch)
+    {
+        forwardIncoming(pk);
+    }
     else
     {
-        if (destAddr == myAddress || destAddr == myGroupAddress)
-        {
-            // destination is me
-            EV_TRACE << "deliver packet to upperLayer" << pk->getName() << endl;
-            send(pk, "localOut");
-            return;
-        }
-        else if (isSwitch)
-        {
-            forwardIncoming(pk);
-        }
-        else
-        {
-            throw cRuntimeError("%lld is not a router", myAddress);
-        }
+        throw cRuntimeError("%lld is not a router", myAddress);
     }
+
 }
 
 void Routing::refreshDisplay() const
