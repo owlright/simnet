@@ -62,6 +62,7 @@ module Switch like INode
 {
     parameters:
         int address;
+        int position = default(0); // the switch's level
         @node;
         @switch;
         @display("i=abstract/switch_s");

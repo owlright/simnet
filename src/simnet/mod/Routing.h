@@ -29,6 +29,7 @@ public:
 private:
     bool isSwitch;
     IntAddress myAddress{INVALID_ADDRESS};
+    int position{-1};
     // IntAddress myGroupAddress{INVALID_ADDRESS};
     bool ecmpFlow = false;
     double collectionPeriod;
@@ -66,7 +67,7 @@ private:
     // and store it in rtable for next time search
     int getRouteGateIndex(int srcAddr, int destAddr);
     [[deprecated]] bool isGroupAddr(IntAddress addr) const { return (GROUPADDR_START <= addr && addr < GROUPADDR_END);};
-    bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
+    [[deprecated]] bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
 
     // ! common forwarding functions
     void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);

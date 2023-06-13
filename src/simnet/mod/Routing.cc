@@ -20,6 +20,7 @@ void Routing::initialize(int stage)
         if (isSwitch) {
             bufferSize = par("bufferSize");
             numAggregators = par("numAggregators");
+            position = getParentModule()->par("position");
             aggregators.resize(numAggregators, nullptr);
             collectionPeriod = par("collectPeriod").doubleValueInUnit("s");
             aggPolicy = par("aggPolicy").stdstringValue();
@@ -35,6 +36,7 @@ void Routing::initialize(int stage)
     }
     if (stage == INITSTAGE_LAST) {
         if (isSwitch) {
+            EV_DEBUG << "router " << myAddress << "'s position is " << position << endl;
             // scheduleAfter(collectionPeriod, dataCollectTimer);
         }
     }
