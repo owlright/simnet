@@ -51,7 +51,7 @@ Packet *ATPEntry::doAggregation(Packet *pk)
         // ! if this is level0, there are still something to do
     }
     if (counter == 0) {
-        // first packet， copy infomation
+        // first packet, copy infomation
         ASSERT(isIdle && bitmap == 0);
         reset();
         jobId = pkt->getJobId();
@@ -72,6 +72,7 @@ Packet *ATPEntry::doAggregation(Packet *pk)
         temp.fanIndegree = pkt->getFanIndegree1();
         pkt->setSwitchIdentifier(0); // TODO I don't know why ATP set this?
     }
+
     if ((temp.bitmap & bitmap) > 0) {
         // is already aggregated
         ASSERT(pkt->getResend()); // TODO if there is such case that resend==0?
@@ -83,7 +84,8 @@ Packet *ATPEntry::doAggregation(Packet *pk)
         counter++;
         bitmap |= temp.bitmap;
     }
-
+    EV_DEBUG << pkt->getDestAddr() << " aggCounter: " << counter;
+    EV_DEBUG << " bitmap: " << std::bitset<32>(bitmap)<< endl;
     if (pkt->getResend()) {
         reset();
         return pk;

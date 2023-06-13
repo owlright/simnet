@@ -125,40 +125,14 @@ simsignal_t Routing::createBufferSignalForGroup(IntAddress group)
 void Routing::forwardIncoming(Packet *pk)
 {
     auto destAddr = pk->getDestAddr();
+    auto seq = pk->getSeqNumber();
+    auto destSeqKey = std::make_pair(destAddr, seq);
     if (pk->getPacketType() == AGG)
     {
         auto apk = check_and_cast<AggPacket*>(pk);
-        auto dest = apk->getDestAddr();
-        auto seq = apk->getSeqNumber();
-        auto destSeqKey = std::make_pair(dest, seq);
         if (!apk->isAck())
         {
-            auto agtrIndex = apk->getAggregatorIndex();
-            if (aggregators.at(agtrIndex) == nullptr) { // lazy initialization to save memory
-                switch(apk->getAggPolicy())
-                {
-                    case ATP:
-                        aggregators[agtrIndex] = new ATPEntry();
-                        break;
-                    case MTATP:
-                        aggregators[agtrIndex] = new MTATPEntry();
-                        break;
-                    default:
-                        throw cRuntimeError("unknown agg policy");
-                }
-
-            }
-            auto entry = aggregators[agtrIndex];
-            if (entry->checkAdmission(apk)) {
-                pk = entry->doAggregation(apk);
-            } else {
-                // this means collision
-                // set these fields before forwarding
-                apk->setCollision(true);
-                apk->setResend(true); // TODO I don't know why ATP set this
-                if (apk->getAggPolicy() == ATP)
-                    check_and_cast<ATPPacket*>(apk)->setSwitchIdentifier(1);
-            }
+            pk = aggregate(apk);
         }
         else
         {
@@ -231,6 +205,36 @@ Packet* Routing::doAggregation(Packet *pk)
         }
     }
     return pk;
+}
+
+Packet* Routing::aggregate(AggPacket *apk)
+{
+    // auto dest = apk->getDestAddr();
+    // auto seq = apk->getSeqNumber();
+    // auto destSeqKey = std::make_pair(dest, seq);
+    auto agtrIndex = apk->getAggregatorIndex();
+    if (aggregators.at(agtrIndex) == nullptr) { // lazy initialization to save memory
+        switch(apk->getAggPolicy())
+        {
+            case ATP:
+                if (position == 1)
+                    aggregators[agtrIndex] = new ATPEntry();
+                else // ! ATP only do aggregation at edge switches
+                    return apk;
+                break;
+            case MTATP:
+                aggregators[agtrIndex] = new MTATPEntry();
+                break;
+            default:
+                throw cRuntimeError("unknown agg policy");
+        }
+    }
+    auto entry = aggregators[agtrIndex];
+    if (entry->checkAdmission(apk)) // ! collision bit will be set here
+    {
+        return entry->doAggregation(apk);
+    }
+    return nullptr;
 }
 
 bool Routing::addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree)
