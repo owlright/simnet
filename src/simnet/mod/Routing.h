@@ -33,8 +33,8 @@ private:
     bool ecmpFlow = false;
     double collectionPeriod;
     // TODO improve the code
-    std::string aggPolicy;
-    bool isTimerPolicy{false};
+    [[deprecated]] std::string aggPolicy;
+    [[deprecated]] bool isTimerPolicy{false};
 
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
@@ -61,7 +61,7 @@ private:
     cMessage* dataCollectTimer{nullptr};
 
     // ! common router functions
-    
+
     // Ask global routeManager for the first seen destAddr
     // and store it in rtable for next time search
     int getRouteGateIndex(int srcAddr, int destAddr);
@@ -79,9 +79,9 @@ private:
 
     // ! for aggregation
     std::vector<int> getReversePortIndexes(const AddrSeqType& groupSeqKey) const;
-    Packet* doAggregation(Packet* pk);
-    bool addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree);
-    bool tryAddSeqEntry(const Packet* pk);
+    [[deprecated]] Packet* doAggregation(Packet* pk);
+    [[deprecated]] bool addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree);
+    [[deprecated]] bool tryAddSeqEntry(const Packet* pk);
     void recordIncomingPorts(AddrSeqType& groupSeqKey, int port);
 
 protected:
