@@ -125,21 +125,24 @@ simsignal_t Routing::createBufferSignalForGroup(IntAddress group)
 void Routing::forwardIncoming(Packet *pk)
 {
     auto destAddr = pk->getDestAddr();
+    auto srcAddr = pk->getSrcAddr();
     auto seq = pk->getSeqNumber();
     auto destSeqKey = std::make_pair(destAddr, seq);
     if (pk->getPacketType() == AGG)
     {
         auto apk = check_and_cast<AggPacket*>(pk);
+        recordIncomingPorts(destSeqKey, pk->getArrivalGate()->getIndex());
         if (!apk->isAck())
         {
             pk = aggregate(apk);
         }
         else
         {
+            auto srcSeqKey = std::make_pair(srcAddr, seq);
             // ! if group does not deal with this group, then its group table is empty
             // ! but it still need to send ACK reversely back to incoming ports
-            auto outGateIndexes = getReversePortIndexes(destSeqKey);
-            incomingPortIndexes.erase(destSeqKey); // ! avoid comsuming too much memory
+            auto outGateIndexes = getReversePortIndexes(srcSeqKey);
+            incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
             broadcast(pk, outGateIndexes);
             return;
         }
@@ -153,7 +156,6 @@ void Routing::forwardIncoming(Packet *pk)
     // 2. finished aggregated packet
     // 2. group packet not responsible for
     // 3. group packet failed to be aggregated
-    auto srcAddr = pk->getSrcAddr();
     int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
     if (outGateIndex == -1) { // ! TODO if not found, routeManager will throw an error, the code is useless
         EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
