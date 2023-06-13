@@ -13,6 +13,7 @@ struct GroupHostInfo
     std::vector<int> workers;
     int numWorkers;
     int numPSes;
+    IntAddress multicastAddress;
 };
 
 struct GroupSwitchInfo

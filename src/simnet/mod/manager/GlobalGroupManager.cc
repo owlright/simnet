@@ -164,6 +164,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
     } else {
         std::string line;
         int jobId = 0; // which is also the index in database
+        IntAddress mcastAddr = GROUPADDR_START + 1;
         EV << std::left << std::setw(50) << "workers" << std::setw(30) << "PSes" << endl;
         while (getline(hostConfig, line, '\n')) {
             if (line.empty() || line[0] == '#')
@@ -182,6 +183,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             entry->PSes = PSAddrs;
             entry->numWorkers = workerAddrs.size();
             entry->numPSes = PSAddrs.size();
+            entry->multicastAddress = mcastAddr;
             groupHostInfodb.push_back(entry);
             EV << std::setw(50) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
             for (auto i = 0; i < workerAddrs.size(); i++)
