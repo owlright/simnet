@@ -34,7 +34,7 @@ bool AggregatorEntry::checkAdmission(const Packet *pk) const
 Packet *ATPEntry::doAggregation(Packet *pk)
 {
     auto pkt = check_and_cast<ATPPacket*>(pk); // ! using pkt in the below code
-    ASSERT(pkt->getJobId() == jobId && pkt->getSeqNumber() == seqNumber);
+
     auto isLevel0 = pkt->getSwitchIdentifier() == 0;
     if (pkt->getResend()) { // ! is this a resend packet?
         ASSERT(!isIdle); // ! checkAdmission will avoid this case happen
@@ -52,7 +52,10 @@ Packet *ATPEntry::doAggregation(Packet *pk)
         seqNumber = pkt->getSeqNumber();
         timestamp = pkt->getArrivalTime();
         isIdle = false;
+    } else {// ! checkAdmission will avoid this case happen
+        ASSERT(pkt->getJobId() == jobId && pkt->getSeqNumber() == seqNumber);
     }
+
 
     if (isLevel0) {
         temp.bitmap = pkt->getBitmap0();
