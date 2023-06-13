@@ -14,8 +14,8 @@ protected:
     virtual void reset();
 
 protected:
-    bool isIdle{false};
-    int counter{-1};
+    bool isIdle{true};
+    int counter{0};
     int jobId{-1};
     bool ecn{false};
     SeqNumber seqNumber{-1};
