@@ -12,8 +12,8 @@ protected:
     virtual Packet* createAckPacket(const Packet* const pk) override;
 
 protected:
-    std::unordered_map<SeqNumber, int> aggCounters;
-    std::unordered_map<SeqNumber, int> receivedNumber;
+    std::unordered_map<SeqNumber, std::unordered_set<IntAddress> > aggedWorkers;
+    std::unordered_map<SeqNumber, int> receivedNumber; // received packets number
     static simsignal_t aggRatioSignal;
 
 private:
@@ -50,8 +50,9 @@ void ParameterServerApp::initialize(int stage)
 
 void ParameterServerApp::handleMessage(cMessage *msg)
 {
-    auto pk = check_and_cast<Packet*>(msg);
-    auto connectionId = pk->getDestAddr(); // ! use groupAddr as connectionId
+    auto pk = check_and_cast<AggPacket*>(msg);
+    ASSERT(pk->getJobId() == groupInfo->hostinfo->jobId);
+    auto connectionId = pk->getJobId();
     auto it = connections.find(connectionId);
     if (it == connections.end()) {
         onNewConnectionArrived(connectionId, pk);
@@ -61,48 +62,65 @@ void ParameterServerApp::handleMessage(cMessage *msg)
 
 void ParameterServerApp::onNewConnectionArrived(IdNumber connId, const Packet* const pk)
 {
-    EV_DEBUG << "Create new connection id " << connId << endl;
+    if (connections.size() > 1)
+        throw cRuntimeError("a PS only serves one group");
+    EV_DEBUG << "Create new connection id by jobId " << connId << endl;
     connections[connId] = createConnection(connId);
     auto connection = connections.at(connId);
-    connection->bindRemote(connId, pk->getLocalPort());
+    connection->bindRemote(groupInfo->hostinfo->multicastAddress, pk->getLocalPort());
 }
 
 void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
-    auto pk = check_and_cast<Packet*>(msg);
-    ASSERT(pk->getKind() == PacketType::DATA);
-    ASSERT(pk->getDestAddr() == connection->getConnectionId());
+    auto pk = check_and_cast<ATPPacket*>(msg);
+    ASSERT(pk->getPacketType() == AGG);
+    ASSERT(pk->getJobId() == connection->getConnectionId());
     auto seq = pk->getSeqNumber();
-    if (aggCounters.find(seq) == aggCounters.end())
+    if (aggedWorkers.find(seq) == aggedWorkers.end())
     {
-        aggCounters[seq] = 0;
+        aggedWorkers[seq] = std::unordered_set<IntAddress>();
         receivedNumber[seq] = 0;
     }
-
-    auto aggpk = check_and_cast<MTATPPacket*>(pk->decapsulate());
-    aggCounters.at(seq) += aggpk->getAggCounter();
-    receivedNumber.at(seq) += 1;
-    EV_DEBUG << "Seq " << seq << " aggregated " << aggCounters.at(seq) << endl;
-    if (aggCounters.at(seq) == aggpk->getWorkerNumber())
+    EV_DEBUG << pk->getRecord() << endl;
+    auto& tmpWorkersRecord = aggedWorkers.at(seq);
+    for (auto& w:pk->getRecord()) {
+        if (tmpWorkersRecord.find(w) != tmpWorkersRecord.end()) {
+            EV_WARN << "received a resend packet" << endl;
+            receivedNumber[seq] += 1;
+        }
+        tmpWorkersRecord.insert(w);
+    }
+    EV_DEBUG << "Seq " << seq << " aggregated " << pk->getRecord().size() << " packets." << endl;
+    auto aggedNumber = tmpWorkersRecord.size();
+    if (aggedNumber == pk->getWorkerNumber())
     {
         auto packet = createAckPacket(pk);
         connection->send(packet);
-        emit(aggRatioSignal, receivedNumber.at(seq) / double(aggCounters.at(seq)) );
-        aggCounters.erase(seq);
+        emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedNumber) );
+        aggedWorkers.erase(seq);
         receivedNumber.erase(seq);
         EV_DEBUG << "Seq " << seq << " finished." << endl;
-        // TODO destroy this connection
     }
     delete pk;
-    delete aggpk;
 }
 
 Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
 {
-    auto packet = UnicastEchoApp::createAckPacket(pk);
     char pkname[40];
-    sprintf(pkname, "ACK-%lld-to-%lld-seq%lld",
+    sprintf(pkname, "MuACK-%lld-to-%lld-seq%lld",
             localAddr, pk->getDestAddr(), pk->getSeqNumber());
-    packet->setName(pkname);
+    auto packet = new AggPacket(pkname);
+    packet->setSeqNumber(pk->getSeqNumber());
+    packet->setKind(PacketType::ACK);
+    packet->setByteLength(64);
+    packet->setReceivedBytes(pk->getByteLength());
+    packet->setStartTime(pk->getStartTime());
+    packet->setQueueTime(pk->getQueueTime());
+    packet->setTransmitTime(pk->getTransmitTime());
+    if (pk->getECN()) {
+        packet->setECE(true);
+    }
+    packet->setIsFlowFinished(pk->isFlowFinished());
+    check_and_cast<AggPacket*>(packet)->setIsAck(true);
     return packet;
 }
