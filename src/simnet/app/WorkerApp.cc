@@ -34,10 +34,7 @@ void ATPWorker::initialize(int stage)
             jobId = groupInfo->hostinfo->jobId;
             EV << "host " << localAddr << " accept job " << jobId;
             EV << " possible PSes: ";
-            for (auto& p: groupInfo->hostinfo->PSes) {
-                EV << p << " ";
-            }
-            EV << endl;
+            EV << groupInfo->hostinfo->PSes << endl;
             // ! TODO FIXME only send to a single sever
             // ! Split Worker App from UnicastApp or Let UnicastApp have multiple Paramter servers ?
             destAddr = groupInfo->hostinfo->PSes.at(0);
