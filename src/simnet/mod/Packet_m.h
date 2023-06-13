@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
 //
 
 #ifndef __PACKET_M_H
@@ -25,7 +25,7 @@ class AggPacket;
 class ATPPacket;
 class MTATPPacket;
 /**
- * Enum generated from <tt>simnet/mod/Packet.msg:2</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/../mod/Packet.msg:2</tt> by opp_msgtool.
  * <pre>
  * enum PacketType
  * {
@@ -49,7 +49,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Enum generated from <tt>simnet/mod/Packet.msg:11</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/../mod/Packet.msg:11</tt> by opp_msgtool.
  * <pre>
  * enum AggPolicy
  * {
@@ -67,7 +67,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPolicy& e) { b->pa
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b->unpack(n); e = static_cast<AggPolicy>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:17</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:17</tt> by opp_msgtool.
  * <pre>
  * packet EthernetMacHeader
  * {
@@ -99,7 +99,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const EthernetMacHeader& ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, EthernetMacHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:22</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:22</tt> by opp_msgtool.
  * <pre>
  * class IpHeader extends EthernetMacHeader
  * {
@@ -141,7 +141,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IpHeader& obj) {obj.p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IpHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:29</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:29</tt> by opp_msgtool.
  * <pre>
  * class UdpHeader extends IpHeader
  * {
@@ -183,7 +183,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const UdpHeader& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, UdpHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:36</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:36</tt> by opp_msgtool.
  * <pre>
  * class TcpLikeHeader extends IpHeader
  * {
@@ -240,10 +240,11 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const TcpLikeHeader& obj) {
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, TcpLikeHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:46</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:46</tt> by opp_msgtool.
  * <pre>
  * class Packet extends TcpLikeHeader
  * {
+ *     // cheating fields
  *     PacketType packetType;
  *     int64_t connectionId;
  *     int64_t receivedBytes;
@@ -305,8 +306,12 @@ class Packet : public ::TcpLikeHeader
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Packet& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Packet& obj) {obj.parsimUnpack(b);}
 
+// cplusplus {{
+#include <vector>
+// }}
+
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:57</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:62</tt> by opp_msgtool.
  * <pre>
  * class AggPacket extends Packet
  * {
@@ -320,6 +325,8 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Packet& obj) {obj.parsimU
  *     bool collision;
  *     bool ecn;
  *     bool isAck;
+ *     // cheating fields
+ *     int64_t workerRecord[] \@custom \@sizeGetter(getRecordLen) \@sizeSetter(setRecordLen) \@getter(getRecord) \@setter(setRecord);
  * }
  * </pre>
  */
@@ -377,13 +384,44 @@ class AggPacket : public ::Packet
 
     virtual bool isAck() const;
     virtual void setIsAck(bool isAck);
+
+
+    protected:
+        std::vector<int64_t> workerRecord;
+    public:
+        // expected methods:
+        virtual void setRecordLen(size_t size) {
+            workerRecord.reserve(size);
+        }
+        virtual size_t getRecordLen() const {return workerRecord.size();}
+        virtual std::vector<int64_t> getRecord() const {return workerRecord;}
+        virtual int64_t getRecord(size_t k) {return workerRecord.at(k);}
+        virtual void setRecord(size_t k, int64_t worker) {
+            EV_WARN << "You should not use this method, but using addRecord instead." << std::endl;
+            workerRecord[k] = worker;
+        }
+        //new methods:
+        virtual void addRecord(int64_t worker) {
+            workerRecord.push_back(worker);
+        }
+        virtual void setRecord(std::vector<int64_t>& workers) {
+            auto oldLen = getRecordLen();
+            for (auto i = 0; i < oldLen; i++) {
+                workerRecord[i] = workers.back();
+                workers.pop_back();
+            }
+            while (!workers.empty()) {
+                workerRecord.push_back(workers.back());
+                workers.pop_back();
+            }
+        }
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPacket& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:71</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:117</tt> by opp_msgtool.
  * <pre>
  * class ATPPacket extends AggPacket
  * {
@@ -441,7 +479,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const ATPPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ATPPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:82</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:128</tt> by opp_msgtool.
  * <pre>
  * class MTATPPacket extends AggPacket
  * {

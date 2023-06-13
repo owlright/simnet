@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -2195,6 +2195,9 @@ void AggPacket::copy(const AggPacket& other)
     this->collision = other.collision;
     this->ecn = other.ecn;
     this->isAck_ = other.isAck_;
+// cplusplus {{
+    this->workerRecord = other.workerRecord;
+// }}
 }
 
 void AggPacket::parsimPack(omnetpp::cCommBuffer *b) const
@@ -2209,6 +2212,7 @@ void AggPacket::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->collision);
     doParsimPacking(b,this->ecn);
     doParsimPacking(b,this->isAck_);
+    // field workerRecord is abstract or custom -- please do packing in customized class
 }
 
 void AggPacket::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -2223,6 +2227,7 @@ void AggPacket::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->collision);
     doParsimUnpacking(b,this->ecn);
     doParsimUnpacking(b,this->isAck_);
+    // field workerRecord is abstract or custom -- please do unpacking in customized class
 }
 
 AggPolicy AggPacket::getAggPolicy() const
@@ -2329,6 +2334,7 @@ class AggPacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_collision,
         FIELD_ecn,
         FIELD_isAck,
+        FIELD_workerRecord,
     };
   public:
     AggPacketDescriptor();
@@ -2395,7 +2401,7 @@ const char *AggPacketDescriptor::getProperty(const char *propertyName) const
 int AggPacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 9+base->getFieldCount() : 9;
+    return base ? 10+base->getFieldCount() : 10;
 }
 
 unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
@@ -2416,8 +2422,9 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_collision
         FD_ISEDITABLE,    // FIELD_ecn
         FD_ISEDITABLE,    // FIELD_isAck
+        FD_ISARRAY | FD_ISEDITABLE | FD_ISRESIZABLE,    // FIELD_workerRecord
     };
-    return (field >= 0 && field < 9) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 10) ? fieldTypeFlags[field] : 0;
 }
 
 const char *AggPacketDescriptor::getFieldName(int field) const
@@ -2438,8 +2445,9 @@ const char *AggPacketDescriptor::getFieldName(int field) const
         "collision",
         "ecn",
         "isAck",
+        "workerRecord",
     };
-    return (field >= 0 && field < 9) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 10) ? fieldNames[field] : nullptr;
 }
 
 int AggPacketDescriptor::findField(const char *fieldName) const
@@ -2455,6 +2463,7 @@ int AggPacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "collision") == 0) return baseIndex + 6;
     if (strcmp(fieldName, "ecn") == 0) return baseIndex + 7;
     if (strcmp(fieldName, "isAck") == 0) return baseIndex + 8;
+    if (strcmp(fieldName, "workerRecord") == 0) return baseIndex + 9;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -2476,8 +2485,9 @@ const char *AggPacketDescriptor::getFieldTypeString(int field) const
         "bool",    // FIELD_collision
         "bool",    // FIELD_ecn
         "bool",    // FIELD_isAck
+        "int64_t",    // FIELD_workerRecord
     };
-    return (field >= 0 && field < 9) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 10) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **AggPacketDescriptor::getFieldPropertyNames(int field) const
@@ -2491,6 +2501,10 @@ const char **AggPacketDescriptor::getFieldPropertyNames(int field) const
     switch (field) {
         case FIELD_aggPolicy: {
             static const char *names[] = { "enum",  nullptr };
+            return names;
+        }
+        case FIELD_workerRecord: {
+            static const char *names[] = { "custom", "sizeGetter", "sizeSetter", "getter", "setter",  nullptr };
             return names;
         }
         default: return nullptr;
@@ -2509,6 +2523,13 @@ const char *AggPacketDescriptor::getFieldProperty(int field, const char *propert
         case FIELD_aggPolicy:
             if (!strcmp(propertyName, "enum")) return "AggPolicy";
             return nullptr;
+        case FIELD_workerRecord:
+            if (!strcmp(propertyName, "custom")) return "";
+            if (!strcmp(propertyName, "sizeGetter")) return "getRecordLen";
+            if (!strcmp(propertyName, "sizeSetter")) return "setRecordLen";
+            if (!strcmp(propertyName, "getter")) return "getRecord";
+            if (!strcmp(propertyName, "setter")) return "setRecord";
+            return nullptr;
         default: return nullptr;
     }
 }
@@ -2523,6 +2544,7 @@ int AggPacketDescriptor::getFieldArraySize(omnetpp::any_ptr object, int field) c
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
+        case FIELD_workerRecord: return pp->getRecordLen();
         default: return 0;
     }
 }
@@ -2539,6 +2561,7 @@ void AggPacketDescriptor::setFieldArraySize(omnetpp::any_ptr object, int field, 
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
+        case FIELD_workerRecord: pp->setRecordLen(size); break;
         default: throw omnetpp::cRuntimeError("Cannot set array size of field %d of class 'AggPacket'", field);
     }
 }
@@ -2576,6 +2599,7 @@ std::string AggPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, 
         case FIELD_collision: return bool2string(pp->getCollision());
         case FIELD_ecn: return bool2string(pp->getEcn());
         case FIELD_isAck: return bool2string(pp->isAck());
+        case FIELD_workerRecord: return int642string(pp->getRecord(i));
         default: return "";
     }
 }
@@ -2601,6 +2625,7 @@ void AggPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int fie
         case FIELD_collision: pp->setCollision(string2bool(value)); break;
         case FIELD_ecn: pp->setEcn(string2bool(value)); break;
         case FIELD_isAck: pp->setIsAck(string2bool(value)); break;
+        case FIELD_workerRecord: pp->setRecord(i,string2int64(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'AggPacket'", field);
     }
 }
@@ -2624,6 +2649,7 @@ omnetpp::cValue AggPacketDescriptor::getFieldValue(omnetpp::any_ptr object, int 
         case FIELD_collision: return pp->getCollision();
         case FIELD_ecn: return pp->getEcn();
         case FIELD_isAck: return pp->isAck();
+        case FIELD_workerRecord: return pp->getRecord(i);
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'AggPacket' as cValue -- field index out of range?", field);
     }
 }
@@ -2649,6 +2675,7 @@ void AggPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int 
         case FIELD_collision: pp->setCollision(value.boolValue()); break;
         case FIELD_ecn: pp->setEcn(value.boolValue()); break;
         case FIELD_isAck: pp->setIsAck(value.boolValue()); break;
+        case FIELD_workerRecord: pp->setRecord(i,omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'AggPacket'", field);
     }
 }
