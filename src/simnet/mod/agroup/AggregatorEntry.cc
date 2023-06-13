@@ -1,5 +1,6 @@
 #include "AggregatorEntry.h"
 #include <bitset>
+#include <algorithm>
 
 void AggregatorEntry::reset()
 {
@@ -9,6 +10,17 @@ void AggregatorEntry::reset()
     timestamp = 0;
     ecn = false;
     isIdle = true;
+}
+
+void AggregatorEntry::checkThenAddWorkerId(const Packet *pk)
+{
+    auto pkt = check_and_cast<const AggPacket*>(pk);
+    for (auto& w:pkt->getRecord()) {
+        if (std::find(workerRecord.begin(), workerRecord.end(), w) != workerRecord.end()) {
+            throw cRuntimeError("worker %lld is already aggregated.", w);
+        }
+        workerRecord.push_back(w);
+    }
 }
 
 Packet *AggregatorEntry::doAggregation(Packet *pk)
@@ -79,7 +91,9 @@ Packet *ATPEntry::doAggregation(Packet *pk)
         ecn = pkt->getEcn();
         delete pkt; // drop the packet
         return nullptr;
-    } else {
+    } else {        \
+        //! cheating
+        checkThenAddWorkerId(pkt);
         // do aggregation
         counter++;
         bitmap |= temp.bitmap;
@@ -93,6 +107,14 @@ Packet *ATPEntry::doAggregation(Packet *pk)
     if (counter == temp.fanIndegree) {
         std::bitset<32> bits(bitmap);
         ASSERT(bits.count() == temp.fanIndegree);
+        // copy switch recorded info into packet
+        if (isLevel0)
+            pkt->setBitmap0(bitmap);
+        else
+            pkt->setBitmap1(bitmap);
+        EV_DEBUG << workerRecord << endl;
+        pkt->setRecord(workerRecord);
+        ASSERT(workerRecord.empty());
         return pk;
     } else {
         delete pk;

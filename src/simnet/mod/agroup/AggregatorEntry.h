@@ -12,6 +12,7 @@ public:
 
 protected:
     virtual void reset();
+    void checkThenAddWorkerId(const Packet* pk);
 
 protected:
     bool isIdle{true};
@@ -20,6 +21,7 @@ protected:
     bool ecn{false};
     SeqNumber seqNumber{-1};
     simtime_t timestamp{0}; // arrived time
+    std::vector<int64_t> workerRecord; // cheating record all worker's address
 
 private:
     simtime_t accumulatedTime;

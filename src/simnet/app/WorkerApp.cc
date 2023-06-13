@@ -72,6 +72,9 @@ Packet* ATPWorker::createDataPacket(B packetBytes)
     pk->setSeqNumber(sentBytes);
     pk->setByteLength(packetBytes);
     pk->setECN(false);
+    // some cheating fields
+    pk->setRecordLen(1);
+    pk->addRecord(localAddr);
     pk->setStartTime(simTime().dbl());
     pk->setTransmitTime(0);
     pk->setQueueTime(0);
