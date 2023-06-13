@@ -88,6 +88,7 @@ Packet* ATPWorker::createDataPacket(B packetBytes)
     auto jobid = reinterpret_cast<uint16_t&>(jobID);
     auto agtrIndex = hashAggrIndex(jobid, seq);
     EV_DEBUG << "aggregator index: " << agtrIndex << endl;
+    pk->setWorkerNumber(groupInfo->hostinfo->numWorkers);
     pk->setAggregatorIndex(agtrIndex);
     pk->setBitmap0(groupInfo->switchinfo->bitmap0);
     pk->setBitmap1(groupInfo->switchinfo->bitmap1);
