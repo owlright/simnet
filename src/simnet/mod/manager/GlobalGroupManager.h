@@ -22,8 +22,8 @@ struct GroupSwitchInfo
     IntAddress switch1{-1};
     int fanIndegree0{-1};
     int fanIndegree1{-1};
-    int bitmap0;
-    int bitmap1;
+    uint32_t bitmap0;
+    uint32_t bitmap1;
 };
 
 struct GroupInfoWithIndex

@@ -147,8 +147,8 @@ void GlobalGroupManager::readSwitchConfig(const char * fileName)
             entry->switch1 = switch1Addr;
             entry->fanIndegree0 = fanIndegree0;
             entry->fanIndegree1 = fanIndegree1;
-            entry->bitmap0 = bitmap0Index > 0 ? (1 << bitmap0Index) : bitmap0Index;
-            entry->bitmap1 = bitmap0Index > 0 ? (1 << bitmap1Index) : bitmap1Index;
+            entry->bitmap0 = bitmap0Index > 0 ? (1 << (bitmap0Index-1)) : bitmap0Index;
+            entry->bitmap1 = bitmap0Index > 0 ? (1 << (bitmap1Index-1)) : bitmap1Index;
             auto it = hostGroupInfo.find(workerAddr);
             ASSERT(it != hostGroupInfo.end());
             it->second->switchinfo = entry;
