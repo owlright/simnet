@@ -18,6 +18,7 @@ module Routing
         // ! these parameters are set in Node.ned
         bool ecmpFlow = default(false);
         string aggPolicy = default("Count");
+        int numAggregators = default(4000);
         int bufferSize @unit(B) = default(10MB);
         double collectPeriod @unit(s)= default(10us);
 

@@ -47,6 +47,7 @@ private:
 
     B bufferSize{0};
     B usedBuffer{0};
+    int numAggregators{0};
 
     std::unordered_set<AddrSeqType, hashFunction> markNotAgg;
     std::unordered_map<AddrSeqType, std::vector<int>, hashFunction> incomingPortIndexes;

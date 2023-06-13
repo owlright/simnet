@@ -19,6 +19,8 @@ void Routing::initialize(int stage)
 
         if (isSwitch) {
             bufferSize = par("bufferSize");
+            numAggregators = par("numAggregators");
+            aggregators.resize(numAggregators, nullptr);
             collectionPeriod = par("collectPeriod").doubleValueInUnit("s");
             aggPolicy = par("aggPolicy").stdstringValue();
             isTimerPolicy = (aggPolicy == "Timer");
@@ -130,6 +132,20 @@ void Routing::forwardIncoming(Packet *pk)
         if (!apk->isAck())
         {
             auto agtrIndex = apk->getAggregatorIndex();
+            if (aggregators.at(agtrIndex) == nullptr) { // lazy initialization to save memory
+                switch(apk->getAggPolicy())
+                {
+                    case ATP:
+                        aggregators[agtrIndex] = new ATPEntry();
+                        break;
+                    case MTATP:
+                        aggregators[agtrIndex] = new MTATPEntry();
+                        break;
+                    default:
+                        throw cRuntimeError("unknown agg policy");
+                }
+
+            }
             auto entry = aggregators[agtrIndex];
             if (entry->checkAdmission(apk)) {
                 pk = entry->doAggregation(apk);
