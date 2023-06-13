@@ -19,12 +19,10 @@
         {
             "name": "Win32",
             "includePath": [
-                "c:/Users/sheng/Documents/repos/omnetpp-6.0.1/include",
-                "c:/Users/sheng/Documents/repos/omnetpp-6.0.1/*",
-                "c:/Users/sheng/Documents/repos/omnetpp-6.0.1/tools/win32.x86_64/mingw64/include",
+                "c:/Users/sheng/Documents/develop/omnetpp-6.0.1/**",
                 "${workspaceFolder}/src"
             ],
-            "compilerPath": "C:/Users/sheng/Documents/repos/omnetpp-6.0.1/tools/win32.x86_64/mingw64/bin/g++.exe -fno-ms-extensions",
+            "compilerPath": "C:/Users/sheng/Documents/develop/omnetpp-6.0.1/tools/win32.x86_64/mingw64/bin/g++.exe -fno-ms-extensions",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-x64",
