@@ -18,15 +18,21 @@ Packet *AggregatorEntry::doAggregation(Packet *pk)
     return pk;
 }
 
-bool AggregatorEntry::checkAdmission(const Packet *pk) const
+bool AggregatorEntry::checkAdmission(Packet *pk) const
 {
-    auto tmp = check_and_cast<const AggPacket*>(pk);
+    auto tmp = check_and_cast<AggPacket*>(pk);
     if (isIdle) {
         if (!tmp->getResend()) // ! do not allocate an idle aggregator to a resend one.
             return true;
     } else {
         if (tmp->getJobId() == jobId && tmp->getSeqNumber() == seqNumber)
             return true;
+        else {
+            // this means collision
+            // set these fields before forwarding
+            tmp->setCollision(true);
+            tmp->setResend(true); // TODO I don't know why ATP set this
+        }
     }
     return false;
 }

@@ -8,7 +8,7 @@ class AggregatorEntry
 {
 public:
     virtual Packet* doAggregation(Packet* pk);
-    bool checkAdmission(const Packet* pk) const;
+    bool checkAdmission(Packet* pk) const;
 
 protected:
     virtual void reset();
