@@ -57,6 +57,9 @@ Packet *ATPEntry::doAggregation(Packet *pk)
     if (pkt->getResend()) { // ! is this a resend packet?
         ASSERT(!isIdle); // ! checkAdmission will avoid this case happen
         if (!isLevel0) {
+            // ! if this is level 1 just send it out, but get its ecn
+            ecn |= pkt->getEcn();
+            // TODO partial aggregation
             reset();
             return pk;
         }
@@ -73,8 +76,8 @@ Packet *ATPEntry::doAggregation(Packet *pk)
     } else {// ! checkAdmission will avoid this case happen
         ASSERT(pkt->getJobId() == jobId && pkt->getSeqNumber() == seqNumber);
     }
-
-
+    // ! ecn will be set any way
+    ecn |= pkt->getEcn();
     if (isLevel0) {
         temp.bitmap = pkt->getBitmap0();
         temp.fanIndegree = pkt->getFanIndegree0();
@@ -112,6 +115,7 @@ Packet *ATPEntry::doAggregation(Packet *pk)
             pkt->setBitmap0(bitmap);
         else
             pkt->setBitmap1(bitmap);
+        pkt->setEcn(ecn);
         EV_DEBUG << workerRecord << endl;
         pkt->setRecord(workerRecord);
         ASSERT(workerRecord.empty());
