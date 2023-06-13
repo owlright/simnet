@@ -351,6 +351,12 @@ void Routing::handleMessage(cMessage *msg)
         send(pk, "localOut");
         return;
     }
+    else if (isGroupAddr(destAddr) && !isSwitch)
+    {   // TODO FIXME should register multicast member at this interface
+        EV_TRACE << "received a multicast packet, deliver it to upperLayer" << pk->getName() << endl;
+        send(pk, "localOut");
+        return;
+    }
     else if (isSwitch)
     {
         forwardIncoming(pk);
