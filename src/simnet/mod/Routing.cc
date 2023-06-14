@@ -9,35 +9,30 @@ void Routing::initialize(int stage)
         dropSignal = registerSignal("drop");
         outputIfSignal = registerSignal("outputIf");
         isSwitch = (getParentModule()->getProperties()->get("switch") != nullptr);
-        // WATCH_MAP(rtable); // ! this causes error if value is vector
+
         routeManager = findModuleFromTopLevel<GlobalRouteManager>("routeManager", this);
         if (!routeManager) // ! this module is necessary
             throw cRuntimeError("no routeManager!");
 
-//        if (strcmp(par("groupManager").stringValue(), "") != 0)
-        // groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
-
         if (isSwitch) {
             bufferSize = par("bufferSize");
             numAggregators = getParentModule()->par("numAggregators");
+            agtrSize = getParentModule()->par("agtrSize");
             position = getParentModule()->par("position");
             aggregators.resize(numAggregators, nullptr);
             collectionPeriod = par("collectPeriod").doubleValueInUnit("s");
-            aggPolicy = par("aggPolicy").stdstringValue();
-            isTimerPolicy = (aggPolicy == "Timer");
+//            aggPolicy = par("aggPolicy").stdstringValue();
+//            isTimerPolicy = (aggPolicy == "Timer");
             aggTimeOut = new cMessage("aggTimeOut");
-            // dataCollectTimer = new cMessage("dataCollector");
+            dataCollectTimer = new cMessage("dataCollector");
         }
 
     }
-    if (stage == INITSTAGE_ASSIGN) {
-        // if (!isSwitch && groupManager != nullptr)
-            // myGroupAddress = groupManager->getGroupAddress(myAddress);
-    }
+
     if (stage == INITSTAGE_LAST) {
         if (isSwitch) {
             EV_DEBUG << "router " << myAddress << "'s position is " << position << endl;
-            // scheduleAfter(collectionPeriod, dataCollectTimer);
+            scheduleAfter(collectionPeriod, dataCollectTimer);
         }
     }
 }
@@ -93,7 +88,7 @@ std::vector<int> Routing::getReversePortIndexes(const AddrSeqType& addrSeqKey) c
 int Routing::getComputationCount() const
 {
     int c = 0;
-    for (const auto& kv: groupTable) {
+    for (const auto& kv: groupMetricTable) {
         c += kv.second->getComputationCount();
     }
     return c;
@@ -102,7 +97,7 @@ int Routing::getComputationCount() const
 simtime_t Routing::getUsedTime() const
 {
     simtime_t t = 0;
-    for (const auto& kv: groupTable) {
+    for (const auto& kv: groupMetricTable) {
         t += kv.second->getUsedTime();
     }
     return t;
@@ -132,6 +127,11 @@ void Routing::forwardIncoming(Packet *pk)
     {
         auto apk = check_and_cast<AggPacket*>(pk);
         recordIncomingPorts(destSeqKey, pk->getArrivalGate()->getIndex());
+        auto jobId = apk->getJobId();
+        if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
+            // the first time we see this group
+            groupMetricTable[jobId] = new jobMetric(this, jobId);
+        }
         if (!apk->isAck())
         {
             pk = aggregate(apk);
@@ -143,6 +143,7 @@ void Routing::forwardIncoming(Packet *pk)
             // ! but it still need to send ACK reversely back to incoming ports
             auto outGateIndexes = getReversePortIndexes(srcSeqKey);
             incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
+            groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
             broadcast(pk, outGateIndexes);
             return;
         }
@@ -167,60 +168,19 @@ void Routing::forwardIncoming(Packet *pk)
     send(pk, "out", outGateIndex);
 }
 
-Packet* Routing::doAggregation(Packet *pk)
-{
-    auto group = pk->getDestAddr();
-    auto seq = pk->getSeqNumber();
-    auto groupSeqKey = std::make_pair(group, seq);
-    ASSERT(groupTable.find(group) != groupTable.end());
-    ASSERT(groupTable.at(group)->isSeqPresent(seq));
-    if (pk->getKind() == REMIND) // a dummy packet to remind aggregation is over
-    {
-        ASSERT(pk->isSelfMessage());
-        ASSERT(groupTable.find(group) != groupTable.end());
-        pk = groupTable.at(group)->agg(pk);
-        ASSERT(pk!=nullptr);
-    }
-    else if (pk->getKind() == DATA) {
-        // ! before aggregation do things here
-        if (isTimerPolicy) {
-            // ! in case the last packet of aggregation not leaving
-            auto timeout = SimTime(check_and_cast<MTATPPacket*>(pk)->getTimer(), SIMTIME_NS);
-            auto deadline = simTime() + timeout;
-            seqDeadline[groupSeqKey] = deadline.inUnit(SIMTIME_NS);
-            if (!aggTimeOut->isScheduled() || deadline < aggTimeOut->getArrivalTime() ) {
-                rescheduleAfter(timeout, aggTimeOut);
-            }
-            seqDeadline[groupSeqKey] = simTime().inUnit(SIMTIME_NS) + check_and_cast<MTATPPacket*>(pk)->getTimer();
-        }
-        // ! aggregation is always the last thing to do as it change the pk pointer
-        pk = groupTable.at(group)->agg(pk);
-    }
-
-    // aggregation is finished
-    if (pk != nullptr) {
-        if (isTimerPolicy) {
-            auto releasedBuffer = groupTable[group]->release(pk);
-            usedBuffer -= releasedBuffer;
-            seqDeadline.erase(groupSeqKey);
-            EV_DEBUG <<"group " << group << " seq " << seq << " release buffer " << releasedBuffer << " bytes" << endl;
-        }
-    }
-    return pk;
-}
-
 Packet* Routing::aggregate(AggPacket *apk)
 {
-    // auto dest = apk->getDestAddr();
-    // auto seq = apk->getSeqNumber();
-    // auto destSeqKey = std::make_pair(dest, seq);
     auto agtrIndex = apk->getAggregatorIndex();
     if (aggregators.at(agtrIndex) == nullptr) { // lazy initialization to save memory
+        ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
+
         switch(apk->getAggPolicy())
         {
             case ATP:
-                if (position == 1)
+                if (position == 1) {
+                    groupMetricTable.at(apk->getJobId())->addUsedBuffer(agtrSize);
                     aggregators[agtrIndex] = new ATPEntry();
+                }
                 else // ! ATP only do aggregation at edge switches
                     return apk;
                 break;
@@ -237,38 +197,6 @@ Packet* Routing::aggregate(AggPacket *apk)
         return entry->doAggregation(apk);
     }
     return nullptr;
-}
-
-bool Routing::addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree)
-{
-    ASSERT(groupTable.find(group) == groupTable.end());
-    // setup for the group
-    groupTable[group] = new AggGroupEntry(bufferSize, indegree);
-    groupTable.at(group)->usedBufferSignal = createBufferSignalForGroup(group);
-    // if (!dataCollectTimer->isScheduled())
-    //     scheduleAfter(collectionPeriod, dataCollectTimer);
-    // TODO all group use the same aggPolicy for now
-    groupTable.at(group)->setAggPolicy(aggPolicy);
-    if (bufferSize - usedBuffer >= firstDataSize)
-    {
-        // ! this check maybe unnecessary, unless you set group canUsedBufferSize < pk->getByteLength() which makes no sense
-        if (groupTable.at(group)->getLeftBuffer() >= firstDataSize)
-        {
-            usedBuffer += firstDataSize;
-            return true;
-        }
-    }
-    return false;
-}
-
-bool Routing::tryAddSeqEntry(const Packet* pk)
-{
-    auto group = pk->getDestAddr();
-    auto seq = pk->getSeqNumber();
-    // ! make sure the seq not exist
-    ASSERT(groupTable.find(group) != groupTable.end()
-            && !groupTable.at(group)->isSeqPresent(seq));
-    return groupTable.at(group)->addSeqEntry(pk);
 }
 
 void Routing::recordIncomingPorts(AddrSeqType& addrSeqKey, int port)
@@ -321,18 +249,17 @@ void Routing::handleMessage(cMessage *msg)
         }
         return;
     }
-    // if (msg == dataCollectTimer)
-    // {
-    //     for (auto const& p : groupTable)
-    //     {
-    //         auto entry = p.second;
-    //         auto used = entry->getUsedBuffer();
-    //         emit(entry->usedBufferSignal, used);
-    //     }
-    //     if (!groupTable.empty())
-    //         scheduleAfter(collectionPeriod, dataCollectTimer);
-    //     return;
-    // }
+    if (msg == dataCollectTimer)
+    {
+        for (auto const& p : groupMetricTable)
+        {
+            auto entry = p.second;
+            entry->emitAllSignals();
+        }
+        if (!groupMetricTable.empty())
+            scheduleAfter(collectionPeriod, dataCollectTimer);
+        return;
+    }
     Packet *pk = check_and_cast<Packet *>(msg);
     auto destAddr = pk->getDestAddr();
     if (pk->getArrivalGate() == gate("localIn"))

@@ -64,6 +64,7 @@ module Switch like INode
         int address;
         int position = default(0); // the switch's level
         int numAggregators = default(40000);
+        int agtrSize @unit(B) = default(264B); // ignore ecn single bit
         @node;
         @switch;
         @display("i=abstract/switch_s");
