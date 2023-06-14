@@ -81,13 +81,13 @@ void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
     delete pk;
 }
 
-std::vector<int> Routing::getReversePortIndexes(const AddrSeqType& groupSeqKey) const
+std::vector<int> Routing::getReversePortIndexes(const AddrSeqType& addrSeqKey) const
 {
 
-    if (incomingPortIndexes.find(groupSeqKey) == incomingPortIndexes.end())
+    if (incomingPortIndexes.find(addrSeqKey) == incomingPortIndexes.end())
         throw cRuntimeError("Routing::getReversePortIndexes: group %lld seq %lld not found!",
-                                    groupSeqKey.first, groupSeqKey.second);
-    return incomingPortIndexes.at(groupSeqKey);
+                                    addrSeqKey.first, addrSeqKey.second);
+    return incomingPortIndexes.at(addrSeqKey);
 }
 
 int Routing::getComputationCount() const
@@ -271,11 +271,11 @@ bool Routing::tryAddSeqEntry(const Packet* pk)
     return groupTable.at(group)->addSeqEntry(pk);
 }
 
-void Routing::recordIncomingPorts(AddrSeqType& groupSeqKey, int port)
+void Routing::recordIncomingPorts(AddrSeqType& addrSeqKey, int port)
 {
     // TODO maybe use unordered_set?
     bool found = false;
-    for (auto& p: incomingPortIndexes[groupSeqKey])
+    for (auto& p: incomingPortIndexes[addrSeqKey])
     {
         if (port == p)
         {
@@ -284,7 +284,7 @@ void Routing::recordIncomingPorts(AddrSeqType& groupSeqKey, int port)
         }
     }
     if (!found)
-        incomingPortIndexes[groupSeqKey].push_back(port);
+        incomingPortIndexes[addrSeqKey].push_back(port);
 }
 
 void Routing::handleMessage(cMessage *msg)
