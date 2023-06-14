@@ -19,7 +19,7 @@ void Routing::initialize(int stage)
 
         if (isSwitch) {
             bufferSize = par("bufferSize");
-            numAggregators = par("numAggregators");
+            numAggregators = getParentModule()->par("numAggregators");
             position = getParentModule()->par("position");
             aggregators.resize(numAggregators, nullptr);
             collectionPeriod = par("collectPeriod").doubleValueInUnit("s");
@@ -353,7 +353,7 @@ void Routing::handleMessage(cMessage *msg)
     }
     else if (isGroupAddr(destAddr) && !isSwitch)
     {   // TODO FIXME should register multicast member at this interface
-        EV_TRACE << "received a multicast packet, deliver it to upperLayer" << pk->getName() << endl;
+        EV_TRACE << "received a multicast packet: "<< pk->getName()  << ", deliver it to upperLayer." << endl;
         send(pk, "localOut");
         return;
     }
