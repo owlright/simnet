@@ -27,7 +27,13 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
     confirmedBytes += segmentSize;
     if (seq > maxAckedSeqNumber)
     {
+        // ! this only detect disorder when it first happen
+        if (seq > maxAckedSeqNumber + segmentSize) {
+            EV_WARN << "disordering(ahead) expect  " << maxAckedSeqNumber + segmentSize
+            << " but get " << seq << endl;
+        }
         maxAckedSeqNumber = seq;
+
         // * do calculations after each RTT finished
         if (maxAckedSeqNumber == markSeq) {
             emit(cwndSignal, cWnd);
@@ -36,7 +42,8 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
     else if (confirmedBytes <= maxAckedSeqNumber)
     {   // ! received an older seq, '==' is not possible either as no dup ack implemented
         // TODO: improve dealing with disordering packets
-        EV_WARN << "Disordering packets! current max acked seq " << maxAckedSeqNumber << " but get " << seq << endl;
+        EV_WARN << "disordering(old) expect  " << maxAckedSeqNumber
+                    << " but get " << seq << endl;
     }
     else
     {   // ! '>=' is impossible
