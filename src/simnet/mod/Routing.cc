@@ -32,7 +32,7 @@ void Routing::initialize(int stage)
     if (stage == INITSTAGE_LAST) {
         if (isSwitch) {
             EV_DEBUG << "router " << myAddress << "'s position is " << position << endl;
-            scheduleAfter(collectionPeriod, dataCollectTimer);
+            // scheduleAfter(collectionPeriod, dataCollectTimer);
         }
     }
 }
@@ -192,12 +192,16 @@ Packet* Routing::aggregate(AggPacket *apk)
                 throw cRuntimeError("unknown agg policy");
         }
     }
-    auto entry = aggregators[agtrIndex];
+    auto entry = aggregators.at(agtrIndex);
     if (entry->checkAdmission(apk)) // ! collision bit will be set here
     {
         return entry->doAggregation(apk);
     }
-    return nullptr;
+    if (apk->getCollision()) {
+        return apk;
+    } else {
+        return nullptr;
+    }
 }
 
 void Routing::recordIncomingPorts(AddrSeqType& addrSeqKey, int port)
