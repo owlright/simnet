@@ -85,9 +85,10 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
     auto& tmpWorkersRecord = aggedWorkers.at(seq);
     for (auto& w:pk->getRecord()) {
         if (tmpWorkersRecord.find(w) != tmpWorkersRecord.end()) {
-            EV_WARN << "received a resend packet" << endl;
             receivedNumber[seq] += 1;
         }
+        else
+            EV_WARN << "received a resend packet" << endl;
         tmpWorkersRecord.insert(w);
     }
     EV_DEBUG << "Seq " << seq << " aggregated " << pk->getRecord().size() << " packets." << endl;
