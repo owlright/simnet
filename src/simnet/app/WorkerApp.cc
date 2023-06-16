@@ -69,6 +69,7 @@ Packet* ATPWorker::createDataPacket(B packetBytes)
     sprintf(pkname, " %lld-to-%lld-seq%lld",
             localAddr, dest, sentBytes);
     auto pk = new ATPPacket(pkname);
+    pk->setRound(currentRound);
     pk->setJobId(jobId);
     pk->setDestAddr(dest);
     pk->setSeqNumber(sentBytes);

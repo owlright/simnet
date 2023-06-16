@@ -317,6 +317,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Packet& obj) {obj.parsimU
  * {
  *     packetType = AGG;
  *     AggPolicy aggPolicy;
+ *     int round;
  *     int aggregatorIndex;
  *     int64_t jobId;
  *     int workerNumber;
@@ -334,6 +335,7 @@ class AggPacket : public ::Packet
 {
   protected:
     AggPolicy aggPolicy = static_cast<AggPolicy>(-1);
+    int round = 0;
     int aggregatorIndex = 0;
     int64_t jobId = 0;
     int workerNumber = 0;
@@ -360,6 +362,9 @@ class AggPacket : public ::Packet
 
     virtual AggPolicy getAggPolicy() const;
     virtual void setAggPolicy(AggPolicy aggPolicy);
+
+    virtual int getRound() const;
+    virtual void setRound(int round);
 
     virtual int getAggregatorIndex() const;
     virtual void setAggregatorIndex(int aggregatorIndex);
@@ -421,7 +426,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:117</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:118</tt> by opp_msgtool.
  * <pre>
  * class ATPPacket extends AggPacket
  * {
@@ -479,7 +484,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const ATPPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ATPPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:128</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:129</tt> by opp_msgtool.
  * <pre>
  * class MTATPPacket extends AggPacket
  * {

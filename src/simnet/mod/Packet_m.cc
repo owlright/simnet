@@ -148,9 +148,7 @@ void doParsimUnpacking(omnetpp::cCommBuffer *, T& t)
     throw omnetpp::cRuntimeError("Parsim error: No doParsimUnpacking() function for type %s", omnetpp::opp_typename(typeid(t)));
 }
 
-}  // namespace omnetpp
-
-Register_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::AGG, PacketType::REMIND, PacketType::NOUSE));
+}  // namespace omRegisteRegister_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::AGG, PacketType::REMIND, PacketType::NOUSE));
 
 Register_Enum(AggPolicy, (AggPolicy::ATP, AggPolicy::MTATP));
 
@@ -1886,7 +1884,7 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         field -= base->getFieldCount();
     }
     static unsigned int fieldTypeFlags[] = {
-        FD_ISEDITABLE,    // FIELD_packetType
+        0,    // FIELD_packetType
         FD_ISEDITABLE,    // FIELD_connectionId
         FD_ISEDITABLE,    // FIELD_receivedBytes
         FD_ISEDITABLE,    // FIELD_startTime
@@ -2061,7 +2059,6 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
     }
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
-        case FIELD_packetType: pp->setPacketType((PacketType)string2enum(value, "PacketType")); break;
         case FIELD_connectionId: pp->setConnectionId(string2int64(value)); break;
         case FIELD_receivedBytes: pp->setReceivedBytes(string2int64(value)); break;
         case FIELD_startTime: pp->setStartTime(string2double(value)); break;
@@ -2105,7 +2102,6 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
     }
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
-        case FIELD_packetType: pp->setPacketType(static_cast<PacketType>(value.intValue())); break;
         case FIELD_connectionId: pp->setConnectionId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_receivedBytes: pp->setReceivedBytes(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_startTime: pp->setStartTime(value.doubleValue()); break;
@@ -2187,6 +2183,7 @@ AggPacket& AggPacket::operator=(const AggPacket& other)
 void AggPacket::copy(const AggPacket& other)
 {
     this->aggPolicy = other.aggPolicy;
+    this->round = other.round;
     this->aggregatorIndex = other.aggregatorIndex;
     this->jobId = other.jobId;
     this->workerNumber = other.workerNumber;
@@ -2204,6 +2201,7 @@ void AggPacket::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::Packet::parsimPack(b);
     doParsimPacking(b,this->aggPolicy);
+    doParsimPacking(b,this->round);
     doParsimPacking(b,this->aggregatorIndex);
     doParsimPacking(b,this->jobId);
     doParsimPacking(b,this->workerNumber);
@@ -2219,6 +2217,7 @@ void AggPacket::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::Packet::parsimUnpack(b);
     doParsimUnpacking(b,this->aggPolicy);
+    doParsimUnpacking(b,this->round);
     doParsimUnpacking(b,this->aggregatorIndex);
     doParsimUnpacking(b,this->jobId);
     doParsimUnpacking(b,this->workerNumber);
@@ -2238,6 +2237,16 @@ AggPolicy AggPacket::getAggPolicy() const
 void AggPacket::setAggPolicy(AggPolicy aggPolicy)
 {
     this->aggPolicy = aggPolicy;
+}
+
+int AggPacket::getRound() const
+{
+    return this->round;
+}
+
+void AggPacket::setRound(int round)
+{
+    this->round = round;
 }
 
 int AggPacket::getAggregatorIndex() const
@@ -2326,6 +2335,7 @@ class AggPacketDescriptor : public omnetpp::cClassDescriptor
     mutable const char **propertyNames;
     enum FieldConstants {
         FIELD_aggPolicy,
+        FIELD_round,
         FIELD_aggregatorIndex,
         FIELD_jobId,
         FIELD_workerNumber,
@@ -2401,7 +2411,7 @@ const char *AggPacketDescriptor::getProperty(const char *propertyName) const
 int AggPacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 10+base->getFieldCount() : 10;
+    return base ? 11+base->getFieldCount() : 11;
 }
 
 unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
@@ -2413,7 +2423,8 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         field -= base->getFieldCount();
     }
     static unsigned int fieldTypeFlags[] = {
-        FD_ISEDITABLE,    // FIELD_aggPolicy
+        0,    // FIELD_aggPolicy
+        FD_ISEDITABLE,    // FIELD_round
         FD_ISEDITABLE,    // FIELD_aggregatorIndex
         FD_ISEDITABLE,    // FIELD_jobId
         FD_ISEDITABLE,    // FIELD_workerNumber
@@ -2424,7 +2435,7 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_isAck
         FD_ISARRAY | FD_ISEDITABLE | FD_ISRESIZABLE,    // FIELD_workerRecord
     };
-    return (field >= 0 && field < 10) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 11) ? fieldTypeFlags[field] : 0;
 }
 
 const char *AggPacketDescriptor::getFieldName(int field) const
@@ -2437,6 +2448,7 @@ const char *AggPacketDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "aggPolicy",
+        "round",
         "aggregatorIndex",
         "jobId",
         "workerNumber",
@@ -2447,7 +2459,7 @@ const char *AggPacketDescriptor::getFieldName(int field) const
         "isAck",
         "workerRecord",
     };
-    return (field >= 0 && field < 10) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 11) ? fieldNames[field] : nullptr;
 }
 
 int AggPacketDescriptor::findField(const char *fieldName) const
@@ -2455,15 +2467,16 @@ int AggPacketDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     int baseIndex = base ? base->getFieldCount() : 0;
     if (strcmp(fieldName, "aggPolicy") == 0) return baseIndex + 0;
-    if (strcmp(fieldName, "aggregatorIndex") == 0) return baseIndex + 1;
-    if (strcmp(fieldName, "jobId") == 0) return baseIndex + 2;
-    if (strcmp(fieldName, "workerNumber") == 0) return baseIndex + 3;
-    if (strcmp(fieldName, "overflow") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "resend") == 0) return baseIndex + 5;
-    if (strcmp(fieldName, "collision") == 0) return baseIndex + 6;
-    if (strcmp(fieldName, "ecn") == 0) return baseIndex + 7;
-    if (strcmp(fieldName, "isAck") == 0) return baseIndex + 8;
-    if (strcmp(fieldName, "workerRecord") == 0) return baseIndex + 9;
+    if (strcmp(fieldName, "round") == 0) return baseIndex + 1;
+    if (strcmp(fieldName, "aggregatorIndex") == 0) return baseIndex + 2;
+    if (strcmp(fieldName, "jobId") == 0) return baseIndex + 3;
+    if (strcmp(fieldName, "workerNumber") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "overflow") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "resend") == 0) return baseIndex + 6;
+    if (strcmp(fieldName, "collision") == 0) return baseIndex + 7;
+    if (strcmp(fieldName, "ecn") == 0) return baseIndex + 8;
+    if (strcmp(fieldName, "isAck") == 0) return baseIndex + 9;
+    if (strcmp(fieldName, "workerRecord") == 0) return baseIndex + 10;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -2477,6 +2490,7 @@ const char *AggPacketDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "AggPolicy",    // FIELD_aggPolicy
+        "int",    // FIELD_round
         "int",    // FIELD_aggregatorIndex
         "int64_t",    // FIELD_jobId
         "int",    // FIELD_workerNumber
@@ -2487,7 +2501,7 @@ const char *AggPacketDescriptor::getFieldTypeString(int field) const
         "bool",    // FIELD_isAck
         "int64_t",    // FIELD_workerRecord
     };
-    return (field >= 0 && field < 10) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 11) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **AggPacketDescriptor::getFieldPropertyNames(int field) const
@@ -2591,6 +2605,7 @@ std::string AggPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, 
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
         case FIELD_aggPolicy: return enum2string(pp->getAggPolicy(), "AggPolicy");
+        case FIELD_round: return long2string(pp->getRound());
         case FIELD_aggregatorIndex: return long2string(pp->getAggregatorIndex());
         case FIELD_jobId: return int642string(pp->getJobId());
         case FIELD_workerNumber: return long2string(pp->getWorkerNumber());
@@ -2616,7 +2631,7 @@ void AggPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int fie
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_aggPolicy: pp->setAggPolicy((AggPolicy)string2enum(value, "AggPolicy")); break;
+        case FIELD_round: pp->setRound(string2long(value)); break;
         case FIELD_aggregatorIndex: pp->setAggregatorIndex(string2long(value)); break;
         case FIELD_jobId: pp->setJobId(string2int64(value)); break;
         case FIELD_workerNumber: pp->setWorkerNumber(string2long(value)); break;
@@ -2641,6 +2656,7 @@ omnetpp::cValue AggPacketDescriptor::getFieldValue(omnetpp::any_ptr object, int 
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
         case FIELD_aggPolicy: return static_cast<int>(pp->getAggPolicy());
+        case FIELD_round: return pp->getRound();
         case FIELD_aggregatorIndex: return pp->getAggregatorIndex();
         case FIELD_jobId: return pp->getJobId();
         case FIELD_workerNumber: return pp->getWorkerNumber();
@@ -2666,7 +2682,7 @@ void AggPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int 
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_aggPolicy: pp->setAggPolicy(static_cast<AggPolicy>(value.intValue())); break;
+        case FIELD_round: pp->setRound(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_aggregatorIndex: pp->setAggregatorIndex(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_jobId: pp->setJobId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_workerNumber: pp->setWorkerNumber(omnetpp::checked_int_cast<int>(value.intValue())); break;

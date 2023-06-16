@@ -62,6 +62,7 @@ class AggPacket extends Packet
 {
     packetType = AGG;
     AggPolicy aggPolicy;
+    int round;
     int aggregatorIndex;
     int64_t jobId;
     int workerNumber;
