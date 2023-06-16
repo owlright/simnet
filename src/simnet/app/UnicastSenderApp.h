@@ -11,7 +11,7 @@ protected:
     virtual Packet* createDataPacket(B packetBytes);
     virtual void onFlowStart();
     virtual void onFlowStop();
-
+    virtual void finish() override;
     // inherited functions
     void initialize(int stage) override;
     void handleMessage(cMessage *msg) override;

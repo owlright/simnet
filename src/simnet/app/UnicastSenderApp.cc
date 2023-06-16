@@ -12,7 +12,10 @@ UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(flowStartTimer);
     cancelAndDelete(jitterTimeout);
 }
-
+void UnicastSenderApp::finish() {
+    if (currentRound != numRounds-1)
+        EV_WARN << currentRound + 1 << " round not reach " << numRounds << endl;
+}
 void UnicastSenderApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
