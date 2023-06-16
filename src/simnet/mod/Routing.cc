@@ -128,6 +128,7 @@ void Routing::forwardIncoming(Packet *pk)
         auto apk = check_and_cast<AggPacket*>(pk);
         recordIncomingPorts(destSeqKey, pk->getArrivalGate()->getIndex());
         auto jobId = apk->getJobId();
+        // ! TODO even router is not responsible for this group, it still records
         if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
             // the first time we see this group
             groupMetricTable[jobId] = new jobMetric(this, jobId);
@@ -136,6 +137,24 @@ void Routing::forwardIncoming(Packet *pk)
         if (!apk->isAck())
         {
             pk = aggregate(apk);
+            if (pk == nullptr) {// ! Aggregation is not finished;
+                return;
+            } else { // TODO: do we release resource at aggpacket leave or ACK arrive?
+                ASSERT(pk == apk);
+                auto agtrIndex = apk->getAggregatorIndex();
+                auto job = apk->getJobId();
+                auto seq = apk->getSeqNumber();
+                auto agtr = aggregators.at(agtrIndex);
+                // ! 1. agtr can be nullptr when router is not responsible for this group
+                // ! 2. collision may happen so the agtr doesn't belong to the packet
+                if (agtr != nullptr
+                        && agtr->getJobId() == job
+                        && agtr->getSeqNumber() == seq) {
+                    delete aggregators[agtrIndex];
+                    aggregators[agtrIndex] = nullptr;
+                    groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
+                }
+            }
         }
         else
         {
@@ -144,13 +163,11 @@ void Routing::forwardIncoming(Packet *pk)
             // ! but it still need to send ACK reversely back to incoming ports
             auto outGateIndexes = getReversePortIndexes(srcSeqKey);
             incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
-            groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
+            // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
             broadcast(pk, outGateIndexes);
             return;
         }
 
-        if (pk == nullptr) // ! Aggregation is not finished;
-            return;
     }
 
     // route this packet which may be:
