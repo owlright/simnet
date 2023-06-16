@@ -8,6 +8,7 @@ class TrafficPatternManager: public GlobalView
 {
 public:
     IntAddress getDestAddr(IntAddress srcAddr) const;
+    std::vector<IntAddress> getDestAddrs(IntAddress srcAddr, int n = 1) const;
 
 protected:
     void initialize(int stage) override;

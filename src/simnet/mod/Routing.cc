@@ -131,6 +131,7 @@ void Routing::forwardIncoming(Packet *pk)
         if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
             // the first time we see this group
             groupMetricTable[jobId] = new jobMetric(this, jobId);
+            groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
         }
         if (!apk->isAck())
         {
