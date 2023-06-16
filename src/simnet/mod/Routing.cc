@@ -334,5 +334,10 @@ void Routing::finish()
         // I dont want the time's unit too big, otherwise the efficiency will be too big
         recordScalar(buf, getComputationCount() / double(getUsedTime().inUnit(SIMTIME_US))); // TODO will resource * usedTime better?
     }
-
+    for (auto& p : aggregators) {
+        if (p!=nullptr) {
+            EV_WARN << "there is unreleased aggregator on router " << myAddress
+            << " belongs to job " << p->getJobId() << " seq " << p->getSeqNumber() << endl;
+        }
+    }
 }
