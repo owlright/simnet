@@ -85,13 +85,18 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
     auto& tmpWorkersRecord = aggedWorkers.at(seq);
     for (auto& w:pk->getRecord()) {
         if (tmpWorkersRecord.find(w) != tmpWorkersRecord.end()) {
+            ASSERT(pk->getResend());
             EV_WARN << "received a resend packet" << endl;
         }
-        else
+        else {
+            if (pk->getCollision())
+                EV_WARN << "hash collision happen" << endl;
             receivedNumber[seq] += 1;
+        }
+
         tmpWorkersRecord.insert(w);
     }
-    EV_DEBUG << "Seq " << seq << " aggregated " << pk->getRecord().size() << " packets." << endl;
+    EV_DEBUG << "Seq " << seq << " aggregated " << receivedNumber[seq] << " packets." << endl;
     auto aggedNumber = tmpWorkersRecord.size();
     if (aggedNumber == pk->getWorkerNumber())
     {
