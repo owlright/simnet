@@ -30,6 +30,11 @@ Packet *AggregatorEntry::doAggregation(Packet *pk)
     return pk;
 }
 
+AggregatorEntry::~AggregatorEntry()
+{
+    reset();
+}
+
 bool AggregatorEntry::checkAdmission(Packet *pk) const
 {
     auto tmp = check_and_cast<AggPacket*>(pk);
@@ -90,7 +95,9 @@ Packet *ATPEntry::doAggregation(Packet *pk)
 
     if ((temp.bitmap & bitmap) > 0) {
         // is already aggregated
-        ASSERT(pkt->getResend()); // TODO if there is such case that resend==0?
+        ASSERT(pkt->getResend());
+        // TODO if there is such case that resend==0?
+        // ! case 1: aggregator is not released, so next round the same seq will use the same aggregator
         ecn = pkt->getEcn();
         delete pkt; // drop the packet
         return nullptr;

@@ -8,7 +8,10 @@ class AggregatorEntry
 {
 public:
     virtual Packet* doAggregation(Packet* pk);
+    virtual ~AggregatorEntry();
     bool checkAdmission(Packet* pk) const;
+    const int getJobId() const {return jobId;}
+    const int getSeqNumber() const {return seqNumber;}
 
 protected:
     virtual void reset();
