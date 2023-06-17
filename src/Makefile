@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for $(LIB_PREFIX)simnet
 #
 # This file was generated with the command:
-#  opp_makemake --make-so -f --deep -o simnet -O out -I.
+#  opp_makemake --make-so -f --deep -O out -I.
 #
 
 # Name of target to be created (-o option)
@@ -43,7 +43,8 @@ OBJS = \
     $O/simnet/mod/Connection.o \
     $O/simnet/mod/L2Queue.o \
     $O/simnet/mod/Routing.o \
-    $O/simnet/mod/agroup/AggGroupEntry.o \
+    $O/simnet/mod/agroup/AggregatorEntry.o \
+    $O/simnet/mod/agroup/joobMetric.o \
     $O/simnet/mod/cong/Dctcp.o \
     $O/simnet/mod/cong/Reno.o \
     $O/simnet/mod/contract/MessageDispatcher.o \
