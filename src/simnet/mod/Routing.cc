@@ -126,16 +126,16 @@ void Routing::forwardIncoming(Packet *pk)
     if (pk->getPacketType() == AGG)
     {
         auto apk = check_and_cast<AggPacket*>(pk);
-        recordIncomingPorts(destSeqKey, pk->getArrivalGate()->getIndex());
         auto jobId = apk->getJobId();
-        // ! TODO even router is not responsible for this group, it still records
-        if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
-            // the first time we see this group
-            groupMetricTable[jobId] = new jobMetric(this, jobId);
-            groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
-        }
         if (!apk->isAck())
         {
+            // ! TODO even router is not responsible for this group, it still records which is not necessary
+            recordIncomingPorts(destSeqKey, pk->getArrivalGate()->getIndex());
+            if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
+                // the first time we see this group
+                groupMetricTable[jobId] = new jobMetric(this, jobId);
+                groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
+            }
             pk = aggregate(apk);
             if (pk == nullptr) {// ! Aggregation is not finished;
                 return;
@@ -147,6 +147,7 @@ void Routing::forwardIncoming(Packet *pk)
                 auto agtr = aggregators.at(agtrIndex);
                 // ! 1. agtr can be nullptr when router is not responsible for this group
                 // ! 2. collision may happen so the agtr doesn't belong to the packet
+                // ! 3. it's a resend packet arrives at switch==1 and there's no according agtr for it
                 if (agtr != nullptr
                         && agtr->getJobId() == job
                         && agtr->getSeqNumber() == seq) {
