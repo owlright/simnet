@@ -110,7 +110,7 @@ void UnicastSenderApp::sendPendingData()
             packetSize = currentFlowSize - sentBytes; // ! incase the data about to send is too small, such as the last packet or flowSize is too small
         }
         sentBytes += packetSize;
-        auto packet = createDataPacket(packetSize);
+        auto packet = createDataPacket(sentBytes, packetSize);
         connection->send(packet);
         cong->onSendData(packetSize);
     }
@@ -174,14 +174,14 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     delete pk;
 }
 
-Packet* UnicastSenderApp::createDataPacket(B packetBytes)
+Packet* UnicastSenderApp::createDataPacket(SeqNumber seq, B packetBytes)
 {
     char pkname[40];
     sprintf(pkname, "conn%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            connection->getConnectionId(), localAddr, destAddr, sentBytes);
+            connection->getConnectionId(), localAddr, destAddr, seq);
     auto pk = new Packet(pkname);
     pk->setKind(DATA);
-    pk->setSeqNumber(sentBytes);
+    pk->setSeqNumber(seq);
     pk->setByteLength(packetBytes);
     pk->setECN(false);
     pk->setStartTime(simTime().dbl());

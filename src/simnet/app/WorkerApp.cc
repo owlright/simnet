@@ -8,7 +8,7 @@ protected:
     void initialize(int stage) override;
     void onFlowStart() override;
     void onFlowStop() override;
-    virtual Packet* createDataPacket(B packetBytes) override;
+    virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
 
 private:
     GlobalGroupManager* groupManager;
@@ -61,18 +61,18 @@ void ATPWorker::onFlowStop()
     groupManager->reportFlowStop(jobId, simTime());
 }
 
-Packet* ATPWorker::createDataPacket(B packetBytes)
+Packet* ATPWorker::createDataPacket(SeqNumber seq, B packetBytes)
 {
     // ASSERT(destAddr == -1); // destAddr is useless
     IntAddress dest = groupInfo->hostinfo->PSes.at(0); // TODO use more PSes
     char pkname[40];
     sprintf(pkname, " %lld-to-%lld-seq%lld",
-            localAddr, dest, sentBytes);
+            localAddr, dest, seq);
     auto pk = new ATPPacket(pkname);
     pk->setRound(currentRound);
     pk->setJobId(jobId);
     pk->setDestAddr(dest);
-    pk->setSeqNumber(sentBytes);
+    pk->setSeqNumber(seq);
     pk->setByteLength(packetBytes);
     pk->setECN(false);
     // some cheating fields
@@ -81,15 +81,15 @@ Packet* ATPWorker::createDataPacket(B packetBytes)
     pk->setStartTime(simTime().dbl());
     pk->setTransmitTime(0);
     pk->setQueueTime(0);
-    if (sentBytes == currentFlowSize)
+    if (sentBytes == confirmedBytes)
         pk->setIsFlowFinished(true);
 
     auto seqNumber = pk->getSeqNumber();
     auto jobID = pk->getJobId();
     // TODO avoid overflow
-    auto seq = reinterpret_cast<uint16_t&>(seqNumber);
-    auto jobid = reinterpret_cast<uint16_t&>(jobID);
-    auto agtrIndex = hashAggrIndex(jobid, seq);
+    auto hseq = reinterpret_cast<uint16_t&>(seqNumber);
+    auto hjobid = reinterpret_cast<uint16_t&>(jobID);
+    auto agtrIndex = hashAggrIndex(hjobid, hseq);
     EV_DEBUG << "aggregator index: " << agtrIndex << endl;
     pk->setWorkerNumber(groupInfo->hostinfo->numWorkers);
     pk->setAggregatorIndex(agtrIndex);
@@ -103,7 +103,7 @@ Packet* ATPWorker::createDataPacket(B packetBytes)
 class TimerWorker : public UnicastSenderApp
 {
 protected:
-    virtual Packet* createDataPacket(B packetBytes) override;
+    virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
     virtual void initialize(int stage) override;
 
 private:

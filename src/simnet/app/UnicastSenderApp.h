@@ -8,7 +8,7 @@ protected:
     // helper functions
     void sendPendingData();
     B inflightBytes() {return sentBytes - confirmedBytes;};
-    virtual Packet* createDataPacket(B packetBytes);
+    virtual Packet* createDataPacket(SeqNumber seq, B packetBytes);
     virtual void onFlowStart();
     virtual void onFlowStop();
     virtual void finish() override;
