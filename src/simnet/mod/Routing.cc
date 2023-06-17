@@ -197,7 +197,7 @@ Packet* Routing::aggregate(AggPacket *apk)
             case ATP:
                 if (position == 1) {
                     groupMetricTable.at(apk->getJobId())->addUsedBuffer(agtrSize);
-                    aggregators[agtrIndex] = new ATPEntry();
+                    aggregators[agtrIndex] = new ATPEntry(apk);
                 }
                 else // ! ATP only do aggregation at edge switches
                     return apk;

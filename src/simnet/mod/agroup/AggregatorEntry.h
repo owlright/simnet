@@ -33,6 +33,7 @@ private:
 class ATPEntry : public  AggregatorEntry
 {
 public:
+    ATPEntry(const Packet* pk);
     virtual Packet* doAggregation(Packet* pk) override;
 
 protected:
@@ -43,7 +44,8 @@ private:
         uint32_t bitmap{0};
         int fanIndegree{0};
     } temp;
-    uint32_t bitmap;
+    uint32_t bitmap{0};
+
 };
 
 class MTATPEntry: public AggregatorEntry

@@ -53,6 +53,12 @@ bool AggregatorEntry::checkAdmission(Packet *pk) const
     return false;
 }
 
+ATPEntry::ATPEntry(const Packet* pk) {
+    auto pkt = check_and_cast<const ATPPacket*>(pk);
+    reset();
+    jobId = pkt->getJobId();
+    seqNumber = pkt->getSeqNumber();
+}
 Packet *ATPEntry::doAggregation(Packet *pk)
 {
     auto pkt = check_and_cast<ATPPacket*>(pk); // ! using pkt in the below code
@@ -62,11 +68,9 @@ Packet *ATPEntry::doAggregation(Packet *pk)
         if (!isLevel0) {
             // ! if switchId==1 just send it out, but get its ecn, the aggregator value is just disposed
             ecn |= pkt->getEcn();
-            // TODO partial aggregation
-            reset();
             return pk;
         }
-        // ! if this is level0, there are still something to do
+        // ! if this is level0, there are still something to do even if it's a resend packet
     }
     if (counter == 0) {
         // first packet, copy infomation
@@ -99,7 +103,7 @@ Packet *ATPEntry::doAggregation(Packet *pk)
         ecn = pkt->getEcn();
         delete pkt; // drop the packet
         return nullptr;
-    } else {        \
+    } else {
         //! cheating
         checkThenAddWorkerId(pkt);
         // do aggregation
@@ -108,10 +112,6 @@ Packet *ATPEntry::doAggregation(Packet *pk)
     }
     EV_DEBUG << pkt->getDestAddr() << " aggCounter: " << counter;
     EV_DEBUG << " bitmap: " << std::bitset<32>(bitmap)<< endl;
-    if (pkt->getResend()) {
-        reset();
-        return pk;
-    }
     if (counter == temp.fanIndegree) {
         std::bitset<32> bits(bitmap);
         ASSERT(bits.count() == temp.fanIndegree);
