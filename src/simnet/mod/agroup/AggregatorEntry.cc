@@ -39,8 +39,7 @@ bool AggregatorEntry::checkAdmission(Packet *pk) const
 {
     auto tmp = check_and_cast<AggPacket*>(pk);
     if (isIdle) {
-        if (!tmp->getResend()) // ! do not allocate an idle aggregator to a resend one.
-            return true;
+        return true;
     } else {
         if (tmp->getJobId() == jobId && tmp->getSeqNumber() == seqNumber)
             return true;
@@ -48,7 +47,7 @@ bool AggregatorEntry::checkAdmission(Packet *pk) const
             // this means collision
             // set these fields before forwarding
             tmp->setCollision(true);
-            tmp->setResend(true); // TODO I don't know why ATP set this
+            tmp->setResend(true); // TODO I don't know why ATP set this, maybe prevent switch 1 do aggregation
         }
     }
     return false;
@@ -60,9 +59,8 @@ Packet *ATPEntry::doAggregation(Packet *pk)
 
     auto isLevel0 = pkt->getSwitchIdentifier() == 0;
     if (pkt->getResend()) { // ! is this a resend packet?
-        ASSERT(!isIdle); // ! checkAdmission will avoid this case happen
         if (!isLevel0) {
-            // ! if this is level 1 just send it out, but get its ecn
+            // ! if switchId==1 just send it out, but get its ecn, the aggregator value is just disposed
             ecn |= pkt->getEcn();
             // TODO partial aggregation
             reset();
