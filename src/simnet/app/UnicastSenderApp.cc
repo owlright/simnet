@@ -152,6 +152,30 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     confirmedBytes += pk->getReceivedBytes();
     cong->onRecvAck(pk->getSeqNumber(), pk->getReceivedBytes(), pk->getECE()); // let cong algo update state
 
+    // ! check if disordered packets are received
+    // std::vector<SeqNumber> removed;
+    auto disorderSeqs = cong->getDisorders();
+    auto seq = pk->getSeqNumber();
+    for (auto& it : disorderSeqs) {
+
+        if (it.second == 0) {
+            // count down, must resend this seq
+            EV_WARN << "resend seq " << it.first << endl;
+            auto packet = createDataPacket(it.first, messageLength); // ! TODO what if it's the last packet?
+            connection->send(packet);
+//            cong->onSendData(messageLength);
+            retransmitBytes += messageLength; // affect inflightBytes
+            // count down, reset counter
+            it.second = 3; // reset count
+        } else {
+            // ! the resend packets received more than once ACK
+            if (confirmedDisorders.find(seq) != confirmedDisorders.end())
+                confirmedBytes -= pk->getReceivedBytes(); // ! which is plus above
+            else if (seq == it.first) {
+                confirmedDisorders.insert(it.first);
+            }
+        }
+    }
     auto pkRTT = simTime() - SimTime(pk->getStartTime());
     emit(rttSignal, pkRTT);
     currentBaseRTT = pkRTT - pk->getQueueTime() - pk->getTransmitTime();

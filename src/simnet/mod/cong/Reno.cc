@@ -24,31 +24,41 @@ void Reno::reset()
 }
 
 void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
-    confirmedBytes += segmentSize;
-    if (seq > maxAckedSeqNumber)
-    {
-        // ! this only detect disorder when it first happen
-        if (seq > maxAckedSeqNumber + segmentSize) {
-            EV_WARN << "disordering(ahead) expect  " << maxAckedSeqNumber + segmentSize
-            << " but get " << seq << endl;
-        }
+    auto expectedSeq = maxAckedSeqNumber + segmentSize;
+    if (seq == expectedSeq) {
+        confirmedBytes += segmentSize;
         maxAckedSeqNumber = seq;
-
-        // * do calculations after each RTT finished
-        if (maxAckedSeqNumber == markSeq) {
-            emit(cwndSignal, cWnd);
+    } else {
+        if (seq > expectedSeq) { // ! always accept new packets
+            confirmedBytes += segmentSize;
+            maxAckedSeqNumber = seq;
+            EV_WARN << "disordering(ahead) expect  " << expectedSeq
+            << " but get " << seq << endl;
+            ASSERT(disorderSeqs.find(seq) == disorderSeqs.end()); // ! only insert new non-seen packets(disorder seq when it first happen);
+            disorderSeqs[expectedSeq] = 3;
+        } else {
+            EV_WARN << "disordering(old) expect  " << expectedSeq
+                         << " but get " << seq << endl;
         }
     }
-    else if (confirmedBytes <= maxAckedSeqNumber)
-    {   // ! received an older seq, '==' is not possible either as no dup ack implemented
-        // TODO: improve dealing with disordering packets
-        EV_WARN << "disordering(old) expect  " << maxAckedSeqNumber
-                    << " but get " << seq << endl;
+    // ! check if former disordered packets are received
+    std::vector<SeqNumber> removed;
+    for (auto& it:disorderSeqs) {
+       if (seq != it.first) {
+           it.second--;
+
+       } else {
+           // received the disordered packet before countdown
+           removed.push_back(it.second);
+       }
     }
-    else
-    {   // ! '>=' is impossible
-        throw cRuntimeError("confirmed %lld bytes, maxAcked %lld, received seq %lld",
-                            confirmedBytes, maxAckedSeqNumber, seq);
+    for (auto& r:removed) {
+       disorderSeqs.erase(r);
+    }
+
+    // * do calculations after each RTT finished
+    if (maxAckedSeqNumber == markSeq) {
+        emit(cwndSignal, cWnd);
     }
 
     if (!congestion) {

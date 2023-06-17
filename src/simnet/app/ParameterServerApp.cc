@@ -83,14 +83,16 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
     }
     EV_DEBUG << pk->getRecord() << endl;
     auto& tmpWorkersRecord = aggedWorkers.at(seq);
+    if (pk->getCollision())
+        EV_WARN << seq << " hash collision happen" << endl;
+    if (pk->getResend())
+        EV_WARN << seq << " is a resend packet" << endl;
     for (auto& w:pk->getRecord()) {
         if (tmpWorkersRecord.find(w) != tmpWorkersRecord.end()) {
             ASSERT(pk->getResend());
-            EV_WARN << "received a resend packet" << endl;
+            EV_WARN << "received a seen packet" << endl;
         }
         else {
-            if (pk->getCollision())
-                EV_WARN << "hash collision happen" << endl;
             receivedNumber[seq] += 1;
         }
 

@@ -7,7 +7,7 @@ class UnicastSenderApp : public UnicastApp
 protected:
     // helper functions
     void sendPendingData();
-    B inflightBytes() {return sentBytes - confirmedBytes;};
+    B inflightBytes() {return sentBytes - confirmedBytes - retransmitBytes;};
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes);
     virtual void onFlowStart();
     virtual void onFlowStop();
@@ -38,6 +38,8 @@ protected:
     B sentBytes{0}; // TODO: maybe rename to maxSentSeq is better
     B confirmedBytes{0};
     B currentFlowSize{0};
+    B retransmitBytes{0};
+    std::unordered_set<SeqNumber> confirmedDisorders;
     simtime_t currentBaseRTT{0};
     simtime_t currentFlowInterval{0};
     int currentRound{0};

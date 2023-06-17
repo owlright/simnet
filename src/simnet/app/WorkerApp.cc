@@ -57,6 +57,7 @@ void ATPWorker::onFlowStart()
 
 void ATPWorker::onFlowStop()
 {
+    EV_DEBUG << "round " << currentRound << " is finished." << endl;
     UnicastSenderApp::onFlowStop();
     groupManager->reportFlowStop(jobId, simTime());
 }
@@ -86,6 +87,8 @@ Packet* ATPWorker::createDataPacket(SeqNumber seq, B packetBytes)
 
     auto seqNumber = pk->getSeqNumber();
     auto jobID = pk->getJobId();
+    if (seq < sentBytes)
+        pk->setResend(true);
     // TODO avoid overflow
     auto hseq = reinterpret_cast<uint16_t&>(seqNumber);
     auto hjobid = reinterpret_cast<uint16_t&>(jobID);
@@ -117,20 +120,20 @@ private:
 
 Define_Module(TimerWorker);
 
-Packet *TimerWorker::createDataPacket(B packetBytes)
+Packet *TimerWorker::createDataPacket(SeqNumber seq, B packetBytes)
 {
     char pkname[40];
     sprintf(pkname, " %lld-to-%lld-seq%lld",
             localAddr, destAddr, sentBytes);
     auto pk = new MTATPPacket(pkname);
     pk->setKind(DATA);
-    pk->setSeqNumber(sentBytes);
+    pk->setSeqNumber(seq);
     pk->setByteLength(packetBytes);
     pk->setECN(false);
     pk->setStartTime(simTime().dbl());
     pk->setTransmitTime(0);
     pk->setQueueTime(0);
-    if (sentBytes == currentFlowSize)
+    if (sentBytes == confirmedBytes)
         pk->setIsFlowFinished(true);
 
     pk->setAggCounter(0);
