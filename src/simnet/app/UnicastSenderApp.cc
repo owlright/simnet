@@ -15,7 +15,7 @@ UnicastSenderApp::~UnicastSenderApp() {
 
 void UnicastSenderApp::finish() {
     EV << "retransmit bytes: " << retransmitBytes << endl;
-    if (currentRound + 1 != numRounds)
+    if (currentRound != numRounds)
         EV_WARN << currentRound + 1 << " round not reach " << numRounds << endl;
 }
 
@@ -121,6 +121,7 @@ void UnicastSenderApp::sendPendingData()
 
 void UnicastSenderApp::onFlowStart()
 {
+    currentRound += 1;
     sentBytes = 0;
     confirmedBytes = 0;
     currentBaseRTT = 0;
@@ -136,7 +137,6 @@ void UnicastSenderApp::onFlowStart()
 
 void UnicastSenderApp::onFlowStop()
 {
-    currentRound += 1;
     emit(fctSignal, (simTime() - flowStartTime));
     emit(idealFctSignal, currentBaseRTT + SimTime((currentFlowSize*8) / bandwidth));
     if (currentRound < numRounds) {// note it's '<' here
