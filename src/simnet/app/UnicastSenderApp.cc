@@ -13,6 +13,7 @@ UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(jitterTimeout);
 }
 void UnicastSenderApp::finish() {
+    EV << "retransmit bytes: " << retransmitBytes << endl;
     if (currentRound != numRounds-1)
         EV_WARN << currentRound + 1 << " round not reach " << numRounds << endl;
 }

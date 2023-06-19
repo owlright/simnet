@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
 //
 
 #ifndef __PACKET_M_H
@@ -25,7 +25,7 @@ class AggPacket;
 class ATPPacket;
 class MTATPPacket;
 /**
- * Enum generated from <tt>simnet/mod/../mod/Packet.msg:2</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/Packet.msg:2</tt> by opp_msgtool.
  * <pre>
  * enum PacketType
  * {
@@ -49,7 +49,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Enum generated from <tt>simnet/mod/../mod/Packet.msg:11</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/Packet.msg:11</tt> by opp_msgtool.
  * <pre>
  * enum AggPolicy
  * {
@@ -67,7 +67,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPolicy& e) { b->pa
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b->unpack(n); e = static_cast<AggPolicy>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:17</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:17</tt> by opp_msgtool.
  * <pre>
  * packet EthernetMacHeader
  * {
@@ -99,7 +99,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const EthernetMacHeader& ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, EthernetMacHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:22</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:22</tt> by opp_msgtool.
  * <pre>
  * class IpHeader extends EthernetMacHeader
  * {
@@ -141,7 +141,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IpHeader& obj) {obj.p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IpHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:29</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:29</tt> by opp_msgtool.
  * <pre>
  * class UdpHeader extends IpHeader
  * {
@@ -183,7 +183,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const UdpHeader& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, UdpHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:36</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:36</tt> by opp_msgtool.
  * <pre>
  * class TcpLikeHeader extends IpHeader
  * {
@@ -240,7 +240,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const TcpLikeHeader& obj) {
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, TcpLikeHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:46</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:46</tt> by opp_msgtool.
  * <pre>
  * class Packet extends TcpLikeHeader
  * {
@@ -311,7 +311,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Packet& obj) {obj.parsimU
 // }}
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:62</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:62</tt> by opp_msgtool.
  * <pre>
  * class AggPacket extends Packet
  * {
@@ -426,7 +426,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:118</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:118</tt> by opp_msgtool.
  * <pre>
  * class ATPPacket extends AggPacket
  * {
@@ -484,7 +484,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const ATPPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ATPPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/../mod/Packet.msg:129</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:129</tt> by opp_msgtool.
  * <pre>
  * class MTATPPacket extends AggPacket
  * {

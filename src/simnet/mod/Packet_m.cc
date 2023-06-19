@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -148,7 +148,9 @@ void doParsimUnpacking(omnetpp::cCommBuffer *, T& t)
     throw omnetpp::cRuntimeError("Parsim error: No doParsimUnpacking() function for type %s", omnetpp::opp_typename(typeid(t)));
 }
 
-}  // namespace omRegisteRegister_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::AGG, PacketType::REMIND, PacketType::NOUSE));
+}  // namespace omnetpp
+
+Register_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::AGG, PacketType::REMIND, PacketType::NOUSE));
 
 Register_Enum(AggPolicy, (AggPolicy::ATP, AggPolicy::MTATP));
 
