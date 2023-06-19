@@ -167,7 +167,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 //            cong->onSendData(messageLength);
             retransmitBytes += messageLength; // affect inflightBytes
             // count down, reset counter
-            it.second = 3; // reset count
+            // it.second = 3; // ! do not change anything owned by cong
         } else {
             // ! the resend packets received more than once ACK
             if (confirmedDisorders.find(seq) != confirmedDisorders.end())

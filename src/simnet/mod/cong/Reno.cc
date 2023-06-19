@@ -8,6 +8,7 @@ simsignal_t Reno::cwndSignal = registerSignal("cwnd");
 void Reno::initialize(int stage) {
     if (stage==INITSTAGE_LOCAL) {
         cWnd = par("initWinSize");
+        maxDisorderNumber = par("maxDisorderNumber");
     }
 }
 
@@ -35,7 +36,7 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
             EV_WARN << "disordering(ahead) expect  " << expectedSeq
             << " but get " << seq << endl;
             ASSERT(disorderSeqs.find(seq) == disorderSeqs.end()); // ! only insert new non-seen packets(disorder seq when it first happen);
-            disorderSeqs[expectedSeq] = 3;
+            disorderSeqs[expectedSeq] = maxDisorderNumber;
         } else {
             EV_WARN << "disordering(old) expect  " << expectedSeq
                          << " but get " << seq << endl;
@@ -45,10 +46,14 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
     std::vector<SeqNumber> removed;
     for (auto& it:disorderSeqs) {
        if (seq != it.first) {
-           it.second--;
-
+            // ! this seq is retransmitted by app last turn
+            // ! we need to wait a RTT time to see if retransmitted is successful
+            if (it.second == 0) {
+                it.second = cWnd;
+            }
+            it.second--;
        } else {
-           // received the disordered packet before countdown
+           // this retramsmitted seq is acked successfully, remove it
            removed.push_back(it.second);
        }
     }
