@@ -9,6 +9,7 @@ protected:
     void onFlowStart() override;
     void onFlowStop() override;
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
+    virtual void finish() override;
 
 private:
     GlobalGroupManager* groupManager;
@@ -42,9 +43,9 @@ void ATPWorker::initialize(int stage)
             destAddr = groupInfo->hostinfo->PSes.at(0);
         }
         else {
+            setIdle();
             EV_WARN << "host " << localAddr << " have an idle ATPWorker" << endl;
         }
-
     }
     UnicastSenderApp::initialize(stage);
 }
@@ -101,6 +102,15 @@ Packet* ATPWorker::createDataPacket(SeqNumber seq, B packetBytes)
     pk->setFanIndegree0(groupInfo->switchinfo->fanIndegree0);
     pk->setFanIndegree1(groupInfo->switchinfo->fanIndegree1);
     return pk;
+}
+
+void ATPWorker::finish()
+{
+    if (isIdle()) {
+        EV << "this ATPWorker is idle, so delete it" << endl;
+    } else {
+        UnicastSenderApp::finish();
+    }
 }
 
 class TimerWorker : public UnicastSenderApp

@@ -10,6 +10,7 @@ protected:
     virtual void onNewConnectionArrived(IdNumber connId, const Packet* const packet) override;
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
     virtual Packet* createAckPacket(const Packet* const pk) override;
+    virtual void finish() override;
 
 protected:
     std::unordered_map<SeqNumber, std::unordered_set<IntAddress> > aggedWorkers;
@@ -43,6 +44,7 @@ void ParameterServerApp::initialize(int stage)
             EV << " multicast addr " << groupInfo->hostinfo->multicastAddress << endl;
         }
         else {
+            setIdle();
             EV_WARN << "host " << localAddr << " have an idle ATPServer" << endl;
         }
     }
@@ -131,4 +133,11 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
     packet->setIsFlowFinished(pk->isFlowFinished());
     check_and_cast<AggPacket*>(packet)->setIsAck(true);
     return packet;
+}
+
+void ParameterServerApp::finish()
+{
+    if (isIdle()) {
+        EV << "this parameter server is idle, so delete it" << endl;
+    }
 }

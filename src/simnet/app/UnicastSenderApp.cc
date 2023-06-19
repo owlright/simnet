@@ -12,11 +12,13 @@ UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(flowStartTimer);
     cancelAndDelete(jitterTimeout);
 }
+
 void UnicastSenderApp::finish() {
     EV << "retransmit bytes: " << retransmitBytes << endl;
-    if (currentRound != numRounds-1)
+    if (currentRound + 1 != numRounds)
         EV_WARN << currentRound + 1 << " round not reach " << numRounds << endl;
 }
+
 void UnicastSenderApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
@@ -85,7 +87,6 @@ void UnicastSenderApp::initialize(int stage)
             if (isUnicastSender)
                 EV_WARN << "address " << localAddr << "'s app has no destAddress" << endl;
         }
-
     }
 }
 
