@@ -22,6 +22,7 @@ void Reno::reset()
     ssThresh = INT64_MAX;
     congState = OPEN;
     cWndCnt = 0;
+    disorderSeqs.clear();
 }
 
 void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
