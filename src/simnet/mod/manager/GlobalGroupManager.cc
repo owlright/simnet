@@ -88,7 +88,7 @@ void GlobalGroupManager::reportFlowStop(IntAddress groupAddr, simtime_t roundSto
 
     if (roundMeter->counter == groupHostInfodb.at(groupAddr)->numWorkers) {
         emit(roundMeter->roundFctSignal, simTime() - roundMeter->startTime);
-        roundMeter->startTime = simTime();
+        roundMeter->startTime = SimTime::getMaxTime();
         roundMeter->counter = 0;
     }
 }
