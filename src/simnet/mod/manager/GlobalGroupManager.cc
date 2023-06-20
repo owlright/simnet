@@ -247,6 +247,27 @@ void GlobalGroupManager::addShortestPath(cTopology& tree, cTopology::Node* start
     }
 }
 
+std::vector<IntAddress> GlobalGroupManager::getShortestPath(cTopology &tree, cTopology::Node *start, cTopology::Node *stop)
+{
+    // the end nodes must be host
+    ASSERT(start->getModule()->getProperties()->get("host")!=nullptr &&
+           stop->getModule()->getProperties()->get("host")!=nullptr);
+    auto node2addr = [](cTopology::Node *node) -> IntAddress {
+        return node->getModule()->par("address").intValue();
+        };
+    std::vector<IntAddress> path;
+    auto node = start;
+    tree.calculateWeightedSingleShortestPathsTo(stop);
+
+    while (node != stop) {
+        path.emplace_back(node2addr(node));
+        auto nextNode = node->getPath(0)->getRemoteNode();
+        node = nextNode;
+    }
+    path.emplace_back(node2addr(stop));
+    return path;
+}
+
 void GlobalGroupManager::buildSteinerTree(cTopology& tree, const std::vector<int>& members, int root)
 {
     auto rootNode = topo->getNode(root);

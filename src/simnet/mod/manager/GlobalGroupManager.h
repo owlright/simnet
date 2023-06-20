@@ -89,5 +89,6 @@ private:
     // TODO make this function more clearly
     // ! add the shortest path between Node start and stop, note that only stop is in the tree
     void addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop);
+    std::vector<IntAddress> getShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop);
 };
 
