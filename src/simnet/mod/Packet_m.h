@@ -17,9 +17,9 @@
 #endif
 
 class EthernetMacHeader;
-class IpHeader;
-class UdpHeader;
-class TcpLikeHeader;
+class IPv4Header;
+class IPv6Header;
+class SegmentRoutingHeader;
 class Packet;
 class AggPacket;
 class ATPPacket;
@@ -71,13 +71,20 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b-
  * <pre>
  * packet EthernetMacHeader
  * {
- *     byteLength = 14;
+ *     byteLength = 14; // ! only this affects size
+ *     uint32_t destinationMacAddr; // 6B
+ *     uint32_t sourceMacAddr; // 6B
+ *     uint32_t etherType; // 4B
+ * 
  * }
  * </pre>
  */
 class EthernetMacHeader : public ::omnetpp::cPacket
 {
   protected:
+    uint32_t destinationMacAddr = 0;
+    uint32_t sourceMacAddr = 0;
+    uint32_t etherType = 0;
 
   private:
     void copy(const EthernetMacHeader& other);
@@ -93,42 +100,163 @@ class EthernetMacHeader : public ::omnetpp::cPacket
     virtual EthernetMacHeader *dup() const override {return new EthernetMacHeader(*this);}
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual uint32_t getDestinationMacAddr() const;
+    virtual void setDestinationMacAddr(uint32_t destinationMacAddr);
+
+    virtual uint32_t getSourceMacAddr() const;
+    virtual void setSourceMacAddr(uint32_t sourceMacAddr);
+
+    virtual uint32_t getEtherType() const;
+    virtual void setEtherType(uint32_t etherType);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const EthernetMacHeader& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, EthernetMacHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:22</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:26</tt> by opp_msgtool.
  * <pre>
- * class IpHeader extends EthernetMacHeader
+ * class IPv4Header extends EthernetMacHeader
  * {
  *     byteLength = 14 + 20;
- *     int64_t srcAddr;
- *     int64_t destAddr;
+ *     uint8_t version = 4; // 4 bits
+ *     uint8_t IHL; // internet header length 4 bits
+ *     uint8_t DSCP; // 6 bits
+ *     uint8_t ipECN; // 2 bits
+ *     uint16_t totalLength; // 2B
+ *     uint8_t identification; // 2B
+ *     uint8_t ipFlags; // 3 bits
+ *     uint8_t fragmentOffset; // 13 bits;
+ *     uint8_t TTL; // 1B
+ *     uint8_t protocol; // 1B
+ *     uint16_t checksum; // 2B
+ *     int64_t srcAddr; // 4B
+ *     int64_t destAddr; // 4B
+ *     uint64_t options; // if IHL > 5
  * }
  * </pre>
  */
-class IpHeader : public ::EthernetMacHeader
+class IPv4Header : public ::EthernetMacHeader
 {
   protected:
+    uint8_t version = 4;
+    uint8_t IHL = 0;
+    uint8_t DSCP = 0;
+    uint8_t ipECN = 0;
+    uint16_t totalLength = 0;
+    uint8_t identification = 0;
+    uint8_t ipFlags = 0;
+    uint8_t fragmentOffset = 0;
+    uint8_t TTL = 0;
+    uint8_t protocol = 0;
+    uint16_t checksum = 0;
+    int64_t srcAddr = 0;
+    int64_t destAddr = 0;
+    uint64_t options = 0;
+
+  private:
+    void copy(const IPv4Header& other);
+
+  protected:
+    bool operator==(const IPv4Header&) = delete;
+
+  public:
+    IPv4Header(const char *name=nullptr);
+    IPv4Header(const IPv4Header& other);
+    virtual ~IPv4Header();
+    IPv4Header& operator=(const IPv4Header& other);
+    virtual IPv4Header *dup() const override {return new IPv4Header(*this);}
+    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
+    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual uint8_t getVersion() const;
+    virtual void setVersion(uint8_t version);
+
+    virtual uint8_t getIHL() const;
+    virtual void setIHL(uint8_t IHL);
+
+    virtual uint8_t getDSCP() const;
+    virtual void setDSCP(uint8_t DSCP);
+
+    virtual uint8_t getIpECN() const;
+    virtual void setIpECN(uint8_t ipECN);
+
+    virtual uint16_t getTotalLength() const;
+    virtual void setTotalLength(uint16_t totalLength);
+
+    virtual uint8_t getIdentification() const;
+    virtual void setIdentification(uint8_t identification);
+
+    virtual uint8_t getIpFlags() const;
+    virtual void setIpFlags(uint8_t ipFlags);
+
+    virtual uint8_t getFragmentOffset() const;
+    virtual void setFragmentOffset(uint8_t fragmentOffset);
+
+    virtual uint8_t getTTL() const;
+    virtual void setTTL(uint8_t TTL);
+
+    virtual uint8_t getProtocol() const;
+    virtual void setProtocol(uint8_t protocol);
+
+    virtual uint16_t getChecksum() const;
+    virtual void setChecksum(uint16_t checksum);
+
+    virtual int64_t getSrcAddr() const;
+    virtual void setSrcAddr(int64_t srcAddr);
+
+    virtual int64_t getDestAddr() const;
+    virtual void setDestAddr(int64_t destAddr);
+
+    virtual uint64_t getOptions() const;
+    virtual void setOptions(uint64_t options);
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const IPv4Header& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv4Header& obj) {obj.parsimUnpack(b);}
+
+/**
+ * Class generated from <tt>simnet/mod/Packet.msg:45</tt> by opp_msgtool.
+ * <pre>
+ * class IPv6Header extends EthernetMacHeader
+ * {
+ *     byteLength = 14 + 40;
+ *     uint8_t version = 6; // 4 bits
+ *     //    uint8_t trafficClass; // 8bits
+ *     //    uint32_t flowLabel; // 20 bits
+ *     //    uint16_t payloadLength; // 2B
+ *     //    uint8_t nextHeader; // 1B
+ *     //    uint8_t TTL; // 1B
+ *     int64_t srcAddr; // 16B
+ *     int64_t destAddr; // 16B
+ * }
+ * </pre>
+ */
+class IPv6Header : public ::EthernetMacHeader
+{
+  protected:
+    uint8_t version = 6;
     int64_t srcAddr = 0;
     int64_t destAddr = 0;
 
   private:
-    void copy(const IpHeader& other);
+    void copy(const IPv6Header& other);
 
   protected:
-    bool operator==(const IpHeader&) = delete;
+    bool operator==(const IPv6Header&) = delete;
 
   public:
-    IpHeader(const char *name=nullptr);
-    IpHeader(const IpHeader& other);
-    virtual ~IpHeader();
-    IpHeader& operator=(const IpHeader& other);
-    virtual IpHeader *dup() const override {return new IpHeader(*this);}
+    IPv6Header(const char *name=nullptr);
+    IPv6Header(const IPv6Header& other);
+    virtual ~IPv6Header();
+    IPv6Header& operator=(const IPv6Header& other);
+    virtual IPv6Header *dup() const override {return new IPv6Header(*this);}
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual uint8_t getVersion() const;
+    virtual void setVersion(uint8_t version);
 
     virtual int64_t getSrcAddr() const;
     virtual void setSrcAddr(int64_t srcAddr);
@@ -137,113 +265,119 @@ class IpHeader : public ::EthernetMacHeader
     virtual void setDestAddr(int64_t destAddr);
 };
 
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const IpHeader& obj) {obj.parsimPack(b);}
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IpHeader& obj) {obj.parsimUnpack(b);}
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const IPv6Header& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv6Header& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:29</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:58</tt> by opp_msgtool.
  * <pre>
- * class UdpHeader extends IpHeader
+ * class SegmentRoutingHeader extends IPv6Header
  * {
- *     byteLength = 14 + 20 + 8;
- *     uint16_t localPort;
- *     uint16_t destPort;
+ *     //    uint8_t nextHeader; // 1B
+ *     uint8_t hdrLength; // Header extension length 1B
+ *     uint8_t routingType; // 1B
+ *     uint8_t segmentsLeft; // 1B
+ *     uint8_t lastEntry; //1B
+ *     uint8_t srhFlags; // 1B
+ *     uint16_t srhTag; // 2B
+ *     // below three are together segmentList each 16B
+ *     int64_t SID[];
+ *     string function[];
+ *     string args[];
  * }
  * </pre>
  */
-class UdpHeader : public ::IpHeader
+class SegmentRoutingHeader : public ::IPv6Header
 {
   protected:
-    uint16_t localPort = 0;
-    uint16_t destPort = 0;
+    uint8_t hdrLength = 0;
+    uint8_t routingType = 0;
+    uint8_t segmentsLeft = 0;
+    uint8_t lastEntry = 0;
+    uint8_t srhFlags = 0;
+    uint16_t srhTag = 0;
+    int64_t *SID = nullptr;
+    size_t SID_arraysize = 0;
+    omnetpp::opp_string *function = nullptr;
+    size_t function_arraysize = 0;
+    omnetpp::opp_string *args = nullptr;
+    size_t args_arraysize = 0;
 
   private:
-    void copy(const UdpHeader& other);
+    void copy(const SegmentRoutingHeader& other);
 
   protected:
-    bool operator==(const UdpHeader&) = delete;
+    bool operator==(const SegmentRoutingHeader&) = delete;
 
   public:
-    UdpHeader(const char *name=nullptr);
-    UdpHeader(const UdpHeader& other);
-    virtual ~UdpHeader();
-    UdpHeader& operator=(const UdpHeader& other);
-    virtual UdpHeader *dup() const override {return new UdpHeader(*this);}
+    SegmentRoutingHeader(const char *name=nullptr);
+    SegmentRoutingHeader(const SegmentRoutingHeader& other);
+    virtual ~SegmentRoutingHeader();
+    SegmentRoutingHeader& operator=(const SegmentRoutingHeader& other);
+    virtual SegmentRoutingHeader *dup() const override {return new SegmentRoutingHeader(*this);}
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
 
-    virtual uint16_t getLocalPort() const;
-    virtual void setLocalPort(uint16_t localPort);
+    virtual uint8_t getHdrLength() const;
+    virtual void setHdrLength(uint8_t hdrLength);
 
-    virtual uint16_t getDestPort() const;
-    virtual void setDestPort(uint16_t destPort);
+    virtual uint8_t getRoutingType() const;
+    virtual void setRoutingType(uint8_t routingType);
+
+    virtual uint8_t getSegmentsLeft() const;
+    virtual void setSegmentsLeft(uint8_t segmentsLeft);
+
+    virtual uint8_t getLastEntry() const;
+    virtual void setLastEntry(uint8_t lastEntry);
+
+    virtual uint8_t getSrhFlags() const;
+    virtual void setSrhFlags(uint8_t srhFlags);
+
+    virtual uint16_t getSrhTag() const;
+    virtual void setSrhTag(uint16_t srhTag);
+
+    virtual void setSIDArraySize(size_t size);
+    virtual size_t getSIDArraySize() const;
+    virtual int64_t getSID(size_t k) const;
+    virtual void setSID(size_t k, int64_t SID);
+    virtual void insertSID(size_t k, int64_t SID);
+    [[deprecated]] void insertSID(int64_t SID) {appendSID(SID);}
+    virtual void appendSID(int64_t SID);
+    virtual void eraseSID(size_t k);
+
+    virtual void setFunctionArraySize(size_t size);
+    virtual size_t getFunctionArraySize() const;
+    virtual const char * getFunction(size_t k) const;
+    virtual void setFunction(size_t k, const char * function);
+    virtual void insertFunction(size_t k, const char * function);
+    [[deprecated]] void insertFunction(const char * function) {appendFunction(function);}
+    virtual void appendFunction(const char * function);
+    virtual void eraseFunction(size_t k);
+
+    virtual void setArgsArraySize(size_t size);
+    virtual size_t getArgsArraySize() const;
+    virtual const char * getArgs(size_t k) const;
+    virtual void setArgs(size_t k, const char * args);
+    virtual void insertArgs(size_t k, const char * args);
+    [[deprecated]] void insertArgs(const char * args) {appendArgs(args);}
+    virtual void appendArgs(const char * args);
+    virtual void eraseArgs(size_t k);
 };
 
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const UdpHeader& obj) {obj.parsimPack(b);}
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, UdpHeader& obj) {obj.parsimUnpack(b);}
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const SegmentRoutingHeader& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, SegmentRoutingHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:36</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:73</tt> by opp_msgtool.
  * <pre>
- * class TcpLikeHeader extends IpHeader
+ * class Packet extends SegmentRoutingHeader
  * {
- *     // ! do not use this class directly, it has no size
+ *     // udp/tcp fields
  *     int64_t seqNumber;
  *     uint16_t localPort;
  *     uint16_t destPort;
  *     bool ECN;
  *     bool ECE;
- * }
- * </pre>
- */
-class TcpLikeHeader : public ::IpHeader
-{
-  protected:
-    int64_t seqNumber = 0;
-    uint16_t localPort = 0;
-    uint16_t destPort = 0;
-    bool ECN = false;
-    bool ECE = false;
-
-  private:
-    void copy(const TcpLikeHeader& other);
-
-  protected:
-    bool operator==(const TcpLikeHeader&) = delete;
-
-  public:
-    TcpLikeHeader(const char *name=nullptr);
-    TcpLikeHeader(const TcpLikeHeader& other);
-    virtual ~TcpLikeHeader();
-    TcpLikeHeader& operator=(const TcpLikeHeader& other);
-    virtual TcpLikeHeader *dup() const override {return new TcpLikeHeader(*this);}
-    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
-    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
-
-    virtual int64_t getSeqNumber() const;
-    virtual void setSeqNumber(int64_t seqNumber);
-
-    virtual uint16_t getLocalPort() const;
-    virtual void setLocalPort(uint16_t localPort);
-
-    virtual uint16_t getDestPort() const;
-    virtual void setDestPort(uint16_t destPort);
-
-    virtual bool getECN() const;
-    virtual void setECN(bool ECN);
-
-    virtual bool getECE() const;
-    virtual void setECE(bool ECE);
-};
-
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const TcpLikeHeader& obj) {obj.parsimPack(b);}
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, TcpLikeHeader& obj) {obj.parsimUnpack(b);}
-
-/**
- * Class generated from <tt>simnet/mod/Packet.msg:46</tt> by opp_msgtool.
- * <pre>
- * class Packet extends TcpLikeHeader
- * {
  *     // cheating fields
  *     PacketType packetType;
  *     int64_t connectionId;
@@ -255,9 +389,14 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, TcpLikeHeader& obj) {obj.
  * }
  * </pre>
  */
-class Packet : public ::TcpLikeHeader
+class Packet : public ::SegmentRoutingHeader
 {
   protected:
+    int64_t seqNumber = 0;
+    uint16_t localPort = 0;
+    uint16_t destPort = 0;
+    bool ECN = false;
+    bool ECE = false;
     PacketType packetType = static_cast<PacketType>(-1);
     int64_t connectionId = 0;
     int64_t receivedBytes = 0;
@@ -280,6 +419,21 @@ class Packet : public ::TcpLikeHeader
     virtual Packet *dup() const override {return new Packet(*this);}
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual int64_t getSeqNumber() const;
+    virtual void setSeqNumber(int64_t seqNumber);
+
+    virtual uint16_t getLocalPort() const;
+    virtual void setLocalPort(uint16_t localPort);
+
+    virtual uint16_t getDestPort() const;
+    virtual void setDestPort(uint16_t destPort);
+
+    virtual bool getECN() const;
+    virtual void setECN(bool ECN);
+
+    virtual bool getECE() const;
+    virtual void setECE(bool ECE);
 
     virtual PacketType getPacketType() const;
     virtual void setPacketType(PacketType packetType);
@@ -311,7 +465,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Packet& obj) {obj.parsimU
 // }}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:62</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:95</tt> by opp_msgtool.
  * <pre>
  * class AggPacket extends Packet
  * {
@@ -426,7 +580,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:118</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:151</tt> by opp_msgtool.
  * <pre>
  * class ATPPacket extends AggPacket
  * {
@@ -484,7 +638,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const ATPPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ATPPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:129</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:162</tt> by opp_msgtool.
  * <pre>
  * class MTATPPacket extends AggPacket
  * {
@@ -541,9 +695,9 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, MTATPPacket& obj) {obj.pa
 namespace omnetpp {
 
 template<> inline EthernetMacHeader *fromAnyPtr(any_ptr ptr) { return check_and_cast<EthernetMacHeader*>(ptr.get<cObject>()); }
-template<> inline IpHeader *fromAnyPtr(any_ptr ptr) { return check_and_cast<IpHeader*>(ptr.get<cObject>()); }
-template<> inline UdpHeader *fromAnyPtr(any_ptr ptr) { return check_and_cast<UdpHeader*>(ptr.get<cObject>()); }
-template<> inline TcpLikeHeader *fromAnyPtr(any_ptr ptr) { return check_and_cast<TcpLikeHeader*>(ptr.get<cObject>()); }
+template<> inline IPv4Header *fromAnyPtr(any_ptr ptr) { return check_and_cast<IPv4Header*>(ptr.get<cObject>()); }
+template<> inline IPv6Header *fromAnyPtr(any_ptr ptr) { return check_and_cast<IPv6Header*>(ptr.get<cObject>()); }
+template<> inline SegmentRoutingHeader *fromAnyPtr(any_ptr ptr) { return check_and_cast<SegmentRoutingHeader*>(ptr.get<cObject>()); }
 template<> inline Packet *fromAnyPtr(any_ptr ptr) { return check_and_cast<Packet*>(ptr.get<cObject>()); }
 template<> inline AggPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<AggPacket*>(ptr.get<cObject>()); }
 template<> inline ATPPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<ATPPacket*>(ptr.get<cObject>()); }
