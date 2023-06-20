@@ -4,6 +4,8 @@ cTopology * GlobalView::topo = nullptr;
 std::vector<int> GlobalView::hostNodes;
 std::unordered_map<int, IntAddress> GlobalView::node2addr;
 std::unordered_map<IntAddress, int> GlobalView::addr2node;
+std::unordered_map<IntAddress, cModule*> GlobalView::addr2mod;
+
 bool GlobalView::isInitialized = false;
 
 GlobalView::~GlobalView()
@@ -48,6 +50,7 @@ void GlobalView::collectNodes(cTopology *topo)
         }
         node2addr[i] = address;
         addr2node[address] = i;
+        addr2mod[address] = node;
         EV_DEBUG<< "node: " << i << " address: " << address << " isHost:"<< (isHost ? "true":"false")<< endl;
     }
 }
