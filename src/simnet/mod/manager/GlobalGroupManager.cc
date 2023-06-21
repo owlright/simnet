@@ -303,6 +303,40 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
         readHostConfig(par("groupHostFile").stringValue());
         readSwitchConfig(par("groupSwitchFile").stringValue());
     }
+    else if (strcmp(policyName, "SRAgg-manual") == 0)
+    {
+
+        readHostConfig(par("groupHostFile").stringValue());
+
+        for (auto& group : groupHostInfodb)
+        {
+            auto senders = group->workers;
+            auto roots = group->PSes;
+            auto ps = roots.at(0);
+            cTopology tree = cTopology("steiner");
+
+            std::vector<int> senderIndexes;
+            for (auto& s:senders) {
+                senderIndexes.push_back(addr2node.at(s));
+            }
+            buildSteinerTree(tree, senderIndexes, addr2node.at(ps)); //  TODO multiple PSes
+
+            std::vector<cModule*> senderMods;
+            for (auto& s:senders) {
+                senderMods.push_back(addr2mod.at(s));
+            }
+
+            for (auto i = 0; i < senders.size(); i++) {
+                auto addr = senders[i];
+                auto it = hostGroupInfo.find(addr);
+                ASSERT(it != hostGroupInfo.end());
+                auto m = senderMods[i];
+                auto path = getShortestPath(tree, tree.getNodeFor(m), tree.getNodeFor(addr2mod.at(ps)));
+                EV_DEBUG << path << endl;
+                it->second->segmentAddrs = path;
+            }
+        }
+    }
     else if (strcmp(policyName, "random") == 0)
     {
         // int groupNum = 2;

@@ -27,12 +27,14 @@ struct GroupSwitchInfo
     uint32_t bitmap1;
 };
 
+// ! for ATP aggregation
 struct GroupInfoWithIndex
 {
     bool isWorker;
     int index;
     std::shared_ptr<const GroupHostInfo> hostinfo;
     std::shared_ptr<const GroupSwitchInfo> switchinfo;
+    std::vector<IntAddress> segmentAddrs; // ! for segment routing aggregation
 };
 
 // struct GroupSwitchInfoWithIndex
@@ -81,7 +83,7 @@ private:
     std::unordered_map<IntAddress, groupRoundFinishInfo*> groupRoundStartTime;
 private:
     std::vector<std::shared_ptr<GroupHostInfo>> groupHostInfodb;
-    std::vector<std::shared_ptr<GroupSwitchInfo>> GroupSwitchInfodb;
+
 private:
     // for aggregation job
     void prepareAggGroup(const char* policyName);
