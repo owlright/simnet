@@ -1,6 +1,7 @@
 #include <map>
 #include <omnetpp.h>
 #include "../mod/Packet_m.h"
+#include "simnet/mod/AggPacket_m.h"
 #include "../common/Defs.h"
 #include "../common/Print.h"
 #include "../common/ModuleAccess.h"

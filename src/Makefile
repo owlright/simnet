@@ -52,10 +52,12 @@ OBJS = \
     $O/simnet/mod/manager/GlobalRouteManager.o \
     $O/simnet/mod/manager/GLobalView.o \
     $O/simnet/mod/manager/TrafficPatternManager.o \
+    $O/simnet/mod/AggPacket_m.o \
     $O/simnet/mod/Packet_m.o
 
 # Message files
 MSGFILES = \
+    simnet/mod/AggPacket.msg \
     simnet/mod/Packet.msg
 
 # SM files

@@ -21,11 +21,12 @@ class IPv4Header;
 class IPv6Header;
 class SegmentRoutingHeader;
 class Packet;
-class AggPacket;
-class ATPPacket;
-class MTATPPacket;
+// cplusplus {{
+#include <vector>
+// }}
+
 /**
- * Enum generated from <tt>simnet/mod/Packet.msg:2</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/Packet.msg:6</tt> by opp_msgtool.
  * <pre>
  * enum PacketType
  * {
@@ -49,7 +50,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Enum generated from <tt>simnet/mod/Packet.msg:11</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/Packet.msg:15</tt> by opp_msgtool.
  * <pre>
  * enum AggPolicy
  * {
@@ -67,7 +68,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPolicy& e) { b->pa
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b->unpack(n); e = static_cast<AggPolicy>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:17</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:21</tt> by opp_msgtool.
  * <pre>
  * packet EthernetMacHeader
  * {
@@ -115,7 +116,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const EthernetMacHeader& ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, EthernetMacHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:26</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:30</tt> by opp_msgtool.
  * <pre>
  * class IPv4Header extends EthernetMacHeader
  * {
@@ -217,7 +218,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IPv4Header& obj) {obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv4Header& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:45</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:49</tt> by opp_msgtool.
  * <pre>
  * class IPv6Header extends EthernetMacHeader
  * {
@@ -269,7 +270,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IPv6Header& obj) {obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv6Header& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:58</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:62</tt> by opp_msgtool.
  * <pre>
  * class SegmentRoutingHeader extends IPv6Header
  * {
@@ -368,7 +369,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const SegmentRoutingHeader&
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, SegmentRoutingHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:73</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:77</tt> by opp_msgtool.
  * <pre>
  * class Packet extends SegmentRoutingHeader
  * {
@@ -460,237 +461,6 @@ class Packet : public ::SegmentRoutingHeader
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Packet& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, Packet& obj) {obj.parsimUnpack(b);}
 
-// cplusplus {{
-#include <vector>
-// }}
-
-/**
- * Class generated from <tt>simnet/mod/Packet.msg:95</tt> by opp_msgtool.
- * <pre>
- * class AggPacket extends Packet
- * {
- *     packetType = AGG;
- *     AggPolicy aggPolicy;
- *     int round;
- *     int aggregatorIndex;
- *     int64_t jobId;
- *     int workerNumber;
- *     bool overflow;
- *     bool resend;
- *     bool collision;
- *     bool ecn;
- *     bool isAck;
- *     // cheating fields
- *     int64_t workerRecord[] \@custom \@sizeGetter(getRecordLen) \@sizeSetter(setRecordLen) \@getter(getRecord) \@setter(setRecord);
- * }
- * </pre>
- */
-class AggPacket : public ::Packet
-{
-  protected:
-    AggPolicy aggPolicy = static_cast<AggPolicy>(-1);
-    int round = 0;
-    int aggregatorIndex = 0;
-    int64_t jobId = 0;
-    int workerNumber = 0;
-    bool overflow = false;
-    bool resend = false;
-    bool collision = false;
-    bool ecn = false;
-    bool isAck_ = false;
-
-  private:
-    void copy(const AggPacket& other);
-
-  protected:
-    bool operator==(const AggPacket&) = delete;
-
-  public:
-    AggPacket(const char *name=nullptr);
-    AggPacket(const AggPacket& other);
-    virtual ~AggPacket();
-    AggPacket& operator=(const AggPacket& other);
-    virtual AggPacket *dup() const override {return new AggPacket(*this);}
-    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
-    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
-
-    virtual AggPolicy getAggPolicy() const;
-    virtual void setAggPolicy(AggPolicy aggPolicy);
-
-    virtual int getRound() const;
-    virtual void setRound(int round);
-
-    virtual int getAggregatorIndex() const;
-    virtual void setAggregatorIndex(int aggregatorIndex);
-
-    virtual int64_t getJobId() const;
-    virtual void setJobId(int64_t jobId);
-
-    virtual int getWorkerNumber() const;
-    virtual void setWorkerNumber(int workerNumber);
-
-    virtual bool getOverflow() const;
-    virtual void setOverflow(bool overflow);
-
-    virtual bool getResend() const;
-    virtual void setResend(bool resend);
-
-    virtual bool getCollision() const;
-    virtual void setCollision(bool collision);
-
-    virtual bool getEcn() const;
-    virtual void setEcn(bool ecn);
-
-    virtual bool isAck() const;
-    virtual void setIsAck(bool isAck);
-
-
-    protected:
-        std::vector<int64_t> workerRecord;
-    public:
-        // expected methods:
-        virtual void setRecordLen(size_t size) {
-            workerRecord.reserve(size);
-        }
-        virtual size_t getRecordLen() const {return workerRecord.size();}
-        virtual std::vector<int64_t> getRecord() const {return workerRecord;}
-        virtual int64_t getRecord(size_t k) {return workerRecord.at(k);}
-        virtual void setRecord(size_t k, int64_t worker) {
-            EV_WARN << "You should not use this method, but using addRecord instead." << std::endl;
-            workerRecord[k] = worker;
-        }
-        //new methods:
-        virtual void addRecord(int64_t worker) {
-            workerRecord.push_back(worker);
-        }
-        virtual void setRecord(std::vector<int64_t>& workers) {
-            auto oldLen = getRecordLen();
-            for (auto i = 0; i < oldLen; i++) {
-                workerRecord[i] = workers.back();
-                workers.pop_back();
-            }
-            while (!workers.empty()) {
-                workerRecord.push_back(workers.back());
-                workers.pop_back();
-            }
-        }
-};
-
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPacket& obj) {obj.parsimPack(b);}
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.parsimUnpack(b);}
-
-/**
- * Class generated from <tt>simnet/mod/Packet.msg:151</tt> by opp_msgtool.
- * <pre>
- * class ATPPacket extends AggPacket
- * {
- *     aggPolicy = ATP;
- *     byteLength = 16 + 8; // ATP header total size is 58 Bytes
- *     uint32_t bitmap0;
- *     uint32_t bitmap1;
- *     int fanIndegree0;
- *     int fanIndegree1;
- *     int switchIdentifier;
- * }
- * </pre>
- */
-class ATPPacket : public ::AggPacket
-{
-  protected:
-    uint32_t bitmap0 = 0;
-    uint32_t bitmap1 = 0;
-    int fanIndegree0 = 0;
-    int fanIndegree1 = 0;
-    int switchIdentifier = 0;
-
-  private:
-    void copy(const ATPPacket& other);
-
-  protected:
-    bool operator==(const ATPPacket&) = delete;
-
-  public:
-    ATPPacket(const char *name=nullptr);
-    ATPPacket(const ATPPacket& other);
-    virtual ~ATPPacket();
-    ATPPacket& operator=(const ATPPacket& other);
-    virtual ATPPacket *dup() const override {return new ATPPacket(*this);}
-    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
-    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
-
-    virtual uint32_t getBitmap0() const;
-    virtual void setBitmap0(uint32_t bitmap0);
-
-    virtual uint32_t getBitmap1() const;
-    virtual void setBitmap1(uint32_t bitmap1);
-
-    virtual int getFanIndegree0() const;
-    virtual void setFanIndegree0(int fanIndegree0);
-
-    virtual int getFanIndegree1() const;
-    virtual void setFanIndegree1(int fanIndegree1);
-
-    virtual int getSwitchIdentifier() const;
-    virtual void setSwitchIdentifier(int switchIdentifier);
-};
-
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const ATPPacket& obj) {obj.parsimPack(b);}
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ATPPacket& obj) {obj.parsimUnpack(b);}
-
-/**
- * Class generated from <tt>simnet/mod/Packet.msg:162</tt> by opp_msgtool.
- * <pre>
- * class MTATPPacket extends AggPacket
- * {
- *     aggPolicy = MTATP;
- *     byteLength = 16 + 4;
- *     int timer;
- *     int aggCounter;
- *     bool flags[5];
- *     int treeCost;
- * }
- * </pre>
- */
-class MTATPPacket : public ::AggPacket
-{
-  protected:
-    int timer = 0;
-    int aggCounter = 0;
-    bool flags[5];
-    int treeCost = 0;
-
-  private:
-    void copy(const MTATPPacket& other);
-
-  protected:
-    bool operator==(const MTATPPacket&) = delete;
-
-  public:
-    MTATPPacket(const char *name=nullptr);
-    MTATPPacket(const MTATPPacket& other);
-    virtual ~MTATPPacket();
-    MTATPPacket& operator=(const MTATPPacket& other);
-    virtual MTATPPacket *dup() const override {return new MTATPPacket(*this);}
-    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
-    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
-
-    virtual int getTimer() const;
-    virtual void setTimer(int timer);
-
-    virtual int getAggCounter() const;
-    virtual void setAggCounter(int aggCounter);
-
-    virtual size_t getFlagsArraySize() const;
-    virtual bool getFlags(size_t k) const;
-    virtual void setFlags(size_t k, bool flags);
-
-    virtual int getTreeCost() const;
-    virtual void setTreeCost(int treeCost);
-};
-
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const MTATPPacket& obj) {obj.parsimPack(b);}
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, MTATPPacket& obj) {obj.parsimUnpack(b);}
-
 
 namespace omnetpp {
 
@@ -699,9 +469,6 @@ template<> inline IPv4Header *fromAnyPtr(any_ptr ptr) { return check_and_cast<IP
 template<> inline IPv6Header *fromAnyPtr(any_ptr ptr) { return check_and_cast<IPv6Header*>(ptr.get<cObject>()); }
 template<> inline SegmentRoutingHeader *fromAnyPtr(any_ptr ptr) { return check_and_cast<SegmentRoutingHeader*>(ptr.get<cObject>()); }
 template<> inline Packet *fromAnyPtr(any_ptr ptr) { return check_and_cast<Packet*>(ptr.get<cObject>()); }
-template<> inline AggPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<AggPacket*>(ptr.get<cObject>()); }
-template<> inline ATPPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<ATPPacket*>(ptr.get<cObject>()); }
-template<> inline MTATPPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<MTATPPacket*>(ptr.get<cObject>()); }
 
 }  // namespace omnetpp
 

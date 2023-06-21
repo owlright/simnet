@@ -1,6 +1,7 @@
 #include "UnicastSenderApp.h"
 #include "simnet/common/ModuleAccess.h"
 #include "simnet/mod/manager/GlobalGroupManager.h"
+#include "simnet/mod/AggPacket_m.h"
 
 class ATPWorker : public UnicastSenderApp
 {

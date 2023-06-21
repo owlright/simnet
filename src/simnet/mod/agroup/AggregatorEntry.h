@@ -1,7 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include "simnet/common/Defs.h"
-#include "simnet/mod/Packet_m.h"
+#include "simnet/mod/AggPacket_m.h"
 using namespace omnetpp;
 
 class AggregatorEntry
