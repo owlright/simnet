@@ -183,7 +183,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             entry->PSes = PSAddrs;
             entry->numWorkers = workerAddrs.size();
             entry->numPSes = PSAddrs.size();
-            entry->multicastAddress = mcastAddr;
+            entry->multicastAddress = mcastAddr++;
             groupHostInfodb.push_back(entry);
             EV << std::setw(50) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
             for (auto i = 0; i < workerAddrs.size(); i++)
