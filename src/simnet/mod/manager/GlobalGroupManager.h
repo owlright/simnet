@@ -35,6 +35,7 @@ struct GroupInfoWithIndex
     std::shared_ptr<const GroupHostInfo> hostinfo;
     std::shared_ptr<const GroupSwitchInfo> switchinfo;
     std::vector<IntAddress> segmentAddrs; // ! for segment routing aggregation
+    std::vector<int> fanIndegrees;
 };
 
 // struct GroupSwitchInfoWithIndex

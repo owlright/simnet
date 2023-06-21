@@ -193,7 +193,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
                 hostEntry->isWorker = true;
                 hostEntry->index = i;
                 auto addr = workerAddrs.at(i);
-                ASSERT(hostGroupInfo.find(addr) == hostGroupInfo.end()); // one host only in one group
+                ASSERT(hostGroupInfo.find(addr) == hostGroupInfo.end()); // TODO one host only in one group, but multiple workers
                 hostGroupInfo[addr] = hostEntry;
             }
             for (auto i = 0; i < PSAddrs.size(); i++)
@@ -325,16 +325,26 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
             for (auto& s:senders) {
                 senderMods.push_back(addr2mod.at(s));
             }
-
+            // * prepare segments
             for (auto i = 0; i < senders.size(); i++) {
                 auto addr = senders[i];
                 auto it = hostGroupInfo.find(addr);
                 ASSERT(it != hostGroupInfo.end());
                 auto m = senderMods[i];
                 auto path = getShortestPath(tree, tree.getNodeFor(m), tree.getNodeFor(addr2mod.at(ps)));
+                ASSERT(path.size() >= 3);
                 EV_DEBUG << path << endl;
-                it->second->segmentAddrs = path;
+                auto segments = std::vector<IntAddress>(path.begin()+1, path.end()-1);
+                it->second->segmentAddrs = segments;
+                // * prepare indegree at each middle node
+                std::vector<int> indegrees;
+                for (auto& seg:segments) {
+                    indegrees.push_back(tree.getNodeFor(addr2mod.at(seg))->getNumInLinks());
+                }
+                it->second->fanIndegrees = indegrees;
             }
+
+
         }
     }
     else if (strcmp(policyName, "random") == 0)
@@ -371,11 +381,11 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
         //     for (auto& m:members)
         //         groupSources[gkey].push_back(node2addr.at(m));
 
-        //     // * get steiner tree for each group
+            // * get steiner tree for each group
         //     cTopology tree = cTopology("steiner");
         //     buildSteinerTree(tree, members, root);
-        //     // * tree construction is finished
-        //     // * now assign tree to routers
+            // * tree construction is finished
+            // * now assign tree to routers
         //     for (auto i = 0; i < tree.getNumNodes(); i++) {
         //         auto node = tree.getNode(i);
         //         auto mod = node->getModule();
