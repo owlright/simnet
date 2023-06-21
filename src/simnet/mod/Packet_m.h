@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
 //
 
 #ifndef __PACKET_M_H
@@ -23,10 +23,11 @@ class SegmentRoutingHeader;
 class Packet;
 // cplusplus {{
 #include <vector>
+using omnetpp::opp_string;
 // }}
 
 /**
- * Enum generated from <tt>simnet/mod/Packet.msg:6</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/../mod/Packet.msg:7</tt> by opp_msgtool.
  * <pre>
  * enum PacketType
  * {
@@ -50,25 +51,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Enum generated from <tt>simnet/mod/Packet.msg:15</tt> by opp_msgtool.
- * <pre>
- * enum AggPolicy
- * {
- *     ATP = 0;
- *     MTATP = 1;
- * }
- * </pre>
- */
-enum AggPolicy {
-    ATP = 0,
-    MTATP = 1
-};
-
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPolicy& e) { b->pack(static_cast<int>(e)); }
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b->unpack(n); e = static_cast<AggPolicy>(n); }
-
-/**
- * Class generated from <tt>simnet/mod/Packet.msg:21</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:16</tt> by opp_msgtool.
  * <pre>
  * packet EthernetMacHeader
  * {
@@ -116,7 +99,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const EthernetMacHeader& ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, EthernetMacHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:30</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:25</tt> by opp_msgtool.
  * <pre>
  * class IPv4Header extends EthernetMacHeader
  * {
@@ -218,7 +201,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IPv4Header& obj) {obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv4Header& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:49</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:44</tt> by opp_msgtool.
  * <pre>
  * class IPv6Header extends EthernetMacHeader
  * {
@@ -270,7 +253,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IPv6Header& obj) {obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv6Header& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:62</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:57</tt> by opp_msgtool.
  * <pre>
  * class SegmentRoutingHeader extends IPv6Header
  * {
@@ -282,9 +265,9 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv6Header& obj) {obj.par
  *     uint8_t srhFlags; // 1B
  *     uint16_t srhTag; // 2B
  *     // below three are together segmentList each 16B
- *     int64_t SID[];
- *     string function[];
- *     string args[];
+ *     int64_t segments[] \@custom \@sizeGetter \@sizeSetter;
+ *     string funs[] \@custom \@sizeGetter \@sizeSetter; // tell the node what to do
+ *     string args[] \@custom \@sizeGetter \@sizeSetter; // args of functions
  * }
  * </pre>
  */
@@ -297,12 +280,6 @@ class SegmentRoutingHeader : public ::IPv6Header
     uint8_t lastEntry = 0;
     uint8_t srhFlags = 0;
     uint16_t srhTag = 0;
-    int64_t *SID = nullptr;
-    size_t SID_arraysize = 0;
-    omnetpp::opp_string *function = nullptr;
-    size_t function_arraysize = 0;
-    omnetpp::opp_string *args = nullptr;
-    size_t args_arraysize = 0;
 
   private:
     void copy(const SegmentRoutingHeader& other);
@@ -337,39 +314,45 @@ class SegmentRoutingHeader : public ::IPv6Header
     virtual uint16_t getSrhTag() const;
     virtual void setSrhTag(uint16_t srhTag);
 
-    virtual void setSIDArraySize(size_t size);
-    virtual size_t getSIDArraySize() const;
-    virtual int64_t getSID(size_t k) const;
-    virtual void setSID(size_t k, int64_t SID);
-    virtual void insertSID(size_t k, int64_t SID);
-    [[deprecated]] void insertSID(int64_t SID) {appendSID(SID);}
-    virtual void appendSID(int64_t SID);
-    virtual void eraseSID(size_t k);
 
-    virtual void setFunctionArraySize(size_t size);
-    virtual size_t getFunctionArraySize() const;
-    virtual const char * getFunction(size_t k) const;
-    virtual void setFunction(size_t k, const char * function);
-    virtual void insertFunction(size_t k, const char * function);
-    [[deprecated]] void insertFunction(const char * function) {appendFunction(function);}
-    virtual void appendFunction(const char * function);
-    virtual void eraseFunction(size_t k);
-
-    virtual void setArgsArraySize(size_t size);
-    virtual size_t getArgsArraySize() const;
-    virtual const char * getArgs(size_t k) const;
-    virtual void setArgs(size_t k, const char * args);
-    virtual void insertArgs(size_t k, const char * args);
-    [[deprecated]] void insertArgs(const char * args) {appendArgs(args);}
-    virtual void appendArgs(const char * args);
-    virtual void eraseArgs(size_t k);
+	protected:
+		std::vector<int64_t> segments; // intermediate node address
+		std::vector<opp_string> funs;
+		std::vector<opp_string> args;
+	public:
+		// expected methods:
+		virtual void setSegmentsArraySize(size_t size) {segments.resize(size);}
+		virtual void setFunsArraySize(size_t size) {funs.resize(size);}
+		virtual void setArgsArraySize(size_t size) {args.resize(size);}
+		
+		virtual size_t getSegmentsArraySize() const {return segments.size();}
+		virtual size_t getFunsArraySize() const {return funs.size();}
+		virtual size_t getArgsArraySize() const {return args.size();}
+		
+		virtual int64_t getSegments(size_t k) {return segments.at(k);}
+		virtual const opp_string& getFuns(size_t k) {return funs.at(k);}
+		virtual const opp_string& getArgs(size_t k) {return args.at(k);}
+		
+		virtual void setSegments(size_t k, int64_t addr) {segments.at(k) = addr;}
+		virtual void setFuns(size_t k, const char* fun) {funs.at(k) = fun;}
+		virtual void setArgs(size_t k, const char* arg) {args.at(k) = arg;}
+		
+		// new methods:
+		virtual void setSIDSize(size_t size) {
+		    setSegmentsArraySize(size);
+		    setFunsArraySize(size);
+		    setArgsArraySize(size);
+		}
+		virtual void popSegment() {segments.pop_back();}
+		virtual void popFun() {funs.pop_back();}
+		virtual void popArg() {args.pop_back();}
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const SegmentRoutingHeader& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, SegmentRoutingHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:77</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:72</tt> by opp_msgtool.
  * <pre>
  * class Packet extends SegmentRoutingHeader
  * {

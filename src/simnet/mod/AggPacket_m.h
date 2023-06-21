@@ -19,10 +19,31 @@
 class AggPacket;
 class ATPPacket;
 class MTATPPacket;
+class SRAggPacket;
 #include "Packet_m.h" // import Packet
 
 /**
- * Class generated from <tt>simnet/mod/AggPacket.msg:4</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/AggPacket.msg:4</tt> by opp_msgtool.
+ * <pre>
+ * enum AggPolicy
+ * {
+ *     ATP = 0;
+ *     MTATP = 1;
+ *     SRAGG = 2;
+ * }
+ * </pre>
+ */
+enum AggPolicy {
+    ATP = 0,
+    MTATP = 1,
+    SRAGG = 2
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPolicy& e) { b->pack(static_cast<int>(e)); }
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b->unpack(n); e = static_cast<AggPolicy>(n); }
+
+/**
+ * Class generated from <tt>simnet/mod/AggPacket.msg:11</tt> by opp_msgtool.
  * <pre>
  * class AggPacket extends Packet
  * {
@@ -137,7 +158,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/AggPacket.msg:60</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/AggPacket.msg:67</tt> by opp_msgtool.
  * <pre>
  * class ATPPacket extends AggPacket
  * {
@@ -195,7 +216,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const ATPPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ATPPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/AggPacket.msg:71</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/AggPacket.msg:78</tt> by opp_msgtool.
  * <pre>
  * class MTATPPacket extends AggPacket
  * {
@@ -248,12 +269,60 @@ class MTATPPacket : public ::AggPacket
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const MTATPPacket& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, MTATPPacket& obj) {obj.parsimUnpack(b);}
 
+/**
+ * Class generated from <tt>simnet/mod/AggPacket.msg:88</tt> by opp_msgtool.
+ * <pre>
+ * class SRAggPacket extends AggPacket
+ * {
+ *     aggPolicy = SRAGG;
+ *     int timer;
+ *     int aggCounter;
+ *     int treeCost;
+ * }
+ * </pre>
+ */
+class SRAggPacket : public ::AggPacket
+{
+  protected:
+    int timer = 0;
+    int aggCounter = 0;
+    int treeCost = 0;
+
+  private:
+    void copy(const SRAggPacket& other);
+
+  protected:
+    bool operator==(const SRAggPacket&) = delete;
+
+  public:
+    SRAggPacket(const char *name=nullptr);
+    SRAggPacket(const SRAggPacket& other);
+    virtual ~SRAggPacket();
+    SRAggPacket& operator=(const SRAggPacket& other);
+    virtual SRAggPacket *dup() const override {return new SRAggPacket(*this);}
+    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
+    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    virtual int getTimer() const;
+    virtual void setTimer(int timer);
+
+    virtual int getAggCounter() const;
+    virtual void setAggCounter(int aggCounter);
+
+    virtual int getTreeCost() const;
+    virtual void setTreeCost(int treeCost);
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const SRAggPacket& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, SRAggPacket& obj) {obj.parsimUnpack(b);}
+
 
 namespace omnetpp {
 
 template<> inline AggPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<AggPacket*>(ptr.get<cObject>()); }
 template<> inline ATPPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<ATPPacket*>(ptr.get<cObject>()); }
 template<> inline MTATPPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<MTATPPacket*>(ptr.get<cObject>()); }
+template<> inline SRAggPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<SRAggPacket*>(ptr.get<cObject>()); }
 
 }  // namespace omnetpp
 

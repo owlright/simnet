@@ -1,5 +1,12 @@
 import Packet;
 
+enum AggPolicy
+{
+    ATP = 0;
+    MTATP = 1;
+    SRAGG = 2;
+}
+
 class AggPacket extends Packet
 {
     packetType = AGG;
@@ -76,3 +83,11 @@ class MTATPPacket extends AggPacket
     bool flags[5];
     int treeCost;
 }
+
+class SRAggPacket extends AggPacket
+{
+    aggPolicy = SRAGG;
+    int timer;
+    int aggCounter;
+    int treeCost;
+} 

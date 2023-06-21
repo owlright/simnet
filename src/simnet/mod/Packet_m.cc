@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -148,11 +148,7 @@ void doParsimUnpacking(omnetpp::cCommBuffer *, T& t)
     throw omnetpp::cRuntimeError("Parsim error: No doParsimUnpacking() function for type %s", omnetpp::opp_typename(typeid(t)));
 }
 
-}  // namespace omnetpp
-
-Register_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::AGG, PacketType::REMIND, PacketType::NOUSE));
-
-Register_Enum(AggPolicy, (AggPolicy::ATP, AggPolicy::MTATP));
+}  // namespace omRegisteRegister_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::AGG, PacketType::REMIND, PacketType::NOUSE));
 
 Register_Class(EthernetMacHeader)
 
@@ -1603,9 +1599,6 @@ SegmentRoutingHeader::SegmentRoutingHeader(const SegmentRoutingHeader& other) : 
 
 SegmentRoutingHeader::~SegmentRoutingHeader()
 {
-    delete [] this->SID;
-    delete [] this->function;
-    delete [] this->args;
 }
 
 SegmentRoutingHeader& SegmentRoutingHeader::operator=(const SegmentRoutingHeader& other)
@@ -1624,24 +1617,11 @@ void SegmentRoutingHeader::copy(const SegmentRoutingHeader& other)
     this->lastEntry = other.lastEntry;
     this->srhFlags = other.srhFlags;
     this->srhTag = other.srhTag;
-    delete [] this->SID;
-    this->SID = (other.SID_arraysize==0) ? nullptr : new int64_t[other.SID_arraysize];
-    SID_arraysize = other.SID_arraysize;
-    for (size_t i = 0; i < SID_arraysize; i++) {
-        this->SID[i] = other.SID[i];
-    }
-    delete [] this->function;
-    this->function = (other.function_arraysize==0) ? nullptr : new omnetpp::opp_string[other.function_arraysize];
-    function_arraysize = other.function_arraysize;
-    for (size_t i = 0; i < function_arraysize; i++) {
-        this->function[i] = other.function[i];
-    }
-    delete [] this->args;
-    this->args = (other.args_arraysize==0) ? nullptr : new omnetpp::opp_string[other.args_arraysize];
-    args_arraysize = other.args_arraysize;
-    for (size_t i = 0; i < args_arraysize; i++) {
-        this->args[i] = other.args[i];
-    }
+// cplusplus {{
+    segments = other.segments;
+    funs = other.funs;
+   	args = other.args;
+// }}
 }
 
 void SegmentRoutingHeader::parsimPack(omnetpp::cCommBuffer *b) const
@@ -1653,12 +1633,9 @@ void SegmentRoutingHeader::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->lastEntry);
     doParsimPacking(b,this->srhFlags);
     doParsimPacking(b,this->srhTag);
-    b->pack(SID_arraysize);
-    doParsimArrayPacking(b,this->SID,SID_arraysize);
-    b->pack(function_arraysize);
-    doParsimArrayPacking(b,this->function,function_arraysize);
-    b->pack(args_arraysize);
-    doParsimArrayPacking(b,this->args,args_arraysize);
+    // field segments is abstract or custom -- please do packing in customized class
+    // field funs is abstract or custom -- please do packing in customized class
+    // field args is abstract or custom -- please do packing in customized class
 }
 
 void SegmentRoutingHeader::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -1670,30 +1647,9 @@ void SegmentRoutingHeader::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->lastEntry);
     doParsimUnpacking(b,this->srhFlags);
     doParsimUnpacking(b,this->srhTag);
-    delete [] this->SID;
-    b->unpack(SID_arraysize);
-    if (SID_arraysize == 0) {
-        this->SID = nullptr;
-    } else {
-        this->SID = new int64_t[SID_arraysize];
-        doParsimArrayUnpacking(b,this->SID,SID_arraysize);
-    }
-    delete [] this->function;
-    b->unpack(function_arraysize);
-    if (function_arraysize == 0) {
-        this->function = nullptr;
-    } else {
-        this->function = new omnetpp::opp_string[function_arraysize];
-        doParsimArrayUnpacking(b,this->function,function_arraysize);
-    }
-    delete [] this->args;
-    b->unpack(args_arraysize);
-    if (args_arraysize == 0) {
-        this->args = nullptr;
-    } else {
-        this->args = new omnetpp::opp_string[args_arraysize];
-        doParsimArrayUnpacking(b,this->args,args_arraysize);
-    }
+    // field segments is abstract or custom -- please do unpacking in customized class
+    // field funs is abstract or custom -- please do unpacking in customized class
+    // field args is abstract or custom -- please do unpacking in customized class
 }
 
 uint8_t SegmentRoutingHeader::getHdrLength() const
@@ -1756,200 +1712,6 @@ void SegmentRoutingHeader::setSrhTag(uint16_t srhTag)
     this->srhTag = srhTag;
 }
 
-size_t SegmentRoutingHeader::getSIDArraySize() const
-{
-    return SID_arraysize;
-}
-
-int64_t SegmentRoutingHeader::getSID(size_t k) const
-{
-    if (k >= SID_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)SID_arraysize, (unsigned long)k);
-    return this->SID[k];
-}
-
-void SegmentRoutingHeader::setSIDArraySize(size_t newSize)
-{
-    int64_t *SID2 = (newSize==0) ? nullptr : new int64_t[newSize];
-    size_t minSize = SID_arraysize < newSize ? SID_arraysize : newSize;
-    for (size_t i = 0; i < minSize; i++)
-        SID2[i] = this->SID[i];
-    for (size_t i = minSize; i < newSize; i++)
-        SID2[i] = 0;
-    delete [] this->SID;
-    this->SID = SID2;
-    SID_arraysize = newSize;
-}
-
-void SegmentRoutingHeader::setSID(size_t k, int64_t SID)
-{
-    if (k >= SID_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)SID_arraysize, (unsigned long)k);
-    this->SID[k] = SID;
-}
-
-void SegmentRoutingHeader::insertSID(size_t k, int64_t SID)
-{
-    if (k > SID_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)SID_arraysize, (unsigned long)k);
-    size_t newSize = SID_arraysize + 1;
-    int64_t *SID2 = new int64_t[newSize];
-    size_t i;
-    for (i = 0; i < k; i++)
-        SID2[i] = this->SID[i];
-    SID2[k] = SID;
-    for (i = k + 1; i < newSize; i++)
-        SID2[i] = this->SID[i-1];
-    delete [] this->SID;
-    this->SID = SID2;
-    SID_arraysize = newSize;
-}
-
-void SegmentRoutingHeader::appendSID(int64_t SID)
-{
-    insertSID(SID_arraysize, SID);
-}
-
-void SegmentRoutingHeader::eraseSID(size_t k)
-{
-    if (k >= SID_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)SID_arraysize, (unsigned long)k);
-    size_t newSize = SID_arraysize - 1;
-    int64_t *SID2 = (newSize == 0) ? nullptr : new int64_t[newSize];
-    size_t i;
-    for (i = 0; i < k; i++)
-        SID2[i] = this->SID[i];
-    for (i = k; i < newSize; i++)
-        SID2[i] = this->SID[i+1];
-    delete [] this->SID;
-    this->SID = SID2;
-    SID_arraysize = newSize;
-}
-
-size_t SegmentRoutingHeader::getFunctionArraySize() const
-{
-    return function_arraysize;
-}
-
-const char * SegmentRoutingHeader::getFunction(size_t k) const
-{
-    if (k >= function_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)function_arraysize, (unsigned long)k);
-    return this->function[k].c_str();
-}
-
-void SegmentRoutingHeader::setFunctionArraySize(size_t newSize)
-{
-    omnetpp::opp_string *function2 = (newSize==0) ? nullptr : new omnetpp::opp_string[newSize];
-    size_t minSize = function_arraysize < newSize ? function_arraysize : newSize;
-    for (size_t i = 0; i < minSize; i++)
-        function2[i] = this->function[i];
-    delete [] this->function;
-    this->function = function2;
-    function_arraysize = newSize;
-}
-
-void SegmentRoutingHeader::setFunction(size_t k, const char * function)
-{
-    if (k >= function_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)function_arraysize, (unsigned long)k);
-    this->function[k] = function;
-}
-
-void SegmentRoutingHeader::insertFunction(size_t k, const char * function)
-{
-    if (k > function_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)function_arraysize, (unsigned long)k);
-    size_t newSize = function_arraysize + 1;
-    omnetpp::opp_string *function2 = new omnetpp::opp_string[newSize];
-    size_t i;
-    for (i = 0; i < k; i++)
-        function2[i] = this->function[i];
-    function2[k] = function;
-    for (i = k + 1; i < newSize; i++)
-        function2[i] = this->function[i-1];
-    delete [] this->function;
-    this->function = function2;
-    function_arraysize = newSize;
-}
-
-void SegmentRoutingHeader::appendFunction(const char * function)
-{
-    insertFunction(function_arraysize, function);
-}
-
-void SegmentRoutingHeader::eraseFunction(size_t k)
-{
-    if (k >= function_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)function_arraysize, (unsigned long)k);
-    size_t newSize = function_arraysize - 1;
-    omnetpp::opp_string *function2 = (newSize == 0) ? nullptr : new omnetpp::opp_string[newSize];
-    size_t i;
-    for (i = 0; i < k; i++)
-        function2[i] = this->function[i];
-    for (i = k; i < newSize; i++)
-        function2[i] = this->function[i+1];
-    delete [] this->function;
-    this->function = function2;
-    function_arraysize = newSize;
-}
-
-size_t SegmentRoutingHeader::getArgsArraySize() const
-{
-    return args_arraysize;
-}
-
-const char * SegmentRoutingHeader::getArgs(size_t k) const
-{
-    if (k >= args_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)args_arraysize, (unsigned long)k);
-    return this->args[k].c_str();
-}
-
-void SegmentRoutingHeader::setArgsArraySize(size_t newSize)
-{
-    omnetpp::opp_string *args2 = (newSize==0) ? nullptr : new omnetpp::opp_string[newSize];
-    size_t minSize = args_arraysize < newSize ? args_arraysize : newSize;
-    for (size_t i = 0; i < minSize; i++)
-        args2[i] = this->args[i];
-    delete [] this->args;
-    this->args = args2;
-    args_arraysize = newSize;
-}
-
-void SegmentRoutingHeader::setArgs(size_t k, const char * args)
-{
-    if (k >= args_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)args_arraysize, (unsigned long)k);
-    this->args[k] = args;
-}
-
-void SegmentRoutingHeader::insertArgs(size_t k, const char * args)
-{
-    if (k > args_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)args_arraysize, (unsigned long)k);
-    size_t newSize = args_arraysize + 1;
-    omnetpp::opp_string *args2 = new omnetpp::opp_string[newSize];
-    size_t i;
-    for (i = 0; i < k; i++)
-        args2[i] = this->args[i];
-    args2[k] = args;
-    for (i = k + 1; i < newSize; i++)
-        args2[i] = this->args[i-1];
-    delete [] this->args;
-    this->args = args2;
-    args_arraysize = newSize;
-}
-
-void SegmentRoutingHeader::appendArgs(const char * args)
-{
-    insertArgs(args_arraysize, args);
-}
-
-void SegmentRoutingHeader::eraseArgs(size_t k)
-{
-    if (k >= args_arraysize) throw omnetpp::cRuntimeError("Array of size %lu indexed by %lu", (unsigned long)args_arraysize, (unsigned long)k);
-    size_t newSize = args_arraysize - 1;
-    omnetpp::opp_string *args2 = (newSize == 0) ? nullptr : new omnetpp::opp_string[newSize];
-    size_t i;
-    for (i = 0; i < k; i++)
-        args2[i] = this->args[i];
-    for (i = k; i < newSize; i++)
-        args2[i] = this->args[i+1];
-    delete [] this->args;
-    this->args = args2;
-    args_arraysize = newSize;
-}
-
 class SegmentRoutingHeaderDescriptor : public omnetpp::cClassDescriptor
 {
   private:
@@ -1961,8 +1723,8 @@ class SegmentRoutingHeaderDescriptor : public omnetpp::cClassDescriptor
         FIELD_lastEntry,
         FIELD_srhFlags,
         FIELD_srhTag,
-        FIELD_SID,
-        FIELD_function,
+        FIELD_segments,
+        FIELD_funs,
         FIELD_args,
     };
   public:
@@ -2048,8 +1810,8 @@ unsigned int SegmentRoutingHeaderDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_lastEntry
         FD_ISEDITABLE,    // FIELD_srhFlags
         FD_ISEDITABLE,    // FIELD_srhTag
-        FD_ISARRAY | FD_ISEDITABLE | FD_ISRESIZABLE,    // FIELD_SID
-        FD_ISARRAY | FD_ISEDITABLE | FD_ISRESIZABLE,    // FIELD_function
+        FD_ISARRAY | FD_ISEDITABLE | FD_ISRESIZABLE,    // FIELD_segments
+        FD_ISARRAY | FD_ISEDITABLE | FD_ISRESIZABLE,    // FIELD_funs
         FD_ISARRAY | FD_ISEDITABLE | FD_ISRESIZABLE,    // FIELD_args
     };
     return (field >= 0 && field < 9) ? fieldTypeFlags[field] : 0;
@@ -2070,8 +1832,8 @@ const char *SegmentRoutingHeaderDescriptor::getFieldName(int field) const
         "lastEntry",
         "srhFlags",
         "srhTag",
-        "SID",
-        "function",
+        "segments",
+        "funs",
         "args",
     };
     return (field >= 0 && field < 9) ? fieldNames[field] : nullptr;
@@ -2087,8 +1849,8 @@ int SegmentRoutingHeaderDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "lastEntry") == 0) return baseIndex + 3;
     if (strcmp(fieldName, "srhFlags") == 0) return baseIndex + 4;
     if (strcmp(fieldName, "srhTag") == 0) return baseIndex + 5;
-    if (strcmp(fieldName, "SID") == 0) return baseIndex + 6;
-    if (strcmp(fieldName, "function") == 0) return baseIndex + 7;
+    if (strcmp(fieldName, "segments") == 0) return baseIndex + 6;
+    if (strcmp(fieldName, "funs") == 0) return baseIndex + 7;
     if (strcmp(fieldName, "args") == 0) return baseIndex + 8;
     return base ? base->findField(fieldName) : -1;
 }
@@ -2108,8 +1870,8 @@ const char *SegmentRoutingHeaderDescriptor::getFieldTypeString(int field) const
         "uint8_t",    // FIELD_lastEntry
         "uint8_t",    // FIELD_srhFlags
         "uint16_t",    // FIELD_srhTag
-        "int64_t",    // FIELD_SID
-        "string",    // FIELD_function
+        "int64_t",    // FIELD_segments
+        "string",    // FIELD_funs
         "string",    // FIELD_args
     };
     return (field >= 0 && field < 9) ? fieldTypeStrings[field] : nullptr;
@@ -2124,6 +1886,18 @@ const char **SegmentRoutingHeaderDescriptor::getFieldPropertyNames(int field) co
         field -= base->getFieldCount();
     }
     switch (field) {
+        case FIELD_segments: {
+            static const char *names[] = { "custom", "sizeGetter", "sizeSetter",  nullptr };
+            return names;
+        }
+        case FIELD_funs: {
+            static const char *names[] = { "custom", "sizeGetter", "sizeSetter",  nullptr };
+            return names;
+        }
+        case FIELD_args: {
+            static const char *names[] = { "custom", "sizeGetter", "sizeSetter",  nullptr };
+            return names;
+        }
         default: return nullptr;
     }
 }
@@ -2137,6 +1911,21 @@ const char *SegmentRoutingHeaderDescriptor::getFieldProperty(int field, const ch
         field -= base->getFieldCount();
     }
     switch (field) {
+        case FIELD_segments:
+            if (!strcmp(propertyName, "custom")) return "";
+            if (!strcmp(propertyName, "sizeGetter")) return "";
+            if (!strcmp(propertyName, "sizeSetter")) return "";
+            return nullptr;
+        case FIELD_funs:
+            if (!strcmp(propertyName, "custom")) return "";
+            if (!strcmp(propertyName, "sizeGetter")) return "";
+            if (!strcmp(propertyName, "sizeSetter")) return "";
+            return nullptr;
+        case FIELD_args:
+            if (!strcmp(propertyName, "custom")) return "";
+            if (!strcmp(propertyName, "sizeGetter")) return "";
+            if (!strcmp(propertyName, "sizeSetter")) return "";
+            return nullptr;
         default: return nullptr;
     }
 }
@@ -2151,8 +1940,8 @@ int SegmentRoutingHeaderDescriptor::getFieldArraySize(omnetpp::any_ptr object, i
     }
     SegmentRoutingHeader *pp = omnetpp::fromAnyPtr<SegmentRoutingHeader>(object); (void)pp;
     switch (field) {
-        case FIELD_SID: return pp->getSIDArraySize();
-        case FIELD_function: return pp->getFunctionArraySize();
+        case FIELD_segments: return pp->getSegmentsArraySize();
+        case FIELD_funs: return pp->getFunsArraySize();
         case FIELD_args: return pp->getArgsArraySize();
         default: return 0;
     }
@@ -2170,8 +1959,8 @@ void SegmentRoutingHeaderDescriptor::setFieldArraySize(omnetpp::any_ptr object, 
     }
     SegmentRoutingHeader *pp = omnetpp::fromAnyPtr<SegmentRoutingHeader>(object); (void)pp;
     switch (field) {
-        case FIELD_SID: pp->setSIDArraySize(size); break;
-        case FIELD_function: pp->setFunctionArraySize(size); break;
+        case FIELD_segments: pp->setSegmentsArraySize(size); break;
+        case FIELD_funs: pp->setFunsArraySize(size); break;
         case FIELD_args: pp->setArgsArraySize(size); break;
         default: throw omnetpp::cRuntimeError("Cannot set array size of field %d of class 'SegmentRoutingHeader'", field);
     }
@@ -2207,8 +1996,8 @@ std::string SegmentRoutingHeaderDescriptor::getFieldValueAsString(omnetpp::any_p
         case FIELD_lastEntry: return ulong2string(pp->getLastEntry());
         case FIELD_srhFlags: return ulong2string(pp->getSrhFlags());
         case FIELD_srhTag: return ulong2string(pp->getSrhTag());
-        case FIELD_SID: return int642string(pp->getSID(i));
-        case FIELD_function: return oppstring2string(pp->getFunction(i));
+        case FIELD_segments: return int642string(pp->getSegments(i));
+        case FIELD_funs: return oppstring2string(pp->getFuns(i));
         case FIELD_args: return oppstring2string(pp->getArgs(i));
         default: return "";
     }
@@ -2232,8 +2021,8 @@ void SegmentRoutingHeaderDescriptor::setFieldValueAsString(omnetpp::any_ptr obje
         case FIELD_lastEntry: pp->setLastEntry(string2ulong(value)); break;
         case FIELD_srhFlags: pp->setSrhFlags(string2ulong(value)); break;
         case FIELD_srhTag: pp->setSrhTag(string2ulong(value)); break;
-        case FIELD_SID: pp->setSID(i,string2int64(value)); break;
-        case FIELD_function: pp->setFunction(i,(value)); break;
+        case FIELD_segments: pp->setSegments(i,string2int64(value)); break;
+        case FIELD_funs: pp->setFuns(i,(value)); break;
         case FIELD_args: pp->setArgs(i,(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'SegmentRoutingHeader'", field);
     }
@@ -2255,8 +2044,8 @@ omnetpp::cValue SegmentRoutingHeaderDescriptor::getFieldValue(omnetpp::any_ptr o
         case FIELD_lastEntry: return (omnetpp::intval_t)(pp->getLastEntry());
         case FIELD_srhFlags: return (omnetpp::intval_t)(pp->getSrhFlags());
         case FIELD_srhTag: return (omnetpp::intval_t)(pp->getSrhTag());
-        case FIELD_SID: return pp->getSID(i);
-        case FIELD_function: return pp->getFunction(i);
+        case FIELD_segments: return pp->getSegments(i);
+        case FIELD_funs: return pp->getFuns(i);
         case FIELD_args: return pp->getArgs(i);
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'SegmentRoutingHeader' as cValue -- field index out of range?", field);
     }
@@ -2280,8 +2069,8 @@ void SegmentRoutingHeaderDescriptor::setFieldValue(omnetpp::any_ptr object, int 
         case FIELD_lastEntry: pp->setLastEntry(omnetpp::checked_int_cast<uint8_t>(value.intValue())); break;
         case FIELD_srhFlags: pp->setSrhFlags(omnetpp::checked_int_cast<uint8_t>(value.intValue())); break;
         case FIELD_srhTag: pp->setSrhTag(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
-        case FIELD_SID: pp->setSID(i,omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
-        case FIELD_function: pp->setFunction(i,value.stringValue()); break;
+        case FIELD_segments: pp->setSegments(i,omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
+        case FIELD_funs: pp->setFuns(i,value.stringValue()); break;
         case FIELD_args: pp->setArgs(i,value.stringValue()); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'SegmentRoutingHeader'", field);
     }

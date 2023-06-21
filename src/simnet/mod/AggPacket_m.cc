@@ -150,6 +150,8 @@ void doParsimUnpacking(omnetpp::cCommBuffer *, T& t)
 
 }  // namespace omnetpp
 
+Register_Enum(AggPolicy, (AggPolicy::ATP, AggPolicy::MTATP, AggPolicy::SRAGG));
+
 Register_Class(AggPacket)
 
 AggPacket::AggPacket(const char *name) : ::Packet(name)
@@ -1606,6 +1608,404 @@ void MTATPPacketDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object, 
     MTATPPacket *pp = omnetpp::fromAnyPtr<MTATPPacket>(object); (void)pp;
     switch (field) {
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'MTATPPacket'", field);
+    }
+}
+
+Register_Class(SRAggPacket)
+
+SRAggPacket::SRAggPacket(const char *name) : ::AggPacket(name)
+{
+    this->setAggPolicy(SRAGG);
+
+}
+
+SRAggPacket::SRAggPacket(const SRAggPacket& other) : ::AggPacket(other)
+{
+    copy(other);
+}
+
+SRAggPacket::~SRAggPacket()
+{
+}
+
+SRAggPacket& SRAggPacket::operator=(const SRAggPacket& other)
+{
+    if (this == &other) return *this;
+    ::AggPacket::operator=(other);
+    copy(other);
+    return *this;
+}
+
+void SRAggPacket::copy(const SRAggPacket& other)
+{
+    this->timer = other.timer;
+    this->aggCounter = other.aggCounter;
+    this->treeCost = other.treeCost;
+}
+
+void SRAggPacket::parsimPack(omnetpp::cCommBuffer *b) const
+{
+    ::AggPacket::parsimPack(b);
+    doParsimPacking(b,this->timer);
+    doParsimPacking(b,this->aggCounter);
+    doParsimPacking(b,this->treeCost);
+}
+
+void SRAggPacket::parsimUnpack(omnetpp::cCommBuffer *b)
+{
+    ::AggPacket::parsimUnpack(b);
+    doParsimUnpacking(b,this->timer);
+    doParsimUnpacking(b,this->aggCounter);
+    doParsimUnpacking(b,this->treeCost);
+}
+
+int SRAggPacket::getTimer() const
+{
+    return this->timer;
+}
+
+void SRAggPacket::setTimer(int timer)
+{
+    this->timer = timer;
+}
+
+int SRAggPacket::getAggCounter() const
+{
+    return this->aggCounter;
+}
+
+void SRAggPacket::setAggCounter(int aggCounter)
+{
+    this->aggCounter = aggCounter;
+}
+
+int SRAggPacket::getTreeCost() const
+{
+    return this->treeCost;
+}
+
+void SRAggPacket::setTreeCost(int treeCost)
+{
+    this->treeCost = treeCost;
+}
+
+class SRAggPacketDescriptor : public omnetpp::cClassDescriptor
+{
+  private:
+    mutable const char **propertyNames;
+    enum FieldConstants {
+        FIELD_timer,
+        FIELD_aggCounter,
+        FIELD_treeCost,
+    };
+  public:
+    SRAggPacketDescriptor();
+    virtual ~SRAggPacketDescriptor();
+
+    virtual bool doesSupport(omnetpp::cObject *obj) const override;
+    virtual const char **getPropertyNames() const override;
+    virtual const char *getProperty(const char *propertyName) const override;
+    virtual int getFieldCount() const override;
+    virtual const char *getFieldName(int field) const override;
+    virtual int findField(const char *fieldName) const override;
+    virtual unsigned int getFieldTypeFlags(int field) const override;
+    virtual const char *getFieldTypeString(int field) const override;
+    virtual const char **getFieldPropertyNames(int field) const override;
+    virtual const char *getFieldProperty(int field, const char *propertyName) const override;
+    virtual int getFieldArraySize(omnetpp::any_ptr object, int field) const override;
+    virtual void setFieldArraySize(omnetpp::any_ptr object, int field, int size) const override;
+
+    virtual const char *getFieldDynamicTypeString(omnetpp::any_ptr object, int field, int i) const override;
+    virtual std::string getFieldValueAsString(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldValueAsString(omnetpp::any_ptr object, int field, int i, const char *value) const override;
+    virtual omnetpp::cValue getFieldValue(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldValue(omnetpp::any_ptr object, int field, int i, const omnetpp::cValue& value) const override;
+
+    virtual const char *getFieldStructName(int field) const override;
+    virtual omnetpp::any_ptr getFieldStructValuePointer(omnetpp::any_ptr object, int field, int i) const override;
+    virtual void setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const override;
+};
+
+Register_ClassDescriptor(SRAggPacketDescriptor)
+
+SRAggPacketDescriptor::SRAggPacketDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(SRAggPacket)), "AggPacket")
+{
+    propertyNames = nullptr;
+}
+
+SRAggPacketDescriptor::~SRAggPacketDescriptor()
+{
+    delete[] propertyNames;
+}
+
+bool SRAggPacketDescriptor::doesSupport(omnetpp::cObject *obj) const
+{
+    return dynamic_cast<SRAggPacket *>(obj)!=nullptr;
+}
+
+const char **SRAggPacketDescriptor::getPropertyNames() const
+{
+    if (!propertyNames) {
+        static const char *names[] = {  nullptr };
+        omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+        const char **baseNames = base ? base->getPropertyNames() : nullptr;
+        propertyNames = mergeLists(baseNames, names);
+    }
+    return propertyNames;
+}
+
+const char *SRAggPacketDescriptor::getProperty(const char *propertyName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    return base ? base->getProperty(propertyName) : nullptr;
+}
+
+int SRAggPacketDescriptor::getFieldCount() const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    return base ? 3+base->getFieldCount() : 3;
+}
+
+unsigned int SRAggPacketDescriptor::getFieldTypeFlags(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldTypeFlags(field);
+        field -= base->getFieldCount();
+    }
+    static unsigned int fieldTypeFlags[] = {
+        FD_ISEDITABLE,    // FIELD_timer
+        FD_ISEDITABLE,    // FIELD_aggCounter
+        FD_ISEDITABLE,    // FIELD_treeCost
+    };
+    return (field >= 0 && field < 3) ? fieldTypeFlags[field] : 0;
+}
+
+const char *SRAggPacketDescriptor::getFieldName(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldName(field);
+        field -= base->getFieldCount();
+    }
+    static const char *fieldNames[] = {
+        "timer",
+        "aggCounter",
+        "treeCost",
+    };
+    return (field >= 0 && field < 3) ? fieldNames[field] : nullptr;
+}
+
+int SRAggPacketDescriptor::findField(const char *fieldName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    int baseIndex = base ? base->getFieldCount() : 0;
+    if (strcmp(fieldName, "timer") == 0) return baseIndex + 0;
+    if (strcmp(fieldName, "aggCounter") == 0) return baseIndex + 1;
+    if (strcmp(fieldName, "treeCost") == 0) return baseIndex + 2;
+    return base ? base->findField(fieldName) : -1;
+}
+
+const char *SRAggPacketDescriptor::getFieldTypeString(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldTypeString(field);
+        field -= base->getFieldCount();
+    }
+    static const char *fieldTypeStrings[] = {
+        "int",    // FIELD_timer
+        "int",    // FIELD_aggCounter
+        "int",    // FIELD_treeCost
+    };
+    return (field >= 0 && field < 3) ? fieldTypeStrings[field] : nullptr;
+}
+
+const char **SRAggPacketDescriptor::getFieldPropertyNames(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldPropertyNames(field);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+const char *SRAggPacketDescriptor::getFieldProperty(int field, const char *propertyName) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldProperty(field, propertyName);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+int SRAggPacketDescriptor::getFieldArraySize(omnetpp::any_ptr object, int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldArraySize(object, field);
+        field -= base->getFieldCount();
+    }
+    SRAggPacket *pp = omnetpp::fromAnyPtr<SRAggPacket>(object); (void)pp;
+    switch (field) {
+        default: return 0;
+    }
+}
+
+void SRAggPacketDescriptor::setFieldArraySize(omnetpp::any_ptr object, int field, int size) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldArraySize(object, field, size);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    SRAggPacket *pp = omnetpp::fromAnyPtr<SRAggPacket>(object); (void)pp;
+    switch (field) {
+        default: throw omnetpp::cRuntimeError("Cannot set array size of field %d of class 'SRAggPacket'", field);
+    }
+}
+
+const char *SRAggPacketDescriptor::getFieldDynamicTypeString(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldDynamicTypeString(object,field,i);
+        field -= base->getFieldCount();
+    }
+    SRAggPacket *pp = omnetpp::fromAnyPtr<SRAggPacket>(object); (void)pp;
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+std::string SRAggPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldValueAsString(object,field,i);
+        field -= base->getFieldCount();
+    }
+    SRAggPacket *pp = omnetpp::fromAnyPtr<SRAggPacket>(object); (void)pp;
+    switch (field) {
+        case FIELD_timer: return long2string(pp->getTimer());
+        case FIELD_aggCounter: return long2string(pp->getAggCounter());
+        case FIELD_treeCost: return long2string(pp->getTreeCost());
+        default: return "";
+    }
+}
+
+void SRAggPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field, int i, const char *value) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldValueAsString(object, field, i, value);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    SRAggPacket *pp = omnetpp::fromAnyPtr<SRAggPacket>(object); (void)pp;
+    switch (field) {
+        case FIELD_timer: pp->setTimer(string2long(value)); break;
+        case FIELD_aggCounter: pp->setAggCounter(string2long(value)); break;
+        case FIELD_treeCost: pp->setTreeCost(string2long(value)); break;
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'SRAggPacket'", field);
+    }
+}
+
+omnetpp::cValue SRAggPacketDescriptor::getFieldValue(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldValue(object,field,i);
+        field -= base->getFieldCount();
+    }
+    SRAggPacket *pp = omnetpp::fromAnyPtr<SRAggPacket>(object); (void)pp;
+    switch (field) {
+        case FIELD_timer: return pp->getTimer();
+        case FIELD_aggCounter: return pp->getAggCounter();
+        case FIELD_treeCost: return pp->getTreeCost();
+        default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'SRAggPacket' as cValue -- field index out of range?", field);
+    }
+}
+
+void SRAggPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, const omnetpp::cValue& value) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldValue(object, field, i, value);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    SRAggPacket *pp = omnetpp::fromAnyPtr<SRAggPacket>(object); (void)pp;
+    switch (field) {
+        case FIELD_timer: pp->setTimer(omnetpp::checked_int_cast<int>(value.intValue())); break;
+        case FIELD_aggCounter: pp->setAggCounter(omnetpp::checked_int_cast<int>(value.intValue())); break;
+        case FIELD_treeCost: pp->setTreeCost(omnetpp::checked_int_cast<int>(value.intValue())); break;
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'SRAggPacket'", field);
+    }
+}
+
+const char *SRAggPacketDescriptor::getFieldStructName(int field) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldStructName(field);
+        field -= base->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    };
+}
+
+omnetpp::any_ptr SRAggPacketDescriptor::getFieldStructValuePointer(omnetpp::any_ptr object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount())
+            return base->getFieldStructValuePointer(object, field, i);
+        field -= base->getFieldCount();
+    }
+    SRAggPacket *pp = omnetpp::fromAnyPtr<SRAggPacket>(object); (void)pp;
+    switch (field) {
+        default: return omnetpp::any_ptr(nullptr);
+    }
+}
+
+void SRAggPacketDescriptor::setFieldStructValuePointer(omnetpp::any_ptr object, int field, int i, omnetpp::any_ptr ptr) const
+{
+    omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
+    if (base) {
+        if (field < base->getFieldCount()){
+            base->setFieldStructValuePointer(object, field, i, ptr);
+            return;
+        }
+        field -= base->getFieldCount();
+    }
+    SRAggPacket *pp = omnetpp::fromAnyPtr<SRAggPacket>(object); (void)pp;
+    switch (field) {
+        default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'SRAggPacket'", field);
     }
 }
 

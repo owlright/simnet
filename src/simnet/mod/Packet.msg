@@ -1,5 +1,6 @@
 cplusplus {{
 #include <vector>
+using omnetpp::opp_string;
 }}
 
 enum PacketType
@@ -10,12 +11,6 @@ enum PacketType
     REMIND   = 3;
     NOUSE    = 4;
 };
-
-enum AggPolicy
-{
-    ATP = 0;
-    MTATP = 1;
-}
 
 packet EthernetMacHeader
 {
@@ -68,9 +63,9 @@ class SegmentRoutingHeader extends IPv6Header
     uint8_t srhFlags; // 1B
     uint16_t srhTag; // 2B
     // below three are together segmentList each 16B
-    int64_t SID[];
-    string function[];
-    string args[];
+    int64_t segments[] @custom @sizeGetter @sizeSetter;
+    string funs[] @custom @sizeGetter @sizeSetter; // tell the node what to do
+    string args[] @custom @sizeGetter @sizeSetter; // args of functions
 }
 
 class Packet extends SegmentRoutingHeader
@@ -90,4 +85,44 @@ class Packet extends SegmentRoutingHeader
     double queueTime;
     bool isFlowFinished;
 }
+
+cplusplus(SegmentRoutingHeader) {{
+	protected:
+		std::vector<int64_t> segments; // intermediate node address
+		std::vector<opp_string> funs;
+		std::vector<opp_string> args;
+	public:
+		// expected methods:
+		virtual void setSegmentsArraySize(size_t size) {segments.resize(size);}
+		virtual void setFunsArraySize(size_t size) {funs.resize(size);}
+		virtual void setArgsArraySize(size_t size) {args.resize(size);}
+		
+		virtual size_t getSegmentsArraySize() const {return segments.size();}
+		virtual size_t getFunsArraySize() const {return funs.size();}
+		virtual size_t getArgsArraySize() const {return args.size();}
+		
+		virtual int64_t getSegments(size_t k) {return segments.at(k);}
+		virtual const opp_string& getFuns(size_t k) {return funs.at(k);}
+		virtual const opp_string& getArgs(size_t k) {return args.at(k);}
+		
+		virtual void setSegments(size_t k, int64_t addr) {segments.at(k) = addr;}
+		virtual void setFuns(size_t k, const char* fun) {funs.at(k) = fun;}
+		virtual void setArgs(size_t k, const char* arg) {args.at(k) = arg;}
+		
+		// new methods:
+		virtual void setSIDSize(size_t size) {
+		    setSegmentsArraySize(size);
+		    setFunsArraySize(size);
+		    setArgsArraySize(size);
+		}
+		virtual void popSegment() {segments.pop_back();}
+		virtual void popFun() {funs.pop_back();}
+		virtual void popArg() {args.pop_back();}
+}}
+
+cplusplus(SegmentRoutingHeader::copy) {{
+    segments = other.segments;
+    funs = other.funs;
+   	args = other.args;
+}}
 
