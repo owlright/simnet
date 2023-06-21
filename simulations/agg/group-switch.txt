@@ -1,4 +1,4 @@
-# Don't use spacei in every column
+# Don't use space in every column
 # how to allocate packet seqs to each tree is globalGroupManager or sender's job
 # worker    bitmap0     switch0   fanIndegree0   bitmap1    switch1     fanIndegree1
   1000         1          4002         2            1         3003         4

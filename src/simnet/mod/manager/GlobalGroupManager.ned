@@ -3,8 +3,8 @@ package simnet.mod.manager;
 simple GlobalGroupManager
 {
     parameters:
-        string groupSwitchFile;
-        string groupHostFile;
+        string groupSwitchFile = default("");
+        string groupHostFile = default("");
         string groupPolicy = default("");
         @class(GlobalGroupManager);
         @display("i=block/cogwheel");
