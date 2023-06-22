@@ -123,24 +123,32 @@ void Routing::forwardIncoming(Packet *pk)
     auto srcAddr = pk->getSrcAddr();
     auto seq = pk->getSeqNumber();
     auto destSeqKey = std::make_pair(destAddr, seq);
-    if (pk->getPacketType() == AGG)
-    {
-        auto apk = check_and_cast<AggPacket*>(pk);
-        auto jobId = apk->getJobId();
-        if (!apk->isAck())
-        {
-            // ! TODO even router is not responsible for this group, it still records which is not necessary
+
+    auto entryIndex = pk->getLastEntry();
+    // ! entryIndex is unsigned, do not check it == -1
+    auto segment = pk->getSegmentsArraySize() > 0 ? pk->getSegments(entryIndex) : -1;
+    if (segment == myAddress) {
+        auto& fun = pk->getFuns(entryIndex);
+        if (fun == "aggregation") {
+            auto apk = check_and_cast<AggPacket*>(pk);
+            auto jobId = apk->getJobId();
             recordIncomingPorts(destSeqKey, pk->getArrivalGate()->getIndex());
             if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
                 // the first time we see this group
                 groupMetricTable[jobId] = new jobMetric(this, jobId);
                 groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
             }
+
             pk = aggregate(apk);
             if (pk == nullptr) {// ! Aggregation is not finished;
                 return;
             } else { // TODO: do we release resource at aggpacket leave or ACK arrive?
                 ASSERT(pk == apk);
+                // ! pop the segments
+                apk->popSegment();
+                apk->popFun();
+                apk->popArg();
+                apk->setLastEntry(apk->getLastEntry() - 1);
                 auto agtrIndex = apk->getAggregatorIndex();
                 auto job = apk->getJobId();
                 auto seq = apk->getSeqNumber();
