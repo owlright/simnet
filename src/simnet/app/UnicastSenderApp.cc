@@ -167,8 +167,10 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     // std::vector<SeqNumber> removed;
     auto disorderSeqs = cong->getDisorders();
 
+    // resend the countdown packets
     for (auto& it : disorderSeqs) {
         if (it.second == 0) {
+            disorders.insert(it.first);
             // count down, must resend this seq
             EV_WARN << "resend seq " << it.first << endl;
             auto packet = createDataPacket(it.first, messageLength); // ! TODO what if it's the last packet?
@@ -177,14 +179,17 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
             retransmitBytes += messageLength; // affect inflightBytes
             // count down, reset counter
             // it.second = 3; // ! do not change anything owned by cong
-        } else {
-            // ! the resend packets received more than once ACK
-            if (confirmedDisorders.find(seq) != confirmedDisorders.end())
-                confirmedBytes -= pk->getReceivedBytes(); // ! which is plus above
-            else if (seq == it.first) {
-                confirmedDisorders.insert(it.first);
-            }
         }
+    }
+    // check if resend packet is receieved
+    if (disorders.find(seq) != disorders.end()) { // first time we receive the ack
+        confirmedRetransBytes += messageLength; // ! TODO what if it's the last packet?
+        confirmedDisorders.insert(seq);
+    }
+    else if (confirmedDisorders.find(seq) != confirmedDisorders.end()) {
+        // the resend packets's ack received more than once
+        // ! which is plus above
+        confirmedBytes -= pk->getReceivedBytes();
     }
     auto pkRTT = simTime() - SimTime(pk->getStartTime());
     emit(rttSignal, pkRTT);

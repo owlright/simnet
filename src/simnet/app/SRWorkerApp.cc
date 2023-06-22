@@ -101,7 +101,7 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     auto hseq = reinterpret_cast<uint16_t&>(seqNumber);
     auto hjobid = reinterpret_cast<uint16_t&>(jobID);
     auto agtrIndex = hashAggrIndex(hjobid, hseq);
-    EV_DEBUG << "aggregator index: " << agtrIndex << endl;
+//    EV_DEBUG << "aggregator index: " << agtrIndex << endl;
     pk->setAggregatorIndex(agtrIndex);
     pk->setWorkerNumber(groupInfo->hostinfo->numWorkers);
 
