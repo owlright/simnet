@@ -165,18 +165,16 @@ void Routing::forwardIncoming(Packet *pk)
                 }
             }
         }
-        else
-        {
-            auto srcSeqKey = std::make_pair(srcAddr, seq);
-            // ! if group does not deal with this group, then its group table is empty
-            // ! but it still need to send ACK reversely back to incoming ports
-            auto outGateIndexes = getReversePortIndexes(srcSeqKey);
-            incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
-            // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
-            broadcast(pk, outGateIndexes);
-            return;
-        }
-
+    }
+    if (isGroupAddr(destAddr)) { // TODO very strange, groupAddr is totally useless here
+        auto srcSeqKey = std::make_pair(srcAddr, seq);
+        // ! if group does not deal with this group, then its group table is empty
+        // ! but it still need to send ACK reversely back to incoming ports
+        auto outGateIndexes = getReversePortIndexes(srcSeqKey);
+        incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
+        // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
+        broadcast(pk, outGateIndexes);
+        return;
     }
 
     // route this packet which may be:
@@ -214,19 +212,27 @@ Packet* Routing::aggregate(AggPacket *apk)
             case MTATP:
                 aggregators[agtrIndex] = new MTATPEntry();
                 break;
+            case SRAGG:
+                if (!apk->getResend())
+                    aggregators[agtrIndex] = new Aggregator();
+                else  // ! a resend packet mustn't get an idle aggregator
+                    return apk;
+                break;
             default:
                 throw cRuntimeError("unknown agg policy");
         }
     }
     auto entry = aggregators.at(agtrIndex);
-    if (entry->checkAdmission(apk)) // ! collision bit will be set here
+    if (entry->checkAdmission(apk))
     {
         return entry->doAggregation(apk);
     }
-    if (apk->getCollision()) {
+    else {
+        // this means collision happened;
+        // set these fields before forwarding
+        apk->setCollision(true);
+        apk->setResend(true); // TODO I don't know why ATP set this, maybe prevent switch 1 do aggregation, but why not just check collision?
         return apk;
-    } else {
-        return nullptr;
     }
 }
 
