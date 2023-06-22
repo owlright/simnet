@@ -15,8 +15,15 @@ UnicastSenderApp::~UnicastSenderApp() {
 
 void UnicastSenderApp::finish() {
     EV << "retransmit bytes: " << retransmitBytes << endl;
-    if (currentRound != numRounds)
-        EV_WARN << currentRound + 1 << " round not reach " << numRounds << endl;
+    if (currentRound != numRounds) {
+        EV_WARN << "Complete " << currentRound << " rounds,  not reach " << numRounds << endl;
+    }
+    for (auto&it: cong->getDisorders()) {
+        EV_WARN << it.first << " " << it.second << endl;
+    }
+    for (auto&it: confirmedDisorders) {
+        EV_WARN << it << " "<< endl;
+    }
 }
 
 void UnicastSenderApp::initialize(int stage)
@@ -152,15 +159,15 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 {
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::ACK);
+    auto seq = pk->getSeqNumber();
     confirmedBytes += pk->getReceivedBytes();
     cong->onRecvAck(pk->getSeqNumber(), pk->getReceivedBytes(), pk->getECE()); // let cong algo update state
 
     // ! check if disordered packets are received
     // std::vector<SeqNumber> removed;
     auto disorderSeqs = cong->getDisorders();
-    auto seq = pk->getSeqNumber();
-    for (auto& it : disorderSeqs) {
 
+    for (auto& it : disorderSeqs) {
         if (it.second == 0) {
             // count down, must resend this seq
             EV_WARN << "resend seq " << it.first << endl;
