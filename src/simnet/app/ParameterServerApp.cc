@@ -16,6 +16,7 @@ protected:
 protected:
     std::unordered_map<SeqNumber, std::unordered_set<IntAddress> > aggedWorkers;
     std::unordered_map<SeqNumber, int> receivedNumber; // received packets number
+    std::unordered_map<SeqNumber, bool> aggedEcns;
     static simsignal_t aggRatioSignal;
 
 private:
@@ -75,7 +76,7 @@ void ParameterServerApp::onNewConnectionArrived(IdNumber connId, const Packet* c
 
 void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
-    auto pk = check_and_cast<ATPPacket*>(msg);
+    auto pk = check_and_cast<AggPacket*>(msg);
     ASSERT(pk->getPacketType() == AGG);
     ASSERT(pk->getJobId() == connection->getConnectionId());
     auto seq = pk->getSeqNumber();
@@ -83,7 +84,10 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
     {
         aggedWorkers[seq] = std::unordered_set<IntAddress>();
         receivedNumber[seq] = 0;
+        aggedEcns[seq] = false;
     }
+    aggedEcns.at(seq) |= pk->getECN() | pk->getEcn();
+
     EV_DEBUG << pk->getRecord() << endl;
     auto& tmpWorkersRecord = aggedWorkers.at(seq);
     if (pk->getCollision())
@@ -98,7 +102,6 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
         else {
             receivedNumber[seq] += 1;
         }
-
         tmpWorkersRecord.insert(w);
     }
     EV_DEBUG << "Seq " << seq << " aggregated " << receivedNumber[seq] << " packets." << endl;
@@ -110,6 +113,7 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
         emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedNumber) );
         aggedWorkers.erase(seq);
         receivedNumber.erase(seq);
+        aggedEcns.erase(seq);
         EV_DEBUG << "Seq " << seq << " finished." << endl;
     }
     delete pk;
@@ -118,8 +122,8 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
 Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
 {
     char pkname[40];
-    sprintf(pkname, "MuACK-%lld-to-%lld-seq%lld",
-            localAddr, pk->getDestAddr(), pk->getSeqNumber());
+    sprintf(pkname, "MuACK-%lld-seq%lld",
+            localAddr, pk->getSeqNumber());
     auto packet = new AggPacket(pkname);
     packet->setSeqNumber(pk->getSeqNumber());
     packet->setKind(PacketType::ACK);
@@ -128,7 +132,7 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
     packet->setStartTime(pk->getStartTime());
     packet->setQueueTime(pk->getQueueTime());
     packet->setTransmitTime(pk->getTransmitTime());
-    if (pk->getECN()) {
+    if (aggedEcns.at(pk->getSeqNumber())) {
         packet->setECE(true);
     }
     packet->setIsFlowFinished(pk->isFlowFinished());
