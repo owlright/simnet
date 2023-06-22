@@ -55,7 +55,7 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
             it.second--;
        } else {
            // this retramsmitted seq is acked successfully, remove it
-           removed.push_back(it.second);
+           removed.push_back(seq);
        }
     }
     for (auto& r:removed) {
