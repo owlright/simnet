@@ -180,8 +180,8 @@ void Routing::forwardIncoming(Packet *pk)
     // route this packet which may be:
     // 1. unicast packet
     // 2. finished aggregated packet
-    // 2. group packet not responsible for
-    // 3. group packet failed to be aggregated
+    // 3. group packet not responsible for
+    // 4. group packet failed to be aggregated(hash collision, resend)
     int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
     if (outGateIndex == -1) { // ! TODO if not found, routeManager will throw an error, the code is useless
         EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
