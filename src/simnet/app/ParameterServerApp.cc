@@ -86,7 +86,7 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
         receivedNumber[seq] = 0;
         aggedEcns[seq] = false;
     }
-    aggedEcns.at(seq) |= pk->getECN() | pk->getEcn();
+    aggedEcns.at(seq) |= (pk->getECN() || pk->getEcn());
 
     EV_DEBUG << pk->getRecord() << endl;
     auto& tmpWorkersRecord = aggedWorkers.at(seq);

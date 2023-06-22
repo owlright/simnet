@@ -60,6 +60,7 @@ Packet *Aggregator::doAggregation(Packet *pk)
     if (counter == indegree) {
         EV_DEBUG << workerRecord << endl;
         apk->setRecord(workerRecord);
+        apk->setEcn(ecn);
         ASSERT(workerRecord.empty());
         return apk;
     } else {
