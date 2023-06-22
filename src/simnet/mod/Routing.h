@@ -9,6 +9,7 @@
 #include "simnet/mod/manager/GlobalGroupManager.h"
 #include "simnet/mod/agroup/jobMetric.h"
 #include "simnet/mod/agroup/AggregatorEntry.h"
+#include "simnet/mod/agroup/Aggregator.h"
 using namespace omnetpp;
 
 /**
@@ -54,7 +55,7 @@ private:
     std::unordered_set<AddrSeqType, hashFunction> markNotAgg;
     std::unordered_map<AddrSeqType, std::vector<int>, hashFunction> incomingPortIndexes;
     std::unordered_map<IntAddress, jobMetric*> groupMetricTable;
-    std::vector<AggregatorEntry*> aggregators;
+    std::vector<Aggregator*> aggregators;
     std::unordered_map<AddrSeqType, int64_t, hashFunction> seqDeadline;
 
 private:

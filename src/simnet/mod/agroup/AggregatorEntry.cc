@@ -2,63 +2,13 @@
 #include <bitset>
 #include <algorithm>
 
-void AggregatorEntry::reset()
-{
-    counter = 0;
-    jobId = 0;
-    seqNumber = 0;
-    timestamp = 0;
-    ecn = false;
-    isIdle = true;
-}
-
-void AggregatorEntry::checkThenAddWorkerId(const Packet *pk)
-{
-    auto pkt = check_and_cast<const AggPacket*>(pk);
-    for (auto& w:pkt->getRecord()) {
-        if (std::find(workerRecord.begin(), workerRecord.end(), w) != workerRecord.end()) {
-            throw cRuntimeError("worker %lld is already aggregated.", w);
-        }
-        workerRecord.push_back(w);
-    }
-}
-
-Packet *AggregatorEntry::doAggregation(Packet *pk)
-{
-    EV_WARN << "AggregatorEntry::doAggregation(Packet *pk): " <<
-                "Make sure you are not meant to use this method directly" << endl;
-    return pk;
-}
-
-AggregatorEntry::~AggregatorEntry()
-{
-    reset();
-}
-
-bool AggregatorEntry::checkAdmission(Packet *pk) const
-{
-    auto tmp = check_and_cast<AggPacket*>(pk);
-    if (isIdle) {
-        return true;
-    } else {
-        if (tmp->getJobId() == jobId && tmp->getSeqNumber() == seqNumber)
-            return true;
-        else {
-            // this means collision
-            // set these fields before forwarding
-            tmp->setCollision(true);
-            tmp->setResend(true); // TODO I don't know why ATP set this, maybe prevent switch 1 do aggregation
-        }
-    }
-    return false;
-}
-
 ATPEntry::ATPEntry(const Packet* pk) {
     auto pkt = check_and_cast<const ATPPacket*>(pk);
     reset();
     jobId = pkt->getJobId();
     seqNumber = pkt->getSeqNumber();
 }
+
 Packet *ATPEntry::doAggregation(Packet *pk)
 {
     auto pkt = check_and_cast<ATPPacket*>(pk); // ! using pkt in the below code
@@ -134,7 +84,7 @@ Packet *ATPEntry::doAggregation(Packet *pk)
 
 void ATPEntry::reset()
 {
-    AggregatorEntry::reset();
+    Aggregator::reset();
     bitmap = 0;
     temp.bitmap = 0;
     temp.fanIndegree = 0;
