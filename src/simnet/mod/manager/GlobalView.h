@@ -17,8 +17,11 @@ protected:
 protected:
     static cTopology *topo;
     static std::vector<int> hostNodes;
+    // TODO rename the below two items
     static std::unordered_map<int, IntAddress> node2addr;
     static std::unordered_map<IntAddress, int> addr2node;
+    
+    static std::unordered_map<IntAddress, cModule*> addr2mod;
 
 private:
     void collectNodes(cTopology* topo);

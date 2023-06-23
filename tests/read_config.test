@@ -1,0 +1,29 @@
+%description:
+read config settings
+%includes:
+#include "simnet/mod/manager/GlobalGroupManager.h"
+
+%file: test.ned
+import simnet.mod.manager.GlobalGroupManager;
+network Test
+{
+    submodules:
+        groupManager: GlobalGroupManager;
+}
+
+%file: package.ned
+@namespace();
+
+
+%inifile: omnetpp.ini
+network = Test
+ned-path = .;../../../src
+*.groupManager.groupPolicy = "manual"
+*.groupManager.groupSwitchFile = "../../../simulations/agg/group-switch.txt"
+*.groupManager.groupHostFile = "../../../simulations/agg/group-host.txt"
+
+%contains: stdout
+jobId: 1 groupAddress: 10000 PSAddress: 4
+
+%contains: stdout
+0 1 2 3

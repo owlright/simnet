@@ -1,6 +1,7 @@
 #pragma once
 #include <omnetpp.h>
 #include "simnet/common/Defs.h"
+#include <unordered_map>
 using namespace omnetpp;
 
 
@@ -22,7 +23,8 @@ public:
     // virtual void onRecvData(SeqNumber seq, B pkSize) = 0;
     void setSegmentSize(B segmentSize) {this->segmentSize=segmentSize;};
     virtual void reset() = 0;
-
+    const std::unordered_map<SeqNumber, int>& getDisorders() const {return disorderSeqs;}
+    
 protected:
     virtual void initialize(int stage) override{};
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
@@ -30,4 +32,5 @@ protected:
 
 protected:
     B segmentSize{1500};
+    std::unordered_map<SeqNumber, int> disorderSeqs;
 };

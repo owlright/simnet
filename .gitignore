@@ -13,3 +13,5 @@ results/
 *.so
 .DS_Store
 *.pyc
+
+tests/work/**

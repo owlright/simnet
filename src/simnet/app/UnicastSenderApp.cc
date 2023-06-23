@@ -7,10 +7,23 @@ simsignal_t UnicastSenderApp::fctSignal = registerSignal("fct");
 simsignal_t UnicastSenderApp::idealFctSignal = registerSignal("idealFct");
 simsignal_t UnicastSenderApp::flowSizeSignal = registerSignal("flowSize");
 simsignal_t UnicastSenderApp::rttSignal = registerSignal("rtt");
-
+simsignal_t UnicastSenderApp::inflightBytesSignal = registerSignal("inflightBytes");
 UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(flowStartTimer);
     cancelAndDelete(jitterTimeout);
+}
+
+void UnicastSenderApp::finish() {
+    EV << "retransmit bytes: " << retransmitBytes << endl;
+    if (currentRound != numRounds) {
+        EV_WARN << "Complete " << currentRound << " rounds,  not reach " << numRounds << endl;
+    }
+    for (auto&it: cong->getDisorders()) {
+        EV_WARN << it.first << " " << it.second << endl;
+    }
+//    for (auto&it: confirmedDisorders) {
+//        EV_WARN << it << " "<< endl;
+//    }
 }
 
 void UnicastSenderApp::initialize(int stage)
@@ -74,12 +87,13 @@ void UnicastSenderApp::initialize(int stage)
             flowStartTimer = new cMessage("flowStart");
             jitterTimeout = new cMessage("jitterTimeout");
             scheduleAfter(currentFlowInterval, flowStartTimer);
-            EV << "destAddr: " << destAddr << " destPort: " << destPort << endl;
+            if (isUnicastSender)
+                EV_DEBUG << "destAddr: " << destAddr << " destPort: " << destPort << endl;
         }
         else {
-            EV_WARN << "address " << localAddr << "'s app has no destAddress" << endl;
+            if (isUnicastSender)
+                EV_WARN << "address " << localAddr << "'s app has no destAddress" << endl;
         }
-
     }
 }
 
@@ -105,7 +119,7 @@ void UnicastSenderApp::sendPendingData()
             packetSize = currentFlowSize - sentBytes; // ! incase the data about to send is too small, such as the last packet or flowSize is too small
         }
         sentBytes += packetSize;
-        auto packet = createDataPacket(packetSize);
+        auto packet = createDataPacket(sentBytes, packetSize);
         connection->send(packet);
         cong->onSendData(packetSize);
     }
@@ -114,9 +128,11 @@ void UnicastSenderApp::sendPendingData()
 
 void UnicastSenderApp::onFlowStart()
 {
+    currentRound += 1;
     sentBytes = 0;
     confirmedBytes = 0;
     currentBaseRTT = 0;
+    confirmedDisorders.clear();
     flowStartTime = simTime();
     EV_INFO << "Current round seq: " << currentRound << endl;
     if (loadMode) //flowSize will change only in loadMode
@@ -128,7 +144,6 @@ void UnicastSenderApp::onFlowStart()
 
 void UnicastSenderApp::onFlowStop()
 {
-    currentRound += 1;
     emit(fctSignal, (simTime() - flowStartTime));
     emit(idealFctSignal, currentBaseRTT + SimTime((currentFlowSize*8) / bandwidth));
     if (currentRound < numRounds) {// note it's '<' here
@@ -144,15 +159,48 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 {
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::ACK);
+    auto seq = pk->getSeqNumber();
     confirmedBytes += pk->getReceivedBytes();
     cong->onRecvAck(pk->getSeqNumber(), pk->getReceivedBytes(), pk->getECE()); // let cong algo update state
 
+    // ! check if disordered packets are received
+    // std::vector<SeqNumber> removed;
+    auto disorderSeqs = cong->getDisorders();
+
+    // resend the countdown packets
+    for (auto& it : disorderSeqs) {
+        if (it.second == 0) {
+            disorders.insert(it.first);
+            // count down, must resend this seq
+            EV_WARN << "resend seq " << it.first << endl;
+            auto packet = createDataPacket(it.first, messageLength); // ! TODO what if it's the last packet?
+            connection->send(packet);
+//            cong->onSendData(messageLength);
+            retransmitBytes += messageLength; // affect inflightBytes
+            // count down, reset counter
+            // it.second = 3; // ! do not change anything owned by cong
+        }
+    }
+    // check if resend packet is receieved
+    if (disorders.find(seq) != disorders.end()) { // first time we receive the ack
+        confirmedRetransBytes += messageLength; // ! TODO what if it's the last packet?
+        confirmedDisorders.insert(seq);
+    }
+    else if (confirmedDisorders.find(seq) != confirmedDisorders.end()) {
+        // the resend packets's ack received more than once
+        // ! which is plus above
+        confirmedBytes -= pk->getReceivedBytes();
+    }
     auto pkRTT = simTime() - SimTime(pk->getStartTime());
     emit(rttSignal, pkRTT);
     currentBaseRTT = pkRTT - pk->getQueueTime() - pk->getTransmitTime();
     if (sentBytes < currentFlowSize) {
         if (!jitterTimeout->isScheduled()) // ! in case multiple acks arrived at the same time
-            scheduleAfter(jitterBeforeSending->doubleValueInUnit("s"), jitterTimeout);
+        {
+            auto jitter = jitterBeforeSending->doubleValueInUnit("s");
+            scheduleAfter(jitter, jitterTimeout);
+        }
+
     } else {
         //TODO if all packets sended
 
@@ -165,18 +213,20 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     delete pk;
 }
 
-Packet* UnicastSenderApp::createDataPacket(B packetBytes)
+Packet* UnicastSenderApp::createDataPacket(SeqNumber seq, B packetBytes)
 {
     char pkname[40];
     sprintf(pkname, "conn%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            connection->getConnectionId(), localAddr, destAddr, sentBytes);
+            connection->getConnectionId(), localAddr, destAddr, seq);
     auto pk = new Packet(pkname);
     pk->setKind(DATA);
-    pk->setSeqNumber(sentBytes);
+    pk->setSeqNumber(seq);
     pk->setByteLength(packetBytes);
     pk->setECN(false);
     pk->setStartTime(simTime().dbl());
     pk->setTransmitTime(0);
     pk->setQueueTime(0);
+    if (sentBytes == currentFlowSize)
+        pk->setIsFlowFinished(true);
     return pk;
 }

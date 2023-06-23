@@ -32,17 +32,21 @@ OBJS = \
     $O/distribution/CdfDistribution.o \
     $O/distribution/NedFunctions.o \
     $O/simnet/app/ParameterServerApp.o \
+    $O/simnet/app/SRWorkerApp.o \
     $O/simnet/app/UnicastApp.o \
     $O/simnet/app/UnicastEchoApp.o \
     $O/simnet/app/UnicastSenderApp.o \
     $O/simnet/app/WorkerApp.o \
     $O/simnet/common/AddressResolver.o \
+    $O/simnet/common/HashTable.o \
     $O/simnet/common/NedFunctions.o \
     $O/simnet/common/ResultFilters.o \
     $O/simnet/mod/Connection.o \
     $O/simnet/mod/L2Queue.o \
     $O/simnet/mod/Routing.o \
-    $O/simnet/mod/agroup/AggGroupEntry.o \
+    $O/simnet/mod/agroup/Aggregator.o \
+    $O/simnet/mod/agroup/AggregatorEntry.o \
+    $O/simnet/mod/agroup/joobMetric.o \
     $O/simnet/mod/cong/Dctcp.o \
     $O/simnet/mod/cong/Reno.o \
     $O/simnet/mod/contract/MessageDispatcher.o \
@@ -50,10 +54,12 @@ OBJS = \
     $O/simnet/mod/manager/GlobalRouteManager.o \
     $O/simnet/mod/manager/GLobalView.o \
     $O/simnet/mod/manager/TrafficPatternManager.o \
+    $O/simnet/mod/AggPacket_m.o \
     $O/simnet/mod/Packet_m.o
 
 # Message files
 MSGFILES = \
+    simnet/mod/AggPacket.msg \
     simnet/mod/Packet.msg
 
 # SM files

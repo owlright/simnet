@@ -2,21 +2,62 @@
 
 #include <omnetpp.h>
 #include <tuple>
+#include <memory>
 #include "GlobalView.h"
 using namespace omnetpp;
+
+struct GroupHostInfo
+{
+    uint16_t jobId;
+    std::vector<int> PSes;
+    std::vector<int> workers;
+    int numWorkers;
+    int numPSes;
+    IntAddress multicastAddress;
+};
+
+struct GroupSwitchInfo
+{
+    // for manually set
+    IntAddress switch0{-1};
+    IntAddress switch1{-1};
+    int fanIndegree0{-1};
+    int fanIndegree1{-1};
+    uint32_t bitmap0;
+    uint32_t bitmap1;
+};
+
+// ! for ATP aggregation
+struct GroupInfoWithIndex
+{
+    bool isWorker;
+    int index;
+    std::shared_ptr<const GroupHostInfo> hostinfo;
+    std::shared_ptr<const GroupSwitchInfo> switchinfo;
+    std::vector<IntAddress> segmentAddrs; // ! for segment routing aggregation
+    std::vector<int> fanIndegrees;
+};
+
+// struct GroupSwitchInfoWithIndex
+// {
+//     bool isWorker;
+//     int index;
+//     std::shared_ptr<const GroupSwitchInfo> switchinfo;
+// };
 
 class GlobalGroupManager : public GlobalView
 {
 public:
     // for switch node use
-    IntAddress getGroupAddress(IntAddress fromNode) const;
-    IntAddress getGroupRootAddress(IntAddress groupAddr) const;
-    int getSendersNumber(IntAddress groupAddr) const;
+    // IntAddress getGroupAddress(IntAddress fromNode) const;
+    // IntAddress getGroupRootAddress(IntAddress groupAddr) const;
+    // int getSendersNumber(IntAddress groupAddr) const;
     // for host node use
-    int getTreeIndex(IntAddress fromNode) const;
-    int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;
-    int getBufferSize(IntAddress group, IntAddress switchAddress) const;
+    // int getTreeIndex(IntAddress fromNode) const;
+    // int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;
+    // int getBufferSize(IntAddress group, IntAddress switchAddress) const;
     // for signals collection
+    const GroupInfoWithIndex* getGroupHostInfo(IntAddress hostAddr) const;
     void reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime);
     void reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime);
 
@@ -32,23 +73,8 @@ private:
     simsignal_t createSignalForGroup(IntAddress group);
 
 private:
-    struct hashFunctionInt2
-    {
-        size_t operator()(const std::pair<IntAddress , int64_t> &x) const{
-            return x.first ^ x.second;
-        }
-    };
-    struct hashFunctionInt3
-    {
-        size_t operator()(const std::tuple<IntAddress, IntAddress, int64_t> &x) const{
-            return std::get<0>(x) ^ std::get<1>(x) ^ std::get<2>(x);
-        }
-    };
-    std::unordered_map<IntAddress, std::vector<int64_t> > hostGroupInfo;
-    std::unordered_map<std::pair<IntAddress, int64_t>, IntAddress, hashFunctionInt2> groupRoot;
-    std::unordered_map<std::pair<IntAddress, int64_t>, std::vector<int64_t>, hashFunctionInt2> groupSources;
-    std::unordered_map<std::tuple<IntAddress, IntAddress, int64_t>, int, hashFunctionInt3> switchFanIndegree;
-    std::unordered_map<std::pair<IntAddress, IntAddress>, B, hashFunctionInt2> switchBufferSize;
+    std::unordered_map<IntAddress, GroupInfoWithIndex* > hostGroupInfo;
+    // std::unordered_map<IntAddress, GroupSwitchInfoWithIndex* > switchGroupInfo;
 
     struct groupRoundFinishInfo {
         size_t counter{0};
@@ -56,6 +82,8 @@ private:
         simsignal_t roundFctSignal;
     };
     std::unordered_map<IntAddress, groupRoundFinishInfo*> groupRoundStartTime;
+private:
+    std::vector<std::shared_ptr<GroupHostInfo>> groupHostInfodb;
 
 private:
     // for aggregation job
@@ -64,5 +92,6 @@ private:
     // TODO make this function more clearly
     // ! add the shortest path between Node start and stop, note that only stop is in the tree
     void addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop);
+    std::vector<IntAddress> getShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop);
 };
 

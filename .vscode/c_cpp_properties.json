@@ -19,16 +19,26 @@
         {
             "name": "Win32",
             "includePath": [
-                "c:/Users/sheng/Documents/repos/omnetpp-6.0.1/include",
-                "c:/Users/sheng/Documents/repos/omnetpp-6.0.1/*",
-                "c:/Users/sheng/Documents/repos/omnetpp-6.0.1/tools/win32.x86_64/mingw64/include",
+                "c:/Users/sheng/Documents/develop/omnetpp-6.0.1/**",
                 "${workspaceFolder}/src"
             ],
-            "compilerPath": "C:/Users/sheng/Documents/repos/omnetpp-6.0.1/tools/win32.x86_64/mingw64/bin/g++.exe -fno-ms-extensions",
+            "compilerPath": "C:/Users/sheng/Documents/develop/omnetpp-6.0.1/tools/win32.x86_64/mingw64/bin/g++.exe -fno-ms-extensions",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "linux-gcc-x64",
             "configurationProvider": "ms-vscode.makefile-tools"
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/aten/omnetpp-6.0.1/include"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-clang-x64"
         }
     ],
     "version": 4

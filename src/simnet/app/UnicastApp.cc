@@ -13,6 +13,10 @@ void UnicastApp::initialize(int stage)
         auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
         check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
     }
+    if (stage==INITSTAGE_LAST && isIdle()) {
+        this->callFinish();
+        this->deleteModule();
+    }
 }
 
 void UnicastApp::handleMessage(cMessage *msg)

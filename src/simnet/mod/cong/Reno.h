@@ -23,6 +23,7 @@ protected:
     B sentBytes{0}; // max seq sent by now
     B cWnd{INT64_MAX};
     SeqNumber ssThresh{INT64_MAX};
+    int maxDisorderNumber;
 
     congStateType congState{OPEN};
     SeqNumber cWndCnt{0}; // ! Linear increase counter

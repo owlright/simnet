@@ -1,13 +1,15 @@
 #include <map>
 #include <omnetpp.h>
 #include "../mod/Packet_m.h"
+#include "simnet/mod/AggPacket_m.h"
 #include "../common/Defs.h"
 #include "../common/Print.h"
 #include "../common/ModuleAccess.h"
 #include "simnet/mod/manager/GlobalRouteMangager.h"
 #include "simnet/mod/manager/GlobalGroupManager.h"
-#include "simnet/mod/agroup/AggGroupEntry.h"
-
+#include "simnet/mod/agroup/jobMetric.h"
+#include "simnet/mod/agroup/AggregatorEntry.h"
+#include "simnet/mod/agroup/Aggregator.h"
 using namespace omnetpp;
 
 /**
@@ -21,7 +23,7 @@ class Routing : public cSimpleModule
             return x.first ^ x.second;
         }
     };
-    typedef std::pair<IntAddress, SeqNumber> GroupSeqType;
+    typedef std::pair<IntAddress, SeqNumber> AddrSeqType;
 
 public:
     virtual ~Routing();
@@ -29,40 +31,62 @@ public:
 private:
     bool isSwitch;
     IntAddress myAddress{INVALID_ADDRESS};
-    IntAddress myGroupAddress{INVALID_ADDRESS};
+    int position{-1};
+    // IntAddress myGroupAddress{INVALID_ADDRESS};
     bool ecmpFlow = false;
+    double collectionPeriod;
     // TODO improve the code
-    std::string aggPolicy;
-    bool isTimerPolicy{false};
+    [[deprecated]] std::string aggPolicy;
+    [[deprecated]] bool isTimerPolicy{false};
 
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
 
     GlobalRouteManager* routeManager{nullptr};
-    GlobalGroupManager* groupManager{nullptr};
+    // GlobalGroupManager* groupManager{nullptr};
     // GroupPacketHandler* gpkHandler{nullptr};
     simsignal_t dropSignal;
     simsignal_t outputIfSignal;
 
     B bufferSize{0};
     B usedBuffer{0};
-
-    std::unordered_set<GroupSeqType, hashFunction> markNotAgg;
-    std::unordered_map<GroupSeqType, std::vector<int>, hashFunction> incomingPortIndexes;
-    std::unordered_map<IntAddress, AggGroupEntry*> groupTable;
-    std::unordered_map<GroupSeqType, int64_t, hashFunction> seqDeadline;
+    int numAggregators{0};
+    B agtrSize;
+    std::unordered_set<AddrSeqType, hashFunction> markNotAgg;
+    std::unordered_map<AddrSeqType, std::vector<int>, hashFunction> incomingPortIndexes;
+    std::unordered_map<IntAddress, jobMetric*> groupMetricTable;
+    std::vector<Aggregator*> aggregators;
+    std::unordered_map<AddrSeqType, int64_t, hashFunction> seqDeadline;
 
 private:
-    // AggPacketHandler aggPacketHandler;
+    // ! self messages
+    cMessage* aggTimeOut{nullptr};
+    cMessage* dataCollectTimer{nullptr};
+
+    // ! common router functions
+
+    // Ask global routeManager for the first seen destAddr
+    // and store it in rtable for next time search
     int getRouteGateIndex(int srcAddr, int destAddr);
-    bool isGroupAddr(IntAddress addr) const { return (GROUPADDR_START <= addr && addr < GROUPADDR_END);};
-    bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
+    [[deprecated]] bool isGroupAddr(IntAddress addr) const { return (GROUPADDR_START <= addr && addr < GROUPADDR_END);};
+    [[deprecated]] bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
+
+    // ! common forwarding functions
     void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
-    std::vector<int> getReversePortIndexes(const GroupSeqType& groupSeqKey) const;
+    void forwardIncoming(Packet* pk);
+
+    // ! for data collection
+    simsignal_t createBufferSignalForGroup(IntAddress group);
     int getComputationCount() const;
     simtime_t getUsedTime() const;
-    simsignal_t createBufferSignalForGroup(IntAddress group);
-    cMessage* aggTimeOut{nullptr};
+
+    // ! for aggregation
+    std::vector<int> getReversePortIndexes(const AddrSeqType& groupSeqKey) const;
+    [[deprecated]] Packet* doAggregation(Packet* pk);
+    Packet* aggregate(AggPacket* pk);
+    [[deprecated]] bool addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree);
+    [[deprecated]] bool tryAddSeqEntry(const Packet* pk);
+    void recordIncomingPorts(AddrSeqType& groupSeqKey, int port);
 
 protected:
     virtual void initialize(int stage) override;

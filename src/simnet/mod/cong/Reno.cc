@@ -8,6 +8,7 @@ simsignal_t Reno::cwndSignal = registerSignal("cwnd");
 void Reno::initialize(int stage) {
     if (stage==INITSTAGE_LOCAL) {
         cWnd = par("initWinSize");
+        maxDisorderNumber = par("maxDisorderNumber");
     }
 }
 
@@ -21,27 +22,49 @@ void Reno::reset()
     ssThresh = INT64_MAX;
     congState = OPEN;
     cWndCnt = 0;
+    disorderSeqs.clear();
 }
 
 void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
-    confirmedBytes += segmentSize;
-    if (seq > maxAckedSeqNumber)
-    {
+    auto expectedSeq = maxAckedSeqNumber + segmentSize;
+    if (seq == expectedSeq) {
+        confirmedBytes += segmentSize;
         maxAckedSeqNumber = seq;
-        // * do calculations after each RTT finished
-        if (maxAckedSeqNumber == markSeq) {
-            emit(cwndSignal, cWnd);
+    } else {
+        if (seq > expectedSeq) { // ! always accept new packets
+            confirmedBytes += segmentSize;
+            maxAckedSeqNumber = seq;
+            EV_WARN << "disordering(ahead) expect  " << expectedSeq
+            << " but get " << seq << endl;
+            ASSERT(disorderSeqs.find(seq) == disorderSeqs.end()); // ! only insert new non-seen packets(disorder seq when it first happen);
+            disorderSeqs[expectedSeq] = maxDisorderNumber;
+        } else {
+            EV_WARN << "disordering(old) expect  " << expectedSeq
+                         << " but get " << seq << endl;
         }
     }
-    else if (confirmedBytes < maxAckedSeqNumber)
-    {   // ! received an older seq, '==' is not possible either as no dup ack implemented
-        // TODO: improve dealing with disordering packets
-        EV_WARN << "Disordering packets! current max acked seq " << maxAckedSeqNumber << " but get " << seq << endl;
+    // ! check if former disordered packets are received
+    std::vector<SeqNumber> removed;
+    for (auto& it:disorderSeqs) {
+       if (seq != it.first) {
+            // ! this seq is retransmitted by app last turn
+            // ! we need to wait a RTT time to see if retransmitted is successful
+            if (it.second == 0) {
+                it.second = cWnd;
+            }
+            it.second--;
+       } else {
+           // this retramsmitted seq is acked successfully, remove it
+           removed.push_back(seq);
+       }
     }
-    else
-    {   // ! '>=' is impossible
-        throw cRuntimeError("confirmed %lld bytes, maxAcked %lld, received seq %lld",
-                            confirmedBytes, maxAckedSeqNumber, seq);
+    for (auto& r:removed) {
+       disorderSeqs.erase(r);
+    }
+
+    // * do calculations after each RTT finished
+    if (maxAckedSeqNumber == markSeq) {
+        emit(cwndSignal, cWnd);
     }
 
     if (!congestion) {

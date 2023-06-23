@@ -1,0 +1,27 @@
+%description:
+Test packet Length
+%includes:
+#include "simnet/mod/Packet_m.h"
+
+%activity:
+auto pk = new Packet();
+EV << "length: " << pk->getByteLength() << endl;
+
+auto atppk = new ATPPacket();
+pk->encapsulate(atppk);
+EV << "length: " << pk->getByteLength() << endl;
+pk->decapsulate();
+delete atppk;
+
+auto mtatppk = new MTATPPacket();
+pk->encapsulate(mtatppk);
+EV << "length: " << pk->getByteLength() << endl;
+pk->decapsulate();
+delete mtatppk;
+
+delete pk;
+
+%contains: stdout
+length: 34
+length: 58
+length: 54
