@@ -7,7 +7,7 @@ simsignal_t UnicastSenderApp::fctSignal = registerSignal("fct");
 simsignal_t UnicastSenderApp::idealFctSignal = registerSignal("idealFct");
 simsignal_t UnicastSenderApp::flowSizeSignal = registerSignal("flowSize");
 simsignal_t UnicastSenderApp::rttSignal = registerSignal("rtt");
-
+simsignal_t UnicastSenderApp::inflightBytesSignal = registerSignal("inflightBytes");
 UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(flowStartTimer);
     cancelAndDelete(jitterTimeout);
@@ -21,9 +21,9 @@ void UnicastSenderApp::finish() {
     for (auto&it: cong->getDisorders()) {
         EV_WARN << it.first << " " << it.second << endl;
     }
-    for (auto&it: confirmedDisorders) {
-        EV_WARN << it << " "<< endl;
-    }
+//    for (auto&it: confirmedDisorders) {
+//        EV_WARN << it << " "<< endl;
+//    }
 }
 
 void UnicastSenderApp::initialize(int stage)

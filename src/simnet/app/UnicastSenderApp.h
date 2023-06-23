@@ -53,6 +53,7 @@ protected:
     static simsignal_t idealFctSignal;
     static simsignal_t flowSizeSignal;
     static simsignal_t rttSignal;
+    static simsignal_t inflightBytesSignal;
     simtime_t flowStartTime;
 
     CongAlgo* cong;
