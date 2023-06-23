@@ -21,7 +21,9 @@ For example, We don't need ip or mac addresses. Things should be kept as simple 
 - [x] Packet type: DATA and ACK
 - [x] label packet ECN and cut the window into half
 - [x] AIMD algorithm should should split the bandwidth equally
+- [x] DCTCP
 - [x] Aggregate packets one level forward and backward
-- [ ] Aggregate packets for more levels
-- [ ] Add buffer module
-- [ ] Simulate buffer overflow
+- [x] Aggregate packets for more levels
+- [x] aggregatorIndex hash collision, then resend packets
+- [x] FatTree(k), k means pod number
+- [ ] job deployment policy
