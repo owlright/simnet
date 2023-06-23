@@ -171,46 +171,48 @@ network testFatTree
         podS1[1].port++ <--> C <--> coreS1.port++;
 }
 
-network MinFatTree
+// There are k pods, each containing two layers of k/2 switches. 
+// Each k-port switch in the lower layer is directly connected to k/2 hosts. 
+// Each of the remaining k/2 ports is connected to k/2 of the k ports in the aggregation layer of the hierarchy.
+network FatTree
 {
     parameters:
-        int podNumber = 2;
-        int coreNumber = 2;
+        int k = default(64);
+        int halfk = int(k/2);
+        int numPods = k;
+        int numCores = int(k^2/4);
 
+        @display("bgb=929,304");
     submodules:
-        pods[podNumber]: Pod {
+        pods[numPods]: Pod {
+            k = parent.k;
             @display("p=166,112,r,50");
         }
-        coreSwitches[coreNumber]: Switch {
+        coreSwitches[numCores]: Switch {
             address = 1000*index;
             @display("p=166,32,r,50");
         }
 
         routeManager: GlobalRouteManager;
-        groupManager: GlobalGroupManager {
-
-            @display("p=295,106");
-        }
+    //        groupManager: GlobalGroupManager {
+    //
+    //            @display("p=295,106");
+    //        }
     connections:
-        coreSwitches[0].port++ <--> C <--> pods[0].port[0];
-        coreSwitches[1].port++ <--> C <--> pods[0].port[1];
-        coreSwitches[0].port++ <--> C <--> pods[0].port[2];
-        coreSwitches[1].port++ <--> C <--> pods[0].port[3];
-        coreSwitches[0].port++ <--> C <--> pods[1].port[0];
-        coreSwitches[1].port++ <--> C <--> pods[1].port[1];
-        coreSwitches[0].port++ <--> C <--> pods[1].port[2];
-        coreSwitches[1].port++ <--> C <--> pods[1].port[3];
+        for i=0..k-1, for j=0..halfk-1, for z=0..halfk-1 {
+            pods[i].port[j+z*halfk] <--> C <--> coreSwitches[j+z*halfk].port++;
+        }
 }
 
 module Pod
 {
     parameters:
-        int k = default(4); // port number of switch
+        int k; // port number of switch
         int hostNumber = int(k^2/4);
         int switchLevelNumber = int(k/2);
         int halfPorts = int(k/2);
+        @display("bgb=778,400");
 
-        @display("bgb=400,400");
     gates:
         inout port[halfPorts*switchLevelNumber];
 
@@ -227,14 +229,15 @@ module Pod
             address = parent.index*100 + (index) + 30;
             @display("p=78,250,r,50");
         }
-    connections:
+    connections allowunconnected:
+        for i=0..halfPorts-1, for j=0..switchLevelNumber-1 {
+            port[j*halfPorts+i] <--> level1[j].port++;
+        }
         for i=0..switchLevelNumber-1, for j=0..halfPorts-1 {
             level0[i].port++ <--> C <--> hosts[i*halfPorts + j].port++;
         }
         for i=0..switchLevelNumber-1, for j=0..switchLevelNumber-1 {
             level0[i].port++ <--> C <--> level1[j].port++;
         }
-        for i=0..halfPorts-1, for j=0..switchLevelNumber-1 {
-            port[j*halfPorts+i] <--> level1[j].port++;
-        }
+
 }
