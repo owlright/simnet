@@ -8,8 +8,8 @@ import simnet.mod.manager.GlobalGroupManager;
 
 channel C extends DatarateChannel
 {
-    delay = 2us;
-    datarate = 100Gbps;
+    delay = 1us;
+    datarate = 40Gbps;
 }
 
 network AggNto1

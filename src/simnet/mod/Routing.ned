@@ -26,7 +26,7 @@ module Routing
         @signal[drop](type="long");
         @signal[outputIf](type="long");
         @signal[group*-usedBuffer](type=long);
-        @statistic[packets](title="outputPackets"; source=outputPacket; record=count; unit=pk);
+        // @statistic[packets](title="outputPackets"; source=outputPacket; record=count; unit=pk);
         @statistic[drop](title="dropped packet byte length";unit=bytes;record=vector?,count,sum;interpolationmode=none);
         @statistic[outputIf](title="output interface for each routed packet";record=histogram;interpolationmode=none);
         @statisticTemplate[groupUsedBuffer](title="group used buffer on switch";record=mean,vector);
