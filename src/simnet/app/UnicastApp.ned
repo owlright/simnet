@@ -3,7 +3,6 @@ import simnet.mod.cong.Cong;
 simple UnicastApp like IApp {
 	parameters:
 	    @class(UnicastApp);
-        int address = default(-1);  // local node address
         int port = default(0);
     gates:
         input in;

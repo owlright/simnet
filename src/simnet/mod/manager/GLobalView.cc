@@ -40,6 +40,10 @@ void GlobalView::collectNodes(cTopology *topo)
     {
         auto node = topo->getNode(i)->getModule();
         IntAddress address = node->par("address");
+        if (address == -1) { // automanually set it by object id which is ensured unique
+            address = node->getId();
+            node->par("address") = address;
+        }
         if (used.find(address) != used.end()){
             throw cRuntimeError("GlobalView::collectNodes: duplicate address %lld", address);
         }

@@ -171,8 +171,8 @@ network testFatTree
         podS1[1].port++ <--> C <--> coreS1.port++;
 }
 
-// There are k pods, each containing two layers of k/2 switches. 
-// Each k-port switch in the lower layer is directly connected to k/2 hosts. 
+// There are k pods, each containing two layers of k/2 switches.
+// Each k-port switch in the lower layer is directly connected to k/2 hosts.
 // Each of the remaining k/2 ports is connected to k/2 of the k ports in the aggregation layer of the hierarchy.
 network FatTree
 {
@@ -189,7 +189,6 @@ network FatTree
             @display("p=166,112,r,50");
         }
         coreSwitches[numCores]: Switch {
-            address = 1000*index;
             @display("p=166,32,r,50");
         }
 
@@ -218,15 +217,12 @@ module Pod
 
     submodules:
         level1[switchLevelNumber]: Switch {
-            address = parent.index*100 + (index) + 20;
             @display("p=101,50,r,100");
         }
         level0[switchLevelNumber]: Switch {
-            address = parent.index*100 + (index) + 10;
             @display("p=101,150,r,100");
         }
         hosts[hostNumber]: Host {
-            address = parent.index*100 + (index) + 30;
             @display("p=78,250,r,50");
         }
     connections allowunconnected:

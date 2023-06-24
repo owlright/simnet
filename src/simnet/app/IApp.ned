@@ -16,7 +16,7 @@ package simnet.app;
 moduleinterface IApp
 {
     parameters:
-        int address;  // local node address
+        @display("i=block/app_s");
 //        int destAddress;
 
     gates:

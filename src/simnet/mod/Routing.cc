@@ -4,7 +4,6 @@ Define_Module(Routing);
 void Routing::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
-        myAddress = getParentModule()->par("address"); // HACK
         ecmpFlow = par("ecmpFlow").boolValue();
         dropSignal = registerSignal("drop");
         outputIfSignal = registerSignal("outputIf");
@@ -28,7 +27,9 @@ void Routing::initialize(int stage)
         }
 
     }
-
+    else if (stage == INITSTAGE_ACCEPT) {
+        myAddress = getParentModule()->par("address"); // HACK
+    }
     if (stage == INITSTAGE_LAST) {
         if (isSwitch) {
             EV_DEBUG << "router " << myAddress << "'s position is " << position << endl;
