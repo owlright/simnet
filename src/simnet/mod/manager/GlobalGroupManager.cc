@@ -126,35 +126,9 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             auto workerAddrs = cStringTokenizer(workerAddrsStr, "[,]").asIntVector();
             auto PSAddrsStr = tokens[1].c_str();
             auto PSAddrs = cStringTokenizer(PSAddrsStr, "[,]").asIntVector();
-            std::shared_ptr<JobHostInfo> entry(new JobHostInfo());
-            entry->jobId = jobId++;
-            entry->workers = workerAddrs;
-            entry->PSes = PSAddrs;
-            entry->numWorkers = workerAddrs.size();
-            entry->numPSes = PSAddrs.size();
-            entry->multicastAddress = mcastAddr++;
-            jobInfodb.push_back(entry);
             EV << std::setw(50) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
-            for (auto i = 0; i < workerAddrs.size(); i++)
-            {
-                auto hostEntry = new JobInfoWithIndex();
-                hostEntry->hostinfo = entry;
-                hostEntry->isWorker = true;
-                hostEntry->index = i;
-                auto addr = workerAddrs.at(i);
-                ASSERT(jobInfo.find(addr) == jobInfo.end()); // TODO one host only in one group, but multiple workers
-                jobInfo[addr] = hostEntry;
-            }
-            for (auto i = 0; i < PSAddrs.size(); i++)
-            {
-                auto hostEntry = new JobInfoWithIndex();
-                hostEntry->hostinfo = entry;
-                hostEntry->isWorker = false;
-                hostEntry->index = i;
-                auto addr = PSAddrs.at(i);
-                ASSERT(jobInfo.find(addr) == jobInfo.end()); // ! server and worker can't be together
-                jobInfo[addr] = hostEntry;
-            }
+            insertJobInfodb(mcastAddr++, workerAddrs, PSAddrs);
+            createJobInfoWithIndex(jobId++, workerAddrs, PSAddrs);
         }
     }
 }
@@ -353,5 +327,41 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
     else
     {
         throw cRuntimeError("you must specify a policy.");
+    }
+}
+
+void GlobalGroupManager::insertJobInfodb(int groupAddress, const std::vector<int>& workers, const std::vector<int>& pses)
+{
+    std::shared_ptr<JobHostInfo> entry(new JobHostInfo());
+    entry->jobId = jobInfodb.size();
+    entry->workers = workers;
+    entry->PSes = pses;
+    entry->numWorkers = workers.size();
+    entry->numPSes = pses.size();
+    entry->multicastAddress = groupAddress++;
+    jobInfodb.push_back(entry);
+}
+
+void GlobalGroupManager::createJobInfoWithIndex(int jobId, const std::vector<int> &workers, const std::vector<int> &pses)
+{
+    for (auto i = 0; i < workers.size(); i++)
+    {
+        auto hostEntry = new JobInfoWithIndex();
+        hostEntry->hostinfo = jobInfodb.at(jobId);
+        hostEntry->isWorker = true;
+        hostEntry->index = i;
+        auto addr = workers.at(i);
+        ASSERT(jobInfo.find(addr) == jobInfo.end()); // TODO one host only in one group, but multiple workers
+        jobInfo[addr] = hostEntry;
+    }
+    for (auto i = 0; i < pses.size(); i++)
+    {
+        auto hostEntry = new JobInfoWithIndex();
+        hostEntry->hostinfo = jobInfodb.at(jobId);
+        hostEntry->isWorker = false;
+        hostEntry->index = i;
+        auto addr = pses.at(i);
+        ASSERT(jobInfo.find(addr) == jobInfo.end()); // ! server and worker can't be together
+        jobInfo[addr] = hostEntry;
     }
 }
