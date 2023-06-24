@@ -2,29 +2,19 @@ package simnet.mod;
 import simnet.app.IApp;
 import simnet.mod.contract.PortDispatcher;
 
-moduleinterface INode
+module Host
 {
     parameters:
-		int address;
-		@node;
-	gates:
-        inout port[];
-}
-
-module Host like INode
-{
-    parameters:
-        int address;
+        int address @mutable = default(-1);
         int numApps = default(0);
         @node;
         @host;
+        @class(Node);
         @display("i=abstract/server_s;bgb=276,324");
     gates:
         inout port[];
     submodules:
         apps[numApps]: <default("UnicastSenderApp")> like IApp {
-            parameters:
-                address = parent.address;
         }
         at: PortDispatcher {
             parameters:
@@ -58,15 +48,16 @@ module Host like INode
         }
 }
 
-module Switch like INode
+module Switch
 {
     parameters:
-        int address;
+        int address @mutable = default(-1);
         int position = default(0); // the switch's level
         int numAggregators = default(40000);
         int agtrSize @unit(B) = default(264B); // ignore ecn single bit
         @node;
         @switch;
+        @class(Node);
         @display("i=abstract/switch_s");
     gates:
         inout port[];

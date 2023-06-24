@@ -92,6 +92,5 @@ protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
-    virtual void refreshDisplay() const override;
     virtual void finish() override;
 };

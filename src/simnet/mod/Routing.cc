@@ -332,15 +332,6 @@ void Routing::handleMessage(cMessage *msg)
 
 }
 
-void Routing::refreshDisplay() const
-{
-    if (!getEnvir()->isExpressMode()) {
-        char buf[20];
-        sprintf(buf, "%" PRId64, myAddress);
-        getParentModule()->getDisplayString().setTagArg("t", 0, buf);
-    }
-}
-
 void Routing::finish()
 {
     if (isSwitch) {

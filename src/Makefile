@@ -43,6 +43,7 @@ OBJS = \
     $O/simnet/common/ResultFilters.o \
     $O/simnet/mod/Connection.o \
     $O/simnet/mod/L2Queue.o \
+    $O/simnet/mod/Node.o \
     $O/simnet/mod/Routing.o \
     $O/simnet/mod/agroup/Aggregator.o \
     $O/simnet/mod/agroup/AggregatorEntry.o \
