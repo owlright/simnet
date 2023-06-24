@@ -21,7 +21,7 @@ protected:
 
 private:
     GlobalGroupManager* groupManager;
-    const GroupInfoWithIndex* groupInfo;
+    const JobInfoWithWorkerIndex* groupInfo;
     IntAddress groupAddr{INVALID_ADDRESS};
 };
 
@@ -40,7 +40,7 @@ void ParameterServerApp::initialize(int stage)
     if (stage == INITSTAGE_ASSIGN) {
         if (groupManager==nullptr)
             throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
-        groupInfo = groupManager->getGroupHostInfo(localAddr);
+        groupInfo = groupManager->getJobInfo(localAddr);
         if (groupInfo != nullptr && !groupInfo->isWorker) {
             EV << "server " << localAddr << " accept job " << groupInfo->hostinfo->jobId;
             EV << " multicast addr " << groupInfo->hostinfo->multicastAddress << endl;

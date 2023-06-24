@@ -3,62 +3,11 @@
 
 Define_Module(GlobalGroupManager);
 
-// IntAddress GlobalGroupManager::getGroupAddress(IntAddress fromNode) const
-// {
-//     if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
-//     {
-//         return INVALID_ADDRESS;
-//     }
-//     return hostGroupInfo.at(fromNode).at(0);
-// }
-
-// IntAddress GlobalGroupManager::getGroupRootAddress(IntAddress groupAddr) const
-// {
-//     auto it = groupRoot.find(std::make_pair(groupAddr, 0));
-//     if (it == groupRoot.end())
-//     {
-//         return INVALID_ADDRESS;
-//     }
-//     return it->second;
-// }
-
-// int GlobalGroupManager::getSendersNumber(IntAddress groupAddr) const
-// {
-//     return groupSources.at(std::make_pair(groupAddr, 0)).size(); // minus the parameter server
-// }
-
-// int GlobalGroupManager::getTreeIndex(IntAddress fromNode) const
-// {
-//     if (hostGroupInfo.find(fromNode) == hostGroupInfo.end())
-//     {
-//         return INVALID_ADDRESS;
-//     }
-//     return hostGroupInfo.at(fromNode).at(1);
-// }
-
-// int GlobalGroupManager::getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const
-// {
-//     auto it = switchFanIndegree.find(std::make_tuple(group, treeIndex, switchAddress));
-//     if (it == switchFanIndegree.end())
-//         return -1;
-//     else
-//         return it->second;
-
-// }
-
-// int GlobalGroupManager::getBufferSize(IntAddress group, IntAddress switchAddress) const
-// {
-//     auto it = switchBufferSize.find(std::make_pair(group, switchAddress));
-//     if (it == switchBufferSize.end())
-//         throw cRuntimeError("bufferSize not found.");
-//     return it->second;
-// }
-
-const GroupInfoWithIndex*
-GlobalGroupManager::getGroupHostInfo(IntAddress hostAddr) const
+const JobInfoWithIndex*
+GlobalGroupManager::getJobInfo(IntAddress hostAddr) const
 {
-    auto it = hostGroupInfo.find(hostAddr);
-    if (it != hostGroupInfo.end())
+    auto it = jobInfo.find(hostAddr);
+    if (it != jobInfo.end())
         return it->second;
     return nullptr;
 }
@@ -86,7 +35,7 @@ void GlobalGroupManager::reportFlowStop(IntAddress groupAddr, simtime_t roundSto
     auto roundMeter = it->second;
     roundMeter->counter++;
 
-    if (roundMeter->counter == groupHostInfodb.at(groupAddr)->numWorkers) {
+    if (roundMeter->counter == jobInfodb.at(groupAddr)->numWorkers) {
         emit(roundMeter->roundFctSignal, simTime() - roundMeter->startTime);
         roundMeter->startTime = SimTime::getMaxTime();
         roundMeter->counter = 0;
@@ -142,15 +91,15 @@ void GlobalGroupManager::readSwitchConfig(const char * fileName)
                 << std::setw(10) << switch1Addr
                 << std::setw(15) << fanIndegree1
                 << endl;
-            std::shared_ptr<GroupSwitchInfo> entry(new GroupSwitchInfo());
+            std::shared_ptr<JobSwitchInfo> entry(new JobSwitchInfo());
             entry->switch0 = switch0Addr;
             entry->switch1 = switch1Addr;
             entry->fanIndegree0 = fanIndegree0;
             entry->fanIndegree1 = fanIndegree1;
             entry->bitmap0 = bitmap0Index > 0 ? (1 << (bitmap0Index-1)) : 0;
             entry->bitmap1 = bitmap1Index > 0 ? (1 << (bitmap1Index-1)) : 0;
-            auto it = hostGroupInfo.find(workerAddr);
-            ASSERT(it != hostGroupInfo.end());
+            auto it = jobInfo.find(workerAddr);
+            ASSERT(it != jobInfo.end());
             it->second->switchinfo = entry;
         }
     }
@@ -177,34 +126,34 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             auto workerAddrs = cStringTokenizer(workerAddrsStr, "[,]").asIntVector();
             auto PSAddrsStr = tokens[1].c_str();
             auto PSAddrs = cStringTokenizer(PSAddrsStr, "[,]").asIntVector();
-            std::shared_ptr<GroupHostInfo> entry(new GroupHostInfo());
+            std::shared_ptr<JobHostInfo> entry(new JobHostInfo());
             entry->jobId = jobId++;
             entry->workers = workerAddrs;
             entry->PSes = PSAddrs;
             entry->numWorkers = workerAddrs.size();
             entry->numPSes = PSAddrs.size();
             entry->multicastAddress = mcastAddr++;
-            groupHostInfodb.push_back(entry);
+            jobInfodb.push_back(entry);
             EV << std::setw(50) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
             for (auto i = 0; i < workerAddrs.size(); i++)
             {
-                auto hostEntry = new GroupInfoWithIndex();
+                auto hostEntry = new JobInfoWithIndex();
                 hostEntry->hostinfo = entry;
                 hostEntry->isWorker = true;
                 hostEntry->index = i;
                 auto addr = workerAddrs.at(i);
-                ASSERT(hostGroupInfo.find(addr) == hostGroupInfo.end()); // TODO one host only in one group, but multiple workers
-                hostGroupInfo[addr] = hostEntry;
+                ASSERT(jobInfo.find(addr) == jobInfo.end()); // TODO one host only in one group, but multiple workers
+                jobInfo[addr] = hostEntry;
             }
             for (auto i = 0; i < PSAddrs.size(); i++)
             {
-                auto hostEntry = new GroupInfoWithIndex();
+                auto hostEntry = new JobInfoWithIndex();
                 hostEntry->hostinfo = entry;
                 hostEntry->isWorker = false;
                 hostEntry->index = i;
                 auto addr = PSAddrs.at(i);
-                ASSERT(hostGroupInfo.find(addr) == hostGroupInfo.end()); // ! server and worker can't be together
-                hostGroupInfo[addr] = hostEntry;
+                ASSERT(jobInfo.find(addr) == jobInfo.end()); // ! server and worker can't be together
+                jobInfo[addr] = hostEntry;
             }
         }
     }
@@ -308,7 +257,7 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
 
         readHostConfig(par("groupHostFile").stringValue());
 
-        for (auto& group : groupHostInfodb)
+        for (auto& group : jobInfodb)
         {
             auto senders = group->workers;
             auto roots = group->PSes;
@@ -328,8 +277,8 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
             // * prepare segments
             for (auto i = 0; i < senders.size(); i++) {
                 auto addr = senders[i];
-                auto it = hostGroupInfo.find(addr);
-                ASSERT(it != hostGroupInfo.end());
+                auto it = jobInfo.find(addr);
+                ASSERT(it != jobInfo.end());
                 auto m = senderMods[i];
                 auto path = getShortestPath(tree, tree.getNodeFor(m), tree.getNodeFor(addr2mod.at(ps)));
                 ASSERT(path.size() >= 3);

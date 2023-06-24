@@ -6,7 +6,7 @@
 #include "GlobalView.h"
 using namespace omnetpp;
 
-struct GroupHostInfo
+struct JobHostInfo
 {
     uint16_t jobId;
     std::vector<int> PSes;
@@ -16,7 +16,7 @@ struct GroupHostInfo
     IntAddress multicastAddress;
 };
 
-struct GroupSwitchInfo
+struct JobSwitchInfo
 {
     // for manually set
     IntAddress switch0{-1};
@@ -28,12 +28,12 @@ struct GroupSwitchInfo
 };
 
 // ! for ATP aggregation
-struct GroupInfoWithIndex
+struct JobInfoWithIndex
 {
     bool isWorker;
     int index;
-    std::shared_ptr<const GroupHostInfo> hostinfo;
-    std::shared_ptr<const GroupSwitchInfo> switchinfo;
+    std::shared_ptr<const JobHostInfo> hostinfo;
+    std::shared_ptr<const JobSwitchInfo> switchinfo;
     std::vector<IntAddress> segmentAddrs; // ! for segment routing aggregation
     std::vector<int> fanIndegrees;
 };
@@ -42,22 +42,13 @@ struct GroupInfoWithIndex
 // {
 //     bool isWorker;
 //     int index;
-//     std::shared_ptr<const GroupSwitchInfo> switchinfo;
+//     std::shared_ptr<const JobSwitchInfo> switchinfo;
 // };
 
 class GlobalGroupManager : public GlobalView
 {
 public:
-    // for switch node use
-    // IntAddress getGroupAddress(IntAddress fromNode) const;
-    // IntAddress getGroupRootAddress(IntAddress groupAddr) const;
-    // int getSendersNumber(IntAddress groupAddr) const;
-    // for host node use
-    // int getTreeIndex(IntAddress fromNode) const;
-    // int getFanIndegree(IntAddress group, int treeIndex, IntAddress switchAddress) const;
-    // int getBufferSize(IntAddress group, IntAddress switchAddress) const;
-    // for signals collection
-    const GroupInfoWithIndex* getGroupHostInfo(IntAddress hostAddr) const;
+    const JobInfoWithIndex* getJobInfo(IntAddress hostAddr) const;
     void reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime);
     void reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime);
 
@@ -73,8 +64,7 @@ private:
     simsignal_t createSignalForGroup(IntAddress group);
 
 private:
-    std::unordered_map<IntAddress, GroupInfoWithIndex* > hostGroupInfo;
-    // std::unordered_map<IntAddress, GroupSwitchInfoWithIndex* > switchGroupInfo;
+    std::unordered_map<IntAddress, JobInfoWithIndex* > jobInfo;
 
     struct groupRoundFinishInfo {
         size_t counter{0};
@@ -83,7 +73,7 @@ private:
     };
     std::unordered_map<IntAddress, groupRoundFinishInfo*> groupRoundStartTime;
 private:
-    std::vector<std::shared_ptr<GroupHostInfo>> groupHostInfodb;
+    std::vector<std::shared_ptr<JobHostInfo>> jobInfodb;
 
 private:
     // for aggregation job

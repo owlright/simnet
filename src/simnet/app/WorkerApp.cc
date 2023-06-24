@@ -14,7 +14,7 @@ protected:
 
 private:
     GlobalGroupManager* groupManager;
-    const GroupInfoWithIndex* groupInfo;
+    const JobInfoWithWorkerIndex* groupInfo;
     int jobId;
     int workerId{-1};
 };
@@ -32,7 +32,7 @@ void ATPWorker::initialize(int stage)
     else if (stage == INITSTAGE_ACCEPT) {
         if (groupManager==nullptr)
             throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
-        groupInfo = groupManager->getGroupHostInfo(localAddr);
+        groupInfo = groupManager->getJobInfo(localAddr);
         if (groupInfo != nullptr && groupInfo->isWorker) {
             workerId = groupInfo->index;
             jobId = groupInfo->hostinfo->jobId;
