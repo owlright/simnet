@@ -31,7 +31,7 @@ void SRWorker::initialize(int stage)
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
         if (groupManager==nullptr) // sometimes for quick debug
             EV_WARN << "You may forget to set groupManager." << endl;
-    } else if (stage == INITSTAGE_ASSIGN) {
+    } else if (stage == INITSTAGE_ACCEPT) {
         if (groupManager==nullptr)
             throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
         groupInfo = groupManager->getGroupHostInfo(localAddr);

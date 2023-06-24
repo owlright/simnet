@@ -19,9 +19,11 @@ inline omnetpp::cEnvir *getActiveSimulationOrEnvir() { return omnetpp::cSimulati
 enum Stage
 {
     INITSTAGE_LOCAL,
-    INITSTAGE_COLLECT, // host and switch report to global manager
-    INITSTAGE_ASSIGN, // host and switch ask global manager
-    INITSTAGE_LAST,
+    INITSTAGE_REPORT, // host report info to manager
+    INITSTAGE_COLLECT, // manager collect info from host
+    INITSTAGE_ASSIGN, // manager assign something to host or switch
+    INITSTAGE_ACCEPT, // all parameters must be set by now
+    INITSTAGE_LAST, // maybe delete this module? print info
     NUM_INIT_STAGES
 };
 
