@@ -193,10 +193,10 @@ network FatTree
         }
 
         routeManager: GlobalRouteManager;
-    //        groupManager: GlobalGroupManager {
-    //
-    //            @display("p=295,106");
-    //        }
+        groupManager: GlobalGroupManager {
+            @display("p=295,106");
+        }
+
     connections:
         for i=0..k-1, for j=0..halfk-1, for z=0..halfk-1 {
             pods[i].port[j+z*halfk] <--> C <--> coreSwitches[j+z*halfk].port++;
