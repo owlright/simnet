@@ -48,7 +48,7 @@ protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
 
 private:
-    void readSwitchConfig(const char * fileName);
+    // void readSwitchConfig(const char * fileName);
     void readHostConfig(const char * fileName);
     simsignal_t createSignalForGroup(IntAddress group);
     int getCurrentJobId() const {return jobId;}
@@ -66,7 +66,13 @@ private:
 
 private:
     int jobId{0};
-    int groupAddress{GROUPADDR_START};    std::unordered_map<int, JobHostInfo*> jobInfodb;
+    int groupAddress{GROUPADDR_START};
+    std::unordered_map<int, JobHostInfo*> jobInfodb;
+    std::unordered_map<int,
+                       std::unordered_map<
+                           IntAddress,
+                           std::unordered_map<IntAddress, JobSegmentsRoute *>>>
+        segmentInfodb;
 
 private:
     // for aggregation job

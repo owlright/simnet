@@ -9,6 +9,7 @@ simple GlobalGroupManager
         int numGroups @mutable = 5;
         int numWorkers @mutable = 6;
         int numPSes @mutable = 1;
+        string aggTreeType = default("sptree"); // ATP, sptree
         @class(GlobalGroupManager);
         @display("i=block/cogwheel");
         @signal[group*-RoundFinishTime](type=simtime_t); // note the wildcard

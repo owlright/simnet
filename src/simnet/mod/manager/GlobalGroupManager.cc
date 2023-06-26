@@ -1,5 +1,6 @@
 #include "GlobalGroupManager.h"
 #include <fstream>
+#include "simnet/common/utils.h"
 
 Define_Module(GlobalGroupManager);
 
@@ -44,58 +45,60 @@ void GlobalGroupManager::initialize(int stage)
         ASSERT(topo);
 }
 
-void GlobalGroupManager::readSwitchConfig(const char * fileName)
-{
-    std::fstream switchConfig(fileName, std::ios::in);
-    if (!switchConfig) {
-        throw cRuntimeError("%s not found!", fileName);
-    } else {
-        std::string line;
-        EV << std::left
-            << std::setw(10) << "worker"
-            << std::setw(10) << "bitmap0"
-            << std::setw(10) << "switch0"
-            << std::setw(15) << "fanIndegree0"
-            << std::setw(10) << "bitmap1"
-            << std::setw(10) << "switch1"
-            << std::setw(15) << "fanIndegree1"
-            << endl;
-        while (getline(switchConfig, line, '\n')) {
-            if (line.empty() || line[0] == '#')
-                continue;
-            std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
-            if (tokens.size() != 7)
-                throw cRuntimeError("wrong line in module file: 8 items required, line: \"%s\"", line.c_str());
+// void GlobalGroupManager::readSwitchConfig(const char * fileName)
+// {
+//     std::fstream switchConfig(fileName, std::ios::in);
+//     if (!switchConfig) {
+//         throw cRuntimeError("%s not found!", fileName);
+//     } else {
+//         std::string line;
+//         EV << std::left
+//             << std::setw(10) << "worker"
+//             << std::setw(10) << "ps"
+//             << std::setw(10) << "bitmap0"
+//             << std::setw(10) << "switch0"
+//             << std::setw(15) << "fanIndegree0"
+//             << std::setw(10) << "bitmap1"
+//             << std::setw(10) << "switch1"
+//             << std::setw(15) << "fanIndegree1"
+//             << endl;
+//         while (getline(switchConfig, line, '\n')) {
+//             if (line.empty() || line[0] == '#')
+//                 continue;
+//             std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
+//             if (tokens.size() != 7)
+//                 throw cRuntimeError("wrong line in module file: 8 items required, line: \"%s\"", line.c_str());
+//             auto tokenIndex = 0;
+//             auto workerAddr   = atol(tokens[tokenIndex++].c_str());
+//             auto PSAddr       = atol(tokens[tokenIndex++].c_str());
+//             auto bitmap0Index = atol(tokens[tokenIndex++].c_str());
+//             auto switch0Addr  = atol(tokens[tokenIndex++].c_str());
+//             auto fanIndegree0 = atol(tokens[tokenIndex++].c_str());
+//             auto bitmap1Index = atol(tokens[tokenIndex++].c_str());
+//             auto switch1Addr  = atol(tokens[tokenIndex++].c_str());
+//             auto fanIndegree1 = atol(tokens[tokenIndex++].c_str());
+//             EV << std::left
+//                 << std::setw(10) << workerAddr
+//                 << std::setw(10) << PSAddr
+//                 << std::setw(10) << bitmap0Index
+//                 << std::setw(10) << switch0Addr
+//                 << std::setw(15) << fanIndegree0
+//                 << std::setw(10) << bitmap1Index
+//                 << std::setw(10) << switch1Addr
+//                 << std::setw(15) << fanIndegree1
+//                 << endl;
+//             std::shared_ptr<JobSwitchInfo> entry(new JobSwitchInfo());
+//             entry->switch0 = switch0Addr;
+//             entry->switch1 = switch1Addr;
+//             entry->fanIndegree0 = fanIndegree0;
+//             entry->fanIndegree1 = fanIndegree1;
+//             entry->bitmap0 = bitmap0Index > 0 ? (1 << (bitmap0Index-1)) : 0;
+//             entry->bitmap1 = bitmap1Index > 0 ? (1 << (bitmap1Index-1)) : 0;
 
-            auto workerAddr   = atol(tokens[0].c_str());
-            auto bitmap0Index = atol(tokens[1].c_str());
-            auto switch0Addr  = atol(tokens[2].c_str());
-            auto fanIndegree0 = atol(tokens[3].c_str());
-            auto bitmap1Index = atol(tokens[4].c_str());
-            auto switch1Addr  = atol(tokens[5].c_str());
-            auto fanIndegree1 = atol(tokens[6].c_str());
-            EV << std::left
-                << std::setw(10) << workerAddr
-                << std::setw(10) << bitmap0Index
-                << std::setw(10) << switch0Addr
-                << std::setw(15) << fanIndegree0
-                << std::setw(10) << bitmap1Index
-                << std::setw(10) << switch1Addr
-                << std::setw(15) << fanIndegree1
-                << endl;
-            std::shared_ptr<JobSwitchInfo> entry(new JobSwitchInfo());
-            entry->switch0 = switch0Addr;
-            entry->switch1 = switch1Addr;
-            entry->fanIndegree0 = fanIndegree0;
-            entry->fanIndegree1 = fanIndegree1;
-            entry->bitmap0 = bitmap0Index > 0 ? (1 << (bitmap0Index-1)) : 0;
-            entry->bitmap1 = bitmap1Index > 0 ? (1 << (bitmap1Index-1)) : 0;
-            auto it = jobInfo.find(workerAddr);
-            ASSERT(it != jobInfo.end());
-            it->second->switchinfo = entry;
-        }
-    }
-}
+//             jobInfo[workerAddr][PSAddr]->switchinfo = entry;
+//         }
+//     }
+// }
 
 void GlobalGroupManager::readHostConfig(const char * fileName)
 {
@@ -275,6 +278,67 @@ void GlobalGroupManager::createJobApps(int jobId)
         at->setGateSize("localOut", at->gateSize("localOut") + 1);
         at->gate("localOut",  at->gateSize("localIn")-1)->connectTo(inGate);
         outGate->connectTo(at->gate("localIn", at->gateSize("localOut")-1));
+    }
+}
+
+void GlobalGroupManager::calcAggTree(const char *policyName)
+{
+    if (strcmp(policyName, "manual") == 0)
+    {
+        // readSwitchConfig(par("groupSwitchFile").stringValue());
+        // TODO manually set segments for each host
+    }
+    else if (strcmp(policyName, "sptree") == 0)
+    {
+        for (auto it : jobInfodb)
+        {
+            auto jobid = it.first;
+            auto group = it.second;
+            auto senders = group->workers;
+            auto roots = group->PSes;
+            auto ps = roots.at(0);
+            cTopology tree = cTopology("steiner");
+
+            std::vector<int> senderIndexes;
+            for (auto& s:senders) {
+                senderIndexes.push_back(addr2node.at(s));
+            }
+            buildSteinerTree(tree, senderIndexes, addr2node.at(ps)); //  TODO multiple PSes
+
+            std::vector<cModule*> senderMods;
+            for (auto& s:senders) {
+                senderMods.push_back(addr2mod.at(s));
+            }
+            // * prepare segments
+            for (auto i = 0; i < senders.size(); i++) {
+                auto addr = senders[i];
+
+                auto m = senderMods[i];
+                auto path = getShortestPath(tree, tree.getNodeFor(m), tree.getNodeFor(addr2mod.at(ps)));
+                ASSERT(path.size() >= 3);
+                EV_DEBUG << path << endl;
+                auto segments = std::vector<int>(path.begin()+1, path.end()-1);
+                // * prepare indegree at each middle node
+                std::vector<int> indegrees;
+                for (auto& seg:segments) {
+                    indegrees.push_back(tree.getNodeFor(addr2mod.at(seg))->getNumInLinks());
+                }
+                segmentInfodb[jobid][addr][ps] = new JobSegmentsRoute();
+                segmentInfodb[jobid][addr][ps]->segmentAddrs = segments;
+                segmentInfodb[jobid][addr][ps]->fanIndegrees = indegrees;
+                for (auto i = 0; i < m->getSubmoduleVectorSize("apps"); i++) {
+                    auto app = m->getSubmodule("apps", i);
+                    if (app->hasPar("segmentAddrs") && ps == app->par("destAddress").intValue()) {
+                        app->par("segmentAddrs") = vectorToString(segments);
+                        app->par("fanIndegrees") = vectorToString(indegrees);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        throw cRuntimeError("you must specify a policy.");
     }
 }
 
