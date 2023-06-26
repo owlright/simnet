@@ -41,6 +41,7 @@ OBJS = \
     $O/simnet/common/HashTable.o \
     $O/simnet/common/NedFunctions.o \
     $O/simnet/common/ResultFilters.o \
+    $O/simnet/common/utils.o \
     $O/simnet/mod/Connection.o \
     $O/simnet/mod/L2Queue.o \
     $O/simnet/mod/Node.o \
