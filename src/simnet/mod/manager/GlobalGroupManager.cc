@@ -208,116 +208,39 @@ void GlobalGroupManager::buildSteinerTree(cTopology& tree, const std::vector<int
     }
 }
 
-void GlobalGroupManager::prepareAggGroup(const char* policyName)
+void GlobalGroupManager::placeJobs(const char *policyName)
 {
-    if (strcmp(policyName, "manual") == 0)
-    {
+    if (strcmp(policyName, "manual") == 0) {
         readHostConfig(par("groupHostFile").stringValue());
-        readSwitchConfig(par("groupSwitchFile").stringValue());
-    }
-    else if (strcmp(policyName, "SRAgg-manual") == 0)
-    {
-
-        readHostConfig(par("groupHostFile").stringValue());
-
-        for (auto& group : jobInfodb)
-        {
-            auto senders = group->workers;
-            auto roots = group->PSes;
-            auto ps = roots.at(0);
-            cTopology tree = cTopology("steiner");
-
-            std::vector<int> senderIndexes;
-            for (auto& s:senders) {
-                senderIndexes.push_back(addr2node.at(s));
-            }
-            buildSteinerTree(tree, senderIndexes, addr2node.at(ps)); //  TODO multiple PSes
-
-            std::vector<cModule*> senderMods;
-            for (auto& s:senders) {
-                senderMods.push_back(addr2mod.at(s));
-            }
-            // * prepare segments
-            for (auto i = 0; i < senders.size(); i++) {
-                auto addr = senders[i];
-                auto it = jobInfo.find(addr);
-                ASSERT(it != jobInfo.end());
-                auto m = senderMods[i];
-                auto path = getShortestPath(tree, tree.getNodeFor(m), tree.getNodeFor(addr2mod.at(ps)));
-                ASSERT(path.size() >= 3);
-                EV_DEBUG << path << endl;
-                auto segments = std::vector<IntAddress>(path.begin()+1, path.end()-1);
-                it->second->segmentAddrs = segments;
-                // * prepare indegree at each middle node
-                std::vector<int> indegrees;
-                for (auto& seg:segments) {
-                    indegrees.push_back(tree.getNodeFor(addr2mod.at(seg))->getNumInLinks());
+    } else if (strcmp(policyName, "random") == 0) {
+        int numGroups = par("numGroups").intValue();
+        int numWorkers = par("numWorkers").intValue();
+        int numPSes = par("numPSes").intValue();
+        for (auto i = 0; i < numGroups; i++) {
+            std::vector<int> workers, workerPorts;
+            std::vector<int> pses, psPorts;
+            std::unordered_set<int> visited; // ! make a group member
+            for (auto j = 0; j < numWorkers + numPSes; j++) {
+                int index = hostNodes.size();
+                do {
+                    index = intrand(hostNodes.size());
+                } while (visited.find(index) != visited.end());
+                visited.insert(index);
+                int nodeId = hostNodes.at(index);
+                int address = node2addr.at(nodeId);
+                if (j < numWorkers) {
+                    workers.push_back(address);
                 }
-                it->second->fanIndegrees = indegrees;
+                else {
+                    pses.push_back(address);
+                }
             }
-
-
+            insertJobInfodb(workers, pses);
+            createJobApps(getCurrentJobId());
         }
     }
-    else if (strcmp(policyName, "random") == 0)
-    {
-        // int groupNum = 2;
-        // int groupMembers = 4;
-        // IntAddress groupAddr = GROUPADDR_START - 1;
-        // std::unordered_set<int> visited; // TODO may not necessary
-        // for (auto i = 0; i < groupNum; i++)
-        // {
-        //     groupAddr++;
-        //     auto gkey = std::make_pair(groupAddr, 0);
-        //     std::vector<int> members;
-        //     // * choose group members randomly without repetition
-        //     for (auto j = 0; j < groupMembers ; j++)
-        //     {
-        //         int index = hostNodes.size();
-        //         if (groupMembers > index)
-        //             throw cRuntimeError("too many group members!");
-        //         do {
-        //             index = intrand(hostNodes.size());
-        //         }
-        //         while (visited.find(index) != visited.end());
-        //         auto node = hostNodes.at(index);
-        //         members.push_back(node);
-        //         visited.insert(node);
-        //         auto addr = node2addr.at(node);
-        //         hostGroupInfo[addr].push_back(groupAddr);
-        //         hostGroupInfo[addr].push_back(0); // TODO treeIndex is always 0 so far
-        //     }
-        //     auto root = members.back();
-        //     members.pop_back();
-        //     groupRoot[gkey] = node2addr.at(root);
-        //     for (auto& m:members)
-        //         groupSources[gkey].push_back(node2addr.at(m));
-
-            // * get steiner tree for each group
-        //     cTopology tree = cTopology("steiner");
-        //     buildSteinerTree(tree, members, root);
-            // * tree construction is finished
-            // * now assign tree to routers
-        //     for (auto i = 0; i < tree.getNumNodes(); i++) {
-        //         auto node = tree.getNode(i);
-        //         auto mod = node->getModule();
-        //         if (mod->getProperties()->get("switch")!=nullptr) {
-        //             auto indegree = node->getNumInLinks();
-        //             auto switchAddr = mod->par("address").intValue();
-        //             EV_DEBUG <<"switchAddr:" << std::setw(6) << switchAddr << " indegree:" << indegree << endl;
-        //             if (indegree >= 2) {
-        //                 switchFanIndegree[std::make_tuple(groupAddr, 0, switchAddr)] = indegree;
-        //                 switchBufferSize[std::make_pair(groupAddr, switchAddr)] = 10000;
-        //             }
-        //         }
-        //     }
-        // }
-    }
-    else
-    {
-        throw cRuntimeError("you must specify a policy.");
-    }
 }
+
 
 void GlobalGroupManager::insertJobInfodb(const std::vector<int>& workers, const std::vector<int>& pses)
 {
