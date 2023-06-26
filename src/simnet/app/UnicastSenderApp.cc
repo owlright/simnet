@@ -29,22 +29,18 @@ void UnicastSenderApp::finish() {
 void UnicastSenderApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
-    if (stage == INITSTAGE_LOCAL) {
+    // ! if this moudle is created by manager in ASSIGN stage, the stages before it will not be executed
+    if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
         // two ways to set destAddr
         destAddr = par("destAddress");
+        destPort = par("destPort");
         numRounds = par("numRounds");
-        if (destAddr == -1) {
-            std::vector<std::string> v = cStringTokenizer(par("destAddresses").stringValue()).asVector();
-            destAddresses = AddressResolver::resolve(v);
-            if (destAddresses.size() > 0) // TODO
-                destAddr = destAddresses[0];
-        }
         //HACK
         bandwidth = check_and_cast<cDatarateChannel *>(
                                     getParentModule()
                                     ->gateHalf("port", cGate::Type::OUTPUT, 0)
                                     ->getChannel())->getDatarate();
-        EV_DEBUG << "port bandwidth: " << bandwidth << " bps" << endl;
+        // EV_DEBUG << "port bandwidth: " << bandwidth << " bps" << endl;
         load = par("load");
         if (0.0 < load && load <= 1.0)
         {
@@ -53,25 +49,17 @@ void UnicastSenderApp::initialize(int stage)
         flowSize = &par("flowSize");
         flowInterval = &par("flowInterval");
         jitterBeforeSending = &par("jitterBeforeSending");
-    }
 
-    if (stage == INITSTAGE_ASSIGN) {
         tpManager = findModuleFromTopLevel<TrafficPatternManager>("trafficPatternManager", this);
         if (tpManager!=nullptr)
             destAddr = tpManager->getDestAddr(localAddr);
-    }
-
-    if (stage == INITSTAGE_LAST) {
+    } else if (stage == INITSTAGE_LAST) {
         if (destAddr >= 0) {
-            destPort = par("destPort");
             messageLength = par("messageLength");
-            if (!loadMode)
-            {
+            if (!loadMode) {
                 currentFlowSize = flowSize->intValue();
                 currentFlowInterval = flowInterval->doubleValueInUnit("s"); // convert any unit into s
-            }
-            else
-            {
+            } else {
                 // flowSize will change every time, only flowSizeMean is known
                 B flowSizeMean = par("flowSizeMean").intValue();
                 // calc interval by load

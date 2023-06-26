@@ -20,8 +20,8 @@ protected:
     static simsignal_t aggRatioSignal;
 
 private:
-    GlobalGroupManager* groupManager;
-    const JobInfoWithWorkerIndex* groupInfo;
+    opp_component_ptr<GlobalGroupManager> groupManager;
+    int jobid{-1};
     IntAddress groupAddr{INVALID_ADDRESS};
 };
 
@@ -32,30 +32,19 @@ simsignal_t ParameterServerApp::aggRatioSignal = registerSignal("aggRatio");
 void ParameterServerApp::initialize(int stage)
 {
     UnicastEchoApp::initialize(stage);
-    if (stage == INITSTAGE_LOCAL) {
+    if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
+        jobid = par("jobId");
+        groupAddr = par("groupAddress");
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
         if (groupManager == nullptr)
             EV_WARN << "You may forget to set groupManager." << endl;
-    }
-    if (stage == INITSTAGE_ASSIGN) {
-        if (groupManager==nullptr)
-            throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
-        groupInfo = groupManager->getJobInfo(localAddr);
-        if (groupInfo != nullptr && !groupInfo->isWorker) {
-            EV << "server " << localAddr << " accept job " << groupInfo->hostinfo->jobId;
-            EV << " multicast addr " << groupInfo->hostinfo->multicastAddress << endl;
-        }
-        else {
-            setIdle();
-            EV_WARN << "host " << localAddr << " have an idle ATPServer" << endl;
-        }
     }
 }
 
 void ParameterServerApp::handleMessage(cMessage *msg)
 {
     auto pk = check_and_cast<AggPacket*>(msg);
-    ASSERT(pk->getJobId() == groupInfo->hostinfo->jobId);
+    // ASSERT(pk->getJobId() == groupInfo->hostinfo->jobId);
     auto connectionId = pk->getJobId();
     auto it = connections.find(connectionId);
     if (it == connections.end()) {
@@ -71,7 +60,7 @@ void ParameterServerApp::onNewConnectionArrived(IdNumber connId, const Packet* c
     EV_DEBUG << "Create new connection id by jobId " << connId << endl;
     connections[connId] = createConnection(connId);
     auto connection = connections.at(connId);
-    connection->bindRemote(groupInfo->hostinfo->multicastAddress, pk->getLocalPort());
+    connection->bindRemote(groupAddr, pk->getLocalPort());
 }
 
 void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage *msg)

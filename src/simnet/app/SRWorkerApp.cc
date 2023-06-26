@@ -14,10 +14,10 @@ protected:
 
 private:
     GlobalGroupManager* groupManager;
-    const JobInfoWithWorkerIndex* groupInfo;
-    int jobId;
+    int jobId{-1};
     int workerId{-1};
-    std::vector<IntAddress> segments;
+    int numWorkers{-1};
+    std::vector<int> segments;
     std::vector<int> fanIndegrees;
 };
 
@@ -26,35 +26,28 @@ Define_Module(SRWorker);
 
 void SRWorker::initialize(int stage)
 {
-    if (stage == INITSTAGE_LOCAL) {
-        isUnicastSender = false;
-        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
-        if (groupManager==nullptr) // sometimes for quick debug
-            EV_WARN << "You may forget to set groupManager." << endl;
-    } else if (stage == INITSTAGE_ACCEPT) {
-        if (groupManager==nullptr)
-            throw cRuntimeError("WorkerApp::initialize: groupManager not found!");
-        groupInfo = groupManager->getJobInfo(localAddr);
-        if (groupInfo != nullptr && groupInfo->isWorker) {
-            workerId = groupInfo->index;
-            jobId = groupInfo->hostinfo->jobId;
-            EV << "host " << localAddr << " accept job " << jobId;
-            EV << " possible PSes: ";
-            EV << groupInfo->hostinfo->PSes << endl;
-            segments = groupInfo->segmentAddrs;
-            fanIndegrees = groupInfo->fanIndegrees;
-            EV << "sid: " << segments << endl;
-            EV << "arg: " << fanIndegrees << endl;
-            // ! TODO FIXME only send to a single sever
-            // ! Split Worker App from UnicastApp or Let UnicastApp have multiple Paramter servers ?
-            destAddr = groupInfo->hostinfo->PSes.at(0);
-        }
-        else {
-            setIdle();
-            EV_WARN << "host " << localAddr << " have an idle SRWorker" << endl;
-        }
-    }
     UnicastSenderApp::initialize(stage);
+    if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
+        jobId = par("jobId");
+        workerId = par("jobId");
+        numWorkers = par("numWorkers");
+//        destAddr = par("destAddress");
+        segments = cStringTokenizer(par("segmentAddrs").stringValue()).asIntVector();
+        fanIndegrees = cStringTokenizer(par("fanIndegrees").stringValue()).asIntVector();
+        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
+
+
+        if (groupManager == nullptr) // sometimes for quick debug
+            EV_WARN << "You may forget to set groupManager." << endl;
+
+        EV << "SRWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
+        EV << " PS(" << destAddr << ":" << destPort << ")" << endl;
+
+        EV << "sid: " << segments << endl;
+        EV << "arg: " << fanIndegrees << endl;
+
+    }
+
 }
 
 void SRWorker::onFlowStart()
@@ -73,7 +66,7 @@ void SRWorker::onFlowStop()
 Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
 {
     // ASSERT(destAddr == -1); // destAddr is useless
-    IntAddress dest = groupInfo->hostinfo->PSes.at(0); // TODO use more PSes
+    IntAddress dest = destAddr; // TODO use more PSes
     char pkname[40];
     sprintf(pkname, " sr%lld-to-%lld-seq%lld",
             localAddr, dest, seq);
@@ -103,7 +96,7 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     auto agtrIndex = hashAggrIndex(hjobid, hseq);
 //    EV_DEBUG << "aggregator index: " << agtrIndex << endl;
     pk->setAggregatorIndex(agtrIndex);
-    pk->setWorkerNumber(groupInfo->hostinfo->numWorkers);
+    pk->setWorkerNumber(numWorkers);
 
     // segment routing
     pk->setSIDSize(segments.size());
@@ -128,3 +121,4 @@ void SRWorker::finish()
         UnicastSenderApp::finish();
     }
 }
+

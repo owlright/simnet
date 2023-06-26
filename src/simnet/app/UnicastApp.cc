@@ -5,13 +5,11 @@ Define_Module(UnicastApp);
 
 void UnicastApp::initialize(int stage)
 {
-    if (stage == INITSTAGE_LOCAL) {
+    if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
+        localAddr = getParentModule()->par("address");
         localPort = par("port");
         // EV_DEBUG << " localport: " << localPort << endl;
-    }
-    else if (stage == INITSTAGE_ACCEPT) {
-        localAddr = getParentModule()->par("address");
-        if (localAddr != INVALID_ADDRESS) {
+        if (localAddr != INVALID_ADDRESS && localPort != INVALID_PORT) {
             connection = createConnection();
             auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
             check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);

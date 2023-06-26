@@ -14,7 +14,6 @@ module UnicastSenderApp extends UnicastApp {
        @class(UnicastSenderApp);
        port = default(1000);
         int destAddress = default(-1);
-        string destAddresses = default("");
         int destPort = default(1001);
         int messageLength @unit(B) = default(1kB);
         int numRounds = default(1);
@@ -56,13 +55,9 @@ module ATPWorker extends UnicastSenderApp {
 module ParameterServerApp extends UnicastEchoApp {
     parameters:
         port = default(2001);
+        int jobId;
+        int groupAddress;
         @class(ParameterServerApp);
         @signal[aggRatio](type=double);
         @statistic[aggRatio](title="aggegation ratio of a packet"; source=aggRatio; record=count,mean,max,min,vector; interpolationmode=linear);
 }
-
-//module TimerWorkerApp extends WorkerApp {
-//    parameters:
-//        double initDwellTime @unit(s) = default(1us);
-//        @class(TimerWorkerApp);
-//}
