@@ -36,8 +36,9 @@ void GlobalGroupManager::reportFlowStop(IntAddress groupAddr, simtime_t roundSto
 void GlobalGroupManager::initialize(int stage)
 {
     GlobalView::initialize(stage);
-    if (stage == INITSTAGE_COLLECT) {
-        prepareAggGroup(par("groupPolicy").stringValue());
+    if (stage == INITSTAGE_ASSIGN) {
+        placeJobs(par("placementPolicy").stringValue());
+        calcAggTree(par("aggTreeType").stringValue());
     }
     if (stage == INITSTAGE_LAST)
         ASSERT(topo);

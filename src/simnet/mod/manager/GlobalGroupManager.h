@@ -70,9 +70,10 @@ private:
 
 private:
     // for aggregation job
-    void prepareAggGroup(const char* policyName);
-    
-    // * jobId and groupAddr are automatically generated
+    void placeJobs(const char* policyName);
+    void createJobApps(int jobId);
+    void calcAggTree(const char* policyName);
+    // * jobId is the job's index in jobInfodb
     void insertJobInfodb(const std::vector<int>& workers, const std::vector<int>& pses);
     void buildSteinerTree(cTopology& tree, const std::vector<int>& members, int root);
     // TODO make this function more clearly
