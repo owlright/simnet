@@ -241,6 +241,42 @@ void GlobalGroupManager::placeJobs(const char *policyName)
     }
 }
 
+void GlobalGroupManager::createJobApps(int jobId)
+{
+    auto job = jobInfodb.at(jobId);
+    auto workers = job->workers;
+    auto nWorkers = job->numWorkers;
+    auto nPSes = job->numPSes;
+    for (auto i = 0; i < nWorkers + nPSes; i++) {
+        auto isWorker = i < nWorkers;
+        auto nodeAddress =  (isWorker ? job->workers[i] : job->PSes[i-nWorkers]);
+        auto node = addr2mod.at(nodeAddress);
+        auto appExistSize = node->getSubmoduleVectorSize("apps");
+        node->setSubmoduleVectorSize("apps", appExistSize + 1);
+        auto appType = (isWorker ? "simnet.app.SRWorker" : "simnet.app.ParameterServerApp");
+        cModule *app = cModuleType::get(appType)->create("apps", node, appExistSize);
+        app->par("port") = 2000 + appExistSize;
+        app->par("jobId") = jobId;
+        if (isWorker) {
+            app->par("workerId") = i;
+            app->par("numWorkers") = nWorkers;
+            app->par("destAddress") = job->PSes[0];
+        } else {
+            app->par("groupAddress") = job->multicastAddresses[0];
+            app->par("psId") = i - nWorkers;
+        }
+        app->finalizeParameters();
+        app->buildInside();
+        app->scheduleStart(simTime());
+        auto inGate = app->gate("in");
+        auto outGate = app->gate("out");
+        auto at = node->getSubmodule("at");
+        at->setGateSize("localIn", at->gateSize("localIn") + 1);
+        at->setGateSize("localOut", at->gateSize("localOut") + 1);
+        at->gate("localOut",  at->gateSize("localIn")-1)->connectTo(inGate);
+        outGate->connectTo(at->gate("localIn", at->gateSize("localOut")-1));
+    }
+}
 
 void GlobalGroupManager::insertJobInfodb(const std::vector<int>& workers, const std::vector<int>& pses)
 {

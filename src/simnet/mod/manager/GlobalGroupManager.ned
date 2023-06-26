@@ -5,7 +5,10 @@ simple GlobalGroupManager
     parameters:
         string groupSwitchFile = default("");
         string groupHostFile = default("");
-        string groupPolicy = default("");
+        string placementPolicy = default("random");
+        int numGroups @mutable = 5;
+        int numWorkers @mutable = 6;
+        int numPSes @mutable = 1;
         @class(GlobalGroupManager);
         @display("i=block/cogwheel");
         @signal[group*-RoundFinishTime](type=simtime_t); // note the wildcard
