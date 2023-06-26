@@ -24,7 +24,7 @@ void ATPWorker::initialize(int stage)
 {
     UnicastSenderApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        isUnicastSender = false;
+
     }
     else if (stage == INITSTAGE_ACCEPT) {
         // if (groupManager!=nullptr) {
