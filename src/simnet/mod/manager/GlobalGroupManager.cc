@@ -112,8 +112,6 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
         throw cRuntimeError("%s not found!", fileName);
     } else {
         std::string line;
-        int jobId = 0; // which is also the index in database
-        IntAddress mcastAddr = GROUPADDR_START + 1;
         EV << std::left << std::setw(50) << "workers" << std::setw(30) << "PSes" << endl;
         while (getline(hostConfig, line, '\n')) {
             if (line.empty() || line[0] == '#')
@@ -127,7 +125,7 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             auto PSAddrsStr = tokens[1].c_str();
             auto PSAddrs = cStringTokenizer(PSAddrsStr, "[,]").asIntVector();
             EV << std::setw(50) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
-            insertJobInfodb(mcastAddr++, workerAddrs, PSAddrs);
+            insertJobInfodb(workerAddrs, PSAddrs);
             createJobInfoWithIndex(jobId++, workerAddrs, PSAddrs);
         }
     }
@@ -330,16 +328,29 @@ void GlobalGroupManager::prepareAggGroup(const char* policyName)
     }
 }
 
-void GlobalGroupManager::insertJobInfodb(int groupAddress, const std::vector<int>& workers, const std::vector<int>& pses)
+void GlobalGroupManager::insertJobInfodb(const std::vector<int>& workers, const std::vector<int>& pses)
 {
-    std::shared_ptr<JobHostInfo> entry(new JobHostInfo());
-    entry->jobId = jobInfodb.size();
+    PortNumber port = 2001;
+    std::vector<int> workerPorts;
+    for (auto i = 0; i < workers.size(); i++) {
+        workerPorts.push_back(port++);
+    }
+    std::vector<int> PSPorts;
+    std::vector<int> multicastAddrs;
+    for (auto i = 0; i < pses.size(); i++) {
+        PSPorts.push_back(port++);
+        multicastAddrs.push_back(getNextGroupAddr());
+    }
+    auto entry(new JobHostInfo());
+    entry->jobId = getNextJobId();
     entry->workers = workers;
     entry->PSes = pses;
+    entry->workerPorts = workerPorts;
+    entry->PSPorts = PSPorts;
     entry->numWorkers = workers.size();
     entry->numPSes = pses.size();
-    entry->multicastAddress = groupAddress++;
-    jobInfodb.push_back(entry);
+    entry->multicastAddresses = multicastAddrs;
+    jobInfodb[entry->jobId] = entry;
 }
 
 void GlobalGroupManager::createJobInfoWithIndex(int jobId, const std::vector<int> &workers, const std::vector<int> &pses)

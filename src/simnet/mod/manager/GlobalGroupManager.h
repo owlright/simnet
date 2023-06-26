@@ -11,9 +11,11 @@ struct JobHostInfo
     uint16_t jobId;
     std::vector<int> PSes;
     std::vector<int> workers;
+    std::vector<int> workerPorts;
+    std::vector<int> PSPorts;
     int numWorkers;
     int numPSes;
-    IntAddress multicastAddress;
+    std::vector<int> multicastAddresses;
 };
 
 struct JobSwitchInfo
@@ -62,6 +64,10 @@ private:
     void readSwitchConfig(const char * fileName);
     void readHostConfig(const char * fileName);
     simsignal_t createSignalForGroup(IntAddress group);
+    int getCurrentJobId() const {return jobId;}
+    int getCurrentGroupAddr() const {return groupAddress;}
+    int getNextJobId() {return ++jobId;}
+    int getNextGroupAddr() {return ++groupAddress;}
 
 private:
     std::unordered_map<IntAddress, JobInfoWithIndex* > jobInfo;
@@ -73,13 +79,15 @@ private:
     };
     std::unordered_map<IntAddress, groupRoundFinishInfo*> groupRoundStartTime;
 private:
-    std::vector<std::shared_ptr<JobHostInfo>> jobInfodb;
+    int jobId{0};
+    int groupAddress{GROUPADDR_START};    std::unordered_map<int, JobHostInfo*> jobInfodb;
 
 private:
     // for aggregation job
     void prepareAggGroup(const char* policyName);
-    // * jobId is the job's index in jobInfodb
-    void insertJobInfodb(int groupAddress, const std::vector<int>& workers, const std::vector<int>& pses);
+    
+    // * jobId and groupAddr are automatically generated
+    void insertJobInfodb(const std::vector<int>& workers, const std::vector<int>& pses);
     void createJobInfoWithIndex(int jobId, const std::vector<int>& workers, const std::vector<int>& pses);
     void buildSteinerTree(cTopology& tree, const std::vector<int>& members, int root);
     // TODO make this function more clearly
