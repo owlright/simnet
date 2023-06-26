@@ -3,15 +3,6 @@
 
 Define_Module(GlobalGroupManager);
 
-const JobInfoWithIndex*
-GlobalGroupManager::getJobInfo(IntAddress hostAddr) const
-{
-    auto it = jobInfo.find(hostAddr);
-    if (it != jobInfo.end())
-        return it->second;
-    return nullptr;
-}
-
 void GlobalGroupManager::reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime)
 {
     if (groupRoundStartTime.find(groupAddr) == groupRoundStartTime.end()) {
@@ -126,7 +117,6 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             auto PSAddrs = cStringTokenizer(PSAddrsStr, "[,]").asIntVector();
             EV << std::setw(50) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
             insertJobInfodb(workerAddrs, PSAddrs);
-            createJobInfoWithIndex(jobId++, workerAddrs, PSAddrs);
         }
     }
 }
@@ -351,28 +341,4 @@ void GlobalGroupManager::insertJobInfodb(const std::vector<int>& workers, const 
     entry->numPSes = pses.size();
     entry->multicastAddresses = multicastAddrs;
     jobInfodb[entry->jobId] = entry;
-}
-
-void GlobalGroupManager::createJobInfoWithIndex(int jobId, const std::vector<int> &workers, const std::vector<int> &pses)
-{
-    for (auto i = 0; i < workers.size(); i++)
-    {
-        auto hostEntry = new JobInfoWithIndex();
-        hostEntry->hostinfo = jobInfodb.at(jobId);
-        hostEntry->isWorker = true;
-        hostEntry->index = i;
-        auto addr = workers.at(i);
-        ASSERT(jobInfo.find(addr) == jobInfo.end()); // TODO one host only in one group, but multiple workers
-        jobInfo[addr] = hostEntry;
-    }
-    for (auto i = 0; i < pses.size(); i++)
-    {
-        auto hostEntry = new JobInfoWithIndex();
-        hostEntry->hostinfo = jobInfodb.at(jobId);
-        hostEntry->isWorker = false;
-        hostEntry->index = i;
-        auto addr = pses.at(i);
-        ASSERT(jobInfo.find(addr) == jobInfo.end()); // ! server and worker can't be together
-        jobInfo[addr] = hostEntry;
-    }
 }
