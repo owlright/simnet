@@ -24,7 +24,7 @@ public:
     void setSegmentSize(B segmentSize) {this->segmentSize=segmentSize;};
     virtual void reset() = 0;
     const std::unordered_map<SeqNumber, int>& getDisorders() const {return disorderSeqs;}
-    
+
 protected:
     virtual void initialize(int stage) override{};
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
