@@ -21,6 +21,7 @@ void Node::initialize(int stage)
                 EV_TRACE << endl;
                 if (app->hasPar("destAddress") &&
                         app->par("destAddress").intValue() == INVALID_ADDRESS) {
+                    EV_WARN << "node " << address << " has idle sender " << app->getClassAndFullName() << endl;
                     app->callFinish();
                     app->deleteModule();
                 }

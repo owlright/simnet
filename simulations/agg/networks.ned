@@ -5,6 +5,7 @@ import simnet.mod.Switch;
 import ned.DatarateChannel;
 import simnet.mod.manager.GlobalRouteManager;
 import simnet.mod.manager.GlobalGroupManager;
+import simnet.mod.manager.TrafficPatternManager;
 
 channel C extends DatarateChannel
 {
@@ -197,6 +198,9 @@ network FatTree
         }
         groupManager: GlobalGroupManager {
             @display("p=428.01373,81.6375");
+        }
+        tpManager: TrafficPatternManager {
+            @display("p=428.01373,237.915");
         }
 
     connections:
