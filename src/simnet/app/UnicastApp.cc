@@ -8,18 +8,16 @@ void UnicastApp::initialize(int stage)
     if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
         localAddr = getParentModule()->par("address");
         localPort = par("port");
-        // EV_DEBUG << " localport: " << localPort << endl;
-        if (localAddr != INVALID_ADDRESS && localPort != INVALID_PORT) {
-            connection = createConnection();
-            auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
-            check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
+        if (connection == nullptr) { // ! only create once
+            if (localAddr != INVALID_ADDRESS && localPort != INVALID_PORT) {
+                connection = createConnection();
+                auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
+                check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
+            }
+            else if (stage == INITSTAGE_ACCEPT) {
+                throw cRuntimeError("the localAddr %" PRId64 " or localPort %u is still invalid.", localAddr, localPort);
+            }
         }
-    }
-    else if (stage==INITSTAGE_LAST) {
-       if (isIdle()) {
-           this->callFinish();
-           this->deleteModule();
-       }
     }
 }
 
