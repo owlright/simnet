@@ -16,7 +16,7 @@ IntAddress TrafficPatternManager::getDestAddr(IntAddress srcAddr) const
     }
     if (dst == INVALID_ADDRESS)
     {
-        throw cRuntimeError("TrafficPatternManager::getDestAddr(%lld): invalid address!", srcAddr);
+        throw cRuntimeError("TrafficPatternManager::getDestAddr(%" PRId64 "): invalid address!", srcAddr);
     }
     return dst;
 }

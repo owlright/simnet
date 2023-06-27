@@ -81,7 +81,7 @@ std::vector<int> Routing::getReversePortIndexes(const AddrSeqType& addrSeqKey) c
 {
 
     if (incomingPortIndexes.find(addrSeqKey) == incomingPortIndexes.end())
-        throw cRuntimeError("Routing::getReversePortIndexes: group %lld seq %lld not found!",
+        throw cRuntimeError("Routing::getReversePortIndexes: group %" PRId64 " seq %" PRId64 "not found!",
                                     addrSeqKey.first, addrSeqKey.second);
     return incomingPortIndexes.at(addrSeqKey);
 }
@@ -107,11 +107,11 @@ simtime_t Routing::getUsedTime() const
 simsignal_t Routing::createBufferSignalForGroup(IntAddress group)
 {
     char signalName[32];
-    sprintf(signalName, "group%lld-usedBuffer", group);
+    sprintf(signalName, "group %" PRId64 "usedBuffer", group);
     simsignal_t signal = registerSignal(signalName);
 
     char statisticName[32];
-    sprintf(statisticName, "group%lld-usedBuffer", group);
+    sprintf(statisticName, "group %" PRId64 "-usedBuffer", group);
     cProperty *statisticTemplate =
         getProperties()->get("statisticTemplate", "groupUsedBuffer");
     getEnvir()->addResultRecorders(this, signal, statisticName, statisticTemplate);
@@ -328,7 +328,7 @@ void Routing::handleMessage(cMessage *msg)
     }
     else
     {
-        throw cRuntimeError("%lld is not a router", myAddress);
+        throw cRuntimeError("%" PRId64 " is not a router", myAddress);
     }
 
 }
@@ -337,7 +337,7 @@ void Routing::finish()
 {
     if (isSwitch) {
         char buf[30];
-        sprintf(buf, "switch-%lld-compEff", myAddress);
+        sprintf(buf, "switch-%" PRId64 "-compEff", myAddress);
         // I dont want the time's unit too big, otherwise the efficiency will be too big
         recordScalar(buf, getComputationCount() / double(getUsedTime().inUnit(SIMTIME_US))); // TODO will resource * usedTime better?
     }

@@ -128,11 +128,11 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
 simsignal_t GlobalGroupManager::createSignalForGroup(IntAddress group)
 {
     char signalName[32];
-    sprintf(signalName, "group%lld-RoundFinishTime", group);
+    sprintf(signalName, "group%" PRId64 "RoundFinishTime", group);
     simsignal_t signal = registerSignal(signalName);
 
     char statisticName[32];
-    sprintf(statisticName, "group%lld-RoundFinishTime", group);
+    sprintf(statisticName, "group%" PRId64 "RoundFinishTime", group);
     cProperty *statisticTemplate =
         getProperties()->get("statisticTemplate", "groupRoundFinishTime");
     getEnvir()->addResultRecorders(this, signal, statisticName, statisticTemplate);

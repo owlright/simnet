@@ -66,7 +66,7 @@ Packet* ATPWorker::createDataPacket(SeqNumber seq, B packetBytes)
 {
     IntAddress dest = destAddr;
     char pkname[40];
-    sprintf(pkname, " %lld-to-%lld-seq%lld",
+    sprintf(pkname, "ATP-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
             localAddr, dest, seq);
     auto pk = new ATPPacket(pkname);
     pk->setRound(currentRound);

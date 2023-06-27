@@ -111,7 +111,7 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
 Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
 {
     char pkname[40];
-    sprintf(pkname, "MuACK-%lld-seq%lld",
+    sprintf(pkname, "MuACK-%" PRId64 "-seq%" PRId64,
             localAddr, pk->getSeqNumber());
     auto packet = new AggPacket(pkname);
     packet->setSeqNumber(pk->getSeqNumber());

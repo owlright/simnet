@@ -13,7 +13,7 @@ cTopology::Node* GlobalRouteManager::getNode(IntAddress address) const
 {
     auto its = addr2node.find(address);
     if (its == addr2node.end()) {
-       throw cRuntimeError("address %lld does not exist!", address);
+       throw cRuntimeError("address %" PRId64 " does not exist!", address);
     }
     return topo->getNode(its->second);
 }

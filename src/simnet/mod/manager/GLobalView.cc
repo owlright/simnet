@@ -45,7 +45,7 @@ void GlobalView::collectNodes(cTopology *topo)
             node->par("address") = address;
         }
         if (used.find(address) != used.end()){
-            throw cRuntimeError("GlobalView::collectNodes: duplicate address %lld", address);
+            throw cRuntimeError("GlobalView::collectNodes: duplicate address %" PRId64, address);
         }
         used.insert(address);
         auto isHost = node->getProperties()->get("host") != nullptr;

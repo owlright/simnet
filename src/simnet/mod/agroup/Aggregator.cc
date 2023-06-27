@@ -17,7 +17,7 @@ void Aggregator::checkThenAddWorkerId(const Packet *pk)
     auto pkt = check_and_cast<const AggPacket*>(pk);
     for (auto& w:pkt->getRecord()) {
         if (std::find(workerRecord.begin(), workerRecord.end(), w) != workerRecord.end()) {
-            throw cRuntimeError("worker %lld is already aggregated.", w);
+            throw cRuntimeError("worker %" PRId64 " is already aggregated.", w);
         }
         workerRecord.push_back(w);
     }

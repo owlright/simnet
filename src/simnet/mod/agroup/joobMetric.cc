@@ -9,11 +9,11 @@ jobMetric::jobMetric(cModule* fromModule, IntAddress group)
 void jobMetric::createBufferSignalForGroup(IntAddress group)
 {
     char signalName[32];
-    sprintf(signalName, "group%lld-usedBuffer", group);
+    sprintf(signalName, "group%" PRId64 "-usedBuffer", group);
     simsignal_t signal = module->registerSignal(signalName);
 
     char statisticName[32];
-    sprintf(statisticName, "group%lld-usedBuffer", group);
+    sprintf(statisticName, "group%" PRId64 "usedBuffer", group);
     cProperty *statisticTemplate =
         module->getProperties()->get("statisticTemplate", "groupUsedBuffer");
     getEnvir()->addResultRecorders(module, signal, statisticName, statisticTemplate);
