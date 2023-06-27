@@ -23,7 +23,7 @@ class Routing : public cSimpleModule
             return x.first ^ x.second;
         }
     };
-    typedef std::pair<IntAddress, SeqNumber> AddrSeqType;
+    typedef std::pair<IntAddress, SeqNumber> MulticastID;
 
 public:
     virtual ~Routing();
@@ -52,11 +52,11 @@ private:
     B usedBuffer{0};
     int numAggregators{0};
     B agtrSize;
-    std::unordered_set<AddrSeqType, hashFunction> markNotAgg;
-    std::unordered_map<AddrSeqType, std::vector<int>, hashFunction> incomingPortIndexes;
+    std::unordered_set<MulticastID, hashFunction> markNotAgg;
+    std::unordered_map<MulticastID, std::vector<int>, hashFunction> incomingPortIndexes;
     std::unordered_map<IntAddress, jobMetric*> groupMetricTable;
     std::vector<Aggregator*> aggregators;
-    std::unordered_map<AddrSeqType, int64_t, hashFunction> seqDeadline;
+    std::unordered_map<MulticastID, int64_t, hashFunction> seqDeadline;
 
 private:
     // ! self messages
@@ -81,12 +81,12 @@ private:
     simtime_t getUsedTime() const;
 
     // ! for aggregation
-    std::vector<int> getReversePortIndexes(const AddrSeqType& groupSeqKey) const;
+    std::vector<int> getReversePortIndexes(const MulticastID& groupSeqKey) const;
     [[deprecated]] Packet* doAggregation(Packet* pk);
     Packet* aggregate(AggPacket* pk);
     [[deprecated]] bool addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree);
     [[deprecated]] bool tryAddSeqEntry(const Packet* pk);
-    void recordIncomingPorts(AddrSeqType& groupSeqKey, int port);
+    void recordIncomingPorts(MulticastID& groupSeqKey, int port);
 
 protected:
     virtual void initialize(int stage) override;

@@ -77,7 +77,7 @@ void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
     delete pk;
 }
 
-std::vector<int> Routing::getReversePortIndexes(const AddrSeqType& addrSeqKey) const
+std::vector<int> Routing::getReversePortIndexes(const MulticastID& addrSeqKey) const
 {
 
     if (incomingPortIndexes.find(addrSeqKey) == incomingPortIndexes.end())
@@ -237,7 +237,7 @@ Packet* Routing::aggregate(AggPacket *apk)
     }
 }
 
-void Routing::recordIncomingPorts(AddrSeqType& addrSeqKey, int port)
+void Routing::recordIncomingPorts(MulticastID& addrSeqKey, int port)
 {
     // TODO maybe use unordered_set?
     bool found = false;
@@ -259,7 +259,7 @@ void Routing::handleMessage(cMessage *msg)
     {
         int count = 0;
         for (auto& groupSeqTimeout : seqDeadline) {
-            AddrSeqType groupSeq = groupSeqTimeout.first;
+            MulticastID groupSeq = groupSeqTimeout.first;
             auto group = groupSeq.first;
             auto seq = groupSeq.second;
             auto timeout = SimTime(groupSeqTimeout.second, SIMTIME_NS);

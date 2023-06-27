@@ -115,7 +115,7 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
             localAddr, pk->getSeqNumber());
     auto packet = new AggPacket(pkname);
     packet->setSeqNumber(pk->getSeqNumber());
-    packet->setKind(PacketType::ACK);
+    packet->setKind(MACK);
     packet->setByteLength(64);
     packet->setReceivedBytes(pk->getByteLength());
     packet->setStartTime(pk->getStartTime());
