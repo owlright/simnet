@@ -265,13 +265,16 @@ void GlobalGroupManager::createJobApps(int jobId)
         node->setSubmoduleVectorSize("apps", appExistSize + 1);
         auto appType = (isWorker ? "simnet.app.SRWorker" : "simnet.app.ParameterServerApp");
         cModule *app = cModuleType::get(appType)->create("apps", node, appExistSize);
-        app->par("port") = 2000 + appExistSize;
+
         app->par("jobId") = jobId;
         if (isWorker) {
             app->par("workerId") = i;
             app->par("numWorkers") = nWorkers;
+            app->par("port") = job->workerPorts[i];
             app->par("destAddress") = job->PSes[0];
+            app->par("destPort") = job->PSPorts[0];
         } else {
+            app->par("port") = job->PSPorts[0];
             app->par("groupAddress") = job->multicastAddresses[0];
             // app->par("psId") = i - nWorkers;
         }
