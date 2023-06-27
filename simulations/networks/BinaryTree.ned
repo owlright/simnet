@@ -1,6 +1,5 @@
 package simnet.simulations.networks;
 
-import simnet.mod.INode;
 import simnet.mod.Host;
 import ned.DatarateChannel;
 import simnet.mod.manager.GlobalRouteManager;
@@ -18,7 +17,7 @@ network BinaryTree
             datarate = 10Gbps;
         }
     submodules:
-        V[2^height]: <default("Host")> like INode {
+        V[2^height]: Host {
             address = index;
         }
 		routeManager: GlobalRouteManager;
