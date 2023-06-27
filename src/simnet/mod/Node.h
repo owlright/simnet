@@ -14,4 +14,7 @@ protected:
     virtual void handleParameterChange(const char *parameterName) override;
     virtual void refreshDisplay() const override;
     virtual int numInitStages() const override { return Stage::NUM_INIT_STAGES; }
+
+private:
+    bool isHost;
 };

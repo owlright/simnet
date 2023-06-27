@@ -6,6 +6,28 @@ void Node::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
         address = par("address").intValue();
+        isHost = getProperties()->get("host") != nullptr;
+    }
+    else if (stage == INITSTAGE_LAST) {
+        if (isHost) {
+            auto apps = getSubmoduleArray("apps");
+            std::vector<const char*> parNames{"port", "destAddress", "destPort"};
+            for (auto app:apps) {
+                for (auto parname: parNames) {
+                    if (app->hasPar(parname)) {
+                        EV_TRACE << app->par(parname) << " ";
+                    }
+                }
+                EV_TRACE << endl;
+                if (app->hasPar("destAddress") &&
+                        app->par("destAddress").intValue() == INVALID_ADDRESS) {
+                    app->callFinish();
+                    app->deleteModule();
+                }
+            }
+
+        }
+
     }
 }
 

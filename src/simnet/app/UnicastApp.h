@@ -12,8 +12,6 @@ protected:
     Connection* connection{nullptr}; // this connection is just for listen incoming connections.
     IntAddress localAddr{INVALID_ADDRESS};
     PortNumber localPort{INVALID_PORT};
-    const bool isIdle() const {return idle;};
-    void setIdle() {idle = true;}
 
 public:
     virtual ~UnicastApp() {};
@@ -27,8 +25,5 @@ protected:
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
 
     virtual Connection* createConnection(int connId=-1);
-
-private:
-    bool idle{false};
 
 };

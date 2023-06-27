@@ -104,9 +104,6 @@ Packet* ATPWorker::createDataPacket(SeqNumber seq, B packetBytes)
 
 void ATPWorker::finish()
 {
-    if (isIdle()) {
-        EV << "this ATPWorker is idle, so delete it" << endl;
-    } else {
-        UnicastSenderApp::finish();
-    }
+    UnicastSenderApp::finish();
+
 }

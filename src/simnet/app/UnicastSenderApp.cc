@@ -18,8 +18,8 @@ void UnicastSenderApp::finish() {
     if (currentRound != numRounds) {
         EV_WARN << "Complete " << currentRound << " rounds,  not reach " << numRounds << endl;
     }
-    for (auto&it: cong->getDisorders()) {
-        EV_WARN << it.first << " " << it.second << endl;
+    for (auto& seq: disorders) {
+        EV_WARN << seq << endl;
     }
 //    for (auto&it: confirmedDisorders) {
 //        EV_WARN << it << " "<< endl;
@@ -167,6 +167,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     if (disorders.find(seq) != disorders.end()) { // first time we receive the ack
         confirmedRetransBytes += messageLength; // ! TODO what if it's the last packet?
         confirmedDisorders.insert(seq);
+        disorders.erase(seq);
     }
     else if (confirmedDisorders.find(seq) != confirmedDisorders.end()) {
         // the resend packets's ack received more than once

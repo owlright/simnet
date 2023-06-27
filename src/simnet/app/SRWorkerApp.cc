@@ -115,10 +115,6 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
 
 void SRWorker::finish()
 {
-    if (isIdle()) {
-        EV << "this SRWorker is idle, so delete it" << endl;
-    } else {
-        UnicastSenderApp::finish();
-    }
+    UnicastSenderApp::finish();
 }
 

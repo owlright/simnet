@@ -131,7 +131,5 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
 
 void ParameterServerApp::finish()
 {
-    if (isIdle()) {
-        EV << "this parameter server is idle, so delete it" << endl;
-    }
+
 }
