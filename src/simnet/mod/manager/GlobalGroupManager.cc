@@ -215,7 +215,8 @@ void GlobalGroupManager::placeJobs(const char *policyName)
 {
     if (strcmp(policyName, "manual") == 0) {
         readHostConfig(par("groupHostFile").stringValue());
-    } else if (strcmp(policyName, "random") == 0) {
+    }
+    else if (strcmp(policyName, "random") == 0) {
         int numGroups = par("numGroups").intValue();
         int numWorkers = par("numWorkers").intValue();
         int numPSes = par("numPSes").intValue();
@@ -241,6 +242,12 @@ void GlobalGroupManager::placeJobs(const char *policyName)
             insertJobInfodb(workers, pses);
             createJobApps(getCurrentJobId());
         }
+    }
+    else if (strcmp(policyName, "") == 0) {
+        // do nothing
+    }
+    else {
+        throw cRuntimeError("invalid placement policy.");
     }
 }
 
@@ -336,9 +343,11 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             }
         }
     }
-    else
-    {
-        throw cRuntimeError("you must specify a policy.");
+    else if (strcmp(policyName, "") == 0) {
+        // do nothing
+    }
+    else {
+        throw cRuntimeError("invalid aggTreeType");
     }
 }
 
