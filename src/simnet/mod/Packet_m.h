@@ -35,7 +35,8 @@ using omnetpp::opp_string;
  *     DATA = 1;
  *     AGG = 2;
  *     REMIND = 3;
- *     NOUSE = 4;
+ *     MACK = 4; // multicast ack
+ *     NOUSE = 5;
  * }
  * </pre>
  */
@@ -44,14 +45,15 @@ enum PacketType {
     DATA = 1,
     AGG = 2,
     REMIND = 3,
-    NOUSE = 4
+    MACK = 4,
+    NOUSE = 5
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->pack(static_cast<int>(e)); }
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:16</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:17</tt> by opp_msgtool.
  * <pre>
  * packet EthernetMacHeader
  * {
@@ -99,7 +101,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const EthernetMacHeader& ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, EthernetMacHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:25</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:26</tt> by opp_msgtool.
  * <pre>
  * class IPv4Header extends EthernetMacHeader
  * {
@@ -201,7 +203,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IPv4Header& obj) {obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv4Header& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:44</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:45</tt> by opp_msgtool.
  * <pre>
  * class IPv6Header extends EthernetMacHeader
  * {
@@ -253,7 +255,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IPv6Header& obj) {obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv6Header& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:57</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:58</tt> by opp_msgtool.
  * <pre>
  * class SegmentRoutingHeader extends IPv6Header
  * {
@@ -324,19 +326,19 @@ class SegmentRoutingHeader : public ::IPv6Header
 		virtual void setSegmentsArraySize(size_t size) {segments.resize(size);}
 		virtual void setFunsArraySize(size_t size) {funs.resize(size);}
 		virtual void setArgsArraySize(size_t size) {args.resize(size);}
-		
+
 		virtual size_t getSegmentsArraySize() const {return segments.size();}
 		virtual size_t getFunsArraySize() const {return funs.size();}
 		virtual size_t getArgsArraySize() const {return args.size();}
-		
+
 		virtual int64_t getSegments(size_t k) {return segments.at(k);}
 		virtual const opp_string& getFuns(size_t k) {return funs.at(k);}
 		virtual const opp_string& getArgs(size_t k) {return args.at(k);}
-		
+
 		virtual void setSegments(size_t k, int64_t addr) {segments.at(k) = addr;}
 		virtual void setFuns(size_t k, const char* fun) {funs.at(k) = fun;}
 		virtual void setArgs(size_t k, const char* arg) {args.at(k) = arg;}
-		
+
 		// new methods:
 		virtual void setSIDSize(size_t size) {
 		    setSegmentsArraySize(size);
@@ -352,7 +354,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const SegmentRoutingHeader&
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, SegmentRoutingHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:72</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/Packet.msg:73</tt> by opp_msgtool.
  * <pre>
  * class Packet extends SegmentRoutingHeader
  * {

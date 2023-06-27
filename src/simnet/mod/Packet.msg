@@ -9,7 +9,8 @@ enum PacketType
     DATA     = 1;
     AGG      = 2;
     REMIND   = 3;
-    NOUSE    = 4;
+    MACK     = 4; // multicast ack
+    NOUSE    = 5;
 };
 
 packet EthernetMacHeader
@@ -18,7 +19,7 @@ packet EthernetMacHeader
     uint32_t destinationMacAddr; // 6B
     uint32_t sourceMacAddr; // 6B
     uint32_t etherType; // 4B
-    
+
 }
 
 class IPv4Header extends EthernetMacHeader
@@ -96,19 +97,19 @@ cplusplus(SegmentRoutingHeader) {{
 		virtual void setSegmentsArraySize(size_t size) {segments.resize(size);}
 		virtual void setFunsArraySize(size_t size) {funs.resize(size);}
 		virtual void setArgsArraySize(size_t size) {args.resize(size);}
-		
+
 		virtual size_t getSegmentsArraySize() const {return segments.size();}
 		virtual size_t getFunsArraySize() const {return funs.size();}
 		virtual size_t getArgsArraySize() const {return args.size();}
-		
+
 		virtual int64_t getSegments(size_t k) {return segments.at(k);}
 		virtual const opp_string& getFuns(size_t k) {return funs.at(k);}
 		virtual const opp_string& getArgs(size_t k) {return args.at(k);}
-		
+
 		virtual void setSegments(size_t k, int64_t addr) {segments.at(k) = addr;}
 		virtual void setFuns(size_t k, const char* fun) {funs.at(k) = fun;}
 		virtual void setArgs(size_t k, const char* arg) {args.at(k) = arg;}
-		
+
 		// new methods:
 		virtual void setSIDSize(size_t size) {
 		    setSegmentsArraySize(size);

@@ -420,7 +420,7 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         field -= base->getFieldCount();
     }
     static unsigned int fieldTypeFlags[] = {
-        0,    // FIELD_aggPolicy
+        FD_ISEDITABLE,    // FIELD_aggPolicy
         FD_ISEDITABLE,    // FIELD_round
         FD_ISEDITABLE,    // FIELD_aggregatorIndex
         FD_ISEDITABLE,    // FIELD_jobId
@@ -628,6 +628,7 @@ void AggPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int fie
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
+        case FIELD_aggPolicy: pp->setAggPolicy((AggPolicy)string2enum(value, "AggPolicy")); break;
         case FIELD_round: pp->setRound(string2long(value)); break;
         case FIELD_aggregatorIndex: pp->setAggregatorIndex(string2long(value)); break;
         case FIELD_jobId: pp->setJobId(string2int64(value)); break;
@@ -679,6 +680,7 @@ void AggPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int 
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
+        case FIELD_aggPolicy: pp->setAggPolicy(static_cast<AggPolicy>(value.intValue())); break;
         case FIELD_round: pp->setRound(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_aggregatorIndex: pp->setAggregatorIndex(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_jobId: pp->setJobId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
