@@ -14,6 +14,9 @@ UnicastSenderApp::~UnicastSenderApp() {
 }
 
 void UnicastSenderApp::finish() {
+    if (destAddr == INVALID_ADDRESS)
+        return;
+
     EV << "retransmit bytes: " << retransmitBytes << endl;
     if (currentRound != numRounds) {
         EV_WARN << "Complete " << currentRound << " rounds,  not reach " << numRounds << endl;
