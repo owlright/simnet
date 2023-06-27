@@ -17,13 +17,40 @@ using namespace omnetpp;
  */
 class Routing : public cSimpleModule
 {
-    struct hashFunction
+    // struct hashFunction
+    // {
+    //     size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
+    //         return x.first ^ x.second;
+    //     }
+    // };
+    typedef struct MulticastID
     {
-        size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
-            return x.first ^ x.second;
+        IntAddress addr;
+        PortNumber port;
+        SeqNumber seq;
+        MulticastID(IntAddress PSAddr, PortNumber PSport, SeqNumber seq)
+        {
+            this->addr = PSAddr;
+            this->port = PSport;
+            this->seq = seq;
+        }
+        // `operator==` is required to compare keys in case of a hash collision
+        bool operator==(const MulticastID &key) const {
+            return addr == key.addr && port == key.port && seq == key.seq;
+        }
+    } MulticastID;
+
+    struct hash_fn
+    {
+        std::size_t operator() (const MulticastID& key) const
+        {
+            auto hashfn = std::hash<int64_t>();
+            std::size_t h1 = hashfn(key.addr);
+            std::size_t h2 = hashfn((int64_t)key.port);
+            std::size_t h3 = hashfn(key.seq);
+            return h1 ^ h2 ^ h3;
         }
     };
-    typedef std::pair<IntAddress, SeqNumber> MulticastID;
 
 public:
     virtual ~Routing();
@@ -52,11 +79,11 @@ private:
     B usedBuffer{0};
     int numAggregators{0};
     B agtrSize;
-    std::unordered_set<MulticastID, hashFunction> markNotAgg;
-    std::unordered_map<MulticastID, std::vector<int>, hashFunction> incomingPortIndexes;
+    std::unordered_set<MulticastID, hash_fn> markNotAgg;
+    std::unordered_map<MulticastID, std::vector<int>, hash_fn> incomingPortIndexes;
     std::unordered_map<IntAddress, jobMetric*> groupMetricTable;
     std::vector<Aggregator*> aggregators;
-    std::unordered_map<MulticastID, int64_t, hashFunction> seqDeadline;
+    std::unordered_map<MulticastID, int64_t, hash_fn> seqDeadline;
 
 private:
     // ! self messages

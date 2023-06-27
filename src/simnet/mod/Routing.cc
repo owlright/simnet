@@ -77,13 +77,12 @@ void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
     delete pk;
 }
 
-std::vector<int> Routing::getReversePortIndexes(const MulticastID& addrSeqKey) const
+std::vector<int> Routing::getReversePortIndexes(const MulticastID& mKey) const
 {
-
-    if (incomingPortIndexes.find(addrSeqKey) == incomingPortIndexes.end())
-        throw cRuntimeError("Routing::getReversePortIndexes: group %" PRId64 " seq %" PRId64 "not found!",
-                                    addrSeqKey.first, addrSeqKey.second);
-    return incomingPortIndexes.at(addrSeqKey);
+    if (incomingPortIndexes.find(mKey) == incomingPortIndexes.end())
+        throw cRuntimeError("Routing::getReversePortIndexes: group: %" PRId64 ":%" PRId64 " seq %" PRId64 "not found!",
+                                    mKey.addr, mKey.port, mKey.seq);
+    return incomingPortIndexes.at(mKey);
 }
 
 int Routing::getComputationCount() const
@@ -133,7 +132,9 @@ void Routing::forwardIncoming(Packet *pk)
         if (fun == "aggregation") {
             auto apk = check_and_cast<AggPacket*>(pk);
             auto jobId = apk->getJobId();
-            recordIncomingPorts(destSeqKey, pk->getArrivalGate()->getIndex());
+            auto PSport = apk->getDestPort();
+            MulticastID mKey = {destAddr, PSport, seq};
+            recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
             if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
                 // the first time we see this group
                 groupMetricTable[jobId] = new jobMetric(this, jobId);
@@ -259,9 +260,9 @@ void Routing::handleMessage(cMessage *msg)
     {
         int count = 0;
         for (auto& groupSeqTimeout : seqDeadline) {
-            MulticastID groupSeq = groupSeqTimeout.first;
-            auto group = groupSeq.first;
-            auto seq = groupSeq.second;
+            MulticastID mKey = groupSeqTimeout.first;
+            auto group = mKey.addr;
+            auto seq = mKey.port;
             auto timeout = SimTime(groupSeqTimeout.second, SIMTIME_NS);
             if (timeout <= simTime()) {
                 count += 1;
