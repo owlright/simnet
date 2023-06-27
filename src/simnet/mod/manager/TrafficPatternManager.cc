@@ -43,10 +43,18 @@ std::vector<IntAddress> TrafficPatternManager::getDestAddrs(IntAddress srcAddr, 
 void TrafficPatternManager::initialize(int stage)
 {
     GlobalView::initialize(stage);
-    if (stage == INITSTAGE_LOCAL)
-    {
+    if (stage == INITSTAGE_LOCAL) {
         trafficPattern = par("trafficPattern").stdstringValue();
     }
-    if (stage == INITSTAGE_LAST)
-        ASSERT(topo);
+    else if (stage == INITSTAGE_ASSIGN) {
+        for (auto nodeId : hostNodes) {
+            auto node = topo->getNode(nodeId)->getModule();
+            for (auto i = 0; i < node->getSubmoduleVectorSize("apps"); i++) {
+                auto app = node->getSubmodule("apps", i);
+                if (strcmp(app->getClassName(), "UnicastSenderApp") == 0 ) {
+                    app->par("destAddress") = getDestAddr(node->par("address"));
+                }
+            }
+        }
+    }
 }

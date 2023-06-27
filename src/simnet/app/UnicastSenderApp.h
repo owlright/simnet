@@ -1,7 +1,7 @@
 #pragma once
 #include "UnicastApp.h"
 #include "simnet/mod/cong/CongAlgo.h"
-#include "simnet/mod/manager/TrafficPatternManager.h"
+
 class UnicastSenderApp : public UnicastApp
 {
 protected:
@@ -16,6 +16,7 @@ protected:
     void initialize(int stage) override;
     void handleMessage(cMessage *msg) override;
     void connectionDataArrived(Connection *connection, cMessage *msg) override;
+    virtual void handleParameterChange(const char *parameterName) override;
 
 protected:
     // configuration
@@ -23,7 +24,6 @@ protected:
     IntAddress destAddr{INVALID_ADDRESS};
     PortNumber destPort{INVALID_PORT};
     int numRounds{0};
-    TrafficPatternManager* tpManager;
 
     B messageLength{0};
     cPar* flowSize{nullptr};

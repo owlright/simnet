@@ -50,9 +50,6 @@ void UnicastSenderApp::initialize(int stage)
         flowInterval = &par("flowInterval");
         jitterBeforeSending = &par("jitterBeforeSending");
 
-        tpManager = findModuleFromTopLevel<TrafficPatternManager>("trafficPatternManager", this);
-        if (tpManager!=nullptr)
-            destAddr = tpManager->getDestAddr(localAddr);
     } else if (stage == INITSTAGE_LAST) {
         if (destAddr >= 0) {
             messageLength = par("messageLength");
@@ -194,6 +191,14 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     }
 
     delete pk;
+}
+
+void UnicastSenderApp::handleParameterChange(const char *parameterName)
+{
+    if (strcmp(parameterName, "destAddress") == 0) {
+        destAddr = par("destAddress");
+        EV_DEBUG << "node " << localAddr << " " << getClassAndFullName() << " accept destAddr " << destAddr << endl;
+    }
 }
 
 Packet* UnicastSenderApp::createDataPacket(SeqNumber seq, B packetBytes)

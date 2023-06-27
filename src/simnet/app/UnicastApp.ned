@@ -13,7 +13,7 @@ module UnicastSenderApp extends UnicastApp {
    parameters:
        @class(UnicastSenderApp);
        port = default(1000);
-        int destAddress = default(-1);
+        int destAddress @mutable = default(-1);
         int destPort = default(1001);
         int messageLength @unit(B) = default(1kB);
         int numRounds = default(1);
