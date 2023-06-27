@@ -4,15 +4,13 @@
 #include "simnet/common/Defs.h"
 using namespace omnetpp;
 
-class GlobalView : public cSimpleModule
+class GlobalView : public cModule
 {
 public:
     virtual ~GlobalView();
 
 protected:
     virtual void initialize(int stage) override;
-    virtual void handleMessage(cMessage * msg) override
-    {throw cRuntimeError("this module doesn't handle messages, it runs only in initialize()");};
     virtual int numInitStages() const override { return Stage::NUM_INIT_STAGES; }
 
 protected:

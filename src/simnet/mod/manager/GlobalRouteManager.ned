@@ -1,6 +1,7 @@
 package simnet.mod.manager;
 
-simple GlobalRouteManager {
+module GlobalRouteManager {
     parameters:
         @display("i=block/cogwheel");
+        @class(GlobalRouteManager);
 }

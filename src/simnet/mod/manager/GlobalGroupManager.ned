@@ -1,6 +1,6 @@
 package simnet.mod.manager;
 
-simple GlobalGroupManager
+module GlobalGroupManager
 {
     parameters:
         string groupSwitchFile = default("");

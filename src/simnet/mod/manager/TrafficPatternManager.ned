@@ -1,6 +1,6 @@
 package simnet.mod.manager;
 
-simple TrafficPatternManager {
+module TrafficPatternManager {
     parameters:
         string trafficPattern = default("");
         @display("i=block/cogwheel");
