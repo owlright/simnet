@@ -55,7 +55,7 @@ void GlobalView::collectNodes(cTopology *topo)
         node2addr[i] = address;
         addr2node[address] = i;
         addr2mod[address] = node;
-        EV_DEBUG<< "node: " << i << " address: " << address << " isHost:"<< (isHost ? "true":"false")<< endl;
+        EV_TRACE << "node: " << i << " address: " << address << " isHost:"<< (isHost ? "true":"false")<< endl;
     }
 }
 

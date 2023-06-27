@@ -32,7 +32,7 @@ void Routing::initialize(int stage)
     }
     if (stage == INITSTAGE_LAST) {
         if (isSwitch) {
-            EV_DEBUG << "router " << myAddress << "'s position is " << position << endl;
+            EV_TRACE << "router " << myAddress << "'s position is " << position << endl;
             // scheduleAfter(collectionPeriod, dataCollectTimer);
         }
     }

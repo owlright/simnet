@@ -266,7 +266,7 @@ void GlobalGroupManager::createJobApps(int jobId)
             app->par("destAddress") = job->PSes[0];
         } else {
             app->par("groupAddress") = job->multicastAddresses[0];
-            app->par("psId") = i - nWorkers;
+            // app->par("psId") = i - nWorkers;
         }
         app->finalizeParameters();
         app->buildInside();
@@ -316,7 +316,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 auto m = senderMods[i];
                 auto path = getShortestPath(tree, tree.getNodeFor(m), tree.getNodeFor(addr2mod.at(ps)));
                 ASSERT(path.size() >= 3);
-                EV_DEBUG << path << endl;
+                EV_DEBUG << path.front() << "->" << path.back() << ":" << path << endl;
                 auto segments = std::vector<int>(path.begin()+1, path.end()-1);
                 // * prepare indegree at each middle node
                 std::vector<int> indegrees;

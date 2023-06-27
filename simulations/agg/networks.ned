@@ -181,8 +181,8 @@ network FatTree
         int halfk = int(k/2);
         int numPods = k;
         int numCores = int(k^2/4);
-
         @display("bgb=929,304");
+
     submodules:
         pods[numPods]: Pod {
             k = parent.k;
@@ -192,9 +192,11 @@ network FatTree
             @display("p=166,32,r,50");
         }
 
-        routeManager: GlobalRouteManager;
+        routeManager: GlobalRouteManager {
+            @display("p=428.01373,157.44374");
+        }
         groupManager: GlobalGroupManager {
-            @display("p=295,106");
+            @display("p=428.01373,81.6375");
         }
 
     connections:
