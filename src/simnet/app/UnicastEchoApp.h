@@ -11,7 +11,7 @@ protected:
     B receivedBytes;
 
 public:
-    ~UnicastEchoApp() {};
+    virtual ~UnicastEchoApp();
 
 protected:
     // inherited functions

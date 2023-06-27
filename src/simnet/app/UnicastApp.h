@@ -14,7 +14,7 @@ protected:
     PortNumber localPort{INVALID_PORT};
 
 public:
-    virtual ~UnicastApp() {};
+    virtual ~UnicastApp() {delete connection; connection = nullptr;};
 
 protected:
     // inherited functions

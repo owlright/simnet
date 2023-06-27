@@ -2,6 +2,14 @@
 
 Define_Module(UnicastEchoApp);
 
+UnicastEchoApp::~UnicastEchoApp()
+{
+    for (auto&it : connections) {
+        delete  it.second;
+        it.second = nullptr;
+    }
+}
+
 void UnicastEchoApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);

@@ -20,6 +20,13 @@ public:
 
     };
 
+public:
+    ~Connection() {
+        // ! do not delete the modules owned by OMNeT++, just set them to nullptr
+        cb = nullptr;
+        gateToUnicast = nullptr;
+    }
+
 private:
     IdNumber connectionId{INVALID_ID};
     IntAddress localAddr{INVALID_ADDRESS};
@@ -29,6 +36,7 @@ private:
 
     ICallback *cb = nullptr;
     cGate *gateToUnicast = nullptr;
+
 public:
     const IntAddress getDestAddr() const {return destAddr;};
     const IntAddress getDestPort() const {return destPort;};
