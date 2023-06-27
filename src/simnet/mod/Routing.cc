@@ -167,8 +167,8 @@ void Routing::forwardIncoming(Packet *pk)
             }
         }
     }
-    if (isGroupAddr(destAddr)) { // TODO very strange, groupAddr is totally useless here
-        auto srcSeqKey = std::make_pair(srcAddr, seq);
+    if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
+        MulticastID srcSeqKey = {srcAddr, pk->getLocalPort(), seq};
         // ! if group does not deal with this group, then its group table is empty
         // ! but it still need to send ACK reversely back to incoming ports
         auto outGateIndexes = getReversePortIndexes(srcSeqKey);
@@ -316,7 +316,7 @@ void Routing::handleMessage(cMessage *msg)
         send(pk, "localOut");
         return;
     }
-    else if (isGroupAddr(destAddr) && !isSwitch)
+    else if (pk->getPacketType() == MACK && !isSwitch)
     {   // TODO FIXME should register multicast member at this interface
         EV_TRACE << "received a multicast packet: "<< pk->getName()  << ", deliver it to upperLayer." << endl;
         send(pk, "localOut");
