@@ -1,8 +1,8 @@
 PROJECT_NAME := simnet
 PROJECT_SRC := src/simnet
 #PROJECT_MAKEFILE := src/Makefile
-PROJECT_TARGET := src/lib$(PROJECT_NAME).dll
-PROJECT_TARGET_DBG := src/lib$(PROJECT_NAME)_dbg.dll
+PROJECT_TARGET := src/$(PROJECT_NAME)
+PROJECT_TARGET_DBG := src/$(PROJECT_NAME)_dbg
 # I don't want automatically find these files.
 # PROJECT_SRC_FILES := $(shell find $(PROJECT_SRC) -name '*.cc' -or -name '*.h' -or -name '*.msg')
 # check system
