@@ -1,22 +1,19 @@
-#include "UnicastSenderApp.h"
+#include "WorkerApp.h"
 #include "simnet/common/ModuleAccess.h"
 #include "simnet/mod/manager/GlobalGroupManager.h"
 #include "simnet/mod/AggPacket_m.h"
 
-class SRWorker : public UnicastSenderApp
+class SRWorker : public WorkerApp
 {
 protected:
     void initialize(int stage) override;
-    void onFlowStart() override;
-    void onFlowStop() override;
+    virtual void onFlowStart() override;
+    virtual void onFlowStop() override;
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
     virtual void finish() override;
 
 private:
     GlobalGroupManager* groupManager;
-    int jobId{-1};
-    int workerId{-1};
-    int numWorkers{-1};
     std::vector<int> segments;
     std::vector<int> fanIndegrees;
 };
@@ -26,11 +23,8 @@ Define_Module(SRWorker);
 
 void SRWorker::initialize(int stage)
 {
-    UnicastSenderApp::initialize(stage);
+    WorkerApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
-        jobId = par("jobId");
-        workerId = par("jobId");
-        numWorkers = par("numWorkers");
 //        destAddr = par("destAddress");
         segments = cStringTokenizer(par("segmentAddrs").stringValue()).asIntVector();
         fanIndegrees = cStringTokenizer(par("fanIndegrees").stringValue()).asIntVector();
@@ -65,15 +59,13 @@ void SRWorker::onFlowStop()
 
 Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
 {
-    // ASSERT(destAddr == -1); // destAddr is useless
-    IntAddress dest = destAddr; // TODO use more PSes
     char pkname[40];
     sprintf(pkname, "sr%" PRId64"-to-%" PRId64 "-seq%" PRId64,
-            localAddr, dest, seq);
+            localAddr, destAddr, seq);
     auto pk = new SRAggPacket(pkname);
     pk->setRound(currentRound);
     pk->setJobId(jobId);
-    pk->setDestAddr(dest);
+    pk->setDestAddr(destAddr);
     pk->setSeqNumber(seq);
     pk->setByteLength(packetBytes);
     pk->setECN(false);

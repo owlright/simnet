@@ -19,9 +19,9 @@ void UnicastSenderApp::finish() {
         return;
 
     EV << "retransmit bytes: " << retransmitBytes << endl;
-    if (currentRound != numRounds) {
-        EV_WARN << getClassAndFullPath() << " " << localAddr << " complete " << currentRound << " rounds,  not reach " << numRounds << endl;
-    }
+    // if (currentRound != numRounds) {
+    //     EV_WARN << getClassAndFullPath() << " " << localAddr << " complete " << currentRound << " rounds,  not reach " << numRounds << endl;
+    // }
     for (auto& seq: disorders) {
         EV_WARN << seq << endl;
     }
@@ -38,35 +38,38 @@ void UnicastSenderApp::initialize(int stage)
         // two ways to set destAddr
         destAddr = par("destAddress");
         destPort = par("destPort");
-        numRounds = par("numRounds");
+        messageLength = par("messageLength");
+        useJitter = par("useJitter");
+        // numRounds = par("numRounds");
         //HACK
         bandwidth = check_and_cast<cDatarateChannel *>(
                                     getParentModule()
                                     ->gateHalf("port", cGate::Type::OUTPUT, 0)
                                     ->getChannel())->getDatarate();
         // EV_DEBUG << "port bandwidth: " << bandwidth << " bps" << endl;
-        load = par("load");
-        if (0.0 < load && load <= 1.0)
-        {
-            loadMode = true;
-        }
-        flowSize = &par("flowSize");
-        flowInterval = &par("flowInterval");
-        jitterBeforeSending = &par("jitterBeforeSending");
+        // load = par("load");
+        // if (0.0 < load && load <= 1.0)
+        // {
+            // loadMode = true;
+        // }
+        flowSize = par("flowSize");
+        // flowInterval = &par("flowInterval");
+        if (useJitter)
+            jitterBeforeSending = &par("jitterBeforeSending");
 
     } else if (stage == INITSTAGE_LAST) {
-        if (destAddr >= 0) {
-            messageLength = par("messageLength");
-            if (!loadMode) {
-                currentFlowSize = flowSize->intValue();
-                currentFlowInterval = flowInterval->doubleValueInUnit("s"); // convert any unit into s
-            } else {
-                // flowSize will change every time, only flowSizeMean is known
-                B flowSizeMean = par("flowSizeMean").intValue();
-                // calc interval by load
-                ASSERT(flowSizeMean > 0 && load > 0);
-                currentFlowInterval = SimTime(flowSizeMean / (bandwidth * load)); // load cannot be zero
-            }
+        if (destAddr != INVALID_ADDRESS && destPort != INVALID_PORT) {
+
+            // if (!loadMode) {
+            //     currentFlowSize = flowSize->intValue();
+            //     currentFlowInterval = flowInterval->doubleValueInUnit("s"); // convert any unit into s
+            // } else {
+            //     // flowSize will change every time, only flowSizeMean is known
+            //     B flowSizeMean = par("flowSizeMean").intValue();
+            //     // calc interval by load
+            //     ASSERT(flowSizeMean > 0 && load > 0);
+            //     currentFlowInterval = SimTime(flowSizeMean / (bandwidth * load)); // load cannot be zero
+            // }
 
             connection->bindRemote(destAddr, destPort); // ! bind remote before using send
             cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
@@ -75,7 +78,7 @@ void UnicastSenderApp::initialize(int stage)
             //schedule sending event
             flowStartTimer = new cMessage("flowStart");
             jitterTimeout = new cMessage("jitterTimeout");
-            scheduleAfter(currentFlowInterval, flowStartTimer);
+            // scheduleAfter(currentFlowInterval, flowStartTimer);
         }
     }
 }
@@ -96,10 +99,10 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
 
 void UnicastSenderApp::sendPendingData()
 {
-    while (cong->getcWnd() > inflightBytes() && sentBytes < currentFlowSize) {
+    while (cong->getcWnd() > inflightBytes() && sentBytes < flowSize) {
         auto packetSize = messageLength;
-        if (messageLength + sentBytes > currentFlowSize) {
-            packetSize = currentFlowSize - sentBytes; // ! incase the data about to send is too small, such as the last packet or flowSize is too small
+        if (messageLength + sentBytes > flowSize) {
+            packetSize = flowSize - sentBytes; // ! incase the data about to send is too small, such as the last packet or flowSize is too small
         }
         sentBytes += packetSize;
         auto packet = createDataPacket(sentBytes, packetSize);
@@ -111,34 +114,33 @@ void UnicastSenderApp::sendPendingData()
 
 void UnicastSenderApp::onFlowStart()
 {
-    currentRound += 1;
     sentBytes = 0;
     confirmedBytes = 0;
     currentBaseRTT = 0;
     confirmedDisorders.clear();
     flowStartTime = simTime();
-    if (loadMode) { //flowSize will change only in loadMode
-        do {
-            currentFlowSize = flowSize->intValue();
-        } while (currentFlowSize <= 0);
-    }
-    EV_INFO << "current round seq: " << currentRound << " flowSize: " << currentFlowSize << endl;
+    // if (loadMode) { //flowSize will change only in loadMode
+    //     do {
+    //         currentFlowSize = flowSize->intValue();
+    //     } while (currentFlowSize <= 0);
+    // }
+    EV_INFO << " flowSize: " << flowSize << endl;
     cong->reset();
-    emit(flowSizeSignal, currentFlowSize);
+    emit(flowSizeSignal, flowSize);
 
 }
 
 void UnicastSenderApp::onFlowStop()
 {
     emit(fctSignal, (simTime() - flowStartTime));
-    emit(idealFctSignal, currentBaseRTT + SimTime((currentFlowSize*8) / bandwidth));
-    if (currentRound < numRounds) {// note it's '<' here
-        if (!loadMode) {
-            ASSERT(flowInterval != nullptr);
-            currentFlowInterval = flowInterval->doubleValueInUnit("s");
-        }
-        scheduleAfter(currentFlowInterval, flowStartTimer);
-    }
+    emit(idealFctSignal, currentBaseRTT + SimTime((flowSize*8) / bandwidth));
+    // if (currentRound < numRounds) {// note it's '<' here
+    //     if (!loadMode) {
+    //         ASSERT(flowInterval != nullptr);
+    //         currentFlowInterval = flowInterval->doubleValueInUnit("s");
+    //     }
+    //     scheduleAfter(currentFlowInterval, flowStartTimer);
+    // }
 }
 
 void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *msg)
@@ -181,8 +183,8 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     auto pkRTT = simTime() - SimTime(pk->getStartTime());
     emit(rttSignal, pkRTT);
     currentBaseRTT = pkRTT - pk->getQueueTime() - pk->getTransmitTime();
-    if (sentBytes < currentFlowSize) {
-        if (!jitterTimeout->isScheduled()) // ! in case multiple acks arrived at the same time
+    if (sentBytes < flowSize) {
+        if (useJitter && !jitterTimeout->isScheduled()) // ! in case multiple acks arrived at the same time
         {
             auto jitter = jitterBeforeSending->doubleValueInUnit("s");
             scheduleAfter(jitter, jitterTimeout);
@@ -193,7 +195,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 
     }
     //TODO if all packets are confirmed
-    if (confirmedBytes == currentFlowSize) {
+    if (confirmedBytes == flowSize) {
         onFlowStop();
     }
 
@@ -221,7 +223,7 @@ Packet* UnicastSenderApp::createDataPacket(SeqNumber seq, B packetBytes)
     pk->setStartTime(simTime().dbl());
     pk->setTransmitTime(0);
     pk->setQueueTime(0);
-    if (sentBytes == currentFlowSize)
+    if (sentBytes == flowSize)
         pk->setIsFlowFinished(true);
     return pk;
 }

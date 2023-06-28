@@ -16,13 +16,14 @@ module UnicastSenderApp extends UnicastApp {
         int destAddress @mutable = default(-1);
         int destPort = default(1001);
         int messageLength @unit(B) = default(1kB);
-        int numRounds = default(1);
+//        int numRounds = default(1);
 
-        double load = default(0.0);
-        int flowSizeMean @unit(B) = default(0B);
-        // ! in case you want to set flowSize and flowInterval manually
-        volatile int flowSize @unit(B) = default(8kB); // in bytes
-        volatile double flowInterval @unit(s) = default(0s); // this means load = 1.0
+//        double load = default(0.0);
+//        int flowSizeMean @unit(B) = default(0B);
+
+        int flowSize @unit(B) = default(8kB); // in bytes
+//        volatile double flowInterval @unit(s) = default(0s); // this means load = 1.0
+        bool useJitter = default(false); // ! set this to true before using jitter
         volatile double jitterBeforeSending @unit(s) = default(0s);
         @signal[fct](type=simtime_t);
         @signal[idealFct](type=simtime_t);
@@ -31,7 +32,7 @@ module UnicastSenderApp extends UnicastApp {
         @signal[inflightBytes](type=int);
         @statistic[fct](title="flow complete time"; source=fct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
-        @statistic[flowSize](title="ideal flow complete time"; source=flowSize; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[flowSize](title="flow total bytes"; source=flowSize; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[rtt](title="rtt"; source=rtt; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[inflightBytes](title="inflight bytes"; source=inflightBytes; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=linear);
    submodules:
@@ -44,13 +45,13 @@ module UnicastEchoApp extends UnicastApp {
         @class(UnicastEchoApp);
 }
 
-module ATPWorker extends UnicastSenderApp {
-    parameters:
-        port = default(2000);
-        destPort = default(2001);
-        int groupAddress = default(this.destAddress);
-        @class(ATPWorker);
-}
+// module ATPWorker extends UnicastSenderApp {
+//     parameters:
+//         port = default(2000);
+//         destPort = default(2001);
+//         int groupAddress = default(this.destAddress);
+//         @class(ATPWorker);
+// }
 
 module ParameterServerApp extends UnicastEchoApp {
     parameters:

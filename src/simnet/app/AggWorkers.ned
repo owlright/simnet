@@ -1,12 +1,19 @@
 package simnet.app;
 
-module SRWorker extends UnicastSenderApp {
+module WorkerApp extends UnicastSenderApp {
 parameters:
     port = default(2000);
     destPort = default(2001);
+    int numRounds = default(1);
     int jobId           = default(-1);
     int workerId        = default(-1);
     int numWorkers      = default(0);
+    double roundInterval @unit(us) = default(1us);
+    @class(WorkerApp);
+}
+
+module SRWorker extends WorkerApp {
+parameters:
     string segmentAddrs @mutable = default("");
     string fanIndegrees @mutable = default("");
     @class(SRWorker);
