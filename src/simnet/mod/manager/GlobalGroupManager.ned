@@ -5,7 +5,7 @@ module GlobalGroupManager
     parameters:
         string groupSwitchFile = default("");
         string groupHostFile = default("");
-        string placementPolicy = default("random");
+        string placementPolicy = default("");
         int numGroups @mutable = 1;
         int numWorkers @mutable = 6;
         int numPSes @mutable = 1;
