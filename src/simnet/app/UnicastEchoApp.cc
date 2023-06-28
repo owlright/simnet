@@ -47,7 +47,7 @@ Packet *UnicastEchoApp::createAckPacket(const Packet* const pk)
 {
     char pkname[40];
     sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            localAddr, pk->getDestAddr(), pk->getSeqNumber());
+            localAddr, pk->getSrcAddr(), pk->getSeqNumber());
     auto packet = new Packet(pkname);
     packet->setSeqNumber(pk->getSeqNumber());
     packet->setKind(PacketType::ACK);

@@ -20,7 +20,7 @@ void UnicastSenderApp::finish() {
 
     EV << "retransmit bytes: " << retransmitBytes << endl;
     if (currentRound != numRounds) {
-        EV_WARN << "Complete " << currentRound << " rounds,  not reach " << numRounds << endl;
+        EV_WARN << getClassAndFullPath() << " " << localAddr << " complete " << currentRound << " rounds,  not reach " << numRounds << endl;
     }
     for (auto& seq: disorders) {
         EV_WARN << seq << endl;
@@ -117,9 +117,12 @@ void UnicastSenderApp::onFlowStart()
     currentBaseRTT = 0;
     confirmedDisorders.clear();
     flowStartTime = simTime();
-    EV_INFO << "Current round seq: " << currentRound << endl;
-    if (loadMode) //flowSize will change only in loadMode
-        currentFlowSize = flowSize->intValue();
+    if (loadMode) { //flowSize will change only in loadMode
+        do {
+            currentFlowSize = flowSize->intValue();
+        } while (currentFlowSize <= 0);
+    }
+    EV_INFO << "current round seq: " << currentRound << " flowSize: " << currentFlowSize << endl;
     cong->reset();
     emit(flowSizeSignal, currentFlowSize);
 
