@@ -2,19 +2,53 @@ package simnet.mod;
 import simnet.app.IApp;
 import simnet.mod.contract.PortDispatcher;
 
-module Host
+module Node
 {
     parameters:
         int address @mutable = default(-1);
-        int numApps = default(0);
-        @node;
-        @host;
         @class(Node);
-        @display("i=abstract/server_s;bgb=276,324");
+        @node;
+
     gates:
         inout port[];
+
+    submodules:
+        routing: Routing {
+            parameters:
+                @display("p=140,163");
+            gates:
+                in[sizeof(parent.port)];
+                out[sizeof(parent.port)];
+        }
+        queue[sizeof(port)]: L2Queue {
+            parameters:
+                @display("p=140,250,row");
+        }
+
+    connections:
+        for i=0..sizeof(port)-1 {
+            routing.out[i] --> queue[i].in;
+            routing.in[i] <-- queue[i].out;
+            queue[i].line <--> port[i];
+        }
+}
+
+module Host extends Node
+{
+    parameters:
+        double bandwidth @unit(bps) @mutable = default(0.0Gbps);
+        int numApps = default(0);
+
+        double load = default(0.0);
+        int flowSizeMean @unit(B) = default(0B);
+        double flowInterval @unit(s) = default(0s); // this means load = 1.0
+        @host;
+        @class(HostNode);
+        @display("i=abstract/server_s;bgb=276,324");
+
     submodules:
         apps[numApps]: <default("UnicastSenderApp")> like IApp {
+            @display("p=140,36.4,r,50");
         }
         at: PortDispatcher {
             parameters:
@@ -23,17 +57,7 @@ module Host
                 localIn[sizeof(parent.apps)];
                 localOut[sizeof(parent.apps)];
         }
-        routing: Routing {
-            parameters:
-                @display("p=140,161");
-            gates:
-                in[sizeof(parent.port)];
-                out[sizeof(parent.port)];
-        }
-        queue[sizeof(port)]: L2Queue {
-            parameters:
-                @display("p=140,236,row");
-        }
+
     connections:
         for i=0..numApps-1 {
             apps[i].out --> at.localIn[i];
@@ -41,42 +65,18 @@ module Host
         }
         at.out --> routing.localIn;
         at.in <-- routing.localOut;
-        for i=0..sizeof(port)-1 {
-            routing.out[i] --> queue[i].in;
-            routing.in[i] <-- queue[i].out;
-            queue[i].line <--> port[i];
-        }
 }
 
-module Switch
+module Switch extends Node
 {
     parameters:
-        int address @mutable = default(-1);
         int position = default(0); // the switch's level
         int numAggregators = default(40000);
-        int agtrSize @unit(B) = default(264B); // ignore ecn single bit
-        @node;
+        int agtrSize @unit(B) = default(264B);
         @switch;
-        @class(Node);
+        @class(SwitchNode);
         @display("i=abstract/switch_s");
-    gates:
-        inout port[];
-    submodules:
-        routing: Routing {
-            parameters:
-                @display("p=140,130");
-            gates:
-                in[sizeof(parent.port)];
-                out[sizeof(parent.port)];
-        }
-        queue[sizeof(port)]: L2Queue {
-            parameters:
-                @display("p=80,200,row");
-        }
-    connections allowunconnected: // routing module's gates localIn/Out is not connected
-        for i=0..sizeof(port)-1 {
-            routing.out[i] --> queue[i].in;
-            routing.in[i] <-- queue[i].out;
-            queue[i].line <--> port[i];
-        }
+
+    connections allowunconnected:
+   	    // routing.localIn/localOut are not connected
 }
