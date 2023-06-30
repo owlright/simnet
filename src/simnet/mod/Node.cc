@@ -112,6 +112,13 @@ void HostNode::startNewFlow()
     }
 }
 
+IntAddress HostNode::generateDestAddr()
+{
+    ASSERT(tpManager);
+    auto destAddr = tpManager->getDestAddr(address);
+    return destAddr;
+}
+
 HostNode::~HostNode()
 {
     cancelAndDelete(newFlowTimer);
