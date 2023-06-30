@@ -35,7 +35,7 @@ void UnicastSenderApp::initialize(int stage)
     UnicastApp::initialize(stage);
     // ! if this moudle is created by manager in ASSIGN stage, the stages before it will not be executed
     if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
-        // two ways to set destAddr
+        appState = Idle;
         destAddr = par("destAddress");
         destPort = par("destPort");
         messageLength = par("messageLength");
@@ -120,7 +120,8 @@ void UnicastSenderApp::onFlowStart()
     confirmedBytes = 0;
     currentBaseRTT = 0;
     confirmedDisorders.clear();
-    flowStartTime = simTime();
+    // flowStartTime = simTime();
+    appState = Sending;
     // if (loadMode) { //flowSize will change only in loadMode
     //     do {
     //         currentFlowSize = flowSize->intValue();
@@ -136,6 +137,7 @@ void UnicastSenderApp::onFlowStop()
 {
     emit(fctSignal, (simTime() - flowStartTime));
     emit(idealFctSignal, currentBaseRTT + SimTime((flowSize*8) / bandwidth));
+    appState = Finished;
     // if (currentRound < numRounds) {// note it's '<' here
     //     if (!loadMode) {
     //         ASSERT(flowInterval != nullptr);
@@ -194,7 +196,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 
     } else {
         //TODO if all packets sended
-
+        appState = AllDataSended;
     }
     //TODO if all packets are confirmed
     if (confirmedBytes == flowSize) {
@@ -208,7 +210,6 @@ void UnicastSenderApp::handleParameterChange(const char *parameterName)
 {
     if (strcmp(parameterName, "destAddress") == 0) {
         destAddr = par("destAddress");
-        EV_DEBUG << "node " << localAddr << " " << getClassAndFullName() << " accept destAddr " << destAddr << endl;
     }
 }
 

@@ -2,8 +2,21 @@
 #include "UnicastApp.h"
 #include "simnet/mod/cong/CongAlgo.h"
 
+
+enum AppState_t
+{
+    Idle,
+    Scheduled,
+    Sending,
+    AllDataSended,
+    Finished
+};
+
+
 class UnicastSenderApp : public UnicastApp
 {
+public:
+    const AppState_t getAppState() const {return appState;};
 protected:
     // helper functions
     void sendPendingData();
@@ -40,7 +53,7 @@ protected:
     // ! state
     B sentBytes{0}; // TODO: maybe rename to maxSentSeq is better
     B confirmedBytes{0};
-
+    AppState_t appState{Idle};
     // B currentFlowSize{0};
 
     B retransmitBytes{0};
