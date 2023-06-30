@@ -1,6 +1,9 @@
 #include <omnetpp.h>
 #include "simnet/common/Defs.h"
+#include "simnet/common/ModuleAccess.h"
 #include "simnet/app/UnicastSenderApp.h"
+#include "simnet/mod/manager/TrafficPatternManager.h"
+
 using namespace omnetpp;
 
 class Node : public cSimpleModule
@@ -28,18 +31,23 @@ protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage * msg) override;
 
-private:
-    opp_component_ptr<UnicastSenderApp> createUnicastSenderApp();
-    void startNewFlow();
-
 protected:
     double load{0};
     B flowSizeMean{0};
     double flowInterval{0.0};
     double bandwidth{0.0}; // bps
-    const char* trafficPattern;
-
     cMessage* newFlowTimer{nullptr};
+
+private:
+    UnicastSenderApp* createUnicastSenderApp();
+    void startNewFlow();
+    IntAddress generateDestAddr();
+
+private:
+    std::vector<opp_component_ptr<UnicastSenderApp>> unicastSenders;
+    opp_component_ptr<TrafficPatternManager> tpManager;
+    bool loadMode{false};
+    PortNumber currPort{1010};
 };
 
 class SwitchNode : public Node {

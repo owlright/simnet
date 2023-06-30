@@ -40,7 +40,7 @@ void HostNode::initialize(int stage)
     Node::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         load = par("load");
-
+        loadMode = load > 0.0;
         flowInterval = par("flowInterval");
         bandwidth = par("bandwidth");
         if (bandwidth <= 0) { // get bandwidth value automatically
@@ -49,16 +49,32 @@ void HostNode::initialize(int stage)
                                         ->getChannel())->getDatarate();
             par("bandwidth") = bandwidth; // ! apps will read this value
         }
-        if (load > 0.0) {
+        if (loadMode) {
             flowSizeMean = par("flowSizeMean");
             ASSERT(flowSizeMean > 0);
             flowInterval = flowSizeMean / (bandwidth * load); // load cannot be zero
+            tpManager = findModuleFromTopLevel<TrafficPatternManager>("tpManager", this); // we only need this in load mode
+            if (tpManager == nullptr)
+                throw cRuntimeError("In loadMode, you must set the tpManager");
+            newFlowTimer = new cMessage("newFlow");
+            scheduleAfter(exponential(flowInterval), newFlowTimer);
         }
-        trafficPattern = par("trafficPattern");
-        newFlowTimer = new cMessage("newFlow");
+        // * collect manually setup unicast apps if there is any
+        auto apps = getSubmoduleArray("apps");
+        for (auto mod:apps) {
+            if (strcmp(mod->getClassName(), "UnicastSenderApp") == 0) {
+                auto app = check_and_cast<UnicastSenderApp*>(mod);
+                unicastSenders.push_back(app);
+            }
+        }
+
     }
     else if (stage == INITSTAGE_ASSIGN) {
-
+        for (auto app:unicastSenders) {
+            if (app->getDestAddr() == INVALID_ADDRESS) {
+                app->setDestAddr(generateDestAddr());
+            }
+        }
     }
 }
 
