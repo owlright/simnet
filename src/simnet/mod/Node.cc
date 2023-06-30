@@ -80,8 +80,10 @@ void HostNode::initialize(int stage)
 
 void HostNode::handleMessage(cMessage* msg)
 {
+    ASSERT(msg->isSelfMessage());
     if (msg == newFlowTimer) {
         startNewFlow();
+        scheduleAfter(exponential(flowInterval), newFlowTimer);
     }
 }
 
@@ -94,22 +96,19 @@ HostNode::createUnicastSenderApp()
 
 void HostNode::startNewFlow()
 {
-    auto apps = getSubmoduleArray("apps");
     bool foundIdleApp = false;
-    for (auto mod:apps) {
-        if (strcmp(mod->getClassName(), "UnicastSenderApp") == 0) {
-            auto app = check_and_cast<UnicastSenderApp*>(mod);
-            if (app->getAppState() == Idle || app->getAppState() == Finished) {
-                app->par("flowStartTime") = (simTime() + exponential(flowInterval)).dbl();
-                foundIdleApp = true;
-            }
-        }
-        if (foundIdleApp == true)
+    for (auto& app:unicastSenders) {
+        if (app->getAppState() == Idle || app->getAppState() == Finished) {
+            if (app->getAppState() == Finished)
+                app->setDestAddr(generateDestAddr());
+            app->scheduleNextFlowAfter((simTime() + exponential(flowInterval)).dbl());
+            foundIdleApp = true;
             break;
+        }
     }
     if (!foundIdleApp) { // we need to create a new app
         auto app = createUnicastSenderApp();
-        app->par("flowStartTime") = (simTime() + exponential(flowInterval)).dbl();
+        unicastSenders.push_back(app);
     }
 }
 
