@@ -88,10 +88,28 @@ void HostNode::handleMessage(cMessage* msg)
 }
 
 
-opp_component_ptr<UnicastSenderApp>
-HostNode::createUnicastSenderApp()
+UnicastSenderApp* HostNode::createUnicastSenderApp()
 {
-    return opp_component_ptr<UnicastSenderApp>();
+    auto appExistSize = getSubmoduleVectorSize("apps");
+    setSubmoduleVectorSize("apps", appExistSize + 1);
+    auto appType = "simnet.app.UnicastSenderApp";
+    cModule *app = cModuleType::get(appType)->create("apps", this, appExistSize);
+    app->par("port") = currPort++;
+    app->par("destAddress") = generateDestAddr();
+    app->par("flowStartTime") = simTime().dbl();
+    app->finalizeParameters();
+    app->buildInside();
+
+    app->scheduleStart(simTime());
+    auto inGate = app->gate("in");
+    auto outGate = app->gate("out");
+    auto at = getSubmodule("at");
+    at->setGateSize("localIn", at->gateSize("localIn") + 1);
+    at->setGateSize("localOut", at->gateSize("localOut") + 1);
+    at->gate("localOut",  at->gateSize("localIn")-1)->connectTo(inGate);
+    outGate->connectTo(at->gate("localIn", at->gateSize("localOut")-1));
+    app->callInitialize();
+    return check_and_cast<UnicastSenderApp*>(app);
 }
 
 void HostNode::startNewFlow()
