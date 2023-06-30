@@ -53,6 +53,8 @@ void UnicastSenderApp::initialize(int stage)
             // loadMode = true;
         // }
         flowSize = par("flowSize");
+        flowStartTime = par("flowStartTime");
+        flowStartTimer = new cMessage("flowStart");
         // flowInterval = &par("flowInterval");
         if (useJitter)
             jitterBeforeSending = &par("jitterBeforeSending");
