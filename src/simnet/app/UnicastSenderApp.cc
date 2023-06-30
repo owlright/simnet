@@ -34,18 +34,19 @@ void UnicastSenderApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
     // ! if this moudle is created by manager in ASSIGN stage, the stages before it will not be executed
-    if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
+    if (stage == INITSTAGE_LOCAL) {
         appState = Idle;
         destAddr = par("destAddress");
         destPort = par("destPort");
         messageLength = par("messageLength");
         useJitter = par("useJitter");
+        bandwidth = getParentModule()->par("bandwidth");
         // numRounds = par("numRounds");
         //HACK
-        bandwidth = check_and_cast<cDatarateChannel *>(
-                                    getParentModule()
-                                    ->gateHalf("port", cGate::Type::OUTPUT, 0)
-                                    ->getChannel())->getDatarate();
+        // bandwidth = check_and_cast<cDatarateChannel *>(
+        //                             getParentModule()
+        //                             ->gateHalf("port", cGate::Type::OUTPUT, 0)
+        //                             ->getChannel())->getDatarate();
         // EV_DEBUG << "port bandwidth: " << bandwidth << " bps" << endl;
         // load = par("load");
         // if (0.0 < load && load <= 1.0)
@@ -78,9 +79,10 @@ void UnicastSenderApp::initialize(int stage)
             cong->setSegmentSize(messageLength);
 
             //schedule sending event
-            flowStartTimer = new cMessage("flowStart");
-            jitterTimeout = new cMessage("jitterTimeout");
-            // scheduleAfter(currentFlowInterval, flowStartTimer);
+            if (useJitter)
+                jitterTimeout = new cMessage("jitterTimeout");
+            scheduleAt(flowStartTime, flowStartTimer);
+            appState = Scheduled;
         }
     }
 }
@@ -97,6 +99,13 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
     } else {
         UnicastApp::handleMessage(msg);
     }
+}
+
+void UnicastSenderApp::scheduleNextFlowAfter(double delay)
+{
+    ASSERT(!flowStartTimer->isScheduled());
+    scheduleAfter(delay, flowStartTimer);
+    appState = Scheduled;
 }
 
 void UnicastSenderApp::sendPendingData()
@@ -193,6 +202,8 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
             auto jitter = jitterBeforeSending->doubleValueInUnit("s");
             scheduleAfter(jitter, jitterTimeout);
         }
+        else
+            sendPendingData();
 
     } else {
         //TODO if all packets sended
@@ -229,4 +240,13 @@ Packet* UnicastSenderApp::createDataPacket(SeqNumber seq, B packetBytes)
     if (sentBytes == flowSize)
         pk->setIsFlowFinished(true);
     return pk;
+}
+
+void UnicastSenderApp::refreshDisplay() const
+{
+    if (!getEnvir()->isExpressMode()) {
+        char buf[20];
+        sprintf(buf, "%" PRId64 ":%u", destAddr, destPort);
+        getDisplayString().setTagArg("t", 0, buf);
+    }
 }
