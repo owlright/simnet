@@ -1,77 +1,51 @@
-#include "UnicastSenderApp.h"
+#include "WorkerApp.h"
 #include "simnet/common/ModuleAccess.h"
 #include "simnet/mod/manager/GlobalGroupManager.h"
 #include "simnet/mod/AggPacket_m.h"
 
-class ATPWorker : public UnicastSenderApp
-{
-protected:
-    void initialize(int stage) override;
-    void onFlowStart() override;
-    void onFlowStop() override;
-    virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
-    virtual void finish() override;
+Define_Module(WorkerApp);
 
-private:
-    opp_component_ptr<GlobalGroupManager> groupManager{nullptr};
-    int jobId;
-    int workerId;
-};
-
-Define_Module(ATPWorker);
-
-void ATPWorker::initialize(int stage)
+void WorkerApp::initialize(int stage)
 {
     UnicastSenderApp::initialize(stage);
-    if (stage == INITSTAGE_LOCAL) {
-
+    if (stage == INITSTAGE_LOCAL | stage == INITSTAGE_ACCEPT) {
+        jobId = par("jobId");
+        workerId = par("jobId");
+        numWorkers = par("numWorkers");
+        numRounds = par("numRounds");
+        roundInterval = par("roundInterval").doubleValueInUnit("s");
     }
-    else if (stage == INITSTAGE_ACCEPT) {
-        // if (groupManager!=nullptr) {
-        //     groupInfo = groupManager->getJobInfo(localAddr, destAddr);
-        //     if (groupInfo != nullptr && groupInfo->isWorker) {
-        //         workerId = groupInfo->index;
-        //         jobId = groupInfo->hostinfo->jobId;
-        //         EV << "host " << localAddr << " accept job " << jobId;
-        //         EV << " possible PSes: ";
-        //         EV << groupInfo->hostinfo->PSes << endl;
-        //         // ! TODO FIXME only send to a single sever
-        //         // ! Split Worker App from UnicastApp or Let UnicastApp have multiple Paramter servers ?
-        //         destAddr = groupInfo->hostinfo->PSes.at(0);
-        //     }
-        //     else {
-        //         setIdle();
-        //         EV_WARN << "host " << localAddr << " have an idle ATPWorker" << endl;
-        //     }
-        // }
+}
 
+void WorkerApp::onFlowStart()
+{
+    currentRound += 1;
+    sentBytes = 0;
+    confirmedBytes = 0;
+    currentBaseRTT = 0;
+    confirmedDisorders.clear();
+    EV_INFO << "current round seq: " << currentRound << endl;
+    cong->reset();
+    // groupManager->reportFlowStart(jobId, simTime());
+}
+
+void WorkerApp::onFlowStop()
+{
+    if (currentRound < numRounds) {// note it's '<' here
+        scheduleAfter(roundInterval, flowStartTimer);
     }
-
+    // groupManager->reportFlowStop(jobId, simTime());
 }
 
-void ATPWorker::onFlowStart()
+Packet* WorkerApp::createDataPacket(SeqNumber seq, B packetBytes)
 {
-    UnicastSenderApp::onFlowStart();
-    groupManager->reportFlowStart(jobId, simTime());
-}
-
-void ATPWorker::onFlowStop()
-{
-    EV_DEBUG << "round " << currentRound << " is finished." << endl;
-    UnicastSenderApp::onFlowStop();
-    groupManager->reportFlowStop(jobId, simTime());
-}
-
-Packet* ATPWorker::createDataPacket(SeqNumber seq, B packetBytes)
-{
-    IntAddress dest = destAddr;
     char pkname[40];
     sprintf(pkname, "ATP-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            localAddr, dest, seq);
-    auto pk = new ATPPacket(pkname);
+            localAddr, destAddr, seq);
+    auto pk = new AggPacket(pkname);
     pk->setRound(currentRound);
     pk->setJobId(jobId);
-    pk->setDestAddr(dest);
+    pk->setDestAddr(destAddr);
     pk->setSeqNumber(seq);
     pk->setByteLength(packetBytes);
     pk->setECN(false);
@@ -92,9 +66,11 @@ Packet* ATPWorker::createDataPacket(SeqNumber seq, B packetBytes)
     auto hseq = reinterpret_cast<uint16_t&>(seqNumber);
     auto hjobid = reinterpret_cast<uint16_t&>(jobID);
     auto agtrIndex = hashAggrIndex(hjobid, hseq);
-    EV_DEBUG << "aggregator index: " << agtrIndex << endl;
+    pk->setAggregatorIndex(agtrIndex);
+    pk->setWorkerNumber(numWorkers);
+    // EV_DEBUG << "aggregator index: " << agtrIndex << endl;
     // pk->setWorkerNumber(groupInfo->hostinfo->numWorkers);
-    // pk->setAggregatorIndex(agtrIndex);
+
     // pk->setBitmap0(groupInfo->switchinfo->bitmap0);
     // pk->setBitmap1(groupInfo->switchinfo->bitmap1);
     // pk->setFanIndegree0(groupInfo->switchinfo->fanIndegree0);
@@ -102,8 +78,10 @@ Packet* ATPWorker::createDataPacket(SeqNumber seq, B packetBytes)
     return pk;
 }
 
-void ATPWorker::finish()
+void WorkerApp::finish()
 {
     UnicastSenderApp::finish();
-
+    if (currentRound != numRounds) {
+        EV_WARN << getClassAndFullPath() << " " << localAddr << " complete " << currentRound << " rounds,  not reach " << numRounds << endl;
+    }
 }
