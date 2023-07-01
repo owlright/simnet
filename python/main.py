@@ -41,7 +41,7 @@ def get_runID(sheet) -> dict:
     return iter_runid
 
 if __name__ == '__main__':
-    sheet = read_csv("simulations", "agg", "fattree")
+    sheet = read_csv("simulations", "test", "RandomCreateApp")
     # iterRunID = get_runID_by_itervar('load')
     runIds = get_runID(sheet)
     loads = [i/10 for i in range(1, 10)]
