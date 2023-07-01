@@ -53,7 +53,7 @@ void HostNode::initialize(int stage)
         if (loadMode) {
             flowSizeMean = par("flowSizeMean");
             ASSERT(flowSizeMean > 0);
-            flowInterval = flowSizeMean / (bandwidth * load); // load cannot be zero
+            flowInterval = (flowSizeMean*8) / (bandwidth * load); // load cannot be zero
             tpManager = findModuleFromTopLevel<TrafficPatternManager>("tpManager", this); // we only need this in load mode
             if (tpManager == nullptr)
                 throw cRuntimeError("In loadMode, you must set the tpManager");
