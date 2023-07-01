@@ -23,7 +23,7 @@ public:
             par("destAddress") = destAddr;
     };
     const IntAddress getDestAddr() const { return destAddr;};
-    void scheduleNextFlowAfter(double delay);
+    void scheduleNextFlowAt(simtime_t_cref time);
 
 protected:
     // helper functions

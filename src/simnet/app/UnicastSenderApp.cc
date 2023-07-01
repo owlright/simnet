@@ -101,10 +101,10 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
     }
 }
 
-void UnicastSenderApp::scheduleNextFlowAfter(double delay)
+void UnicastSenderApp::scheduleNextFlowAt(simtime_t_cref time)
 {
     ASSERT(!flowStartTimer->isScheduled());
-    scheduleAfter(delay, flowStartTimer);
+    scheduleAt(time, flowStartTimer);
     appState = Scheduled;
 }
 

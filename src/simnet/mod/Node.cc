@@ -121,8 +121,8 @@ void HostNode::startNewFlow()
     for (auto& app:unicastSenders) {
         if (app->getAppState() == Idle || app->getAppState() == Finished) {
             if (app->getAppState() == Finished)
-                app->setDestAddr(generateDestAddr());
-            app->scheduleNextFlowAfter((simTime() + exponential(flowInterval)).dbl());
+                app->setDestAddr(generateDestAddr()); // reassign a destAddr, destPort is not changed
+            app->scheduleNextFlowAt(simTime());
             foundIdleApp = true;
             break;
         }
