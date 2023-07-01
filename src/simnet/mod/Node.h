@@ -48,6 +48,8 @@ private:
     opp_component_ptr<TrafficPatternManager> tpManager;
     bool loadMode{false};
     PortNumber currPort{1010};
+    int numFlows{0};
+    int flowCount{0};
 };
 
 class SwitchNode : public Node {

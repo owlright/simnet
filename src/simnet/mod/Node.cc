@@ -6,7 +6,7 @@ Define_Module(Node);
 void Node::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
-        address = par("address").intValue();
+        address = par("address");
     }
 
 }
@@ -40,6 +40,7 @@ void HostNode::initialize(int stage)
     Node::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         load = par("load");
+        numFlows = par("numFlows");
         loadMode = load > 0.0;
         flowInterval = par("flowInterval");
         bandwidth = par("bandwidth");
@@ -82,8 +83,10 @@ void HostNode::handleMessage(cMessage* msg)
 {
     ASSERT(msg->isSelfMessage());
     if (msg == newFlowTimer) {
+        flowCount++;
         startNewFlow();
-        scheduleAfter(exponential(flowInterval), newFlowTimer);
+        if (flowCount < numFlows)
+            scheduleAfter(exponential(flowInterval), newFlowTimer);
     }
 }
 

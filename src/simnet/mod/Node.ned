@@ -38,6 +38,7 @@ module Host extends Node
     parameters:
         double bandwidth @unit(bps) @mutable = default(0.0Gbps);
         int numApps = default(0);
+        int numFlows = default(1);
 
         double load = default(0.0);
         int flowSizeMean @unit(B) = default(0B);
