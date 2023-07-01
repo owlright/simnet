@@ -129,7 +129,7 @@ void UnicastSenderApp::onFlowStart()
     confirmedBytes = 0;
     currentBaseRTT = 0;
     confirmedDisorders.clear();
-    // flowStartTime = simTime();
+    flowStartTime = simTime().dbl();
     appState = Sending;
     // if (loadMode) { //flowSize will change only in loadMode
     //     do {
