@@ -244,7 +244,7 @@ void GlobalGroupManager::placeJobs(const char *policyName)
         }
     }
     else if (strcmp(policyName, "") == 0) {
-        // do nothing
+        EV_WARN << "You may forget to set a placement policy for agg groups, make sure you manually set them." << endl;
     }
     else {
         throw cRuntimeError("invalid placement policy.");
@@ -347,7 +347,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
         }
     }
     else if (strcmp(policyName, "") == 0) {
-        // do nothing
+        EV_WARN << "You may forget to set the aggTreeType." << endl;
     }
     else {
         throw cRuntimeError("invalid aggTreeType");
