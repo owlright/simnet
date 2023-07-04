@@ -3,7 +3,7 @@ package simnet.app;
 module WorkerApp extends UnicastSenderApp {
 parameters:
     port = default(2000);
-    destPort = default(2001);
+    destPort = default(3001);
     int numRounds = default(1);
     int jobId           = default(-1);
     int workerId        = default(-1);

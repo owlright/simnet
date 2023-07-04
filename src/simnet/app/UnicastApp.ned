@@ -56,7 +56,7 @@ module UnicastEchoApp extends UnicastApp {
 
 module ParameterServerApp extends UnicastEchoApp {
     parameters:
-        port = default(2001);
+        port = default(3001);
         int jobId;
         int groupAddress;
         @class(ParameterServerApp);
