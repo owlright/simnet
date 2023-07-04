@@ -356,15 +356,11 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
 
 void GlobalGroupManager::insertJobInfodb(const std::vector<int>& workers, const std::vector<int>& pses)
 {
-    PortNumber port = 2001;
-    std::vector<int> workerPorts;
-    for (auto i = 0; i < workers.size(); i++) {
-        workerPorts.push_back(port++);
-    }
-    std::vector<int> PSPorts;
+    std::vector<int> workerPorts(workers.size(), INVALID_PORT);
+
+    std::vector<int> PSPorts(pses.size(), INVALID_PORT);
     std::vector<int> multicastAddrs;
     for (auto i = 0; i < pses.size(); i++) {
-        PSPorts.push_back(port++);
         multicastAddrs.push_back(getNextGroupAddr());
     }
     auto entry(new JobHostInfo());
