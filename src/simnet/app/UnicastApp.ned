@@ -3,7 +3,7 @@ import simnet.mod.cong.Cong;
 simple UnicastApp like IApp {
 	parameters:
 	    @class(UnicastApp);
-        int port = default(0);
+        int port @mutable = default(65535); // ! I only change this when SRWorker is created, whey need mutable here? why destPort don't need mutable
     gates:
         input in;
         output out;
@@ -16,10 +16,6 @@ module UnicastSenderApp extends UnicastApp {
         int destAddress @mutable = default(-1);
         int destPort = default(1001);
         int messageLength @unit(B) = default(1kB);
-//        int numRounds = default(1);
-
-//        double load = default(0.0);
-//        int flowSizeMean @unit(B) = default(0B);
 
         int flowSize @unit(B) = default(8kB); // in bytes
         double flowStartTime @unit(s) = default(0.0s);
@@ -57,8 +53,8 @@ module UnicastEchoApp extends UnicastApp {
 module ParameterServerApp extends UnicastEchoApp {
     parameters:
         port = default(3001);
-        int jobId;
-        int groupAddress;
+        int jobId = default(-1);
+        int groupAddress = default(-1);
         @class(ParameterServerApp);
         @signal[aggRatio](type=double);
         @statistic[aggRatio](title="aggegation ratio of a packet"; source=aggRatio; record=count,mean,max,min,vector; interpolationmode=linear);

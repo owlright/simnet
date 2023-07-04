@@ -257,27 +257,25 @@ void GlobalGroupManager::createJobApps(int jobId)
     auto workers = job->workers;
     auto nWorkers = job->numWorkers;
     auto nPSes = job->numPSes;
-    for (auto i = 0; i < nWorkers + nPSes; i++) {
-        auto isWorker = i < nWorkers;
-        auto nodeAddress =  (isWorker ? job->workers[i] : job->PSes[i-nWorkers]);
-        auto node = addr2mod.at(nodeAddress);
-        auto appExistSize = node->getSubmoduleVectorSize("apps");
-        node->setSubmoduleVectorSize("apps", appExistSize + 1);
-        auto appType = (isWorker ? "simnet.app.SRWorker" : "simnet.app.ParameterServerApp");
-        cModule *app = cModuleType::get(appType)->create("apps", node, appExistSize);
 
+    if (nPSes > 1)
+        throw cRuntimeError("Not ready for multiple servers.");
+
+    for (auto i = 0; i < nPSes; i++) {
+        auto nodeAddress =  job->PSes[i];
+        auto node = addr2mod.at(nodeAddress);
+        // * find an idle worker
+        auto appExistSize = node->getSubmoduleVectorSize("pses");
+
+        node->setSubmoduleVectorSize("pses", appExistSize + 1);
+        auto appType = "simnet.app.ParameterServerApp";
+        auto app = cModuleType::get(appType)->create("pses", node, appExistSize);
+        // ! port number can only be decided here because we don't know how many pses will
+        // ! be setup, but workers need this to create connection, so PSes must be setup before workers
+        job->PSPorts[i] = 3000 + appExistSize;
         app->par("jobId") = jobId;
-        if (isWorker) {
-            app->par("workerId") = i;
-            app->par("numWorkers") = nWorkers;
-            app->par("port") = job->workerPorts[i];
-            app->par("destAddress") = job->PSes[0];
-            app->par("destPort") = job->PSPorts[0];
-        } else {
-            app->par("port") = job->PSPorts[0];
-            app->par("groupAddress") = job->multicastAddresses[0];
-            // app->par("psId") = i - nWorkers;
-        }
+        app->par("port") = job->PSPorts[i];
+        // only new apps can set these fields
         app->finalizeParameters();
         app->buildInside();
         app->scheduleStart(simTime());
@@ -288,7 +286,40 @@ void GlobalGroupManager::createJobApps(int jobId)
         at->setGateSize("localOut", at->gateSize("localOut") + 1);
         at->gate("localOut",  at->gateSize("localIn")-1)->connectTo(inGate);
         outGate->connectTo(at->gate("localIn", at->gateSize("localOut")-1));
+        app->callInitialize();
+     }
+
+
+    for (auto i = 0; i < nWorkers; i++) {
+        auto nodeAddress =  job->workers[i];
+        auto node = addr2mod.at(nodeAddress);
+        // * find an idle worker
+        auto appExistSize = node->getSubmoduleVectorSize("workers");
+
+        node->setSubmoduleVectorSize("workers", appExistSize + 1);
+        auto appType = "simnet.app.SRWorker";
+        auto app = cModuleType::get(appType)->create("workers", node, appExistSize);
+        job->workerPorts[i] = 2000 + appExistSize; // ! port number can only be decided here
+        // only new apps can set these fields
+        app->par("port") = job->workerPorts[i];
+        app->par("jobId") = jobId;
+        app->par("workerId") = i;
+        app->par("numWorkers") = nWorkers;
+        app->par("destAddress") = job->PSes[0];
+        app->par("destPort") = job->PSPorts[0];
+        app->finalizeParameters();
+        app->buildInside();
+        app->scheduleStart(simTime());
+        auto inGate = app->gate("in");
+        auto outGate = app->gate("out");
+        auto at = node->getSubmodule("at");
+        at->setGateSize("localIn", at->gateSize("localIn") + 1);
+        at->setGateSize("localOut", at->gateSize("localOut") + 1);
+        at->gate("localOut",  at->gateSize("localIn")-1)->connectTo(inGate);
+        outGate->connectTo(at->gate("localIn", at->gateSize("localOut")-1));
+        app->callInitialize();
     }
+
 }
 
 void GlobalGroupManager::calcAggTree(const char *policyName)
