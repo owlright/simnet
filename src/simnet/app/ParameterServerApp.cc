@@ -32,7 +32,7 @@ simsignal_t ParameterServerApp::aggRatioSignal = registerSignal("aggRatio");
 void ParameterServerApp::initialize(int stage)
 {
     UnicastEchoApp::initialize(stage);
-    if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
+    if (stage == INITSTAGE_LOCAL) {
         jobid = par("jobId");
         groupAddr = par("groupAddress");
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);

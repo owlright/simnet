@@ -24,22 +24,18 @@ Define_Module(SRWorker);
 void SRWorker::initialize(int stage)
 {
     WorkerApp::initialize(stage);
-    if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
-//        destAddr = par("destAddress");
-        segments = cStringTokenizer(par("segmentAddrs").stringValue()).asIntVector();
-        fanIndegrees = cStringTokenizer(par("fanIndegrees").stringValue()).asIntVector();
+    if (stage == INITSTAGE_LOCAL) {
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
-
-
         if (groupManager == nullptr) // sometimes for quick debug
             EV_WARN << "You may forget to set groupManager." << endl;
-
+    }
+    else if (stage == INITSTAGE_ACCEPT) {
         EV << "SRWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
         EV << " PS(" << destAddr << ":" << destPort << ")" << endl;
-
+        segments = cStringTokenizer(par("segmentAddrs").stringValue()).asIntVector();
+        fanIndegrees = cStringTokenizer(par("fanIndegrees").stringValue()).asIntVector();
         EV << "sid: " << segments << endl;
         EV << "arg: " << fanIndegrees << endl;
-
     }
 
 }

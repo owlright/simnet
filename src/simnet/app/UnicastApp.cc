@@ -5,18 +5,22 @@ Define_Module(UnicastApp);
 
 void UnicastApp::initialize(int stage)
 {
-    if (stage == INITSTAGE_LOCAL || stage == INITSTAGE_ACCEPT) {
-        localAddr = getParentModule()->par("address");
+    if (stage == INITSTAGE_LOCAL) {
         localPort = par("port");
-        if (connection == nullptr) { // ! only create once
-            if (localAddr != INVALID_ADDRESS && localPort != INVALID_PORT) {
-                connection = createConnection();
-                auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
-                check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
-            }
-            else if (stage == INITSTAGE_ACCEPT) {
-                throw cRuntimeError("the localAddr %" PRId64 " or localPort %u is still invalid.", localAddr, localPort);
-            }
+        // if (connection == nullptr) { // ! only create once
+
+            // else
+        // }
+    }
+    else if (stage == INITSTAGE_ACCEPT) {
+        localAddr = getParentModule()->par("address");
+        if (localAddr != INVALID_ADDRESS && localPort != INVALID_PORT) {
+            connection = createConnection();
+            auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
+            check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
+        }
+        else {
+            throw cRuntimeError("the localAddr %" PRId64 " or localPort %u is still invalid.", localAddr, localPort);
         }
     }
 }

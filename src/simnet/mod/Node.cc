@@ -17,6 +17,7 @@ void Node::handleMessage(cMessage * msg)
 
 void Node::handleParameterChange(const char *parameterName)
 {
+    // ! if stage == INITSTAGE_ASSIGN, this may happen
     if (strcmp(parameterName, "address") == 0) {
         address = par("address");
         // std::cout << getClassAndFullPath() << std::endl;

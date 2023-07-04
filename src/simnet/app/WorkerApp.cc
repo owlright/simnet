@@ -8,7 +8,7 @@ Define_Module(WorkerApp);
 void WorkerApp::initialize(int stage)
 {
     UnicastSenderApp::initialize(stage);
-    if (stage == INITSTAGE_LOCAL | stage == INITSTAGE_ACCEPT) {
+    if (stage == INITSTAGE_LOCAL) {
         jobId = par("jobId");
         workerId = par("jobId");
         numWorkers = par("numWorkers");

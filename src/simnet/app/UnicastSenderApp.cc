@@ -36,23 +36,9 @@ void UnicastSenderApp::initialize(int stage)
     // ! if this moudle is created by manager in ASSIGN stage, the stages before it will not be executed
     if (stage == INITSTAGE_LOCAL) {
         appState = Idle;
-        destAddr = par("destAddress");
-        destPort = par("destPort");
         messageLength = par("messageLength");
         useJitter = par("useJitter");
         bandwidth = getParentModule()->par("bandwidth");
-        // numRounds = par("numRounds");
-        //HACK
-        // bandwidth = check_and_cast<cDatarateChannel *>(
-        //                             getParentModule()
-        //                             ->gateHalf("port", cGate::Type::OUTPUT, 0)
-        //                             ->getChannel())->getDatarate();
-        // EV_DEBUG << "port bandwidth: " << bandwidth << " bps" << endl;
-        // load = par("load");
-        // if (0.0 < load && load <= 1.0)
-        // {
-            // loadMode = true;
-        // }
         flowSize = par("flowSize");
         flowStartTime = par("flowStartTime");
         flowStartTimer = new cMessage("flowStart");
@@ -60,20 +46,11 @@ void UnicastSenderApp::initialize(int stage)
         if (useJitter)
             jitterBeforeSending = &par("jitterBeforeSending");
 
-    } else if (stage == INITSTAGE_LAST) {
+    } else if (stage == INITSTAGE_ACCEPT) {
+        destAddr = par("destAddress");
+        destPort = par("destPort");
+        ASSERT(connection != nullptr); // ! connection must be created by UnicastApp in its ACCEPT stage
         if (destAddr != INVALID_ADDRESS && destPort != INVALID_PORT) {
-
-            // if (!loadMode) {
-            //     currentFlowSize = flowSize->intValue();
-            //     currentFlowInterval = flowInterval->doubleValueInUnit("s"); // convert any unit into s
-            // } else {
-            //     // flowSize will change every time, only flowSizeMean is known
-            //     B flowSizeMean = par("flowSizeMean").intValue();
-            //     // calc interval by load
-            //     ASSERT(flowSizeMean > 0 && load > 0);
-            //     currentFlowInterval = SimTime(flowSizeMean / (bandwidth * load)); // load cannot be zero
-            // }
-
             connection->bindRemote(destAddr, destPort); // ! bind remote before using send
             cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
             cong->setSegmentSize(messageLength);
