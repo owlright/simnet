@@ -286,7 +286,7 @@ void GlobalGroupManager::createJobApps(int jobId)
         at->setGateSize("localOut", at->gateSize("localOut") + 1);
         at->gate("localOut",  at->gateSize("localIn")-1)->connectTo(inGate);
         outGate->connectTo(at->gate("localIn", at->gateSize("localOut")-1));
-        app->callInitialize();
+        app->callInitialize(INITSTAGE_LOCAL);
      }
 
 
@@ -317,7 +317,7 @@ void GlobalGroupManager::createJobApps(int jobId)
         at->setGateSize("localOut", at->gateSize("localOut") + 1);
         at->gate("localOut",  at->gateSize("localIn")-1)->connectTo(inGate);
         outGate->connectTo(at->gate("localIn", at->gateSize("localOut")-1));
-        app->callInitialize();
+        app->callInitialize(INITSTAGE_LOCAL);
     }
 
 }
