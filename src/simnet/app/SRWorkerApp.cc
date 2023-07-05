@@ -1,19 +1,15 @@
 #include "WorkerApp.h"
 #include "simnet/common/ModuleAccess.h"
-#include "simnet/mod/manager/GlobalGroupManager.h"
 #include "simnet/mod/AggPacket_m.h"
 
 class SRWorker : public WorkerApp
 {
 protected:
     void initialize(int stage) override;
-    virtual void onFlowStart() override;
-    virtual void onFlowStop() override;
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
-    virtual void finish() override;
+
 
 private:
-    GlobalGroupManager* groupManager;
     std::vector<int> segments;
     std::vector<int> fanIndegrees;
 };
@@ -25,9 +21,6 @@ void SRWorker::initialize(int stage)
 {
     WorkerApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
-        if (groupManager == nullptr) // sometimes for quick debug
-            EV_WARN << "You may forget to set groupManager." << endl;
     }
     else if (stage == INITSTAGE_ACCEPT) {
         EV << "SRWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
@@ -40,18 +33,6 @@ void SRWorker::initialize(int stage)
 
 }
 
-void SRWorker::onFlowStart()
-{
-    UnicastSenderApp::onFlowStart();
-    groupManager->reportFlowStart(jobId, simTime());
-}
-
-void SRWorker::onFlowStop()
-{
-    EV_DEBUG << "round " << currentRound << " is finished." << endl;
-    UnicastSenderApp::onFlowStop();
-    groupManager->reportFlowStop(jobId, simTime());
-}
 
 Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
 {
@@ -100,9 +81,3 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     }
     return pk;
 }
-
-void SRWorker::finish()
-{
-    UnicastSenderApp::finish();
-}
-

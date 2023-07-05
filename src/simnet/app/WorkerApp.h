@@ -1,6 +1,6 @@
 #pragma once
 #include "UnicastSenderApp.h"
-
+#include "simnet/mod/manager/GlobalGroupManager.h"
 class WorkerApp : public UnicastSenderApp
 {
 protected:
@@ -19,5 +19,5 @@ protected:
     double roundInterval;
     int currentRound{0};
 
-    // opp_component_ptr<GlobalGroupManager> groupManager{nullptr};
+    opp_component_ptr<GlobalGroupManager> groupManager;
 };
