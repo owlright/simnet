@@ -276,6 +276,7 @@ void GlobalGroupManager::createJobApps(int jobId)
         app->par("jobId") = jobId;
         app->par("numWorkers") = nWorkers;
         app->par("port") = job->PSPorts[i];
+        app->par("groupAddress") = job->multicastAddresses[i];
         // only new apps can set these fields
         app->finalizeParameters();
         app->buildInside();
@@ -298,7 +299,7 @@ void GlobalGroupManager::createJobApps(int jobId)
         auto appExistSize = node->getSubmoduleVectorSize("workers");
 
         node->setSubmoduleVectorSize("workers", appExistSize + 1);
-        auto appType = "simnet.app.SRWorker";
+        auto appType = "simnet.app.WorkerApp";
         auto app = cModuleType::get(appType)->create("workers", node, appExistSize);
         job->workerPorts[i] = 2000 + appExistSize; // ! port number can only be decided here
         // only new apps can set these fields
@@ -379,7 +380,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
         }
     }
     else if (strcmp(policyName, "") == 0) {
-        EV_WARN << "You may forget to set the aggTreeType." << endl;
+        EV_WARN << "You may forget to set the aggTreeType. No AggTree will be built!" << endl;
     }
     else {
         throw cRuntimeError("invalid aggTreeType");
