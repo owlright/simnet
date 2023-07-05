@@ -72,11 +72,11 @@ void HostNode::initialize(int stage)
 
     }
     else if (stage == INITSTAGE_ASSIGN) {
-        for (auto app:unicastSenders) {
-            if (app->getDestAddr() == INVALID_ADDRESS) {
-                app->setDestAddr(generateDestAddr());
-            }
-        }
+        // for (auto app:unicastSenders) {
+        //     if (app->getDestAddr() == INVALID_ADDRESS) {
+        //         app->setDestAddr(generateDestAddr());
+        //     }
+        // }
     }
 }
 
@@ -98,7 +98,7 @@ UnicastSenderApp* HostNode::createUnicastSenderApp()
     setSubmoduleVectorSize("apps", appExistSize + 1);
     auto appType = "simnet.app.UnicastSenderApp";
     cModule *app = cModuleType::get(appType)->create("apps", this, appExistSize);
-    app->par("port") = currPort++;
+    app->par("port") = 1000 + appExistSize;
     app->par("destAddress") = generateDestAddr();
     app->par("flowStartTime") = simTime().dbl();
     app->finalizeParameters();
@@ -120,7 +120,7 @@ void HostNode::startNewFlow()
 {
     bool foundIdleApp = false;
     for (auto& app:unicastSenders) {
-        if (app->getAppState() == Idle || app->getAppState() == Finished) {
+        if (app->getAppState() == Finished) {
             if (app->getAppState() == Finished)
                 app->setDestAddr(generateDestAddr()); // reassign a destAddr, destPort is not changed
             app->scheduleNextFlowAt(simTime());

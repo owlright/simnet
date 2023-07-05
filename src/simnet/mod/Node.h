@@ -47,7 +47,6 @@ private:
     std::vector<opp_component_ptr<UnicastSenderApp>> unicastSenders;
     opp_component_ptr<TrafficPatternManager> tpManager;
     bool loadMode{false};
-    PortNumber currPort{1010};
     int numFlows{0};
     int flowCount{0};
 };

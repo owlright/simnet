@@ -9,20 +9,21 @@ module Node
         @class(Node);
         @node;
 
+        @display("bgb=721,432");
     gates:
         inout port[];
 
     submodules:
         routing: Routing {
             parameters:
-                @display("p=140,163");
+                @display("p=349,213");
             gates:
                 in[sizeof(parent.port)];
                 out[sizeof(parent.port)];
         }
         queue[sizeof(port)]: L2Queue {
             parameters:
-                @display("p=140,250,row");
+                @display("p=349,300,row");
         }
 
     connections:
@@ -47,24 +48,24 @@ module Host extends Node
         double flowInterval @unit(s) = default(0s); // this means load = 1.0
         @host;
         @class(HostNode);
-        @display("i=abstract/server_s;bgb=276,324");
+        @display("i=abstract/server_s");
 
     submodules:
         apps[numApps]: <default("UnicastSenderApp")> like IApp {
             port = 1000 + index;
-            @display("p=61.600002,42,r,50");
+            @display("p=42,125.06667,r,100");
         }
         workers[numWorkers]: <default("SRWorker")> like IApp {
             port = 2000 + index;
-            @display("p=140,42,r,50");
+            @display("p=348.13333,112,r,100");
         }
         pses[numServers]: <default("ParameterServerApp")> like IApp {
             port = 3000 + index;
-            @display("p=220.26668,42,r,50");
+            @display("p=628.13336,117.600006,r,100");
         }
         at: PortDispatcher {
             parameters:
-                @display("p=140,103");
+                @display("p=348.13333,159.6");
             gates:
                 localIn[parent.numAllApps];
                 localOut[parent.numAllApps];

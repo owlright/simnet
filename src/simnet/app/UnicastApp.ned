@@ -12,9 +12,9 @@ simple UnicastApp like IApp {
 module UnicastSenderApp extends UnicastApp {
    parameters:
        @class(UnicastSenderApp);
-       port = default(1000);
+       port = default(-1);
         int destAddress @mutable = default(-1);
-        int destPort = default(1001);
+        int destPort = default(1000);
         int messageLength @unit(B) = default(1kB);
 
         int flowSize @unit(B) = default(8kB); // in bytes
@@ -52,7 +52,7 @@ module UnicastEchoApp extends UnicastApp {
 
 module ParameterServerApp extends UnicastEchoApp {
     parameters:
-        port = default(3001);
+        port = default(1000);
         int jobId = default(-1);
         int groupAddress = default(-1);
         @class(ParameterServerApp);
