@@ -274,6 +274,7 @@ void GlobalGroupManager::createJobApps(int jobId)
         // ! be setup, but workers need this to create connection, so PSes must be setup before workers
         job->PSPorts[i] = 3000 + appExistSize;
         app->par("jobId") = jobId;
+        app->par("numWorkers") = nWorkers;
         app->par("port") = job->PSPorts[i];
         // only new apps can set these fields
         app->finalizeParameters();

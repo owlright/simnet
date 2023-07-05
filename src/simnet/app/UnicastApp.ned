@@ -55,6 +55,7 @@ module ParameterServerApp extends UnicastEchoApp {
         port = default(1000);
         int jobId = default(-1);
         int groupAddress = default(-1);
+        int numWorkers = default(0);
         @class(ParameterServerApp);
         @signal[aggRatio](type=double);
         @statistic[aggRatio](title="aggegation ratio of a packet"; source=aggRatio; record=count,mean,max,min,vector; interpolationmode=linear);

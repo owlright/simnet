@@ -34,17 +34,14 @@ void ParameterServerApp::initialize(int stage)
     UnicastEchoApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         jobid = par("jobId");
+        numWorkers = par("numWorkers");
         groupAddr = par("groupAddress");
-        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
-        if (groupManager == nullptr)
-            EV_WARN << "You may forget to set groupManager." << endl;
     }
 }
 
 void ParameterServerApp::handleMessage(cMessage *msg)
 {
     auto pk = check_and_cast<AggPacket*>(msg);
-    // ASSERT(pk->getJobId() == groupInfo->hostinfo->jobId);
     auto connectionId = pk->getJobId();
     auto it = connections.find(connectionId);
     if (it == connections.end()) {
@@ -55,6 +52,7 @@ void ParameterServerApp::handleMessage(cMessage *msg)
 
 void ParameterServerApp::onNewConnectionArrived(IdNumber connId, const Packet* const pk)
 {
+    ASSERT(connId == jobid);
     if (connections.size() > 1)
         throw cRuntimeError("a PS only serves one group");
     EV_DEBUG << "Create new connection id by jobId " << connId << endl;
