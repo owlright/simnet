@@ -25,7 +25,7 @@ void Aggregator::checkThenAddWorkerId(const Packet *pk)
 
 Packet *Aggregator::doAggregation(Packet *pk)
 {
-    auto apk = check_and_cast<AggPacket*>(pk);
+    auto apk = check_and_cast<AggUseIncPacket*>(pk);
     if (apk->getECN()) {
         apk->setEcn(true); // copy the ECN flag
     }

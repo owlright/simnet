@@ -58,7 +58,7 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     char pkname[40];
     sprintf(pkname, "sr%" PRId64"-to-%" PRId64 "-seq%" PRId64,
             localAddr, destAddr, seq);
-    auto pk = new SRAggPacket(pkname);
+    auto pk = new AggUseIncPacket(pkname);
     pk->setRound(currentRound);
     pk->setJobId(jobId);
     pk->setDestAddr(destAddr);

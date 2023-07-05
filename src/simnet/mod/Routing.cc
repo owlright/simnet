@@ -130,7 +130,7 @@ void Routing::forwardIncoming(Packet *pk)
     if (segment == myAddress) {
         auto& fun = pk->getFuns(entryIndex);
         if (fun == "aggregation") {
-            auto apk = check_and_cast<AggPacket*>(pk);
+            auto apk = check_and_cast<AggUseIncPacket*>(pk);
             auto jobId = apk->getJobId();
             auto PSport = apk->getDestPort();
             MulticastID mKey = {destAddr, PSport, seq};
@@ -195,7 +195,7 @@ void Routing::forwardIncoming(Packet *pk)
     send(pk, "out", outGateIndex);
 }
 
-Packet* Routing::aggregate(AggPacket *apk)
+Packet* Routing::aggregate(AggUseIncPacket *apk)
 {
     auto agtrIndex = apk->getAggregatorIndex();
     if (aggregators.at(agtrIndex) == nullptr) { // lazy initialization to save memory
@@ -214,7 +214,7 @@ Packet* Routing::aggregate(AggPacket *apk)
             case MTATP:
                 aggregators[agtrIndex] = new MTATPEntry();
                 break;
-            case SRAGG:
+            case INC:
                 if (!apk->getResend())
                     aggregators[agtrIndex] = new Aggregator();
                 else  // ! a resend packet mustn't get an idle aggregator

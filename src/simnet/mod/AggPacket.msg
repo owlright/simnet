@@ -4,22 +4,19 @@ enum AggPolicy
 {
     ATP = 0;
     MTATP = 1;
-    SRAGG = 2;
+    INC = 2;
+    NOINC = 3;
 }
 
 class AggPacket extends Packet
 {
     packetType = AGG;
-    AggPolicy aggPolicy;
+    AggPolicy aggPolicy = NOINC;
     int round;
-    int aggregatorIndex;
     int64_t jobId;
     int workerNumber;
-    bool overflow;
     bool resend;
-    bool collision;
-    bool ecn;
-    bool isAck;
+	bool isAck;
     // cheating fields
     int64_t workerRecord[] @custom @sizeGetter(getRecordLen)
                            @sizeSetter(setRecordLen)
@@ -63,7 +60,24 @@ cplusplus(AggPacket::copy) {{
     this->workerRecord = other.workerRecord;
 }}
 
-class ATPPacket extends AggPacket
+class AggUseIncPacket extends AggPacket
+{
+    int aggregatorIndex;
+    bool collision;
+    bool ecn;
+    bool overflow;
+
+    aggPolicy = INC;
+    int aggCounter;
+    int treeCost;
+}
+
+class AggNoIncPacket extends AggPacket
+{
+    aggPolicy = NOINC;
+}
+
+class ATPPacket extends AggUseIncPacket
 {
     aggPolicy = ATP;
     byteLength = 16 + 8; // ATP header total size is 58 Bytes
@@ -74,20 +88,10 @@ class ATPPacket extends AggPacket
     int switchIdentifier;
 }
 
-class MTATPPacket extends AggPacket
+class MTATPPacket extends AggUseIncPacket
 {
     aggPolicy = MTATP;
     byteLength = 16 + 4;
-    int timer;
-    int aggCounter;
     bool flags[5];
-    int treeCost;
 }
 
-class SRAggPacket extends AggPacket
-{
-    aggPolicy = SRAGG;
-    int timer;
-    int aggCounter;
-    int treeCost;
-} 
