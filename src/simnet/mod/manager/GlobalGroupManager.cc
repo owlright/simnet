@@ -367,8 +367,8 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 segmentInfodb[jobid][addr][ps] = new JobSegmentsRoute();
                 segmentInfodb[jobid][addr][ps]->segmentAddrs = segments;
                 segmentInfodb[jobid][addr][ps]->fanIndegrees = indegrees;
-                for (auto i = 0; i < m->getSubmoduleVectorSize("apps"); i++) {
-                    auto app = m->getSubmodule("apps", i);
+                for (auto i = 0; i < m->getSubmoduleVectorSize("workers"); i++) {
+                    auto app = m->getSubmodule("workers", i);
                     if (app->hasPar("segmentAddrs") && ps == app->par("destAddress").intValue()) {
                         app->par("segmentAddrs") = vectorToString(segments);
                         app->par("fanIndegrees") = vectorToString(indegrees);
