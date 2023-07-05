@@ -222,8 +222,9 @@ Packet* UnicastSenderApp::createDataPacket(SeqNumber seq, B packetBytes)
 void UnicastSenderApp::refreshDisplay() const
 {
     if (!getEnvir()->isExpressMode()) {
-        char buf[20];
-        sprintf(buf, "remote: %" PRId64 ":%u", destAddr, destPort);
+        char buf[50];
+        sprintf(buf, "remote: %" PRId64 ":%u\n local: %" PRId64 ":%u",
+                destAddr, destPort, localAddr, localPort);
         getDisplayString().setTagArg("t", 0, buf);
     }
 }
