@@ -33,13 +33,12 @@ network FatTree
         coreSwitches[numCores]: Switch {
             @display("p=166,32,r,50");
         }
-
         routeManager: GlobalRouteManager {
             @display("p=428.01373,157.44374");
         }
-        // groupManager: GlobalGroupManager {
-        //     @display("p=428.01373,81.6375");
-        // }
+        groupManager: GlobalGroupManager {
+            @display("p=428.01373,81.6375");
+        }
         tpManager: TrafficPatternManager {
             @display("p=428.01373,237.915");
         }
