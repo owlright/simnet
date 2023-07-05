@@ -32,16 +32,17 @@ int PortDispatcher::findGateIndexByPort(PortNumber port)
 void PortDispatcher::handleMessage(cMessage *msg)
 {
     if (msg->arrivedOn("in")) {
-        Packet *pk = check_and_cast<Packet *>(msg);
+        auto pk = check_and_cast<Packet *>(msg);
         auto port = pk->getDestPort();
+        ASSERT(pk->getDestAddr() != INVALID_ADDRESS && port != INVALID_PORT);
         auto outGateIndex = findGateIndexByPort(port);
         send(msg, "localOut", outGateIndex);
-        EV_DEBUG << "Dispatching packet "<< msg->getName() << " to gate localOut " << outGateIndex  << endl;
+        EV_TRACE << "Dispatching packet "<< msg->getName() << " to gate localOut " << outGateIndex  << endl;
     }
     else if (msg->arrivedOn("localIn")) {
         ASSERT(msg->isPacket());
         send(msg, "out");
-        EV_DEBUG << "Received packet "<< msg->getName() << " from app." << endl;
+        EV_TRACE << "Received packet "<< msg->getName() << " from app." << endl;
     }
     else {
         throw cRuntimeError("should not run here");

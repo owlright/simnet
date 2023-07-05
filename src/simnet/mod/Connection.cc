@@ -8,6 +8,7 @@ void Connection::bind(IntAddress localAddr, PortNumber localPort)
 
 void Connection::bindRemote(IntAddress destAddr, PortNumber destPort)
 {
+    ASSERT(destAddr != INVALID_ADDRESS && destPort != INVALID_PORT);
     this->destAddr = destAddr;
     this->destPort = destPort;
 }
@@ -22,13 +23,14 @@ Connection::Connection(IdNumber connId)
 
 void Connection::send(cMessage* msg)
 {
-    if (destAddr == INVALID_ADDRESS || destPort == INVALID_PORT)
-        throw cRuntimeError("Connection::send: must set destAddr and destPort before using this function");
     auto pk = check_and_cast<Packet *>(msg);
     pk->setSrcAddr(localAddr);
-    pk->setDestAddr(destAddr);
     pk->setLocalPort(localPort);
-    pk->setDestPort(destPort);
+    if (destAddr != INVALID_ADDRESS || destPort != INVALID_PORT) {
+        pk->setDestAddr(destAddr);
+        pk->setDestPort(destPort);
+    }
+
     pk->setConnectionId(getConnectionId());
     sendToUnicast(pk);
 }
