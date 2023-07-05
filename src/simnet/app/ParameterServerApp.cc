@@ -19,10 +19,17 @@ protected:
     std::unordered_map<SeqNumber, bool> aggedEcns;
     static simsignal_t aggRatioSignal;
 
+protected:
+    void dealWithAggPacket(const cMessage* msg);
+    void dealWithIncAggPacket(Connection* connection, const cMessage* msg);
+    void dealWithNoIncAggPacket(const cMessage* msg);
+
 private:
-    opp_component_ptr<GlobalGroupManager> groupManager;
     int jobid{-1};
+    int numWorkers{0};
     IntAddress groupAddr{INVALID_ADDRESS};
+    std::vector<IntAddress> workers;
+    std::vector<PortNumber> workerPorts;
 };
 
 Define_Module(ParameterServerApp);
@@ -64,44 +71,13 @@ void ParameterServerApp::onNewConnectionArrived(IdNumber connId, const Packet* c
 void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
     auto pk = check_and_cast<AggPacket*>(msg);
-    ASSERT(pk->getPacketType() == AGG);
     ASSERT(pk->getJobId() == connection->getConnectionId());
-    auto seq = pk->getSeqNumber();
-    if (aggedWorkers.find(seq) == aggedWorkers.end())
-    {
-        aggedWorkers[seq] = std::unordered_set<IntAddress>();
-        receivedNumber[seq] = 0;
-        aggedEcns[seq] = false;
+    dealWithAggPacket(msg);
+    if (pk->getAggPolicy() == INC) {
+        dealWithIncAggPacket(connection, msg);
     }
-    aggedEcns.at(seq) |= (pk->getECN() || pk->getEcn());
-
-    EV_DEBUG << pk->getRecord() << endl;
-    auto& tmpWorkersRecord = aggedWorkers.at(seq);
-    if (pk->getCollision())
-        EV_WARN << seq << " hash collision happen" << endl;
-    if (pk->getResend())
-        EV_WARN << seq << " is a resend packet" << endl;
-    for (auto& w:pk->getRecord()) {
-        if (tmpWorkersRecord.find(w) != tmpWorkersRecord.end()) {
-            ASSERT(pk->getResend());
-            EV_WARN << "received a seen packet" << endl;
-        }
-        else {
-            receivedNumber[seq] += 1;
-        }
-        tmpWorkersRecord.insert(w);
-    }
-    EV_DEBUG << "Seq " << seq << " aggregated " << receivedNumber[seq] << " packets." << endl;
-    auto aggedNumber = tmpWorkersRecord.size();
-    if (aggedNumber == pk->getWorkerNumber())
-    {
-        auto packet = createAckPacket(pk);
-        connection->send(packet);
-        emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedNumber) );
-        aggedWorkers.erase(seq);
-        receivedNumber.erase(seq);
-        aggedEcns.erase(seq);
-        EV_DEBUG << "Seq " << seq << " finished." << endl;
+    else if (pk->getAggPolicy() == NOINC) {
+        dealWithNoIncAggPacket(msg);
     }
     delete pk;
 }
@@ -113,21 +89,109 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
             localAddr, pk->getSeqNumber());
     auto packet = new AggPacket(pkname);
     packet->setSeqNumber(pk->getSeqNumber());
-    packet->setKind(MACK);
+    packet->setPacketType(MACK);
     packet->setByteLength(64);
     packet->setReceivedBytes(pk->getByteLength());
     packet->setStartTime(pk->getStartTime());
     packet->setQueueTime(pk->getQueueTime());
     packet->setTransmitTime(pk->getTransmitTime());
-    if (aggedEcns.at(pk->getSeqNumber())) {
+    if (aggedEcns[pk->getSeqNumber()]) {
         packet->setECE(true);
     }
     packet->setIsFlowFinished(pk->isFlowFinished());
     check_and_cast<AggPacket*>(packet)->setIsAck(true);
+    // * set these fields is for no-inc agg packets
+    packet->setDestAddr(INVALID_ADDRESS);
+    packet->setDestPort(INVALID_PORT);
     return packet;
 }
 
 void ParameterServerApp::finish()
 {
 
+}
+
+void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
+{
+    auto pk = check_and_cast<const AggPacket*>(msg);
+    ASSERT(pk->getPacketType() == AGG);
+    auto seq = pk->getSeqNumber();
+    EV_DEBUG << pk->getRecord() << endl;
+    // * first packet of the same seq
+    if (aggedWorkers.find(seq) == aggedWorkers.end())
+    {
+        aggedWorkers[seq] = std::unordered_set<IntAddress>();
+        receivedNumber[seq] = 0;
+        aggedEcns[seq] = false;
+    }
+    aggedEcns.at(seq) |= pk->getECN();
+    auto& tmpWorkersRecord = aggedWorkers.at(seq);
+    for (auto& w:pk->getRecord()) {
+        if (tmpWorkersRecord.find(w) != tmpWorkersRecord.end()) {
+            ASSERT(pk->getResend());
+            EV_WARN << "received a seen packet" << endl;
+        }
+        else {
+            receivedNumber[seq] += 1;
+            if (workers.size() < numWorkers) {
+                workers.push_back(w);
+                workerPorts.push_back(pk->getLocalPort());
+            }
+        }
+        tmpWorkersRecord.insert(w);
+    }
+    EV_DEBUG << "Seq " << seq << " aggregated " << receivedNumber.at(seq) << " packets." << endl;
+
+}
+
+void ParameterServerApp::dealWithNoIncAggPacket(const cMessage *msg)
+{
+    auto pk = check_and_cast<const AggPacket*>(msg); // FIXME
+    auto seq = pk->getSeqNumber();
+    auto& tmpWorkersRecord = aggedWorkers.at(seq);
+    auto aggedNumber = tmpWorkersRecord.size();
+    if (aggedNumber == pk->getWorkerNumber())
+    {
+        ASSERT(workers.size() == numWorkers);
+        ASSERT(aggedNumber == numWorkers);
+        for (auto i = 0; i < workers.size(); i++) {
+           auto packet = createAckPacket(pk);
+           packet->setPacketType(ACK);
+           packet->setDestAddr(workers[i]);
+           packet->setDestPort(workerPorts[i]);
+           connection->send(packet); // ! HACK: this connection is the listening socket
+        }
+        emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedNumber) );
+        aggedWorkers.erase(seq);
+        receivedNumber.erase(seq);
+        aggedEcns.erase(seq);
+        EV_DEBUG << "Seq " << seq << " finished." << endl;
+    }
+}
+
+void ParameterServerApp::dealWithIncAggPacket(Connection* connection, const cMessage* msg)
+{
+    auto pk = check_and_cast<const AggUseIncPacket*>(msg);
+    auto seq = pk->getSeqNumber();
+    aggedEcns.at(seq) |= pk->getEcn();
+
+    if (pk->getCollision())
+        EV_WARN << seq << " hash collision happen" << endl;
+    if (pk->getResend())
+        EV_WARN << seq << " is a resend packet" << endl;
+
+    auto& tmpWorkersRecord = aggedWorkers.at(seq);
+    auto aggedNumber = tmpWorkersRecord.size();
+    if (aggedNumber == pk->getWorkerNumber())
+    {
+        ASSERT(workers.size() == numWorkers);
+        ASSERT(aggedNumber == numWorkers);
+        auto packet = createAckPacket(pk);
+        connection->send(packet);
+        emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedNumber) );
+        aggedWorkers.erase(seq);
+        receivedNumber.erase(seq);
+        aggedEcns.erase(seq);
+        EV_DEBUG << "Seq " << seq << " finished." << endl;
+    }
 }
