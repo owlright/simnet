@@ -124,9 +124,12 @@ void Routing::forwardIncoming(Packet *pk)
     auto seq = pk->getSeqNumber();
     auto destSeqKey = std::make_pair(destAddr, seq);
 
-    auto entryIndex = pk->getLastEntry();
+    auto entryIndex = pk->getSegmentsLeft();
     // ! entryIndex is unsigned, do not check it == -1
-    auto segment = pk->getSegmentsArraySize() > 0 ? pk->getSegments(entryIndex) : -1;
+    IntAddress segment{INVALID_ADDRESS};
+    if (entryIndex > 0)
+        segment =  pk->getSegments(entryIndex - 1);
+
     if (segment == myAddress) {
         auto& fun = pk->getFuns(entryIndex);
         if (fun == "aggregation") {
@@ -150,6 +153,7 @@ void Routing::forwardIncoming(Packet *pk)
                 apk->popSegment();
                 apk->popFun();
                 apk->popArg();
+                pk->setSegmentsLeft(pk->getSegmentsLeft() - 1);
                 apk->setLastEntry(apk->getLastEntry() - 1);
                 auto agtrIndex = apk->getAggregatorIndex();
                 auto job = apk->getJobId();
@@ -184,6 +188,7 @@ void Routing::forwardIncoming(Packet *pk)
     // 2. finished aggregated packet
     // 3. group packet not responsible for
     // 4. group packet failed to be aggregated(hash collision, resend)
+    // 5. group packet not ask for aggregation(segmentsLeft == 0)
     int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
     if (outGateIndex == -1) { // ! TODO if not found, routeManager will throw an error, the code is useless
         EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
