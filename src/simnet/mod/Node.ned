@@ -52,13 +52,15 @@ module Host extends Node
     submodules:
         apps[numApps]: <default("UnicastSenderApp")> like IApp {
             port = 1000 + index;
-            @display("p=140,36.4,r,50");
+            @display("p=61.600002,42,r,50");
         }
         workers[numWorkers]: <default("SRWorker")> like IApp {
             port = 2000 + index;
+            @display("p=140,42,r,50");
         }
         pses[numServers]: <default("ParameterServerApp")> like IApp {
             port = 3000 + index;
+            @display("p=220.26668,42,r,50");
         }
         at: PortDispatcher {
             parameters:
