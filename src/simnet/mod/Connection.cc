@@ -22,7 +22,7 @@ Connection::Connection(IdNumber connId)
 
 void Connection::send(cMessage* msg)
 {
-    if (destAddr == -1 || destPort == INVALID_PORT)
+    if (destAddr == INVALID_ADDRESS || destPort == INVALID_PORT)
         throw cRuntimeError("Connection::send: must set destAddr and destPort before using this function");
     auto pk = check_and_cast<Packet *>(msg);
     pk->setSrcAddr(localAddr);
