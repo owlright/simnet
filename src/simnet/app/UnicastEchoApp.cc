@@ -62,3 +62,12 @@ Packet *UnicastEchoApp::createAckPacket(const Packet* const pk)
     packet->setIsFlowFinished(pk->isFlowFinished());
     return packet;
 }
+
+void UnicastEchoApp::refreshDisplay() const
+{
+    if (!getEnvir()->isExpressMode()) {
+        char buf[20];
+        sprintf(buf, "local:%" PRId64 ":%u", localAddr, localPort);
+        getDisplayString().setTagArg("t", 0, buf);
+    }
+}

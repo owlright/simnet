@@ -223,7 +223,7 @@ void UnicastSenderApp::refreshDisplay() const
 {
     if (!getEnvir()->isExpressMode()) {
         char buf[20];
-        sprintf(buf, "%" PRId64 ":%u", destAddr, destPort);
+        sprintf(buf, "remote: %" PRId64 ":%u", destAddr, destPort);
         getDisplayString().setTagArg("t", 0, buf);
     }
 }

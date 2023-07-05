@@ -24,4 +24,5 @@ protected:
     // for callback function use
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
     virtual Packet* createAckPacket(const Packet* const pk);
+    virtual void refreshDisplay() const override;
 };
