@@ -61,6 +61,11 @@ void HostNode::initialize(int stage)
                                         ->getChannel())->getDatarate();
             par("bandwidth") = bandwidth; // ! apps will read this value
         }
+    }
+    else if (stage == INITSTAGE_LAST) {
+        if (getSubmoduleVectorSize("workers") > 0 || getSubmoduleVectorSize("pses") > 0) {
+            loadMode = false;
+        }
         if (loadMode) {
             flowSizeMean = par("flowSizeMean");
             ASSERT(flowSizeMean > 0);
