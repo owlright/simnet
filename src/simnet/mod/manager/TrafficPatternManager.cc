@@ -4,6 +4,10 @@ Define_Module(TrafficPatternManager);
 
 IntAddress TrafficPatternManager::getDestAddr(IntAddress srcAddr) const
 {
+    if (srcAddr == INVALID_ADDRESS)
+    {
+        throw cRuntimeError("TrafficPatternManager::getDestAddr(%" PRId64 "): invalid address!", srcAddr);
+    }
     IntAddress dst{INVALID_ADDRESS};
     if (trafficPattern == "uniform")
     {
@@ -14,9 +18,11 @@ IntAddress TrafficPatternManager::getDestAddr(IntAddress srcAddr) const
         }
         while(dst == srcAddr);
     }
-    if (dst == INVALID_ADDRESS)
-    {
-        throw cRuntimeError("TrafficPatternManager::getDestAddr(%" PRId64 "): invalid address!", srcAddr);
+    else if (trafficPattern == "") {
+        EV_WARN << "Empty trafficPattern!" << endl;
+    }
+    else {
+        throw cRuntimeError("unknown trafficPattern.");
     }
     return dst;
 }
