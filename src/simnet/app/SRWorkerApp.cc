@@ -70,6 +70,7 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     // segment routing
     pk->setSIDSize(segments.size());
     pk->setLastEntry(segments.size() - 1);
+    pk->setSegmentsLeft(segments.size());
     auto sit = segments.rbegin();
     auto fit = fanIndegrees.rbegin();
     for (auto i = 0; i < segments.size(); i++)
