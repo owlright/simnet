@@ -80,7 +80,7 @@ void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
 std::vector<int> Routing::getReversePortIndexes(const MulticastID& mKey) const
 {
     if (incomingPortIndexes.find(mKey) == incomingPortIndexes.end())
-        throw cRuntimeError("Routing::getReversePortIndexes: group: %" PRId64 ":%" PRId64 " seq %" PRId64 "not found!",
+        throw cRuntimeError("Routing::getReversePortIndexes: group: %" PRId64 ":%u seq %" PRId64 "not found!",
                                     mKey.addr, mKey.port, mKey.seq);
     return incomingPortIndexes.at(mKey);
 }
@@ -122,13 +122,15 @@ void Routing::forwardIncoming(Packet *pk)
     auto destAddr = pk->getDestAddr();
     auto srcAddr = pk->getSrcAddr();
     auto seq = pk->getSeqNumber();
-    auto destSeqKey = std::make_pair(destAddr, seq);
+    // auto destSeqKey = std::make_pair(destAddr, seq);
 
     auto entryIndex = pk->getSegmentsLeft();
     // ! entryIndex is unsigned, do not check it == -1
     IntAddress segment{INVALID_ADDRESS};
-    if (entryIndex > 0)
+    if (entryIndex > 0) {
         segment =  pk->getSegments(entryIndex - 1);
+        entryIndex -= 1;
+    }
 
     if (segment == myAddress) {
         auto& fun = pk->getFuns(entryIndex);
