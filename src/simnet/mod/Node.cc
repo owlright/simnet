@@ -94,6 +94,9 @@ void HostNode::handleMessage(cMessage* msg)
 UnicastSenderApp* HostNode::createUnicastSenderApp()
 {
     auto appExistSize = getSubmoduleVectorSize("apps");
+    if (appExistSize == 0)
+        throw cRuntimeError("apps[0] must be UnicastEchoApp.");
+    EV_TRACE << "create UnicastSenderApp with port " << 1001 + appExistSize << endl;
     setSubmoduleVectorSize("apps", appExistSize + 1);
     auto appType = "simnet.app.UnicastSenderApp";
     cModule *app = cModuleType::get(appType)->create("apps", this, appExistSize);
