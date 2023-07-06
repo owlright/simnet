@@ -156,6 +156,10 @@ void ParameterServerApp::dealWithNoIncAggPacket(const cMessage *msg)
         ASSERT(aggedNumber == numWorkers);
         for (auto i = 0; i < workers.size(); i++) {
            auto packet = createAckPacket(pk);
+           char pkname[40];
+           sprintf(pkname, "ACK-%" PRId64 "-seq%" PRId64,
+                      localAddr, pk->getSeqNumber());
+           packet->setName(pkname);
            packet->setPacketType(ACK);
            packet->setDestAddr(workers[i]);
            packet->setDestPort(workerPorts[i]);
