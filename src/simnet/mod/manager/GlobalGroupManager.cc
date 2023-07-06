@@ -37,9 +37,15 @@ void GlobalGroupManager::reportFlowStop(IntAddress groupAddr, simtime_t roundSto
 void GlobalGroupManager::initialize(int stage)
 {
     GlobalView::initialize(stage);
-    if (stage == INITSTAGE_ASSIGN) {
-        placeJobs(par("placementPolicy").stringValue());
-        calcAggTree(par("aggTreeType").stringValue());
+    if (stage == INITSTAGE_LOCAL) {
+        placementPolicy = par("placementPolicy");
+        aggTreeType = par("aggTreeType");
+        if (strcmp(aggTreeType, "") != 0)
+            useInc = true;
+    }
+    else if (stage == INITSTAGE_ASSIGN) {
+        placeJobs(placementPolicy);
+        calcAggTree(aggTreeType);
     }
     if (stage == INITSTAGE_LAST)
         ASSERT(topo);
@@ -299,7 +305,7 @@ void GlobalGroupManager::createJobApps(int jobId)
         auto appExistSize = node->getSubmoduleVectorSize("workers");
 
         node->setSubmoduleVectorSize("workers", appExistSize + 1);
-        auto appType = "simnet.app.WorkerApp";
+        auto appType = useInc ? "simnet.app.SRWorker" : "simnet.app.WorkerApp";
         auto app = cModuleType::get(appType)->create("workers", node, appExistSize);
         job->workerPorts[i] = 2000 + appExistSize; // ! port number can only be decided here
         // only new apps can set these fields

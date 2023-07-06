@@ -71,6 +71,9 @@ private:
                            IntAddress,
                            std::unordered_map<IntAddress, JobSegmentsRoute *>>>
         segmentInfodb;
+    const char* placementPolicy;
+    const char* aggTreeType;
+    bool useInc{false};
 
 private:
     // for aggregation job
