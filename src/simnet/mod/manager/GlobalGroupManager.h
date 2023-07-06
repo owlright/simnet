@@ -74,6 +74,7 @@ private:
     const char* placementPolicy;
     const char* aggTreeType;
     bool useInc{false};
+    double jobFraction{0};
 
 private:
     // for aggregation job

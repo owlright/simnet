@@ -1,5 +1,9 @@
-#include "GlobalGroupManager.h"
+#include <iostream>
 #include <fstream>
+#include <algorithm> // std::shuffle
+#include <numeric>   // std::iota
+#include <random>    // std::default_random_engine
+#include "GlobalGroupManager.h"
 #include "simnet/common/utils.h"
 
 Define_Module(GlobalGroupManager);
@@ -39,13 +43,17 @@ void GlobalGroupManager::initialize(int stage)
     GlobalView::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         placementPolicy = par("placementPolicy");
+        jobFraction = par("jobFraction");
+
         aggTreeType = par("aggTreeType");
         if (strcmp(aggTreeType, "") != 0)
             useInc = true;
     }
     else if (stage == INITSTAGE_ASSIGN) {
         placeJobs(placementPolicy);
-        calcAggTree(aggTreeType);
+        if (useInc) {
+            calcAggTree(aggTreeType);
+        }
     }
     if (stage == INITSTAGE_LAST)
         ASSERT(topo);
@@ -223,31 +231,60 @@ void GlobalGroupManager::placeJobs(const char *policyName)
         readHostConfig(par("groupHostFile").stringValue());
     }
     else if (strcmp(policyName, "random") == 0) {
+        int numUsedHosts = hostNodes.size() * jobFraction;
+        auto hostscopy = hostNodes;
+
+        std::shuffle(hostscopy.begin(), hostscopy.end(), std::default_random_engine(intrand(3245)));
+        std::vector<int> hostIds(hostscopy.begin(), hostscopy.begin()+numUsedHosts);
+
         int numGroups = par("numGroups").intValue();
         int numWorkers = par("numWorkers").intValue();
         int numPSes = par("numPSes").intValue();
+
+        if (numGroups*(numWorkers+numPSes) > numUsedHosts) {
+            throw cRuntimeError("used too many hosts, only %d can use.", numUsedHosts);
+        }
+
+        // TODO if allow two workers or pses on the same host ?
+        // ! a host can only be use once
+        int count = 0;
         for (auto i = 0; i < numGroups; i++) {
-            std::vector<int> workers, workerPorts;
-            std::vector<int> pses, psPorts;
-            std::unordered_set<int> visited; // ! make a group member
+            std::vector<int> workers;
+            std::vector<int> pses;
             for (auto j = 0; j < numWorkers + numPSes; j++) {
-                int index = hostNodes.size();
-                do {
-                    index = intrand(hostNodes.size());
-                } while (visited.find(index) != visited.end());
-                visited.insert(index);
-                int nodeId = hostNodes.at(index);
+                int nodeId = hostIds.at(count++);
                 int address = node2addr.at(nodeId);
-                if (j < numWorkers) {
+                if (j < numWorkers)
                     workers.push_back(address);
-                }
-                else {
+                else
                     pses.push_back(address);
-                }
             }
             insertJobInfodb(workers, pses);
             createJobApps(getCurrentJobId());
         }
+        // ! different job's worker or worker and ps can be on the same host
+        // for (auto i = 0; i < numGroups; i++) {
+        //     std::vector<int> workers, workerPorts;
+        //     std::vector<int> pses, psPorts;
+        //     std::unordered_set<int> visited;
+        //     for (auto j = 0; j < numWorkers + numPSes; j++) {
+        //         int index = numUsedHosts; // this is invalid afterall
+        //         do {
+        //             index = intrand(hostIds.size());
+        //         } while (visited.find(index) != visited.end());
+        //         visited.insert(index);
+        //         int nodeId = hostNodes.at(index);
+        //         int address = node2addr.at(nodeId);
+        //         if (j < numWorkers) {
+        //             workers.push_back(address);
+        //         }
+        //         else {
+        //             pses.push_back(address);
+        //         }
+        //     }
+        //     insertJobInfodb(workers, pses);
+        //     createJobApps(getCurrentJobId());
+        // }
     }
     else if (strcmp(policyName, "") == 0) {
         EV_WARN << "You may forget to set a placement policy for agg groups, make sure you manually set them." << endl;
