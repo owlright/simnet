@@ -25,5 +25,5 @@ protected:
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
 
     virtual Connection* createConnection(int connId=-1);
-
+    virtual void handleParameterChange(const char *parameterName) override;
 };

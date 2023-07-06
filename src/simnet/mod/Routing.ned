@@ -16,6 +16,7 @@ module Routing
 {
     parameters:
         // ! these parameters are set in Node.ned
+        int address @mutable = default(-1);
         bool ecmpFlow = default(false);
         string aggPolicy = default("Count");
         int bufferSize @unit(B) = default(10MB);

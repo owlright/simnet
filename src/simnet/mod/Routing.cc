@@ -4,6 +4,7 @@ Define_Module(Routing);
 void Routing::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
+        myAddress = par("address");
         ecmpFlow = par("ecmpFlow").boolValue();
         dropSignal = registerSignal("drop");
         outputIfSignal = registerSignal("outputIf");
@@ -26,9 +27,6 @@ void Routing::initialize(int stage)
             dataCollectTimer = new cMessage("dataCollector");
         }
 
-    }
-    else if (stage == INITSTAGE_ACCEPT) {
-        myAddress = getParentModule()->par("address"); // HACK
     }
     if (stage == INITSTAGE_LAST) {
         if (isSwitch) {
@@ -354,5 +352,12 @@ void Routing::finish()
             EV_WARN << "there is unreleased aggregator on router " << myAddress
             << " belongs to job " << p->getJobId() << " seq " << p->getSeqNumber() << endl;
         }
+    }
+}
+
+void Routing::handleParameterChange(const char *parameterName)
+{
+    if (strcmp(parameterName, "address") == 0) {
+        myAddress = par("address");
     }
 }

@@ -7,20 +7,16 @@ void UnicastApp::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
         localPort = par("port");
-        // if (connection == nullptr) { // ! only create once
-
-            // else
-        // }
-    }
-    else if (stage == INITSTAGE_ACCEPT) {
         localAddr = getParentModule()->par("address");
-        if (localAddr != INVALID_ADDRESS && localPort != INVALID_PORT) {
-            connection = createConnection();
-            auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
-            check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
-        }
-        else {
-            throw cRuntimeError("the localAddr %" PRId64 " or localPort %u is still invalid.", localAddr, localPort);
+         if (localAddr != INVALID_ADDRESS && localPort != INVALID_PORT) {
+             connection = createConnection();
+             auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
+             check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
+         }
+    }
+    else if (stage == INITSTAGE_LAST) {
+        if (connection == nullptr) {
+            throw cRuntimeError("connection is still nullptr");
         }
     }
 }
@@ -36,6 +32,20 @@ void UnicastApp::handleMessage(cMessage *msg)
 void UnicastApp::connectionDataArrived(Connection *connection, cMessage* msg)
 {
     delete msg;
+}
+
+void UnicastApp::handleParameterChange(const char *parameterName)
+{
+    if (strcmp(parameterName, "address") == 0) {
+        localAddr = par("address");
+        // ! localAddr should only changed once
+        if (connection != nullptr) {
+            throw cRuntimeError("connection has already been setup!");
+        }
+        connection = createConnection();
+        auto connectedGateIndex = gate("out")->getPathEndGate()->getIndex();
+        check_and_cast<PortDispatcher*>(getParentModule()->getSubmodule("at"))->registerPort(localPort, connectedGateIndex);
+    }
 }
 
 Connection* UnicastApp::createConnection(int connId)

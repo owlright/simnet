@@ -29,18 +29,19 @@ protected:
     // helper functions
     void sendPendingData();
     B inflightBytes() {return sentBytes + retransmitBytes - confirmedBytes - confirmedRetransBytes;};
-    // inherited functions
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes);
     virtual void onFlowStart();
     virtual void onFlowStop();
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    virtual void handleParameterChange(const char *parameterName) override;
+
 
 protected:
+    // inherited functions
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
     virtual void finish() override;
     virtual void refreshDisplay() const override;
+    virtual void handleParameterChange(const char *parameterName) override;
 
 protected:
     // ! parameters
@@ -90,4 +91,6 @@ protected:
 public:
     virtual ~UnicastSenderApp();
 
+private:
+    bool bindRemote();
 };

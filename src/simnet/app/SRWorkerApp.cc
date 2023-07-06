@@ -22,7 +22,7 @@ void SRWorker::initialize(int stage)
     WorkerApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
     }
-    else if (stage == INITSTAGE_ACCEPT) {
+    else if (stage == INITSTAGE_LAST) {
         EV << "SRWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
         EV << " PS(" << destAddr << ":" << destPort << ")" << endl;
         segments = cStringTokenizer(par("segmentAddrs").stringValue()).asIntVector();

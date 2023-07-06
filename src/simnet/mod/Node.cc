@@ -20,7 +20,17 @@ void Node::handleParameterChange(const char *parameterName)
     // ! if stage == INITSTAGE_ASSIGN, this may happen
     if (strcmp(parameterName, "address") == 0) {
         address = par("address");
-        // std::cout << getClassAndFullPath() << std::endl;
+        std::vector<const char*> notifyapps{"apps", "workers", "pses"};
+        for (auto name:notifyapps) {
+            if (hasSubmoduleVector(name)) {
+                auto apps = getSubmoduleArray(name);
+                for (auto& app:apps) {
+                    app->par("address") = address;
+                }
+            }
+        }
+        auto routing = getSubmodule("routing");
+        routing->par("address") = address;
     }
 }
 
@@ -61,22 +71,6 @@ void HostNode::initialize(int stage)
             newFlowTimer = new cMessage("newFlow");
             scheduleAfter(exponential(flowInterval), newFlowTimer);
         }
-        // * collect manually setup unicast apps if there is any
-        auto apps = getSubmoduleArray("apps");
-        for (auto mod:apps) {
-            if (strcmp(mod->getClassName(), "UnicastSenderApp") == 0) {
-                auto app = check_and_cast<UnicastSenderApp*>(mod);
-                unicastSenders.push_back(app);
-            }
-        }
-
-    }
-    else if (stage == INITSTAGE_ASSIGN) {
-        // for (auto app:unicastSenders) {
-        //     if (app->getDestAddr() == INVALID_ADDRESS) {
-        //         app->setDestAddr(generateDestAddr());
-        //     }
-        // }
     }
 }
 
@@ -98,6 +92,7 @@ UnicastSenderApp* HostNode::createUnicastSenderApp()
     setSubmoduleVectorSize("apps", appExistSize + 1);
     auto appType = "simnet.app.UnicastSenderApp";
     cModule *app = cModuleType::get(appType)->create("apps", this, appExistSize);
+    app->par("address") = address;
     app->par("port") = 1000 + appExistSize;
     app->par("destAddress") = generateDestAddr();
     app->par("flowStartTime") = simTime().dbl();

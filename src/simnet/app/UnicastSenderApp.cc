@@ -14,6 +14,18 @@ UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(jitterTimeout);
 }
 
+bool UnicastSenderApp::bindRemote()
+{
+    if(destAddr != INVALID_ADDRESS && destPort != INVALID_PORT) {
+        connection->bindRemote(destAddr, destPort); // ! bind remote before using send
+        appState = Scheduled;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 void UnicastSenderApp::finish() {
     if (destAddr == INVALID_ADDRESS)
         return;
@@ -45,21 +57,12 @@ void UnicastSenderApp::initialize(int stage)
         // flowInterval = &par("flowInterval");
         if (useJitter)
             jitterBeforeSending = &par("jitterBeforeSending");
-
-    } else if (stage == INITSTAGE_ACCEPT) {
+        cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
+        cong->setSegmentSize(messageLength);
         destAddr = par("destAddress");
         destPort = par("destPort");
-        ASSERT(connection != nullptr); // ! connection must be created by UnicastApp in its ACCEPT stage
-        if (destAddr != INVALID_ADDRESS && destPort != INVALID_PORT) {
-            connection->bindRemote(destAddr, destPort); // ! bind remote before using send
-            cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
-            cong->setSegmentSize(messageLength);
-
-            //schedule sending event
-            if (useJitter)
-                jitterTimeout = new cMessage("jitterTimeout");
+        if (bindRemote()) {
             scheduleAt(flowStartTime, flowStartTimer);
-            appState = Scheduled;
         }
     }
 }
@@ -108,11 +111,9 @@ void UnicastSenderApp::onFlowStart()
     confirmedDisorders.clear();
     flowStartTime = simTime().dbl();
     appState = Sending;
-    // if (loadMode) { //flowSize will change only in loadMode
-    //     do {
-    //         currentFlowSize = flowSize->intValue();
-    //     } while (currentFlowSize <= 0);
-    // }
+    if (connection == nullptr) {
+        throw cRuntimeError("conneciton is nullptr!");
+    }
     EV_INFO << " flowSize: " << flowSize << endl;
     cong->reset();
     emit(flowSizeSignal, flowSize);
@@ -124,13 +125,6 @@ void UnicastSenderApp::onFlowStop()
     emit(fctSignal, (simTime() - flowStartTime));
     emit(idealFctSignal, currentBaseRTT + SimTime((flowSize*8) / bandwidth));
     appState = Finished;
-    // if (currentRound < numRounds) {// note it's '<' here
-    //     if (!loadMode) {
-    //         ASSERT(flowInterval != nullptr);
-    //         currentFlowInterval = flowInterval->doubleValueInUnit("s");
-    //     }
-    //     scheduleAfter(currentFlowInterval, flowStartTimer);
-    // }
 }
 
 void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *msg)
@@ -196,9 +190,17 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
 
 void UnicastSenderApp::handleParameterChange(const char *parameterName)
 {
+    UnicastApp::handleParameterChange(parameterName);
+    // this can happen when node change the app destionation
     if (strcmp(parameterName, "destAddress") == 0) {
         destAddr = par("destAddress");
+        bindRemote();
     }
+    else if (strcmp(parameterName, "destPort") == 0) {
+        destPort = par("destPort");
+        bindRemote();
+    }
+
 }
 
 Packet* UnicastSenderApp::createDataPacket(SeqNumber seq, B packetBytes)

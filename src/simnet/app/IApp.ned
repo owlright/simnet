@@ -17,7 +17,8 @@ moduleinterface IApp
 {
     parameters:
         @display("i=block/app_s");
-//        int destAddress;
+       int address;
+       int port;
 
     gates:
         input in;
