@@ -2,6 +2,7 @@
 
 cTopology * GlobalView::topo = nullptr;
 std::vector<int> GlobalView::hostNodes;
+std::vector<IntAddress> GlobalView::jobUsedAddrs;
 std::unordered_map<int, IntAddress> GlobalView::node2addr;
 std::unordered_map<IntAddress, int> GlobalView::addr2node;
 std::unordered_map<IntAddress, cModule*> GlobalView::addr2mod;

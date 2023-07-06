@@ -258,6 +258,7 @@ void GlobalGroupManager::placeJobs(const char *policyName)
                     workers.push_back(address);
                 else
                     pses.push_back(address);
+                jobUsedAddrs.push_back(address);
             }
             insertJobInfodb(workers, pses);
             createJobApps(getCurrentJobId());

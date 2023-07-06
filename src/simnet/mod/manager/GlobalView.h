@@ -16,6 +16,7 @@ protected:
 protected:
     static cTopology *topo;
     static std::vector<int> hostNodes;
+    static std::vector<IntAddress> jobUsedAddrs;
     // TODO rename the below two items
     static std::unordered_map<int, IntAddress> node2addr;
     static std::unordered_map<IntAddress, int> addr2node;
