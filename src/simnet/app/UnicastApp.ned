@@ -11,9 +11,9 @@ simple UnicastApp like IApp {
 }
 
 module UnicastSenderApp extends UnicastApp {
-   parameters:
-       @class(UnicastSenderApp);
-       port = default(-1);
+    parameters:
+        @class(UnicastSenderApp);
+        port = default(-1);
         int destAddress @mutable = default(-1);
         int destPort = default(1000);
         int messageLength @unit(B) = default(1kB);
