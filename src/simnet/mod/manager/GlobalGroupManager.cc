@@ -207,31 +207,29 @@ std::vector<IntAddress> GlobalGroupManager::getShortestPath(cTopology &tree, cTo
     return path;
 }
 
-void GlobalGroupManager::buildSteinerTree(cTopology& tree, const std::vector<int>& members, int root)
+void GlobalGroupManager::buildSteinerTree(cTopology& tree, const std::vector<cTopology::Node*>& leaves, cTopology::Node* root)
 {
-    auto rootNode = topo->getNode(root);
-    tree.addNode(new cTopology::Node(rootNode->getModuleId())); // ! must new a node
-    for (auto& n:members) {
+    tree.addNode(new cTopology::Node(root->getModuleId())); // ! must new a node
+    for (auto& n:leaves) {
         double dist = INFINITY;
-        auto currentHost = topo->getNode(n);
         // * find the joint node to the tree
         cTopology::Node* jointNode = nullptr;
         for (auto i = 0; i < tree.getNumNodes(); i++) {
             // ! Node* of the same Module in tree and topo are different
             auto nodeInTree = topo->getNodeFor(tree.getNode(i)->getModule());
-            if (nodeInTree == rootNode ||
+            if (nodeInTree == root ||
                     nodeInTree->getModule()->getProperties()->get("switch")!=nullptr)
             { // ! ignore hosts
                 topo->calculateWeightedSingleShortestPathsTo(nodeInTree);
-                if (currentHost->getDistanceToTarget() < dist) {
-                    dist = currentHost->getDistanceToTarget();
+                if (n->getDistanceToTarget() < dist) {
+                    dist = n->getDistanceToTarget();
                     jointNode = nodeInTree;
                 }
             }
         }
         ASSERT(jointNode);
         // * add the node into tree using the shortest path
-        addShortestPath(tree, currentHost, jointNode);
+        addShortestPath(tree, n, jointNode);
     }
 }
 
@@ -392,15 +390,14 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             EV_DEBUG << "job " << jobid << endl;
             auto group = it.second;
             auto senders = group->workers;
-            auto roots = group->PSes;
-            auto ps = roots.at(0);
+            auto ps = group->PSes.at(0);
             cTopology tree = cTopology("steiner");
 
-            std::vector<int> senderIndexes;
+            std::vector<cTopology::Node*> senderNodes;
             for (auto& s:senders) {
-                senderIndexes.push_back(addr2nodeId.at(s));
+                senderNodes.push_back(addr2node.at(s));
             }
-            buildSteinerTree(tree, senderIndexes, addr2nodeId.at(ps)); //  TODO multiple PSes
+            buildSteinerTree(tree, senderNodes, addr2node.at(ps)); //  TODO multiple PSes
 
             std::vector<cModule*> senderMods;
             for (auto& s:senders) {
@@ -437,7 +434,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
 
                 }
 
-                // * prepare indegree at each middle node
+                // * prepare args(indegree) at each segment
                 std::vector<int> indegrees;
                 for (auto& seg:segments) {
                     indegrees.push_back(tree.getNodeFor(addr2mod.at(seg))->getNumInLinks());
