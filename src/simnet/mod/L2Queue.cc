@@ -30,14 +30,14 @@ class L2Queue : public cSimpleModule
     cMessage *endTransmissionEvent{nullptr};
     bool isBusy;
 
-    simsignal_t qlenSignal;
+    static simsignal_t qlenSignal;
     // simsignal_t busySignal;
     // simsignal_t queueingTimeSignal;
     // simsignal_t dropSignal;
     // simsignal_t txBytesSignal;
     // simsignal_t rxBytesSignal;
     // simsignal_t congestionSignal;
-    simsignal_t outputPacketSignal;
+    static simsignal_t outputPacketSignal;
 
   public:
     B getQueueBytes() const {return queueBytes;};
@@ -53,6 +53,9 @@ class L2Queue : public cSimpleModule
 };
 
 Define_Module(L2Queue);
+
+simsignal_t L2Queue::outputPacketSignal = registerSignal("outputPacket");
+simsignal_t L2Queue::qlenSignal = registerSignal("qlen");
 
 void L2Queue::insertQueue(cMessage *msg) {
     queue.insert(msg);
@@ -82,14 +85,12 @@ void L2Queue::initialize()
     ecnThreshold = par("ecnThreshold");
     frameSize = par("frameSize");
 
-    qlenSignal = registerSignal("qlen");
     // busySignal = registerSignal("busy");
     // queueingTimeSignal = registerSignal("queueingTime");
     // dropSignal = registerSignal("drop");
     // txBytesSignal = registerSignal("txBytes");
     // rxBytesSignal = registerSignal("rxBytes");
     // congestionSignal = registerSignal("congestion");
-    outputPacketSignal = registerSignal("outputPacket");
     emit(qlenSignal, getQueueBytes());
     // emit(busySignal, false);
     isBusy = false;
