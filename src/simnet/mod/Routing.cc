@@ -149,7 +149,7 @@ void Routing::forwardIncoming(Packet *pk)
                 return;
             } else { // TODO: do we release resource at aggpacket leave or ACK arrive?
                 ASSERT(pk == apk);
-                // ! pop the segments
+                // ! pop the segments, RFC not require this
                 apk->popSegment();
                 apk->popFun();
                 apk->popArg();
@@ -189,8 +189,14 @@ void Routing::forwardIncoming(Packet *pk)
     // 3. group packet not responsible for
     // 4. group packet failed to be aggregated(hash collision, resend)
     // 5. group packet not ask for aggregation(segmentsLeft == 0)
-    int outGateIndex = getRouteGateIndex(srcAddr, destAddr);
-    if (outGateIndex == -1) { // ! TODO if not found, routeManager will throw an error, the code is useless
+    int outGateIndex = -1;
+    if (segment == myAddress && entryIndex != 0) {
+        outGateIndex = getRouteGateIndex(srcAddr, pk->getSegments(entryIndex - 1)); // route to next router
+    }
+    else {
+        outGateIndex = getRouteGateIndex(srcAddr, destAddr);
+    }
+    if (outGateIndex == -1) {
         EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
         emit(dropSignal, (intval_t)pk->getByteLength());
         delete pk;
