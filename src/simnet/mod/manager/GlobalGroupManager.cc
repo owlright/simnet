@@ -6,6 +6,16 @@
 #include "GlobalGroupManager.h"
 #include "simnet/common/utils.h"
 
+std::ostream& operator<<(std::ostream& os, const std::vector<cTopology::Node*>& array)
+{
+    os << "[";
+    for (auto &elem : array) {
+        os << " " << elem->getModule()->getFullPath();
+    }
+    os << " ] ";
+    return os;
+}
+
 Define_Module(GlobalGroupManager);
 
 void GlobalGroupManager::reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime)
