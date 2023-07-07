@@ -3,8 +3,8 @@
 cTopology * GlobalView::topo = nullptr;
 std::vector<int> GlobalView::hostNodes;
 std::vector<IntAddress> GlobalView::jobUsedAddrs;
-std::unordered_map<int, IntAddress> GlobalView::node2addr;
-std::unordered_map<IntAddress, int> GlobalView::addr2node;
+std::unordered_map<int, IntAddress> GlobalView::nodeId2addr;
+std::unordered_map<IntAddress, int> GlobalView::addr2nodeId;
 std::unordered_map<IntAddress, cModule*> GlobalView::addr2mod;
 
 bool GlobalView::isInitialized = false;
@@ -35,27 +35,28 @@ void GlobalView::initialize(int stage)
 
 void GlobalView::collectNodes(cTopology *topo)
 {
-    node2addr.reserve(topo->getNumNodes());
+    nodeId2addr.reserve(topo->getNumNodes());
     std::unordered_set<IntAddress> used;
     for (int i = 0; i < topo->getNumNodes(); i++)
     {
-        auto node = topo->getNode(i)->getModule();
-        IntAddress address = node->par("address");
+        auto node = topo->getNode(i);
+        auto nodeMod = node->getModule();
+        IntAddress address = nodeMod->par("address");
         if (address == -1) { // automanually set it by object id which is ensured unique
-            address = node->getId();
-            node->par("address") = address;
+            address = nodeMod->getId();
+            nodeMod->par("address") = address;
         }
         if (used.find(address) != used.end()){
             throw cRuntimeError("GlobalView::collectNodes: duplicate address %" PRId64, address);
         }
         used.insert(address);
-        auto isHost = node->getProperties()->get("host") != nullptr;
+        auto isHost = nodeMod->getProperties()->get("host") != nullptr;
         if (isHost) {
             hostNodes.push_back(i);
         }
-        node2addr[i] = address;
-        addr2node[address] = i;
-        addr2mod[address] = node;
+        nodeId2addr[i] = address;
+        addr2nodeId[address] = i;
+        addr2mod[address] = nodeMod;
         EV_TRACE << "node: " << i << " address: " << address << " isHost:"<< (isHost ? "true":"false")<< endl;
     }
 }

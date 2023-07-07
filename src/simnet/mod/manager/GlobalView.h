@@ -18,8 +18,8 @@ protected:
     static std::vector<int> hostNodes;
     static std::vector<IntAddress> jobUsedAddrs;
     // TODO rename the below two items
-    static std::unordered_map<int, IntAddress> node2addr;
-    static std::unordered_map<IntAddress, int> addr2node;
+    static std::unordered_map<int, IntAddress> nodeId2addr;
+    static std::unordered_map<IntAddress, int> addr2nodeId;
     static std::unordered_map<IntAddress, cModule*> addr2mod;
 
 private:

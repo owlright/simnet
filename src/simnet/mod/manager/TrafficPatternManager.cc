@@ -14,7 +14,7 @@ IntAddress TrafficPatternManager::getDestAddr(IntAddress srcAddr) const
         do { // ! avoid send to itself
             auto randNum = this->intrand(hostNodes.size());
             auto nodeIndex = hostNodes.at(randNum);
-            dst = node2addr.at(nodeIndex);
+            dst = nodeId2addr.at(nodeIndex);
         }
         while(dst == srcAddr);
     }
@@ -37,7 +37,7 @@ std::vector<IntAddress> TrafficPatternManager::getDestAddrs(IntAddress srcAddr, 
             do { // ! avoid send to itself
                 auto randNum = this->intrand(hostNodes.size());
                 auto nodeIndex = hostNodes.at(randNum);
-                tmpdest = node2addr.at(nodeIndex);
+                tmpdest = nodeId2addr.at(nodeIndex);
             } while(tmpdest == srcAddr);
             dests.push_back(tmpdest);
         }

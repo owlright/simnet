@@ -11,8 +11,8 @@ void GlobalRouteManager::initialize(int stage)
 
 cTopology::Node* GlobalRouteManager::getNode(IntAddress address) const
 {
-    auto its = addr2node.find(address);
-    if (its == addr2node.end()) {
+    auto its = addr2nodeId.find(address);
+    if (its == addr2nodeId.end()) {
        throw cRuntimeError("address %" PRId64 " does not exist!", address);
     }
     return topo->getNode(its->second);

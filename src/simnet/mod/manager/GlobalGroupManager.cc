@@ -263,7 +263,7 @@ void GlobalGroupManager::placeJobs(const char *policyName)
             std::vector<int> pses;
             for (auto j = 0; j < numWorkers + numPSes; j++) {
                 int nodeId = hostIds.at(count++);
-                int address = node2addr.at(nodeId);
+                int address = nodeId2addr.at(nodeId);
                 if (j < numWorkers)
                     workers.push_back(address);
                 else
@@ -400,9 +400,9 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
 
             std::vector<int> senderIndexes;
             for (auto& s:senders) {
-                senderIndexes.push_back(addr2node.at(s));
+                senderIndexes.push_back(addr2nodeId.at(s));
             }
-            buildSteinerTree(tree, senderIndexes, addr2node.at(ps)); //  TODO multiple PSes
+            buildSteinerTree(tree, senderIndexes, addr2nodeId.at(ps)); //  TODO multiple PSes
 
             std::vector<cModule*> senderMods;
             for (auto& s:senders) {
@@ -422,8 +422,8 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 std::unordered_set<cTopology::Node*> visitedNodes;
                 std::unordered_set<cTopology::Link*> visitedLinks;
                 for (auto j = 0; j < segments.size() - 1; j++) {
-                    auto u = topo->getNode(addr2node[segments[j]]);
-                    auto v = topo->getNode(addr2node[segments[j+1]]);
+                    auto u = topo->getNode(addr2nodeId[segments[j]]);
+                    auto v = topo->getNode(addr2nodeId[segments[j+1]]);
                     if (visitedNodes.find(u) == visitedNodes.end()) {
                         visitedNodes.insert(u);
                         u->setWeight(u->getWeight() + 1);
