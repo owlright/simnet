@@ -131,6 +131,7 @@
         "tilesource": "cpp",
         "verticaldatum": "cpp",
         "resourcelibrary": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "future": "cpp"
     }
 }
