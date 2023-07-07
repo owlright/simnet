@@ -21,6 +21,9 @@ protected:
     static std::unordered_map<int, IntAddress> nodeId2addr;
     static std::unordered_map<IntAddress, int> addr2nodeId;
     static std::unordered_map<IntAddress, cModule*> addr2mod;
+    static std::unordered_map<cModule*, IntAddress> mod2addr;
+    static std::unordered_map<cTopology::Node*, IntAddress> node2addr;
+    static std::unordered_map<IntAddress, cTopology::Node*> addr2node;
 
 private:
     void collectNodes(cTopology* topo);

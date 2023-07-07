@@ -6,7 +6,9 @@ std::vector<IntAddress> GlobalView::jobUsedAddrs;
 std::unordered_map<int, IntAddress> GlobalView::nodeId2addr;
 std::unordered_map<IntAddress, int> GlobalView::addr2nodeId;
 std::unordered_map<IntAddress, cModule*> GlobalView::addr2mod;
-
+std::unordered_map<cModule*, IntAddress> GlobalView::mod2addr;
+std::unordered_map<IntAddress, cTopology::Node*> GlobalView::addr2node;
+std::unordered_map<cTopology::Node*, IntAddress> GlobalView::node2addr;
 bool GlobalView::isInitialized = false;
 
 GlobalView::~GlobalView()
@@ -57,6 +59,9 @@ void GlobalView::collectNodes(cTopology *topo)
         nodeId2addr[i] = address;
         addr2nodeId[address] = i;
         addr2mod[address] = nodeMod;
+        mod2addr[nodeMod] = address;
+        node2addr[node] = address;
+        addr2node[address] = node;
         EV_TRACE << "node: " << i << " address: " << address << " isHost:"<< (isHost ? "true":"false")<< endl;
     }
 }
