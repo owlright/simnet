@@ -83,6 +83,10 @@ private:
     void calcAggTree(const char* policyName);
     // * jobId is the job's index in jobInfodb
     void insertJobInfodb(const std::vector<int>& workers, const std::vector<int>& pses);
+    /* This function modifies the variable "tree" in-place to generate
+       a Steiner tree based on "members" and "root".
+       Note that members and root are both the indexes in GlobalView::topo
+    */
     void buildSteinerTree(cTopology& tree, const std::vector<int>& members, int root);
     // TODO make this function more clearly
     // ! add the shortest path between Node start and stop, note that only stop is in the tree

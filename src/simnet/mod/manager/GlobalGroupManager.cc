@@ -387,8 +387,10 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
     }
     else if (strcmp(policyName, "sptree") == 0)
     {
+        int jobNumber = 1;
         for (auto it : jobInfodb)
         {
+            EV_DEBUG << "job " << jobNumber++ << endl;
             auto jobid = it.first;
             auto group = it.second;
             auto senders = group->workers;
@@ -412,7 +414,6 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             // * prepare segments
             for (auto i = 0; i < senders.size(); i++) {
                 auto addr = senders[i];
-
                 auto m = senderMods[i];
                 auto path = getShortestPath(tree, tree.getNodeFor(m), tree.getNodeFor(addr2mod.at(ps)));
                 ASSERT(path.size() >= 3);
