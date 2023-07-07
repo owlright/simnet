@@ -165,7 +165,7 @@ simsignal_t GlobalGroupManager::createSignalForGroup(IntAddress group)
 
 void GlobalGroupManager::addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop)
 {
-    topo->calculateUnweightedSingleShortestPathsTo(stop);
+    topo->calculateWeightedSingleShortestPathsTo(stop);
     auto node = start;
     auto treeNode = new cTopology::Node(node->getModuleId()); // ! must new a node
     tree.addNode(treeNode);
@@ -222,7 +222,7 @@ void GlobalGroupManager::buildSteinerTree(cTopology& tree, const std::vector<int
             if (nodeInTree == rootNode ||
                     nodeInTree->getModule()->getProperties()->get("switch")!=nullptr)
             { // ! ignore hosts
-                topo->calculateUnweightedSingleShortestPathsTo(nodeInTree);
+                topo->calculateWeightedSingleShortestPathsTo(nodeInTree);
                 if (currentHost->getDistanceToTarget() < dist) {
                     dist = currentHost->getDistanceToTarget();
                     jointNode = nodeInTree;
@@ -406,6 +406,9 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             for (auto& s:senders) {
                 senderMods.push_back(addr2mod.at(s));
             }
+
+            // * HACK the simplest ecmp tree
+            // * iterate over all tree's edges and nodes, add weight 1 onto them in topo
             // * prepare segments
             for (auto i = 0; i < senders.size(); i++) {
                 auto addr = senders[i];
@@ -415,6 +418,26 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 ASSERT(path.size() >= 3);
                 EV_DEBUG << path.front() << "->" << path.back() << ":" << path << endl;
                 auto segments = std::vector<int>(path.begin()+1, path.end()-1);
+                std::unordered_set<cTopology::Node*> visitedNodes;
+                std::unordered_set<cTopology::Link*> visitedLinks;
+                for (auto j = 0; j < segments.size() - 1; j++) {
+                    auto u = topo->getNode(addr2node[segments[j]]);
+                    auto v = topo->getNode(addr2node[segments[j+1]]);
+                    if (visitedNodes.find(u) == visitedNodes.end()) {
+                        visitedNodes.insert(u);
+                        u->setWeight(u->getWeight() + 1);
+                    }
+                    // * get the edge u->v
+                    auto nOutEdges = u->getNumOutLinks();
+                    for (auto k = 0; k < nOutEdges; k++) {
+                        auto outEdge = u->getLinkOut(k);
+                        if (outEdge->getRemoteNode() == v && visitedLinks.find(outEdge) == visitedLinks.end()) {
+                            outEdge->setWeight(outEdge->getWeight() + 1);
+                        }
+                    }
+
+                }
+
                 // * prepare indegree at each middle node
                 std::vector<int> indegrees;
                 for (auto& seg:segments) {
