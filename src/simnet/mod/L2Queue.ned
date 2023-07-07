@@ -33,21 +33,21 @@ simple L2Queue
         bool useCutThroughSwitching = default(false);  // use cut-through switching instead of store-and-forward
         @display("i=block/queue;q=queue");
         @signal[qlen](type="long");
-        @signal[busy](type="bool");
-        @signal[congestion](type="long");
-        @signal[queueingTime](type="simtime_t");
-        @signal[drop](type="long");
-        @signal[txBytes](type="long");
-        @signal[rxBytes](type="long");
+        // @signal[busy](type="bool");
+        // @signal[congestion](type="long");
+        // @signal[queueingTime](type="simtime_t");
+        // @signal[drop](type="long");
+        // @signal[txBytes](type="long");
+        // @signal[rxBytes](type="long");
         @signal[outputPacket](type=Packet);
 
         @statistic[qlen](title="queue length(Byte)";record=vector,max;interpolationmode=linear);
-        @statistic[busy](title="server busy state";record=vector?,timeavg;interpolationmode=sample-hold);
-        @statistic[congestion](title="congestion happend";record=vector;interpolationmode=sample-hold);
-        @statistic[queueingTime](title="queueing time at dequeue";unit=s;interpolationmode=none);
-        @statistic[drop](title="dropped packet byte length";unit=bytes;record=vector?,count,sum;interpolationmode=none);
-        @statistic[txBytes](title="transmitting packet byte length";unit=bytes;record=vector?,count,sum,histogram;interpolationmode=none);
-        @statistic[rxBytes](title="received packet byte length";unit=bytes;record=vector?,count,sum,histogram;interpolationmode=none);
+        // @statistic[busy](title="server busy state";record=vector?,timeavg;interpolationmode=sample-hold);
+        // @statistic[congestion](title="congestion happend";record=vector;interpolationmode=sample-hold);
+        // @statistic[queueingTime](title="queueing time at dequeue";unit=s;interpolationmode=none);
+        // @statistic[drop](title="dropped packet byte length";unit=bytes;record=vector?,count,sum;interpolationmode=none);
+        // @statistic[txBytes](title="transmitting packet byte length";unit=bytes;record=vector?,count,sum,histogram;interpolationmode=none);
+        // @statistic[rxBytes](title="received packet byte length";unit=bytes;record=vector?,count,sum,histogram;interpolationmode=none);
         @statistic[dataRate](title="data rate"; source=throughput(outputPacket)/1e6; record=vector; unit=Mbps; interpolationmode=linear);
     gates:
         input in;

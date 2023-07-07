@@ -31,12 +31,12 @@ class L2Queue : public cSimpleModule
     bool isBusy;
 
     simsignal_t qlenSignal;
-    simsignal_t busySignal;
-    simsignal_t queueingTimeSignal;
-    simsignal_t dropSignal;
-    simsignal_t txBytesSignal;
-    simsignal_t rxBytesSignal;
-    simsignal_t congestionSignal;
+    // simsignal_t busySignal;
+    // simsignal_t queueingTimeSignal;
+    // simsignal_t dropSignal;
+    // simsignal_t txBytesSignal;
+    // simsignal_t rxBytesSignal;
+    // simsignal_t congestionSignal;
     simsignal_t outputPacketSignal;
 
   public:
@@ -83,15 +83,15 @@ void L2Queue::initialize()
     frameSize = par("frameSize");
 
     qlenSignal = registerSignal("qlen");
-    busySignal = registerSignal("busy");
-    queueingTimeSignal = registerSignal("queueingTime");
-    dropSignal = registerSignal("drop");
-    txBytesSignal = registerSignal("txBytes");
-    rxBytesSignal = registerSignal("rxBytes");
-    congestionSignal = registerSignal("congestion");
+    // busySignal = registerSignal("busy");
+    // queueingTimeSignal = registerSignal("queueingTime");
+    // dropSignal = registerSignal("drop");
+    // txBytesSignal = registerSignal("txBytes");
+    // rxBytesSignal = registerSignal("rxBytes");
+    // congestionSignal = registerSignal("congestion");
     outputPacketSignal = registerSignal("outputPacket");
     emit(qlenSignal, getQueueBytes());
-    emit(busySignal, false);
+    // emit(busySignal, false);
     isBusy = false;
 }
 
@@ -105,7 +105,7 @@ void L2Queue::startTransmitting(cMessage *msg)
     pk->setTransmitTime(pk->getTransmitTime() + (numBytes*8)/speed);
     send(msg, "line$o");
     emit(outputPacketSignal, check_and_cast<Packet*>(msg));
-    emit(txBytesSignal, numBytes);
+    // emit(txBytesSignal, numBytes);
 
     // Schedule an event for the time when last bit will leave the gate.
     simtime_t endTransmission = gate("line$o")->getTransmissionChannel()->getTransmissionFinishTime();
@@ -119,21 +119,21 @@ void L2Queue::handleMessage(cMessage *msg)
         EV_TRACE << "Transmission finished.\n";
         isBusy = false;
         if (queue.isEmpty()) {
-            emit(busySignal, false);
+            // emit(busySignal, false);
         }
         else {
             msg = popQueue();
             auto qTime = simTime() - msg->getTimestamp();
             auto pk = check_and_cast<Packet *> (msg);
             pk->setQueueTime(pk->getQueueTime() + qTime.dbl()); // accumulate queue time
-            emit(queueingTimeSignal, qTime);
+            // emit(queueingTimeSignal, qTime);
             emit(qlenSignal, getQueueBytes());
             startTransmitting(msg);
         }
     }
     else if (msg->arrivedOn("line$i")) {
         // pass up
-        emit(rxBytesSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());
+        // emit(rxBytesSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());
         send(msg, "out");
     }
     else {  // arrived on gate "in"
@@ -143,19 +143,19 @@ void L2Queue::handleMessage(cMessage *msg)
                 if (!getEnvir()->isExpressMode()) {
                     getParentModule()->bubble("congestion!");
                 }
-                emit(congestionSignal, ecnThreshold);
+                // emit(congestionSignal, ecnThreshold);
                 EV_TRACE << "Current queue length " << queue.getLength()
                     << " and ECN threshold is " << ecnThreshold <<". Mark ECN!\n";
                 check_and_cast<Packet *>(msg)->setECN(true); // TODO how to avoid using Packet here?
             }
             else {
-                emit(congestionSignal, 0);
+                // emit(congestionSignal, 0);
             }
             // We are currently busy, so just queue up the packet.
             if (capacity && getQueueBytes() >= capacity) {
                 throw cRuntimeError("Not ready for dealing with packet loss.");
                 EV_TRACE << "Received " << msg << " but transmitter busy and queue full: discarding\n";
-                emit(dropSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());
+                // emit(dropSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());
                 delete msg;
             }
             else {
@@ -170,9 +170,9 @@ void L2Queue::handleMessage(cMessage *msg)
         else {
             // We are idle, so we can start transmitting right away.
             EV_TRACE << "Received " << msg << endl;
-            emit(queueingTimeSignal, SIMTIME_ZERO); // TODO: what is the signal used for?
+            // emit(queueingTimeSignal, SIMTIME_ZERO); // TODO: what is the signal used for?
             startTransmitting(msg);
-            emit(busySignal, true);
+            // emit(busySignal, true);
         }
     }
 }
