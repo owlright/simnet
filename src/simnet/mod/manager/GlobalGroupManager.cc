@@ -387,11 +387,9 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
     }
     else if (strcmp(policyName, "sptree") == 0)
     {
-        int jobNumber = 1;
-        for (auto it : jobInfodb)
-        {
-            EV_DEBUG << "job " << jobNumber++ << endl;
+        for (auto it : jobInfodb) {
             auto jobid = it.first;
+            EV_DEBUG << "job " << jobid << endl;
             auto group = it.second;
             auto senders = group->workers;
             auto roots = group->PSes;
