@@ -198,6 +198,12 @@ void Routing::forwardIncoming(Packet *pk)
     // 4. group packet failed to be aggregated(hash collision, resend)
     // 5. group packet not ask for aggregation(segmentsLeft == 0)
     int outGateIndex = -1;
+    if (pk->getPacketType() == AGG) {
+        // ! aggPacket's srcAddr may change when resend or collision happen
+        // ! we must make sure in any case the ecmp give the same outGate index
+        srcAddr = myAddress + destAddr;
+    }
+
     if (segment == myAddress && entryIndex != 0) {
         outGateIndex = getRouteGateIndex(srcAddr, pk->getSegments(entryIndex - 1)); // ! route to next router, otherwise ecmp may break this
     }
