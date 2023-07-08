@@ -133,7 +133,7 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
         }
         else {
             receivedNumber[seq] += 1;
-            if (workers.size() < numWorkers) {
+            if (workers.size() < numWorkers) { // ! just avoid push_back many times
                 workers.push_back(w);
                 workerPorts.push_back(pk->getLocalPort());
             }

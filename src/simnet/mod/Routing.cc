@@ -153,7 +153,7 @@ void Routing::forwardIncoming(Packet *pk)
                 apk->popSegment();
                 apk->popFun();
                 apk->popArg();
-                pk->setSegmentsLeft(pk->getSegmentsLeft() - 1);
+                apk->setSegmentsLeft(apk->getSegmentsLeft() - 1);
                 apk->setLastEntry(apk->getLastEntry() - 1);
                 auto agtrIndex = apk->getAggregatorIndex();
                 auto job = apk->getJobId();
@@ -180,7 +180,7 @@ void Routing::forwardIncoming(Packet *pk)
         MulticastID mKey = {destAddr, PSport, seq};
         recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
     }
-    if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
+    else if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
         MulticastID srcSeqKey = {srcAddr, pk->getLocalPort(), seq};
         // ! if group does not deal with this group, then its group table is empty
         // ! but it still need to send ACK reversely back to incoming ports
