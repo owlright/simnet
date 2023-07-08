@@ -172,7 +172,7 @@ void Routing::forwardIncoming(Packet *pk)
             }
         }
     }
-    if (pk->getPacketType() == AGG) {
+    else if (pk->getPacketType() == AGG) {
         // ! this node don't do aggregation, but its still need to record incoming ports
         // ! because it needs this to send reverse multicast packets
         // ! but actually this should also be clarified in segments, which will cost more space to store the segments
