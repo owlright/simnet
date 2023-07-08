@@ -30,7 +30,7 @@ Packet *Aggregator::doAggregation(Packet *pk)
         apk->setEcn(true); // copy the ECN flag
     }
     ecn |= apk->getEcn(); // * ecn will be set any way(normal or resend)
-    auto entryIndex = pk->getLastEntry();
+    auto entryIndex = pk->getSegmentsLeft() - 1;
     auto& fanIndegree = pk->getArgs(entryIndex);
     auto indegree = atoi(fanIndegree.c_str());
 
