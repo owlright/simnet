@@ -439,6 +439,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 for (auto& seg:segments) {
                     indegrees.push_back(tree.getNodeFor(addr2mod.at(seg))->getNumInLinks());
                 }
+                EV_TRACE << indegrees << endl;
                 segmentInfodb[jobid][addr][ps] = new JobSegmentsRoute();
                 segmentInfodb[jobid][addr][ps]->segmentAddrs = segments;
                 segmentInfodb[jobid][addr][ps]->fanIndegrees = indegrees;
@@ -450,6 +451,82 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                     }
                 }
             }
+        }
+    }
+    else if (strcmp(policyName, "edge") == 0) {
+        for (auto it : jobInfodb)
+        {
+            EV_DEBUG << "job " <<  it.first<< endl;
+            auto group = it.second;
+            auto senders = group->workers;
+            auto ps = group->PSes.at(0);
+            auto psNode = topo->getNode(addr2nodeId.at(ps));
+
+            cTopology tree = cTopology("steiner");
+            std::vector<cTopology::Node*> senderNodes;
+            for (auto& s:senders) {
+                senderNodes.push_back(addr2node.at(s));
+            }
+            buildSteinerTree(tree, senderNodes, psNode);
+            // ! if only do aggregation at edge, the indegree calculation is a litte harder
+            std::unordered_map<IntAddress, int> indegrees;
+            std::unordered_map<IntAddress, std::vector<IntAddress>> addrSegments;
+            for (auto& s:senders) {
+                auto srcNode = topo->getNode(addr2nodeId.at(s));
+                auto edge0Switch = srcNode->getLinkOut(0)->getRemoteNode();
+                auto edge1Switch = psNode->getLinkIn(0)->getRemoteNode();
+                // * prepare segments
+                std::vector<IntAddress> segments;
+                segments.push_back(mod2addr.at(edge0Switch->getModule()));
+                if (edge1Switch!=edge0Switch)
+                    segments.push_back(mod2addr.at(edge1Switch->getModule()));
+                addrSegments[s] = segments;
+                EV_TRACE << segments << endl;
+                // std::cout << segments << endl;
+                for (int i = segments.size() - 1; i >= 0; i--) {
+                    auto seg = segments[i];
+                    if (indegrees.find(seg) == indegrees.end()) {
+                        indegrees[seg] = 1;
+                    }
+                    else {
+                        if ((i == 0) || (i == 1 && indegrees.find(segments[i-1]) == indegrees.end())) {
+                            // * this is still a new flow
+                            indegrees[seg] += 1;
+                        }
+                    }
+                }
+
+                // for (auto i = 0; i < srcMod->getSubmoduleVectorSize("workers"); i++) {
+                //     auto app = srcMod->getSubmodule("workers", i);
+                //     if (app->hasPar("segmentAddrs") && ps == app->par("destAddress").intValue()) {
+                //         app->par("segmentAddrs") = vectorToString(segments);
+                //         std::vector<int> tmp;
+                //         for (auto s:segments) {
+                //             tmp.push_back(indegrees.at(s));
+                //         }
+                //         app->par("fanIndegrees") = vectorToString(tmp);
+                //     }
+                // }
+            }
+            for (auto& s:senders) {
+                auto srcMod = addr2mod[s];
+                auto segments = addrSegments[s];
+                for (auto i = 0; i < srcMod->getSubmoduleVectorSize("workers"); i++) {
+                    auto app = srcMod->getSubmodule("workers", i);
+                    if (app->hasPar("segmentAddrs") && ps == app->par("destAddress").intValue()) {
+                        app->par("segmentAddrs") = vectorToString(segments);
+                        std::vector<int> tmp;
+                        for (auto s:segments) {
+                            tmp.push_back(indegrees.at(s));
+                        }
+                        app->par("fanIndegrees") = vectorToString(tmp);
+                    }
+                }
+            }
+            // for (auto& it:indegrees) {
+            //     std::cout << it.first << " " << it.second << endl;
+            // }
+            // std::cout << endl;
         }
     }
     else if (strcmp(policyName, "") == 0) {
