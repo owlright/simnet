@@ -1,6 +1,5 @@
 #include "WorkerApp.h"
 #include "simnet/common/ModuleAccess.h"
-#include "simnet/mod/manager/GlobalGroupManager.h"
 #include "simnet/mod/AggPacket_m.h"
 
 Define_Module(WorkerApp);
@@ -10,13 +9,13 @@ void WorkerApp::initialize(int stage)
     UnicastSenderApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         jobId = par("jobId");
-        workerId = par("jobId");
+        workerId = par("workerId");
         numWorkers = par("numWorkers");
         numRounds = par("numRounds");
         roundInterval = par("roundInterval").doubleValueInUnit("s");
-        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
-        if (groupManager == nullptr)
-            throw cRuntimeError("You may forget to set groupManager.");
+        jobMetricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
+        if (jobMetricCollector == nullptr)
+            EV_WARN << "No job metrics will be collected." << endl;
     }
 }
 
@@ -29,7 +28,7 @@ void WorkerApp::onFlowStart()
     confirmedDisorders.clear();
     EV_INFO << "current round seq: " << currentRound << endl;
     cong->reset();
-    groupManager->reportFlowStart(jobId, simTime());
+    jobMetricCollector->reportFlowStart(jobId, numWorkers, workerId, simTime());
 }
 
 void WorkerApp::onFlowStop()
@@ -37,7 +36,7 @@ void WorkerApp::onFlowStop()
     if (currentRound < numRounds) {// note it's '<' here
         scheduleAfter(roundInterval, flowStartTimer);
     }
-    groupManager->reportFlowStop(jobId, simTime());
+    jobMetricCollector->reportFlowStop(jobId, numWorkers, workerId, simTime());
 }
 
 Packet* WorkerApp::createDataPacket(SeqNumber seq, B packetBytes)

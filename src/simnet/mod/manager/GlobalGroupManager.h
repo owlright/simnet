@@ -37,10 +37,6 @@ struct JobSegmentsRoute // ! for segment routing aggregation
 
 class GlobalGroupManager : public GlobalView
 {
-public:
-    void reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime);
-    void reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime);
-
 protected:
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
@@ -48,19 +44,10 @@ protected:
 private:
     // void readSwitchConfig(const char * fileName);
     void readHostConfig(const char * fileName);
-    simsignal_t createSignalForGroup(IntAddress group);
     int getCurrentJobId() const {return jobId;}
     int getCurrentGroupAddr() const {return groupAddress;}
     int getNextJobId() {return ++jobId;}
     int getNextGroupAddr() {return ++groupAddress;}
-
-private:
-    struct groupRoundFinishInfo {
-        size_t counter{0};
-        simtime_t startTime;
-        simsignal_t roundFctSignal;
-    };
-    std::unordered_map<IntAddress, groupRoundFinishInfo*> groupRoundStartTime;
 
 private:
     int jobId{0};

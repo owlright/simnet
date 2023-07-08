@@ -1,6 +1,6 @@
 #pragma once
 #include "UnicastSenderApp.h"
-#include "simnet/mod/manager/GlobalGroupManager.h"
+#include "simnet/mod/manager/GlobalMetricCollector.h"
 class WorkerApp : public UnicastSenderApp
 {
 protected:
@@ -14,10 +14,9 @@ protected:
     int jobId{-1};
     int workerId{-1};
     int numWorkers{-1};
-
     int numRounds;
     double roundInterval;
     int currentRound{0};
 
-    opp_component_ptr<GlobalGroupManager> groupManager;
+    opp_component_ptr<GlobalMetricCollector> jobMetricCollector;
 };

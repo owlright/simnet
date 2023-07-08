@@ -18,36 +18,6 @@ std::ostream& operator<<(std::ostream& os, const std::vector<cTopology::Node*>& 
 
 Define_Module(GlobalGroupManager);
 
-void GlobalGroupManager::reportFlowStart(IntAddress groupAddr, simtime_t roundStartTime)
-{
-    if (groupRoundStartTime.find(groupAddr) == groupRoundStartTime.end()) {
-        groupRoundStartTime[groupAddr] = new groupRoundFinishInfo();
-        groupRoundStartTime[groupAddr]->roundFctSignal = createSignalForGroup(groupAddr);
-        groupRoundStartTime[groupAddr]->startTime = roundStartTime;
-    } else {
-        if (roundStartTime  < groupRoundStartTime[groupAddr]->startTime) {
-            groupRoundStartTime[groupAddr]->startTime = roundStartTime;
-        }
-    }
-}
-
-void GlobalGroupManager::reportFlowStop(IntAddress groupAddr, simtime_t roundStopTime)
-{
-    auto it = groupRoundStartTime.find(groupAddr);
-    if (it == groupRoundStartTime.end()) {
-        throw cRuntimeError("This group hasn't registered its signal");
-    }
-
-    auto roundMeter = it->second;
-    roundMeter->counter++;
-
-    if (roundMeter->counter == jobInfodb.at(groupAddr)->numWorkers) {
-        emit(roundMeter->roundFctSignal, simTime() - roundMeter->startTime);
-        roundMeter->startTime = SimTime::getMaxTime();
-        roundMeter->counter = 0;
-    }
-}
-
 void GlobalGroupManager::initialize(int stage)
 {
     GlobalView::initialize(stage);
@@ -68,61 +38,6 @@ void GlobalGroupManager::initialize(int stage)
     if (stage == INITSTAGE_LAST)
         ASSERT(topo);
 }
-
-// void GlobalGroupManager::readSwitchConfig(const char * fileName)
-// {
-//     std::fstream switchConfig(fileName, std::ios::in);
-//     if (!switchConfig) {
-//         throw cRuntimeError("%s not found!", fileName);
-//     } else {
-//         std::string line;
-//         EV << std::left
-//             << std::setw(10) << "worker"
-//             << std::setw(10) << "ps"
-//             << std::setw(10) << "bitmap0"
-//             << std::setw(10) << "switch0"
-//             << std::setw(15) << "fanIndegree0"
-//             << std::setw(10) << "bitmap1"
-//             << std::setw(10) << "switch1"
-//             << std::setw(15) << "fanIndegree1"
-//             << endl;
-//         while (getline(switchConfig, line, '\n')) {
-//             if (line.empty() || line[0] == '#')
-//                 continue;
-//             std::vector<std::string> tokens = cStringTokenizer(line.c_str()).asVector();
-//             if (tokens.size() != 7)
-//                 throw cRuntimeError("wrong line in module file: 8 items required, line: \"%s\"", line.c_str());
-//             auto tokenIndex = 0;
-//             auto workerAddr   = atol(tokens[tokenIndex++].c_str());
-//             auto PSAddr       = atol(tokens[tokenIndex++].c_str());
-//             auto bitmap0Index = atol(tokens[tokenIndex++].c_str());
-//             auto switch0Addr  = atol(tokens[tokenIndex++].c_str());
-//             auto fanIndegree0 = atol(tokens[tokenIndex++].c_str());
-//             auto bitmap1Index = atol(tokens[tokenIndex++].c_str());
-//             auto switch1Addr  = atol(tokens[tokenIndex++].c_str());
-//             auto fanIndegree1 = atol(tokens[tokenIndex++].c_str());
-//             EV << std::left
-//                 << std::setw(10) << workerAddr
-//                 << std::setw(10) << PSAddr
-//                 << std::setw(10) << bitmap0Index
-//                 << std::setw(10) << switch0Addr
-//                 << std::setw(15) << fanIndegree0
-//                 << std::setw(10) << bitmap1Index
-//                 << std::setw(10) << switch1Addr
-//                 << std::setw(15) << fanIndegree1
-//                 << endl;
-//             std::shared_ptr<JobSwitchInfo> entry(new JobSwitchInfo());
-//             entry->switch0 = switch0Addr;
-//             entry->switch1 = switch1Addr;
-//             entry->fanIndegree0 = fanIndegree0;
-//             entry->fanIndegree1 = fanIndegree1;
-//             entry->bitmap0 = bitmap0Index > 0 ? (1 << (bitmap0Index-1)) : 0;
-//             entry->bitmap1 = bitmap1Index > 0 ? (1 << (bitmap1Index-1)) : 0;
-
-//             jobInfo[workerAddr][PSAddr]->switchinfo = entry;
-//         }
-//     }
-// }
 
 void GlobalGroupManager::readHostConfig(const char * fileName)
 {
@@ -147,20 +62,6 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
             insertJobInfodb(workerAddrs, PSAddrs);
         }
     }
-}
-
-simsignal_t GlobalGroupManager::createSignalForGroup(IntAddress group)
-{
-    char signalName[32];
-    sprintf(signalName, "group%" PRId64 "-RoundFinishTime", group);
-    simsignal_t signal = registerSignal(signalName);
-
-    char statisticName[32];
-    sprintf(statisticName, "group%" PRId64 "-RoundFinishTime", group);
-    cProperty *statisticTemplate =
-        getProperties()->get("statisticTemplate", "groupRoundFinishTime");
-    getEnvir()->addResultRecorders(this, signal, statisticName, statisticTemplate);
-    return signal;
 }
 
 void GlobalGroupManager::addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop)
