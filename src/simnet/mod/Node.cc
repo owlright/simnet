@@ -90,6 +90,22 @@ void HostNode::handleMessage(cMessage* msg)
     }
 }
 
+void HostNode::finish()
+{
+    // ! Note apps[0] is ParameterServerApp
+    for (auto i = 1; i < getSubmoduleVectorSize("apps"); i++) {
+        auto app = getSubmodule("apps", i);
+        app->deleteModule();
+    }
+    for (auto i = 0; i < getSubmoduleVectorSize("workers"); i++) {
+        auto app = getSubmodule("workers", i);
+        app->deleteModule();
+    }
+    for (auto i = 0; i < getSubmoduleVectorSize("pses"); i++) {
+        auto app = getSubmodule("pses", i);
+        app->deleteModule();
+    }
+}
 
 UnicastSenderApp* HostNode::createUnicastSenderApp()
 {

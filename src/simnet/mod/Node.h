@@ -20,6 +20,7 @@ protected:
     virtual void handleParameterChange(const char *parameterName) override;
     virtual void refreshDisplay() const override;
     virtual int numInitStages() const override { return Stage::NUM_INIT_STAGES; }
+    virtual void finish() override {};
 
 };
 
@@ -30,6 +31,7 @@ public:
 protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage * msg) override;
+    virtual void finish() override;
 
 protected:
     double load{0};
