@@ -6,7 +6,7 @@ import ned.DatarateChannel;
 import simnet.mod.manager.GlobalRouteManager;
 import simnet.mod.manager.GlobalGroupManager;
 import simnet.mod.manager.TrafficPatternManager;
-
+import simnet.mod.manager.GlobalMetricCollector;
 channel C extends DatarateChannel
 {
     delay = 1us;
@@ -41,6 +41,9 @@ network FatTree
         }
         tpManager: TrafficPatternManager {
             @display("p=428.01373,237.915");
+        }
+        metricCollector: GlobalMetricCollector {
+
         }
 
     connections:
