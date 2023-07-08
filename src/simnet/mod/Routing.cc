@@ -78,8 +78,8 @@ void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
 std::vector<int> Routing::getReversePortIndexes(const MulticastID& mKey) const
 {
     if (incomingPortIndexes.find(mKey) == incomingPortIndexes.end())
-        throw cRuntimeError("Routing::getReversePortIndexes: group: %" PRId64 ":%u seq %" PRId64 "not found!",
-                                    mKey.addr, mKey.port, mKey.seq);
+        throw cRuntimeError("%" PRId64" Routing::getReversePortIndexes: group: %" PRId64 ":%u seq %" PRId64 "not found!",
+                                    myAddress, mKey.addr, mKey.port, mKey.seq);
     return incomingPortIndexes.at(mKey);
 }
 
@@ -172,6 +172,14 @@ void Routing::forwardIncoming(Packet *pk)
             }
         }
     }
+    if (pk->getPacketType() == AGG) {
+        // ! this node don't do aggregation, but its still need to record incoming ports
+        // ! because it needs this to send reverse multicast packets
+        // ! but actually this should also be clarified in segments, which will cost more space to store the segments
+        auto PSport = pk->getDestPort();
+        MulticastID mKey = {destAddr, PSport, seq};
+        recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
+    }
     if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
         MulticastID srcSeqKey = {srcAddr, pk->getLocalPort(), seq};
         // ! if group does not deal with this group, then its group table is empty
@@ -191,7 +199,7 @@ void Routing::forwardIncoming(Packet *pk)
     // 5. group packet not ask for aggregation(segmentsLeft == 0)
     int outGateIndex = -1;
     if (segment == myAddress && entryIndex != 0) {
-        outGateIndex = getRouteGateIndex(srcAddr, pk->getSegments(entryIndex - 1)); // route to next router
+        outGateIndex = getRouteGateIndex(srcAddr, pk->getSegments(entryIndex - 1)); // ! route to next router, otherwise ecmp may break this
     }
     else {
         outGateIndex = getRouteGateIndex(srcAddr, destAddr);
