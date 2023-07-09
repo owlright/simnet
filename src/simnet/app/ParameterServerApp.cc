@@ -27,6 +27,7 @@ protected:
 private:
     int jobid{-1};
     int numWorkers{0};
+    int currentRound{0};
     IntAddress groupAddr{INVALID_ADDRESS};
     std::vector<IntAddress> workers;
     std::vector<PortNumber> workerPorts;
@@ -116,6 +117,14 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
     auto pk = check_and_cast<const AggPacket*>(msg);
     ASSERT(pk->getPacketType() == AGG);
     auto seq = pk->getSeqNumber();
+    auto round = pk->getRound();
+    if (round != currentRound) {
+        // ! it's very important to clear information left by last Round
+        aggedWorkers.clear();
+        receivedNumber.clear();
+        aggedEcns.clear();
+        currentRound = round;
+    }
     EV_DEBUG << pk->getRecord() << endl;
     // * first packet of the same seq
     if (aggedWorkers.find(seq) == aggedWorkers.end())
