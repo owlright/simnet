@@ -125,6 +125,10 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
         aggedEcns.clear();
         currentRound = round;
     }
+
+    // I left this for future debuging
+    // if ( localAddr == 112 && currentRound >= 3 && seq == 108000 )
+    //     std::cout <<  round << " " << pk->getResend() << " "<< pk->getRecord() <<  " " << seq << endl;
     EV_DEBUG << pk->getRecord() << endl;
     // * first packet of the same seq
     if (aggedWorkers.find(seq) == aggedWorkers.end())

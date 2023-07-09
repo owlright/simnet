@@ -7,7 +7,7 @@ class SRWorker : public WorkerApp
 protected:
     void initialize(int stage) override;
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
-
+    virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
 
 private:
     std::vector<int> segments;
@@ -57,8 +57,12 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
 
     auto seqNumber = pk->getSeqNumber();
     auto jobID = pk->getJobId();
-    if (seq < sentBytes)
+    if (seq < sentBytes) {
         pk->setResend(true);
+    }
+    // I left this for future debuging
+    // if (jobId == 1 && seq == 108000)
+    //     std::cout << localAddr <<" " << pk->getPreviousEventNumber() << " " << currentRound << " " << pk->getResend() << " " << pk->getSeqNumber() << endl;
     // TODO avoid overflow
     auto hseq = reinterpret_cast<uint16_t&>(seqNumber);
     auto hjobid = reinterpret_cast<uint16_t&>(jobID);
@@ -81,4 +85,18 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
         pk->setArgs(i, indegree.c_str());
     }
     return pk;
+}
+
+void SRWorker::connectionDataArrived(Connection *connection, cMessage *msg)
+{
+    // I left this for future debuging
+    // auto pk = check_and_cast<AggPacket*>(msg);
+    // auto seq = pk->getSeqNumber();
+    // if (jobId==1 && localAddr == 113 && seq >= 108000) {
+    //     std::cout << localAddr << " "
+    //               << seq << " "
+    //               << confirmedBytes << endl;
+    // }
+    WorkerApp::connectionDataArrived(connection, msg);
+
 }
