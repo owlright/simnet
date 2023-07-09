@@ -3,6 +3,7 @@ package simnet.simulations.networks;
 import simnet.mod.Host;
 import simnet.mod.Switch;
 import ned.DatarateChannel;
+import simnet.mod.manager.GlobalView;
 import simnet.mod.manager.GlobalRouteManager;
 import simnet.mod.manager.GlobalGroupManager;
 import simnet.mod.manager.TrafficPatternManager;
@@ -43,6 +44,9 @@ network FatTree
             @display("p=428.01373,237.915");
         }
         metricCollector: GlobalMetricCollector {
+
+        }
+        globalView: GlobalView {
 
         }
 

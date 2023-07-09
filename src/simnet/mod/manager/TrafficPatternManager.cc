@@ -12,9 +12,9 @@ IntAddress TrafficPatternManager::getDestAddr(IntAddress srcAddr) const
     if (trafficPattern == "uniform")
     {
         do { // ! avoid send to itself
-            auto randNum = this->intrand(hostNodes.size());
-            auto nodeIndex = hostNodes.at(randNum);
-            dst = nodeId2addr.at(nodeIndex);
+            auto randNum = this->intrand(hostIds.size());
+            auto nodeIndex = hostIds.at(randNum);
+            dst = getAddr(nodeIndex);
         }
         while(dst == srcAddr);
     }
@@ -35,9 +35,9 @@ std::vector<IntAddress> TrafficPatternManager::getDestAddrs(IntAddress srcAddr, 
         if (trafficPattern == "uniform")
         {
             do { // ! avoid send to itself
-                auto randNum = this->intrand(hostNodes.size());
-                auto nodeIndex = hostNodes.at(randNum);
-                tmpdest = nodeId2addr.at(nodeIndex);
+                auto randNum = this->intrand(hostIds.size());
+                auto nodeIndex = hostIds.at(randNum);
+                tmpdest = getAddr(nodeIndex);
             } while(tmpdest == srcAddr);
             dests.push_back(tmpdest);
         }
@@ -47,7 +47,7 @@ std::vector<IntAddress> TrafficPatternManager::getDestAddrs(IntAddress srcAddr, 
 
 void TrafficPatternManager::initialize(int stage)
 {
-    GlobalView::initialize(stage);
+    GlobalManager::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         trafficPattern = par("trafficPattern").stdstringValue();
     }

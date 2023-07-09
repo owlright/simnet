@@ -4,18 +4,7 @@ Define_Module(GlobalRouteManager);
 
 void GlobalRouteManager::initialize(int stage)
 {
-    GlobalView::initialize(stage);
-    if (stage == INITSTAGE_LAST)
-        ASSERT(topo);
-}
-
-cTopology::Node* GlobalRouteManager::getNode(IntAddress address) const
-{
-    auto its = addr2nodeId.find(address);
-    if (its == addr2nodeId.end()) {
-       throw cRuntimeError("address %" PRId64 " does not exist!", address);
-    }
-    return topo->getNode(its->second);
+    GlobalManager::initialize(stage);
 }
 
 std::vector<int> GlobalRouteManager::getRoutes(IntAddress switchAddr, IntAddress dest) const // TODO just pass the src address is ok

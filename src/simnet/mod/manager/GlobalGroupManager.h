@@ -1,9 +1,11 @@
 #pragma once
 
 #include <omnetpp.h>
-#include <tuple>
-#include <memory>
-#include "GlobalView.h"
+#include <unordered_map>
+#include "simnet/common/Defs.h"
+#include "simnet/common/utils.h"
+#include "GlobalManager.h"
+
 using namespace omnetpp;
 
 struct JobHostInfo
@@ -35,11 +37,10 @@ struct JobSegmentsRoute // ! for segment routing aggregation
     std::vector<int> fanIndegrees;
 };
 
-class GlobalGroupManager : public GlobalView
+class GlobalGroupManager : public GlobalManager
 {
 protected:
     virtual void initialize(int stage) override;
-    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
 
 private:
     // void readSwitchConfig(const char * fileName);

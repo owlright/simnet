@@ -4,7 +4,6 @@
 #include <numeric>   // std::iota
 #include <random>    // std::default_random_engine
 #include "GlobalGroupManager.h"
-#include "simnet/common/utils.h"
 
 std::ostream& operator<<(std::ostream& os, const std::vector<cTopology::Node*>& array)
 {
@@ -20,7 +19,7 @@ Define_Module(GlobalGroupManager);
 
 void GlobalGroupManager::initialize(int stage)
 {
-    GlobalView::initialize(stage);
+    GlobalManager::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         placementPolicy = par("placementPolicy");
         jobFraction = par("jobFraction");
@@ -35,8 +34,7 @@ void GlobalGroupManager::initialize(int stage)
             calcAggTree(aggTreeType);
         }
     }
-    if (stage == INITSTAGE_LAST)
-        ASSERT(topo);
+
 }
 
 void GlobalGroupManager::readHostConfig(const char * fileName)
@@ -140,8 +138,8 @@ void GlobalGroupManager::placeJobs(const char *policyName)
         readHostConfig(par("groupHostFile").stringValue());
     }
     else if (strcmp(policyName, "random") == 0) {
-        int numUsedHosts = hostNodes.size() * jobFraction;
-        auto hostscopy = hostNodes;
+        int numUsedHosts = hostIds.size() * jobFraction;
+        auto hostscopy = hostIds;
 
         std::shuffle(hostscopy.begin(), hostscopy.end(), std::default_random_engine(intrand(3245)));
         std::vector<int> hostIds(hostscopy.begin(), hostscopy.begin()+numUsedHosts);
@@ -162,12 +160,11 @@ void GlobalGroupManager::placeJobs(const char *policyName)
             std::vector<int> pses;
             for (auto j = 0; j < numWorkers + numPSes; j++) {
                 int nodeId = hostIds.at(count++);
-                int address = nodeId2addr.at(nodeId);
+                int address = getAddr(nodeId);
                 if (j < numWorkers)
                     workers.push_back(address);
                 else
                     pses.push_back(address);
-                jobUsedAddrs.push_back(address);
             }
             insertJobInfodb(workers, pses);
             createJobApps(getCurrentJobId());
@@ -216,7 +213,7 @@ void GlobalGroupManager::createJobApps(int jobId)
 
     for (auto i = 0; i < nPSes; i++) {
         auto nodeAddress =  job->PSes[i];
-        auto node = addr2mod.at(nodeAddress);
+        auto node = getMod(nodeAddress);
         // * find an idle worker
         auto appExistSize = node->getSubmoduleVectorSize("pses");
 
@@ -247,7 +244,7 @@ void GlobalGroupManager::createJobApps(int jobId)
 
     for (auto i = 0; i < nWorkers; i++) {
         auto nodeAddress =  job->workers[i];
-        auto node = addr2mod.at(nodeAddress);
+        auto node = getMod(nodeAddress);
         // * find an idle worker
         auto appExistSize = node->getSubmoduleVectorSize("workers");
 
@@ -296,13 +293,13 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
 
             std::vector<cTopology::Node*> senderNodes;
             for (auto& s:senders) {
-                senderNodes.push_back(addr2node.at(s));
+                senderNodes.push_back(getNode(s));
             }
-            buildSteinerTree(tree, senderNodes, addr2node.at(ps)); //  TODO multiple PSes
+            buildSteinerTree(tree, senderNodes, getNode(ps)); //  TODO multiple PSes
 
             std::vector<cModule*> senderMods;
             for (auto& s:senders) {
-                senderMods.push_back(addr2mod.at(s));
+                senderMods.push_back(getMod(s));
             }
 
             // * HACK the simplest ecmp tree
@@ -311,15 +308,15 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             for (auto i = 0; i < senders.size(); i++) {
                 auto addr = senders[i];
                 auto m = senderMods[i];
-                auto path = getShortestPath(tree, tree.getNodeFor(m), tree.getNodeFor(addr2mod.at(ps)));
+                auto path = getShortestPath(tree, tree.getNodeFor(m), tree.getNodeFor(getMod(ps)));
                 ASSERT(path.size() >= 3);
                 EV_DEBUG << path.front() << "->" << path.back() << ":" << path << endl;
                 auto segments = std::vector<int>(path.begin()+1, path.end()-1);
                 std::unordered_set<cTopology::Node*> visitedNodes;
                 std::unordered_set<cTopology::Link*> visitedLinks;
                 for (auto j = 0; j < segments.size() - 1; j++) {
-                    auto u = topo->getNode(addr2nodeId[segments[j]]);
-                    auto v = topo->getNode(addr2nodeId[segments[j+1]]);
+                    auto u = getNode(segments[j]);
+                    auto v = getNode(segments[j+1]);
                     if (visitedNodes.find(u) == visitedNodes.end()) {
                         visitedNodes.insert(u);
                         u->setWeight(u->getWeight() + 1);
@@ -338,7 +335,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 // * prepare args(indegree) at each segment
                 std::vector<int> indegrees;
                 for (auto& seg:segments) {
-                    indegrees.push_back(tree.getNodeFor(addr2mod.at(seg))->getNumInLinks());
+                    indegrees.push_back(tree.getNodeFor(getMod(seg))->getNumInLinks());
                 }
                 EV_TRACE << indegrees << endl;
                 segmentInfodb[jobid][addr][ps] = new JobSegmentsRoute();
@@ -361,26 +358,26 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             auto group = it.second;
             auto senders = group->workers;
             auto ps = group->PSes.at(0);
-            auto psNode = topo->getNode(addr2nodeId.at(ps));
+            auto psNode = getNode(ps);
 
             cTopology tree = cTopology("steiner");
             std::vector<cTopology::Node*> senderNodes;
             for (auto& s:senders) {
-                senderNodes.push_back(addr2node.at(s));
+                senderNodes.push_back(getNode(s));
             }
             buildSteinerTree(tree, senderNodes, psNode);
             // ! if only do aggregation at edge, the indegree calculation is a litte harder
             std::unordered_map<IntAddress, int> indegrees;
             std::unordered_map<IntAddress, std::vector<IntAddress>> addrSegments;
             for (auto& s:senders) {
-                auto srcNode = topo->getNode(addr2nodeId.at(s));
+                auto srcNode = getNode(s);
                 auto edge0Switch = srcNode->getLinkOut(0)->getRemoteNode();
                 auto edge1Switch = psNode->getLinkIn(0)->getRemoteNode();
                 // * prepare segments
                 std::vector<IntAddress> segments;
-                segments.push_back(mod2addr.at(edge0Switch->getModule()));
+                segments.push_back(getAddr(edge0Switch->getModule()));
                 if (edge1Switch!=edge0Switch)
-                    segments.push_back(mod2addr.at(edge1Switch->getModule()));
+                    segments.push_back(getAddr(edge1Switch->getModule()));
                 addrSegments[s] = segments;
                 EV_TRACE << segments << endl;
                 // std::cout << segments << endl;
@@ -410,7 +407,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 // }
             }
             for (auto& s:senders) {
-                auto srcMod = addr2mod[s];
+                auto srcMod = getMod(s);
                 auto segments = addrSegments[s];
                 for (auto i = 0; i < srcMod->getSubmoduleVectorSize("workers"); i++) {
                     auto app = srcMod->getSubmodule("workers", i);
