@@ -53,6 +53,7 @@ OBJS = \
     $O/simnet/mod/cong/Reno.o \
     $O/simnet/mod/contract/MessageDispatcher.o \
     $O/simnet/mod/manager/GlobalGroupManager.o \
+    $O/simnet/mod/manager/GlobalManager.o \
     $O/simnet/mod/manager/GlobalMetricCollector.o \
     $O/simnet/mod/manager/GlobalRouteManager.o \
     $O/simnet/mod/manager/GLobalView.o \
