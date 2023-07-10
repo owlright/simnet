@@ -74,7 +74,7 @@ protected:
     B retransmitBytes{0};
     B confirmedRetransBytes{0};
     std::unordered_set<SeqNumber> disorders;
-    std::unordered_set<SeqNumber> confirmedDisorders;
+    // std::unordered_set<SeqNumber> confirmedDisorders;
     std::unordered_map<SeqNumber, B> sentButNotAcked;
     simtime_t currentBaseRTT{0};
     // simtime_t currentFlowInterval{0};

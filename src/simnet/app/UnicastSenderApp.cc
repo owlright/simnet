@@ -133,7 +133,6 @@ void UnicastSenderApp::onFlowStart()
     retransmitBytes = 0;
     confirmedRetransBytes = 0;
     currentBaseRTT = 0;
-    confirmedDisorders.clear();
     flowStartTime = simTime().dbl();
     appState = Sending;
     ASSERT(sentButNotAcked.empty());
@@ -181,15 +180,10 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     }
     // check if resend packet is receieved
     if (disorders.find(seq) != disorders.end()) { // first time we receive the ack
-        confirmedRetransBytes += messageLength; // ! TODO what if it's the last packet?
-        confirmedDisorders.insert(seq);
+        confirmedRetransBytes += sentButNotAcked.at(seq);
         disorders.erase(seq);
     }
-    else if (confirmedDisorders.find(seq) != confirmedDisorders.end()) {
-        // the resend packets's ack received more than once
-        // ! which is plus above
-        confirmedBytes -= pk->getReceivedBytes();
-    }
+
     sentButNotAcked.erase(seq);
     auto pkRTT = simTime() - SimTime(pk->getStartTime());
     emit(rttSignal, pkRTT);
