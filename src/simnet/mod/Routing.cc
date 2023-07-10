@@ -129,7 +129,17 @@ void Routing::forwardIncoming(Packet *pk)
         segment =  pk->getSegments(entryIndex - 1);
         entryIndex -= 1;
     }
-
+    // if (pk->getPacketType() == AGG || pk->getPacketType() == MACK) {
+    //     auto apk = check_and_cast<const AggPacket*>(pk);
+    //     auto jobid = apk->getJobId();
+    //     auto seq = apk->getSeqNumber();
+    //     auto round = apk->getRound();
+    //     auto isresend = apk->getResend();
+    //     // I left this for future debuging
+    //     if ( seq >= 500000 && myAddress == 107 && round == 3 && jobid == 4) {
+    //         std::cout <<"Router "<< myAddress << " " << apk->getResend() << " "<< apk->getRecord() << "inport " << pk->getArrivalGate()->getIndex() << endl;
+    //     }
+    // }
     if (segment == myAddress) {
         auto& fun = pk->getFuns(entryIndex);
         if (fun == "aggregation") {

@@ -46,6 +46,8 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     pk->setSeqNumber(seq);
     pk->setByteLength(packetBytes);
     pk->setECN(false);
+//    if (seq==500000)
+//        std::cout << localAddr << simTime() << endl;
     // some cheating fields
     pk->setRecordLen(1);
     pk->addRecord(localAddr);

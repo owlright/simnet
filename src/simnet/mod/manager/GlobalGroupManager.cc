@@ -359,7 +359,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             auto senders = group->workers;
             auto ps = group->PSes.at(0);
             auto psNode = getNode(ps);
-
+            // EV_TRACE << senders << " " << ps << endl;
             cTopology tree = cTopology("steiner");
             std::vector<cTopology::Node*> senderNodes;
             for (auto& s:senders) {
