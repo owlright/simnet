@@ -83,8 +83,9 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
     delete pk;
 }
 
-Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
+Packet* ParameterServerApp::createAckPacket(const Packet* const pkt)
 {
+    auto pk = check_and_cast<const AggPacket*>(pkt);
     char pkname[40];
     sprintf(pkname, "MuACK-%" PRId64 "-seq%" PRId64,
             localAddr, pk->getSeqNumber());
@@ -93,6 +94,8 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pk)
     packet->setPacketType(MACK);
     packet->setByteLength(64);
     packet->setReceivedBytes(pk->getByteLength());
+    packet->setJobId(pk->getJobId());
+    packet->setRound(pk->getRound());
     packet->setStartTime(pk->getStartTime());
     packet->setQueueTime(pk->getQueueTime());
     packet->setTransmitTime(pk->getTransmitTime());
@@ -118,7 +121,7 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
     ASSERT(pk->getPacketType() == AGG);
     auto seq = pk->getSeqNumber();
     auto round = pk->getRound();
-    if (round != currentRound) {
+    if (round > currentRound) {
         // ! it's very important to clear information left by last Round
         aggedWorkers.clear();
         receivedNumber.clear();
