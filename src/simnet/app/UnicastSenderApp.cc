@@ -80,8 +80,12 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
         sendPendingData();
     } else if (msg == RTOTimeout) {
         if (!sentButNotAcked.empty()) {
+            auto leftRoom = cong->getcWnd() - inflightBytes();
             for (auto& it: sentButNotAcked) {
-                retransmitLostPacket(it.first, it.second);
+                if (leftRoom >= it.second) {
+                    retransmitLostPacket(it.first, it.second);
+                    leftRoom -= it.second;
+                }
             }
             scheduleAfter(currentBaseRTT, RTOTimeout);
         }
