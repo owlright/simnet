@@ -15,7 +15,7 @@ class AggPacket extends Packet
     int round;
     int64_t jobId;
     int workerNumber;
-    bool resend;
+    // bool resend;
 	bool isAck;
     // cheating fields
     int64_t workerRecord[] @custom @sizeGetter(getRecordLen)

@@ -57,9 +57,9 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
 
     auto seqNumber = pk->getSeqNumber();
     auto jobID = pk->getJobId();
-    if (seq < sentBytes) {
-        pk->setResend(true);
-    }
+    // if (seq < sentBytes) {
+    //     pk->setResend(true);
+    // }
     // I left this for future debuging
     // if (jobId == 1 && seq == 108000)
     //     std::cout << localAddr <<" " << pk->getPreviousEventNumber() << " " << currentRound << " " << pk->getResend() << " " << pk->getSeqNumber() << endl;

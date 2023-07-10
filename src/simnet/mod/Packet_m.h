@@ -372,6 +372,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, SegmentRoutingHeader& obj
  *     double transmitTime;
  *     double queueTime;
  *     bool isFlowFinished;
+ *     bool resend;
  * }
  * </pre>
  */
@@ -390,6 +391,7 @@ class Packet : public ::SegmentRoutingHeader
     double transmitTime = 0;
     double queueTime = 0;
     bool isFlowFinished_ = false;
+    bool resend = false;
 
   private:
     void copy(const Packet& other);
@@ -441,6 +443,9 @@ class Packet : public ::SegmentRoutingHeader
 
     virtual bool isFlowFinished() const;
     virtual void setIsFlowFinished(bool isFlowFinished);
+
+    virtual bool getResend() const;
+    virtual void setResend(bool resend);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const Packet& obj) {obj.parsimPack(b);}

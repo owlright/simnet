@@ -85,6 +85,7 @@ class Packet extends SegmentRoutingHeader
     double transmitTime;
     double queueTime;
     bool isFlowFinished;
+    bool resend;
 }
 
 cplusplus(SegmentRoutingHeader) {{

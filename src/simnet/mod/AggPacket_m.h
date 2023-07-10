@@ -55,7 +55,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b-
  *     int round;
  *     int64_t jobId;
  *     int workerNumber;
- *     bool resend;
+ *     // bool resend;
  *     bool isAck;
  *     // cheating fields
  *     int64_t workerRecord[] \@custom \@sizeGetter(getRecordLen) \@sizeSetter(setRecordLen) \@getter(getRecord) \@setter(setRecord);
@@ -69,7 +69,6 @@ class AggPacket : public ::Packet
     int round = 0;
     int64_t jobId = 0;
     int workerNumber = 0;
-    bool resend = false;
     bool isAck_ = false;
 
   private:
@@ -98,9 +97,6 @@ class AggPacket : public ::Packet
 
     virtual int getWorkerNumber() const;
     virtual void setWorkerNumber(int workerNumber);
-
-    virtual bool getResend() const;
-    virtual void setResend(bool resend);
 
     virtual bool isAck() const;
     virtual void setIsAck(bool isAck);
