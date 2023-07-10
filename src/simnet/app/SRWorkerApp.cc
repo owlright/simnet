@@ -61,8 +61,8 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     //     pk->setResend(true);
     // }
     // I left this for future debuging
-    // if (jobId == 1 && seq == 108000)
-    //     std::cout << localAddr <<" " << pk->getPreviousEventNumber() << " " << currentRound << " " << pk->getResend() << " " << pk->getSeqNumber() << endl;
+    //  if (jobId == 4 && seq >= 500000)
+    //     std::cout << localAddr << " round " << currentRound << " will send out " << pk->getSeqNumber() << endl;
     // TODO avoid overflow
     auto hseq = reinterpret_cast<uint16_t&>(seqNumber);
     auto hjobid = reinterpret_cast<uint16_t&>(jobID);
@@ -90,13 +90,14 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
 void SRWorker::connectionDataArrived(Connection *connection, cMessage *msg)
 {
     // I left this for future debuging
-    // auto pk = check_and_cast<AggPacket*>(msg);
-    // auto seq = pk->getSeqNumber();
-    // if (jobId==1 && localAddr == 113 && seq >= 108000) {
-    //     std::cout << localAddr << " "
-    //               << seq << " "
-    //               << confirmedBytes << endl;
-    // }
+    //  auto pk = check_and_cast<AggPacket*>(msg);
+    //  auto seq = pk->getSeqNumber();
+    //  if (jobId == 4 && seq >=500000) {
+    //      std::cout << localAddr << " received ack"
+    //                << seq << " "
+    //                << pk->getRound() << " "
+    //                << confirmedBytes << endl;
+    //  }
     WorkerApp::connectionDataArrived(connection, msg);
 
 }

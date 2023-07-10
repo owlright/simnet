@@ -206,6 +206,8 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     if (confirmedBytes == flowSize) {
         cancelEvent(RTOTimeout); // ! avoid affecting next flow
         onFlowStop();
+        // if (localAddr == 53 || localAddr == 232 || localAddr == 234)
+        //     std::cout << localAddr << " flow finished!" << endl;
     }
 
     delete pk;
