@@ -149,6 +149,10 @@ void Routing::forwardIncoming(Packet *pk)
                 return;
             } else { // TODO: do we release resource at aggpacket leave or ACK arrive?
                 ASSERT(pk == apk);
+                if (incomingCount.find(mKey) == incomingCount.end())
+                    incomingCount[mKey] = 1;
+                else
+                    incomingCount[mKey] += 1;
                 // ! pop the segments, RFC not require this
                 apk->popSegment();
                 apk->popFun();
@@ -161,7 +165,7 @@ void Routing::forwardIncoming(Packet *pk)
                 auto agtr = aggregators.at(agtrIndex);
                 // ! 1. agtr can be nullptr when router is not responsible for this group
                 // ! 2. collision may happen so the agtr doesn't belong to the packet
-                // ! 3. it's a resend packet arrives at switch==1 and there's no according agtr for it
+                // ! 3. it's a resend packet arrives and there's no according agtr for it
                 if (agtr != nullptr
                         && agtr->getJobId() == job
                         && agtr->getSeqNumber() == seq) {
@@ -179,13 +183,24 @@ void Routing::forwardIncoming(Packet *pk)
         auto PSport = pk->getDestPort();
         MulticastID mKey = {destAddr, PSport, seq};
         recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
+        //!  in ATP, or future version resend packet may not go through segment==myAddress process
+        if (incomingCount.find(mKey) == incomingCount.end())
+            incomingCount[mKey] = 1;
+        else
+            incomingCount[mKey] += 1;
     }
     else if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
         MulticastID srcSeqKey = {srcAddr, pk->getLocalPort(), seq};
+        ASSERT(incomingCount.find(srcSeqKey) != incomingCount.end());
+        incomingCount.at(srcSeqKey) -= 1;
         // ! if group does not deal with this group, then its group table is empty
         // ! but it still need to send ACK reversely back to incoming ports
         auto outGateIndexes = getReversePortIndexes(srcSeqKey);
-        incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
+        // incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
+        if (incomingCount[srcSeqKey] == 0) {
+            incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
+            incomingCount.erase(srcSeqKey);
+        }
         // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
         broadcast(pk, outGateIndexes);
         return;
