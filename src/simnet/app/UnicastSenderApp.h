@@ -28,6 +28,7 @@ public:
 protected:
     // helper functions
     void sendPendingData();
+    void retransmitLostPacket(SeqNumber seq, B packetBytes);
     B inflightBytes() {return sentBytes + retransmitBytes - confirmedBytes - confirmedRetransBytes;};
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes);
     virtual void onFlowStart();
@@ -62,6 +63,7 @@ protected:
     // state
     cMessage *flowStartTimer = nullptr;
     cMessage *jitterTimeout = nullptr;
+    cMessage *RTOTimeout = nullptr;
 
     // ! state
     B sentBytes{0}; // TODO: maybe rename to maxSentSeq is better
@@ -73,6 +75,7 @@ protected:
     B confirmedRetransBytes{0};
     std::unordered_set<SeqNumber> disorders;
     std::unordered_set<SeqNumber> confirmedDisorders;
+    std::unordered_map<SeqNumber, B> sentButNotAcked;
     simtime_t currentBaseRTT{0};
     // simtime_t currentFlowInterval{0};
     // int currentRound{0};

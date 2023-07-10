@@ -12,6 +12,7 @@ simsignal_t UnicastSenderApp::inflightBytesSignal = registerSignal("inflightByte
 UnicastSenderApp::~UnicastSenderApp() {
     cancelAndDelete(flowStartTimer);
     cancelAndDelete(jitterTimeout);
+    cancelAndDelete(RTOTimeout);
 }
 
 bool UnicastSenderApp::bindRemote()
@@ -54,6 +55,7 @@ void UnicastSenderApp::initialize(int stage)
         flowSize = par("flowSize");
         flowStartTime = par("flowStartTime");
         flowStartTimer = new cMessage("flowStart");
+        RTOTimeout = new cMessage("RTOTimeout");
         // flowInterval = &par("flowInterval");
         if (useJitter)
             jitterBeforeSending = &par("jitterBeforeSending");
@@ -76,6 +78,13 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
         sendPendingData();
     } else if (msg == jitterTimeout) { // most times is a new window
         sendPendingData();
+    } else if (msg == RTOTimeout) {
+        if (!sentButNotAcked.empty()) {
+            for (auto& it: sentButNotAcked) {
+                retransmitLostPacket(it.first, it.second);
+            }
+            scheduleAfter(currentBaseRTT, RTOTimeout);
+        }
     } else {
         UnicastApp::handleMessage(msg);
     }
@@ -96,6 +105,8 @@ void UnicastSenderApp::sendPendingData()
             packetSize = flowSize - sentBytes; // ! incase the data about to send is too small, such as the last packet or flowSize is too small
         }
         sentBytes += packetSize;
+        ASSERT(sentButNotAcked.find(sentBytes) == sentButNotAcked.end());
+        sentButNotAcked[sentBytes] = packetSize;
         auto packet = createDataPacket(sentBytes, packetSize);
         connection->send(packet);
         cong->onSendData(packetSize);
@@ -103,14 +114,30 @@ void UnicastSenderApp::sendPendingData()
 
 }
 
+void UnicastSenderApp::retransmitLostPacket(SeqNumber seq, B packetBytes)
+{
+    EV_WARN << "resend seq " << seq << endl;
+    auto packet = createDataPacket(seq, packetBytes);
+    packet->setResend(true);
+    connection->send(packet);
+//      cong->onSendData(messageLength); // ? Do cong needs to know this
+    // if (seq >= 500000)
+    //    std::cout << localAddr <<" retransmit seq " << seq << endl;
+    retransmitBytes += packetBytes; // affect inflightBytes
+}
+
 void UnicastSenderApp::onFlowStart()
 {
     sentBytes = 0;
     confirmedBytes = 0;
+    retransmitBytes = 0;
+    confirmedRetransBytes = 0;
     currentBaseRTT = 0;
     confirmedDisorders.clear();
     flowStartTime = simTime().dbl();
     appState = Sending;
+    ASSERT(sentButNotAcked.empty());
+    ASSERT(!RTOTimeout->isScheduled());
     if (connection == nullptr) {
         throw cRuntimeError("conneciton is nullptr!");
     }
@@ -132,6 +159,11 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::ACK);
     auto seq = pk->getSeqNumber();
+    if (sentButNotAcked.find(seq) == sentButNotAcked.end()) {
+        // ! receiver may ack to multiple resend packets, ignore the others
+        delete pk;
+        return;
+    }
     confirmedBytes += pk->getReceivedBytes();
     cong->onRecvAck(pk->getSeqNumber(), pk->getReceivedBytes(), pk->getECE()); // let cong algo update state
 
@@ -144,13 +176,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         if (it.second == 0) {
             disorders.insert(it.first);
             // count down, must resend this seq
-            EV_WARN << "resend seq " << it.first << endl;
-            auto packet = createDataPacket(it.first, messageLength); // ! TODO what if it's the last packet?
-            connection->send(packet);
-//            cong->onSendData(messageLength);
-            retransmitBytes += messageLength; // affect inflightBytes
-            // count down, reset counter
-            // it.second = 3; // ! do not change anything owned by cong
+            retransmitLostPacket(it.first, sentButNotAcked.at(it.first));
         }
     }
     // check if resend packet is receieved
@@ -164,6 +190,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         // ! which is plus above
         confirmedBytes -= pk->getReceivedBytes();
     }
+    sentButNotAcked.erase(seq);
     auto pkRTT = simTime() - SimTime(pk->getStartTime());
     emit(rttSignal, pkRTT);
     currentBaseRTT = pkRTT - pk->getQueueTime() - pk->getTransmitTime();
@@ -177,11 +204,13 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
             sendPendingData();
 
     } else {
-        //TODO if all packets sended
+        if (!RTOTimeout->isScheduled())
+            scheduleAfter(pkRTT, RTOTimeout);
         appState = AllDataSended;
     }
     //TODO if all packets are confirmed
     if (confirmedBytes == flowSize) {
+        cancelEvent(RTOTimeout); // ! avoid affecting next flow
         onFlowStop();
     }
 
