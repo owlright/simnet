@@ -21,13 +21,9 @@ void WorkerApp::initialize(int stage)
 
 void WorkerApp::onFlowStart()
 {
+    UnicastSenderApp::onFlowStart();
     currentRound += 1;
-    sentBytes = 0;
-    confirmedBytes = 0;
-    currentBaseRTT = 0;
-    confirmedDisorders.clear();
     EV_INFO << "current round seq: " << currentRound << endl;
-    cong->reset();
     jobMetricCollector->reportFlowStart(jobId, numWorkers, workerId, simTime());
 }
 
