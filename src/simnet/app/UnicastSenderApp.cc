@@ -198,8 +198,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
             sendPendingData();
 
     } else {
-        if (!RTOTimeout->isScheduled())
-            scheduleAfter(pkRTT, RTOTimeout);
+        rescheduleAfter(pkRTT, RTOTimeout);
         appState = AllDataSended;
     }
     //TODO if all packets are confirmed
