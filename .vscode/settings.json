@@ -133,5 +133,6 @@
         "resourcelibrary": "cpp",
         "codecvt": "cpp",
         "future": "cpp"
-    }
+    },
+    "python.analysis.typeCheckingMode": "basic"
 }
