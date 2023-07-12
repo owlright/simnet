@@ -54,37 +54,49 @@ def read_csv(sim_dirname, exp_name, config_name) -> pd.DataFrame:
     df.rename(columns={"run": "runID"}, inplace=True)
     return df
 
-def get_itervarnames(sheet: pd.DataFrame) -> list:
-    print(sheet)
+def get_itvar_names(sheet: pd.DataFrame) -> list:
+    '''Get all iterator variable names'''
     return sheet[sheet['type'] == 'itervar']['attrname'].drop_duplicates().to_list()
 
-def get_runID(sheet) -> Dict[tuple, Dict[str, str]]:
-    ''' dict[itvar][repetition]: run
+def get_itvar_values(sheet, itvar_name) -> list:
+    return sheet[(sheet['type'] == 'itervar')
+                 & (sheet['attrname'] == itvar_name)
+                 ]['attrvalue'].drop_duplicates().tolist()
+
+def get_runID(sheet: pd.DataFrame, itvar_name):
+    ''' dict[itvar_name][itvar_value]: runid
     '''
-    runs_ = sheet.groupby("runID")
-    all_keys = list(runs_.groups.keys())
-    print("total", len(all_keys), "run numbers")
-    iternames =  sheet[(sheet['type'] == 'itervar')]['attrname'].unique(); # ! incase multiple itervalues
+    df = sheet[sheet['type'] == 'itervar']
+    itvar_values = df[(sheet['attrname'] == itvar_name)]['attrvalue'].drop_duplicates().tolist()
+    runIds = []
+    for itvar in itvar_values:
+        runid = df[df['attrvalue'] == itvar].iloc[0,0]
+        runIds.append(itvar)
+
+    # runs_ = sheet.groupby("runID")
+    # all_runIds = list(runs_.groups.keys())
+    # print("total", len(all_runIds), "run ids")
+    print(itvar_names)
     # repeat_number = sheet[(sheet['type'] == 'config') & (sheet['attrname'] == 'repeat')]['attrvalue'].iloc[0]
 
-    iter_runid = dict()
-    for run in all_keys:
-        key = list()
-        for itername in iternames:
-            key.append(sheet[(sheet['runID'] == run)
-                             & (sheet['type'] == 'itervar')
-                             & (sheet['attrname'] == itername)
-                             ]['attrvalue'].astype(float).iloc[0]
-                       )
-        if len(key) == 0:
-            key = ('NoItervarFound')
-        else:
-            key = tuple(key)
-        if key not in iter_runid:
-            iter_runid[key] = dict()
-        replication = sheet[(sheet['runID'] == run)
-                            & (sheet['type'] == 'runattr')
-                            & (sheet['attrname'] == 'replication')
-                            ]['attrvalue'].iloc[0].strip('#')
-        iter_runid[key][int(replication)] = run
-    return iter_runid
+    # iter_runid = dict()
+    # for run in all_keys:
+    #     key = list()
+    #     for itername in iternames:
+    #         key.append(sheet[(sheet['runID'] == run)
+    #                          & (sheet['type'] == 'itervar')
+    #                          & (sheet['attrname'] == itername)
+    #                          ]['attrvalue'].astype(float).iloc[0]
+    #                    )
+    #     if len(key) == 0:
+    #         key = ('NoItervarFound')
+    #     else:
+    #         key = tuple(key)
+    #     if key not in iter_runid:
+    #         iter_runid[key] = dict()
+    #     replication = sheet[(sheet['runID'] == run)
+    #                         & (sheet['type'] == 'runattr')
+    #                         & (sheet['attrname'] == 'replication')
+    #                         ]['attrvalue'].iloc[0].strip('#')
+    #     iter_runid[key][int(replication)] = run
+    # return iter_runid
