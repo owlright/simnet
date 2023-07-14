@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 from typing import Dict
+import itertools as itool
+
 _SCALAR_COLUMN_NAMES = ["value"]
 _STATISTIC_COLUMN_NAMES = ["count", "sumweights", "mean", "stddev", "min", "max"]
 _HISTOGRAM_COLUMN_NAMES = ["underflows", "overflows", "binedges", "binvalues"]
@@ -35,68 +37,48 @@ def read_csv(sim_dirname, exp_name, config_name) -> pd.DataFrame:
         return row
 
     path = os.path.join(sim_dirname, exp_name, "results", f'{config_name}.csv')
-    df = pd.read_csv(path, converters = {
-        'count': _parse_int,
-        'min': _parse_float,
-        'max': _parse_float,
-        'mean': _parse_float,
-        'stddev': _parse_float,
-        'sumweights': _parse_float,
-        'underflows': _parse_float,
-        'overflows': _parse_float,
-        'binedges': _parse_ndarray,
-        'binvalues': _parse_ndarray,
-        'vectime': _parse_ndarray,
-        'vecvalue': _parse_ndarray
-    },
-    low_memory=False)
+    df = pd.read_csv(path,
+                     converters={
+                         'count': _parse_int,
+                         'min': _parse_float,
+                         'max': _parse_float,
+                         'mean': _parse_float,
+                         'stddev': _parse_float,
+                         'sumweights': _parse_float,
+                         'underflows': _parse_float,
+                         'overflows': _parse_float,
+                         'binedges': _parse_ndarray,
+                         'binvalues': _parse_ndarray,
+                         'vectime': _parse_ndarray,
+                         'vecvalue': _parse_ndarray
+                     },
+                     low_memory=False)
     df = df.transform(_transform, axis=1)
     df.rename(columns={"run": "runID"}, inplace=True)
     return df
 
 def get_itvar_names(sheet: pd.DataFrame) -> list:
-    '''Get all iterator variable names'''
+    """Get all itvar names"""
     return sheet[sheet['type'] == 'itervar']['attrname'].drop_duplicates().to_list()
 
-def get_itvar_values(sheet, itvar_name) -> list:
+
+def get_itvar_values(sheet: pd.DataFrame, itvar_name: str) -> list:
+    """Get all itvar values"""
     return sheet[(sheet['type'] == 'itervar')
-                 & (sheet['attrname'] == itvar_name)
-                 ]['attrvalue'].drop_duplicates().tolist()
+                 & (sheet['attrname'] == itvar_name)]['attrvalue'].drop_duplicates().tolist()
 
-def get_runID(sheet: pd.DataFrame, itvar_name):
-    ''' dict[itvar_name][itvar_value]: runid
-    '''
-    df = sheet[sheet['type'] == 'itervar']
-    itvar_values = df[(sheet['attrname'] == itvar_name)]['attrvalue'].drop_duplicates().tolist()
-    runIds = []
-    for itvar in itvar_values:
-        runid = df[df['attrvalue'] == itvar].iloc[0,0]
-        runIds.append(itvar)
 
-    # runs_ = sheet.groupby("runID")
-    # all_runIds = list(runs_.groups.keys())
-    # print("total", len(all_runIds), "run ids")
-    print(itvar_names)
-    # repeat_number = sheet[(sheet['type'] == 'config') & (sheet['attrname'] == 'repeat')]['attrvalue'].iloc[0]
+def get_runIDs(sheet: pd.DataFrame):
+    itvar_names = get_itvar_names(sheet)
+    runIDs = {}
+    itvars = []
+    for itvar_name in itvar_names:
+        itvars.append(get_itvar_values(sheet, itvar_name))
 
-    # iter_runid = dict()
-    # for run in all_keys:
-    #     key = list()
-    #     for itername in iternames:
-    #         key.append(sheet[(sheet['runID'] == run)
-    #                          & (sheet['type'] == 'itervar')
-    #                          & (sheet['attrname'] == itername)
-    #                          ]['attrvalue'].astype(float).iloc[0]
-    #                    )
-    #     if len(key) == 0:
-    #         key = ('NoItervarFound')
-    #     else:
-    #         key = tuple(key)
-    #     if key not in iter_runid:
-    #         iter_runid[key] = dict()
-    #     replication = sheet[(sheet['runID'] == run)
-    #                         & (sheet['type'] == 'runattr')
-    #                         & (sheet['attrname'] == 'replication')
-    #                         ]['attrvalue'].iloc[0].strip('#')
-    #     iter_runid[key][int(replication)] = run
-    # return iter_runid
+    for itvar_comb in itool.product(*itvars):
+        query_index = sheet["attrname"] == ""
+        for i, itvar_name in enumerate(itvar_names):
+            query_index = (sheet["attrname"] == itvar_name) & (sheet["attrvalue"] == itvar_comb[i]) | query_index
+        repetition_runIds = sheet[query_index]["runID"].drop_duplicates().to_list()
+        runIDs[itvar_comb] = repetition_runIds
+    return itvar_names, runIDs

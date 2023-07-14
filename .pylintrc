@@ -1,0 +1,10 @@
+[MESSAGES CONTROL]
+disable=
+        invalid-name,
+        missing-function-docstring,
+        C0114, # missing-module-docstring,
+        multiple-imports,
+        C0413, # wrong-import-position
+
+[FORMAT]
+max-line-length=120

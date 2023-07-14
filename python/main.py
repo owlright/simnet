@@ -3,5 +3,5 @@ from simnet.results import get_avg_by_itvars
 import pandas as pd
 
 if __name__ == '__main__':
-    tmp = get_avg_by_itvars("exp", "AggSptreeOnFatTree", 'job-.*-RoundFinishTime')
-    print(tmp)
+    sheet = read_csv("simulations", "test", "uniformTraffic")
+    print(get_runIDs(sheet))
