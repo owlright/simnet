@@ -126,8 +126,8 @@ void Routing::forwardIncoming(Packet *pk)
     // ! entryIndex is unsigned, do not check it == -1
     IntAddress segment{INVALID_ADDRESS};
     if (entryIndex > 0) {
-        segment =  pk->getSegments(entryIndex - 1);
         entryIndex -= 1;
+        segment =  pk->getSegments(entryIndex);
     }
     // if (pk->getPacketType() == AGG || pk->getPacketType() == MACK) {
     //     auto apk = check_and_cast<const AggPacket*>(pk);

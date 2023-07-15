@@ -142,7 +142,7 @@
     "python.formatting.yapfArgs": [
         "--style={based_on_style: pep8, column_limit: 120, indent_width: 4}"
     ],
-    "python.linting.enabled": true,
+    "python.linting.enabled": false,
     "python.linting.pylintEnabled": true,
     "pylint.args": [
         "-j 4",
