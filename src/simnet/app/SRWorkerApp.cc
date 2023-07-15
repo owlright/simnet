@@ -1,7 +1,8 @@
 #include "WorkerApp.h"
 #include "simnet/common/ModuleAccess.h"
 #include "simnet/mod/AggPacket_m.h"
-
+#include "simnet/common/utils.h"
+#include <functional>
 class SRWorker : public WorkerApp
 {
 protected:
@@ -66,9 +67,12 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     //  if (jobId == 4 && seq >= 500000)
     //     std::cout << localAddr << " round " << currentRound << " will send out " << pk->getSeqNumber() << endl;
     // TODO avoid overflow
-    auto hseq = reinterpret_cast<uint16_t&>(seqNumber);
-    auto hjobid = reinterpret_cast<uint16_t&>(jobID);
-    auto agtrIndex = hashAggrIndex(hjobid, hseq);
+    // auto hseq = reinterpret_cast<uint16_t&>(seqNumber);
+    // auto hjobid = reinterpret_cast<uint16_t&>(jobID);
+    // auto agtrIndex = hashAggrIndex(hjobid, hseq);
+    int agtrIndex = intrand(234243);
+    hash_combine(agtrIndex, jobID);
+    hash_combine(agtrIndex, seqNumber);
 //    EV_DEBUG << "aggregator index: " << agtrIndex << endl;
     pk->setAggregatorIndex(agtrIndex);
     pk->setWorkerNumber(numWorkers);

@@ -14,3 +14,10 @@ std::string vectorToString(const std::vector<T>& vec)
     }
     return tmp.str();
 }
+
+template <class T>
+inline void hash_combine(int& seed, const T& v)
+{
+    std::hash<T> hasher;
+    seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+}
