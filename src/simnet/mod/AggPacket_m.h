@@ -55,6 +55,8 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b-
  *     int round;
  *     int64_t jobId;
  *     int workerNumber;
+ *     int treeCost;
+ *     int distance;
  *     // bool resend;
  *     bool isAck;
  *     // cheating fields
@@ -69,6 +71,8 @@ class AggPacket : public ::Packet
     int round = 0;
     int64_t jobId = 0;
     int workerNumber = 0;
+    int treeCost = 0;
+    int distance = 0;
     bool isAck_ = false;
 
   private:
@@ -97,6 +101,12 @@ class AggPacket : public ::Packet
 
     virtual int getWorkerNumber() const;
     virtual void setWorkerNumber(int workerNumber);
+
+    virtual int getTreeCost() const;
+    virtual void setTreeCost(int treeCost);
+
+    virtual int getDistance() const;
+    virtual void setDistance(int distance);
 
     virtual bool isAck() const;
     virtual void setIsAck(bool isAck);
@@ -137,7 +147,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/AggPacket.msg:64</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/AggPacket.msg:66</tt> by opp_msgtool.
  * <pre>
  * class AggUseIncPacket extends AggPacket
  * {
@@ -148,7 +158,6 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.pars
  * 
  *     aggPolicy = INC;
  *     int aggCounter;
- *     int treeCost;
  * }
  * </pre>
  */
@@ -160,7 +169,6 @@ class AggUseIncPacket : public ::AggPacket
     bool ecn = false;
     bool overflow = false;
     int aggCounter = 0;
-    int treeCost = 0;
 
   private:
     void copy(const AggUseIncPacket& other);
@@ -191,16 +199,13 @@ class AggUseIncPacket : public ::AggPacket
 
     virtual int getAggCounter() const;
     virtual void setAggCounter(int aggCounter);
-
-    virtual int getTreeCost() const;
-    virtual void setTreeCost(int treeCost);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggUseIncPacket& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggUseIncPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/AggPacket.msg:76</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/AggPacket.msg:77</tt> by opp_msgtool.
  * <pre>
  * class AggNoIncPacket extends AggPacket
  * {
@@ -232,7 +237,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggNoIncPacket& obj) 
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggNoIncPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/AggPacket.msg:81</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/AggPacket.msg:82</tt> by opp_msgtool.
  * <pre>
  * class ATPPacket extends AggUseIncPacket
  * {
@@ -290,7 +295,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const ATPPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ATPPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/AggPacket.msg:92</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/AggPacket.msg:93</tt> by opp_msgtool.
  * <pre>
  * class MTATPPacket extends AggUseIncPacket
  * {

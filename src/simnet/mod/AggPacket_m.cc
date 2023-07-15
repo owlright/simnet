@@ -183,6 +183,8 @@ void AggPacket::copy(const AggPacket& other)
     this->round = other.round;
     this->jobId = other.jobId;
     this->workerNumber = other.workerNumber;
+    this->treeCost = other.treeCost;
+    this->distance = other.distance;
     this->isAck_ = other.isAck_;
 // cplusplus {{
     this->workerRecord = other.workerRecord;
@@ -196,6 +198,8 @@ void AggPacket::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->round);
     doParsimPacking(b,this->jobId);
     doParsimPacking(b,this->workerNumber);
+    doParsimPacking(b,this->treeCost);
+    doParsimPacking(b,this->distance);
     doParsimPacking(b,this->isAck_);
     // field workerRecord is abstract or custom -- please do packing in customized class
 }
@@ -207,6 +211,8 @@ void AggPacket::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->round);
     doParsimUnpacking(b,this->jobId);
     doParsimUnpacking(b,this->workerNumber);
+    doParsimUnpacking(b,this->treeCost);
+    doParsimUnpacking(b,this->distance);
     doParsimUnpacking(b,this->isAck_);
     // field workerRecord is abstract or custom -- please do unpacking in customized class
 }
@@ -251,6 +257,26 @@ void AggPacket::setWorkerNumber(int workerNumber)
     this->workerNumber = workerNumber;
 }
 
+int AggPacket::getTreeCost() const
+{
+    return this->treeCost;
+}
+
+void AggPacket::setTreeCost(int treeCost)
+{
+    this->treeCost = treeCost;
+}
+
+int AggPacket::getDistance() const
+{
+    return this->distance;
+}
+
+void AggPacket::setDistance(int distance)
+{
+    this->distance = distance;
+}
+
 bool AggPacket::isAck() const
 {
     return this->isAck_;
@@ -270,6 +296,8 @@ class AggPacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_round,
         FIELD_jobId,
         FIELD_workerNumber,
+        FIELD_treeCost,
+        FIELD_distance,
         FIELD_isAck,
         FIELD_workerRecord,
     };
@@ -338,7 +366,7 @@ const char *AggPacketDescriptor::getProperty(const char *propertyName) const
 int AggPacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 6+base->getFieldCount() : 6;
+    return base ? 8+base->getFieldCount() : 8;
 }
 
 unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
@@ -354,10 +382,12 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_round
         FD_ISEDITABLE,    // FIELD_jobId
         FD_ISEDITABLE,    // FIELD_workerNumber
+        FD_ISEDITABLE,    // FIELD_treeCost
+        FD_ISEDITABLE,    // FIELD_distance
         FD_ISEDITABLE,    // FIELD_isAck
         FD_ISARRAY | FD_ISEDITABLE | FD_ISRESIZABLE,    // FIELD_workerRecord
     };
-    return (field >= 0 && field < 6) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 8) ? fieldTypeFlags[field] : 0;
 }
 
 const char *AggPacketDescriptor::getFieldName(int field) const
@@ -373,10 +403,12 @@ const char *AggPacketDescriptor::getFieldName(int field) const
         "round",
         "jobId",
         "workerNumber",
+        "treeCost",
+        "distance",
         "isAck",
         "workerRecord",
     };
-    return (field >= 0 && field < 6) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 8) ? fieldNames[field] : nullptr;
 }
 
 int AggPacketDescriptor::findField(const char *fieldName) const
@@ -387,8 +419,10 @@ int AggPacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "round") == 0) return baseIndex + 1;
     if (strcmp(fieldName, "jobId") == 0) return baseIndex + 2;
     if (strcmp(fieldName, "workerNumber") == 0) return baseIndex + 3;
-    if (strcmp(fieldName, "isAck") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "workerRecord") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "treeCost") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "distance") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "isAck") == 0) return baseIndex + 6;
+    if (strcmp(fieldName, "workerRecord") == 0) return baseIndex + 7;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -405,10 +439,12 @@ const char *AggPacketDescriptor::getFieldTypeString(int field) const
         "int",    // FIELD_round
         "int64_t",    // FIELD_jobId
         "int",    // FIELD_workerNumber
+        "int",    // FIELD_treeCost
+        "int",    // FIELD_distance
         "bool",    // FIELD_isAck
         "int64_t",    // FIELD_workerRecord
     };
-    return (field >= 0 && field < 6) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 8) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **AggPacketDescriptor::getFieldPropertyNames(int field) const
@@ -515,6 +551,8 @@ std::string AggPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, 
         case FIELD_round: return long2string(pp->getRound());
         case FIELD_jobId: return int642string(pp->getJobId());
         case FIELD_workerNumber: return long2string(pp->getWorkerNumber());
+        case FIELD_treeCost: return long2string(pp->getTreeCost());
+        case FIELD_distance: return long2string(pp->getDistance());
         case FIELD_isAck: return bool2string(pp->isAck());
         case FIELD_workerRecord: return int642string(pp->getRecord(i));
         default: return "";
@@ -537,6 +575,8 @@ void AggPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int fie
         case FIELD_round: pp->setRound(string2long(value)); break;
         case FIELD_jobId: pp->setJobId(string2int64(value)); break;
         case FIELD_workerNumber: pp->setWorkerNumber(string2long(value)); break;
+        case FIELD_treeCost: pp->setTreeCost(string2long(value)); break;
+        case FIELD_distance: pp->setDistance(string2long(value)); break;
         case FIELD_isAck: pp->setIsAck(string2bool(value)); break;
         case FIELD_workerRecord: pp->setRecord(i,string2int64(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'AggPacket'", field);
@@ -557,6 +597,8 @@ omnetpp::cValue AggPacketDescriptor::getFieldValue(omnetpp::any_ptr object, int 
         case FIELD_round: return pp->getRound();
         case FIELD_jobId: return pp->getJobId();
         case FIELD_workerNumber: return pp->getWorkerNumber();
+        case FIELD_treeCost: return pp->getTreeCost();
+        case FIELD_distance: return pp->getDistance();
         case FIELD_isAck: return pp->isAck();
         case FIELD_workerRecord: return pp->getRecord(i);
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'AggPacket' as cValue -- field index out of range?", field);
@@ -579,6 +621,8 @@ void AggPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int 
         case FIELD_round: pp->setRound(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_jobId: pp->setJobId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_workerNumber: pp->setWorkerNumber(omnetpp::checked_int_cast<int>(value.intValue())); break;
+        case FIELD_treeCost: pp->setTreeCost(omnetpp::checked_int_cast<int>(value.intValue())); break;
+        case FIELD_distance: pp->setDistance(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_isAck: pp->setIsAck(value.boolValue()); break;
         case FIELD_workerRecord: pp->setRecord(i,omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'AggPacket'", field);
@@ -660,7 +704,6 @@ void AggUseIncPacket::copy(const AggUseIncPacket& other)
     this->ecn = other.ecn;
     this->overflow = other.overflow;
     this->aggCounter = other.aggCounter;
-    this->treeCost = other.treeCost;
 }
 
 void AggUseIncPacket::parsimPack(omnetpp::cCommBuffer *b) const
@@ -671,7 +714,6 @@ void AggUseIncPacket::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->ecn);
     doParsimPacking(b,this->overflow);
     doParsimPacking(b,this->aggCounter);
-    doParsimPacking(b,this->treeCost);
 }
 
 void AggUseIncPacket::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -682,7 +724,6 @@ void AggUseIncPacket::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->ecn);
     doParsimUnpacking(b,this->overflow);
     doParsimUnpacking(b,this->aggCounter);
-    doParsimUnpacking(b,this->treeCost);
 }
 
 int AggUseIncPacket::getAggregatorIndex() const
@@ -735,16 +776,6 @@ void AggUseIncPacket::setAggCounter(int aggCounter)
     this->aggCounter = aggCounter;
 }
 
-int AggUseIncPacket::getTreeCost() const
-{
-    return this->treeCost;
-}
-
-void AggUseIncPacket::setTreeCost(int treeCost)
-{
-    this->treeCost = treeCost;
-}
-
 class AggUseIncPacketDescriptor : public omnetpp::cClassDescriptor
 {
   private:
@@ -755,7 +786,6 @@ class AggUseIncPacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_ecn,
         FIELD_overflow,
         FIELD_aggCounter,
-        FIELD_treeCost,
     };
   public:
     AggUseIncPacketDescriptor();
@@ -822,7 +852,7 @@ const char *AggUseIncPacketDescriptor::getProperty(const char *propertyName) con
 int AggUseIncPacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 6+base->getFieldCount() : 6;
+    return base ? 5+base->getFieldCount() : 5;
 }
 
 unsigned int AggUseIncPacketDescriptor::getFieldTypeFlags(int field) const
@@ -839,9 +869,8 @@ unsigned int AggUseIncPacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_ecn
         FD_ISEDITABLE,    // FIELD_overflow
         FD_ISEDITABLE,    // FIELD_aggCounter
-        FD_ISEDITABLE,    // FIELD_treeCost
     };
-    return (field >= 0 && field < 6) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 5) ? fieldTypeFlags[field] : 0;
 }
 
 const char *AggUseIncPacketDescriptor::getFieldName(int field) const
@@ -858,9 +887,8 @@ const char *AggUseIncPacketDescriptor::getFieldName(int field) const
         "ecn",
         "overflow",
         "aggCounter",
-        "treeCost",
     };
-    return (field >= 0 && field < 6) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 5) ? fieldNames[field] : nullptr;
 }
 
 int AggUseIncPacketDescriptor::findField(const char *fieldName) const
@@ -872,7 +900,6 @@ int AggUseIncPacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "ecn") == 0) return baseIndex + 2;
     if (strcmp(fieldName, "overflow") == 0) return baseIndex + 3;
     if (strcmp(fieldName, "aggCounter") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "treeCost") == 0) return baseIndex + 5;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -890,9 +917,8 @@ const char *AggUseIncPacketDescriptor::getFieldTypeString(int field) const
         "bool",    // FIELD_ecn
         "bool",    // FIELD_overflow
         "int",    // FIELD_aggCounter
-        "int",    // FIELD_treeCost
     };
-    return (field >= 0 && field < 6) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 5) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **AggUseIncPacketDescriptor::getFieldPropertyNames(int field) const
@@ -980,7 +1006,6 @@ std::string AggUseIncPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr ob
         case FIELD_ecn: return bool2string(pp->getEcn());
         case FIELD_overflow: return bool2string(pp->getOverflow());
         case FIELD_aggCounter: return long2string(pp->getAggCounter());
-        case FIELD_treeCost: return long2string(pp->getTreeCost());
         default: return "";
     }
 }
@@ -1002,7 +1027,6 @@ void AggUseIncPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, i
         case FIELD_ecn: pp->setEcn(string2bool(value)); break;
         case FIELD_overflow: pp->setOverflow(string2bool(value)); break;
         case FIELD_aggCounter: pp->setAggCounter(string2long(value)); break;
-        case FIELD_treeCost: pp->setTreeCost(string2long(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'AggUseIncPacket'", field);
     }
 }
@@ -1022,7 +1046,6 @@ omnetpp::cValue AggUseIncPacketDescriptor::getFieldValue(omnetpp::any_ptr object
         case FIELD_ecn: return pp->getEcn();
         case FIELD_overflow: return pp->getOverflow();
         case FIELD_aggCounter: return pp->getAggCounter();
-        case FIELD_treeCost: return pp->getTreeCost();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'AggUseIncPacket' as cValue -- field index out of range?", field);
     }
 }
@@ -1044,7 +1067,6 @@ void AggUseIncPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field
         case FIELD_ecn: pp->setEcn(value.boolValue()); break;
         case FIELD_overflow: pp->setOverflow(value.boolValue()); break;
         case FIELD_aggCounter: pp->setAggCounter(omnetpp::checked_int_cast<int>(value.intValue())); break;
-        case FIELD_treeCost: pp->setTreeCost(omnetpp::checked_int_cast<int>(value.intValue())); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'AggUseIncPacket'", field);
     }
 }

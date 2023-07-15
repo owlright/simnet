@@ -15,6 +15,8 @@ class AggPacket extends Packet
     int round;
     int64_t jobId;
     int workerNumber;
+    int treeCost;
+    int distance;
     // bool resend;
 	bool isAck;
     // cheating fields
@@ -69,7 +71,6 @@ class AggUseIncPacket extends AggPacket
 
     aggPolicy = INC;
     int aggCounter;
-    int treeCost;
 }
 
 class AggNoIncPacket extends AggPacket

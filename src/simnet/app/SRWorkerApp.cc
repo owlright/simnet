@@ -76,7 +76,7 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
 //    EV_DEBUG << "aggregator index: " << agtrIndex << endl;
     pk->setAggregatorIndex(agtrIndex);
     pk->setWorkerNumber(numWorkers);
-
+    pk->setDistance(0);
     // segment routing
     pk->setSIDSize(segments.size());
     pk->setLastEntry(segments.size() - 1);
