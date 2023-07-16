@@ -151,7 +151,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.pars
  * <pre>
  * class AggUseIncPacket extends AggPacket
  * {
- *     int aggregatorIndex;
+ *     unsigned long aggregatorIndex;
  *     bool collision;
  *     bool ecn;
  *     bool overflow;
@@ -164,7 +164,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.pars
 class AggUseIncPacket : public ::AggPacket
 {
   protected:
-    int aggregatorIndex = 0;
+    unsigned long aggregatorIndex = 0;
     bool collision = false;
     bool ecn = false;
     bool overflow = false;
@@ -185,8 +185,8 @@ class AggUseIncPacket : public ::AggPacket
     virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
 
-    virtual int getAggregatorIndex() const;
-    virtual void setAggregatorIndex(int aggregatorIndex);
+    virtual unsigned long getAggregatorIndex() const;
+    virtual void setAggregatorIndex(unsigned long aggregatorIndex);
 
     virtual bool getCollision() const;
     virtual void setCollision(bool collision);

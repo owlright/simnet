@@ -64,7 +64,7 @@ cplusplus(AggPacket::copy) {{
 
 class AggUseIncPacket extends AggPacket
 {
-    int aggregatorIndex;
+    unsigned long aggregatorIndex;
     bool collision;
     bool ecn;
     bool overflow;

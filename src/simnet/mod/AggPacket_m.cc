@@ -726,12 +726,12 @@ void AggUseIncPacket::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->aggCounter);
 }
 
-int AggUseIncPacket::getAggregatorIndex() const
+unsigned long AggUseIncPacket::getAggregatorIndex() const
 {
     return this->aggregatorIndex;
 }
 
-void AggUseIncPacket::setAggregatorIndex(int aggregatorIndex)
+void AggUseIncPacket::setAggregatorIndex(unsigned long aggregatorIndex)
 {
     this->aggregatorIndex = aggregatorIndex;
 }
@@ -912,7 +912,7 @@ const char *AggUseIncPacketDescriptor::getFieldTypeString(int field) const
         field -= base->getFieldCount();
     }
     static const char *fieldTypeStrings[] = {
-        "int",    // FIELD_aggregatorIndex
+        "unsigned long",    // FIELD_aggregatorIndex
         "bool",    // FIELD_collision
         "bool",    // FIELD_ecn
         "bool",    // FIELD_overflow
@@ -1001,7 +1001,7 @@ std::string AggUseIncPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr ob
     }
     AggUseIncPacket *pp = omnetpp::fromAnyPtr<AggUseIncPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_aggregatorIndex: return long2string(pp->getAggregatorIndex());
+        case FIELD_aggregatorIndex: return ulong2string(pp->getAggregatorIndex());
         case FIELD_collision: return bool2string(pp->getCollision());
         case FIELD_ecn: return bool2string(pp->getEcn());
         case FIELD_overflow: return bool2string(pp->getOverflow());
@@ -1022,7 +1022,7 @@ void AggUseIncPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, i
     }
     AggUseIncPacket *pp = omnetpp::fromAnyPtr<AggUseIncPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_aggregatorIndex: pp->setAggregatorIndex(string2long(value)); break;
+        case FIELD_aggregatorIndex: pp->setAggregatorIndex(string2ulong(value)); break;
         case FIELD_collision: pp->setCollision(string2bool(value)); break;
         case FIELD_ecn: pp->setEcn(string2bool(value)); break;
         case FIELD_overflow: pp->setOverflow(string2bool(value)); break;
@@ -1041,7 +1041,7 @@ omnetpp::cValue AggUseIncPacketDescriptor::getFieldValue(omnetpp::any_ptr object
     }
     AggUseIncPacket *pp = omnetpp::fromAnyPtr<AggUseIncPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_aggregatorIndex: return pp->getAggregatorIndex();
+        case FIELD_aggregatorIndex: return omnetpp::checked_int_cast<omnetpp::intval_t>(pp->getAggregatorIndex());
         case FIELD_collision: return pp->getCollision();
         case FIELD_ecn: return pp->getEcn();
         case FIELD_overflow: return pp->getOverflow();
@@ -1062,7 +1062,7 @@ void AggUseIncPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field
     }
     AggUseIncPacket *pp = omnetpp::fromAnyPtr<AggUseIncPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_aggregatorIndex: pp->setAggregatorIndex(omnetpp::checked_int_cast<int>(value.intValue())); break;
+        case FIELD_aggregatorIndex: pp->setAggregatorIndex(omnetpp::checked_int_cast<unsigned long>(value.intValue())); break;
         case FIELD_collision: pp->setCollision(value.boolValue()); break;
         case FIELD_ecn: pp->setEcn(value.boolValue()); break;
         case FIELD_overflow: pp->setOverflow(value.boolValue()); break;

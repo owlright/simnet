@@ -70,11 +70,11 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     // auto hseq = reinterpret_cast<uint16_t&>(seqNumber);
     // auto hjobid = reinterpret_cast<uint16_t&>(jobID);
     // auto agtrIndex = hashAggrIndex(hjobid, hseq);
-    int agtrIndex = intrand(234243);
+    std::size_t agtrIndex = seqNumber ^ jobID;
     hash_combine(agtrIndex, jobID);
     hash_combine(agtrIndex, seqNumber);
 //    EV_DEBUG << "aggregator index: " << agtrIndex << endl;
-    pk->setAggregatorIndex(agtrIndex);
+    pk->setAggregatorIndex(agtrIndex % MAX_AGTR_COUNT);
     pk->setWorkerNumber(numWorkers);
     pk->setDistance(0);
     // segment routing
