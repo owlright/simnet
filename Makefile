@@ -77,7 +77,7 @@ OPP_RUN_DBG_OPTIONS := -m \
 --cmdenv-log-level=warn \
 --debug-on-errors=true \
 -n simulations \
--n $(PROJECT_SRC) -l $(PROJECT_TARGET_DBG)
+-n $(PROJECT_SRC) -l $(PROJECT_TARGET)
 
 define SIM_template
 $(eval SIM_INI_FILE := simulations/$(1)/omnetpp.ini)
@@ -105,8 +105,8 @@ $(1)-%-qt: $(PROJECT_TARGET)
 	opp_run $(SIM_INI_FILE) -c $$* -u Qtenv $(OPP_RUN_OPTIONS) --**.statistic-recording=false --output-scalar-file=/dev/null --output-scalar-file-append=true
 
 $(1)-%-dbg: $(PROJECT_TARGET_DBG)
-	@echo "\e[1;34m[\"$(subst $(space),\"$(,)$(space)\",$(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_DBG_OPTIONS) --**.statistic-recording=false --output-scalar-file=/dev/null --output-scalar-file-append=true)\"]\e[0m"
-	opp_run_dbg $(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_DBG_OPTIONS) --**.statistic-recording=false --output-scalar-file=/dev/null --output-scalar-file-append=true
+	@echo "\e[1;34m[\"$(subst $(space),\"$(,)$(space)\",$(SIM_INI_FILE) -c $$* -u Qtenv $(OPP_RUN_DBG_OPTIONS) --**.statistic-recording=false --output-scalar-file=/dev/null --output-scalar-file-append=true)\"]\e[0m"
+	opp_run_dbg $(SIM_INI_FILE) -c $$* -u Qtenv $(OPP_RUN_DBG_OPTIONS) --**.statistic-recording=false --output-scalar-file=/dev/null --output-scalar-file-append=true
 
 .PHONY: $(1)-% $(1)-%-plt $(1)-%-qt $(1)-%-dbg
 endef
