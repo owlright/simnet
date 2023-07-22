@@ -132,7 +132,8 @@
         "verticaldatum": "cpp",
         "resourcelibrary": "cpp",
         "codecvt": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "typeindex": "cpp"
     },
     "python.analysis.typeCheckingMode": "basic",
     "[python]": {
