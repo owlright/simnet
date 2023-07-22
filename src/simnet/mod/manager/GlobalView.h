@@ -2,8 +2,14 @@
 #include <omnetpp.h>
 #include <unordered_map>
 #include "simnet/common/Defs.h"
-using namespace omnetpp;
+using std::vector;
+template <typename T>
+using Dict = std::unordered_map<T, T>;
 
+template <typename T>
+using Mat = std::vector<std::vector<T>>;
+
+using namespace omnetpp;
 class GlobalView : public cModule
 {
 public:
@@ -12,6 +18,7 @@ public:
     std::unordered_map<int, IntAddress> getNodeIdAddrMap() const {return nodeId2Addr;}
     std::unordered_map<IntAddress, int> getAddrNodeIdMap() const {return addr2NodeId;}
     ~GlobalView() { delete topo; topo=nullptr;}
+    Dict<int> primMST(const vector<int>& S, const vector<int>& mstnodes, const Mat<double>& oddist);
 
 protected:
     virtual void initialize(int stage) override;
