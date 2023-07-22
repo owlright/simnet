@@ -22,7 +22,6 @@ void GlobalGroupManager::initialize(int stage)
     GlobalManager::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         placementPolicy = par("placementPolicy");
-        jobFraction = par("jobFraction");
 
         aggTreeType = par("aggTreeType");
         if (strcmp(aggTreeType, "") != 0)
@@ -144,7 +143,7 @@ void GlobalGroupManager::placeJobs(const char *policyName)
         readHostConfig(par("groupHostFile").stringValue());
     }
     else if (strcmp(policyName, "random") == 0) {
-        int numUsedHosts = hostIds.size() * jobFraction;
+        int numUsedHosts = hostIds.size();
         auto hostscopy = hostIds;
 
         std::shuffle(hostscopy.begin(), hostscopy.end(), std::default_random_engine(intrand(3245)));

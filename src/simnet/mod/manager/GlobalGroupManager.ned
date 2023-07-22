@@ -7,7 +7,6 @@ module GlobalGroupManager
         string groupHostFile = default("");
         string placementPolicy = default("");
 
-        double jobFraction = default(1.0);
         int numGroups @mutable = default(1);
         int numWorkers @mutable = default(6);
         int numPSes @mutable = default(1);
