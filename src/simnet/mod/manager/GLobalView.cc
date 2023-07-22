@@ -8,6 +8,20 @@ void GlobalView::initialize(int stage)
         EV << "network initialization." << endl;
         topo = new cTopology("topo");
         topo->extractByProperty("node");
+        int N = topo->getNumNodes();
+        topoDist.resize(N, vector<double>(N));
+        for (int i = 0; i < topo->getNumNodes(); i++) {
+            topo->calculateWeightedSingleShortestPathsTo(topo->getNode(i));
+            for (int j = 0; j < topo->getNumNodes(); j++) {
+                topoDist[i][j] = topo->getNode(j)->getDistanceToTarget();
+                // std::cout << i << " "
+                //           << j << " "
+                //           << topoDist[i][j] << endl;
+                // std::cout << topo->getNode(i)->getModule()->getClassAndFullPath() << " "
+                //           << topo->getNode(j)->getModule()->getClassAndFullPath() << " "
+                //           << topoDist[i][j] << endl;
+            }
+        }
         EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
         collectNodes(topo);
     }

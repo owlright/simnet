@@ -19,6 +19,7 @@ protected:
 
 private:
     cTopology* topo{nullptr};
+    Mat<double> topoDist;
     std::vector<int> hostNodes;
 
     std::unordered_map<int, IntAddress> nodeId2Addr;
