@@ -30,6 +30,12 @@ void GlobalGroupManager::initialize(int stage)
     }
     else if (stage == INITSTAGE_ASSIGN) {
         placeJobs(placementPolicy);
+        for (auto& [jobid, info] : jobInfodb) {
+            EV << "job " << jobid << endl;
+            EV << "workers: " << info->workers << endl;
+            EV << "pses: " << info->PSes << endl;
+        }
+
         if (useInc) {
             calcAggTree(aggTreeType);
         }
@@ -285,7 +291,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
     {
         for (auto it : jobInfodb) {
             auto jobid = it.first;
-            EV_DEBUG << "job " << jobid << endl;
+            EV_TRACE << "job " << jobid << endl;
             auto group = it.second;
             auto senders = group->workers;
             auto ps = group->PSes.at(0);
@@ -326,7 +332,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                     for (auto k = 0; k < nOutEdges; k++) {
                         auto outEdge = u->getLinkOut(k);
                         if (outEdge->getRemoteNode() == v && visitedLinks.find(outEdge) == visitedLinks.end()) {
-                            outEdge->setWeight(outEdge->getWeight() + 1);
+                            outEdge->setWeight(outEdge->getWeight() + 1); // ! avoid always use the same link
                         }
                     }
 

@@ -53,7 +53,7 @@ private:
 private:
     int jobId{0};
     int groupAddress{GROUPADDR_START};
-    std::unordered_map<int, JobHostInfo*> jobInfodb;
+    std::map<int, JobHostInfo*> jobInfodb;
     std::unordered_map<int,
                        std::unordered_map<
                            IntAddress,
