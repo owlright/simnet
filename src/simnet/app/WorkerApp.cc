@@ -24,7 +24,8 @@ void WorkerApp::onFlowStart()
     UnicastSenderApp::onFlowStart();
     currentRound += 1;
     EV_INFO << "current round seq: " << currentRound << endl;
-    jobMetricCollector->reportFlowStart(jobId, numWorkers, workerId, simTime());
+    if (jobMetricCollector)
+        jobMetricCollector->reportFlowStart(jobId, numWorkers, workerId, simTime());
 }
 
 void WorkerApp::onFlowStop()
@@ -32,7 +33,8 @@ void WorkerApp::onFlowStop()
     if (currentRound < numRounds) {// note it's '<' here
         scheduleAfter(roundInterval, flowStartTimer);
     }
-    jobMetricCollector->reportFlowStop(jobId, numWorkers, workerId, simTime());
+    if (jobMetricCollector)
+        jobMetricCollector->reportFlowStop(jobId, numWorkers, workerId, simTime());
 }
 
 Packet* WorkerApp::createDataPacket(SeqNumber seq, B packetBytes)
