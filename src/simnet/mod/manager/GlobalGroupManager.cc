@@ -144,59 +144,54 @@ void GlobalGroupManager::placeJobs(const char *policyName)
     }
     else if (strcmp(policyName, "random") == 0) {
         int numUsedHosts = hostIds.size();
-        auto hostscopy = hostIds;
-
-        std::shuffle(hostscopy.begin(), hostscopy.end(), std::default_random_engine(intrand(3245)));
-        std::vector<int> hostIds(hostscopy.begin(), hostscopy.begin()+numUsedHosts);
+        auto worker_left_hosts = hostIds;
+        std::transform(worker_left_hosts.cbegin(), worker_left_hosts.cend(),
+                        worker_left_hosts.begin(),
+                        [this](int id){ return getAddr(id);}); // convert host index to address
+        auto ps_left_hosts = worker_left_hosts;
+        auto seed1 = intrand(3245);
+        auto seed2 = intrand(4148);
+        auto shuffle = [](decltype(worker_left_hosts) &vec, decltype(seed1) seed) {
+            std::shuffle(vec.begin(), vec.end(), std::default_random_engine(seed));
+        };
+        shuffle(worker_left_hosts, seed1);
+        shuffle(ps_left_hosts, seed2);
+        // std::cout << "workers can use: " << worker_left_hosts << endl;
+        // std::cout << "ps can use: " << ps_left_hosts << endl;
+        // std::vector<int> hostIds(hostscopy.begin(), hostscopy.begin()+numUsedHosts);
 
         int numGroups = par("numGroups").intValue();
         int numWorkers = par("numWorkers").intValue();
         int numPSes = par("numPSes").intValue();
 
-        if (numGroups*(numWorkers+numPSes) > numUsedHosts) {
+        if (numGroups*numWorkers > numUsedHosts || numGroups*numPSes > numUsedHosts) {
             throw cRuntimeError("used too many hosts, only %d can use.", numUsedHosts);
         }
 
-        // TODO if allow two workers or pses on the same host ?
-        // ! a host can only be use once
-        int count = 0;
         for (auto i = 0; i < numGroups; i++) {
-            std::vector<int> workers;
-            std::vector<int> pses;
-            for (auto j = 0; j < numWorkers + numPSes; j++) {
-                int nodeId = hostIds.at(count++);
-                int address = getAddr(nodeId);
-                if (j < numWorkers)
-                    workers.push_back(address);
-                else
-                    pses.push_back(address);
-            }
+            std::vector<int> workers(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
+            // std::cout << workers << endl;
+            worker_left_hosts.erase(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
+            shuffle(worker_left_hosts, seed1);
+            // std::cout << worker_left_hosts << endl;
+            // ! s1 and s2 must be sorted
+            auto s1 = std::set<int>(ps_left_hosts.begin(), ps_left_hosts.end());
+            auto s2 = std::set<int>(workers.begin(), workers.end());
+            decltype(s1) res;
+            std::set_difference(s1.begin(), s1.end(),
+                                s2.begin(), s2.end(), std::inserter(res, res.end()));
+            decltype(ps_left_hosts) tmp(res.begin(), res.end());
+            // std::cout << "PS can use: " << tmp << endl;
+            std::vector<int> pses {tmp.back()}; // just pick the last element
+            tmp.pop_back();
+            // std::cout << "PS: "<< pses << endl;
+            ps_left_hosts.resize(ps_left_hosts.size() - pses.size());
+            std::merge(tmp.begin(), tmp.end(), workers.begin(), workers.end(), ps_left_hosts.begin());
+            shuffle(ps_left_hosts, seed2);
             insertJobInfodb(workers, pses);
             createJobApps(getCurrentJobId());
         }
-        // ! different job's worker or worker and ps can be on the same host
-        // for (auto i = 0; i < numGroups; i++) {
-        //     std::vector<int> workers, workerPorts;
-        //     std::vector<int> pses, psPorts;
-        //     std::unordered_set<int> visited;
-        //     for (auto j = 0; j < numWorkers + numPSes; j++) {
-        //         int index = numUsedHosts; // this is invalid afterall
-        //         do {
-        //             index = intrand(hostIds.size());
-        //         } while (visited.find(index) != visited.end());
-        //         visited.insert(index);
-        //         int nodeId = hostNodes.at(index);
-        //         int address = node2addr.at(nodeId);
-        //         if (j < numWorkers) {
-        //             workers.push_back(address);
-        //         }
-        //         else {
-        //             pses.push_back(address);
-        //         }
-        //     }
-        //     insertJobInfodb(workers, pses);
-        //     createJobApps(getCurrentJobId());
-        // }
+        // TODO multiple parameter servers
     }
     else if (strcmp(policyName, "") == 0) {
         EV_WARN << "You may forget to set a placement policy for agg groups, make sure you manually set them." << endl;
