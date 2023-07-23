@@ -1,4 +1,5 @@
 #include "GlobalView.h"
+#include <algorithm>
 Define_Module(GlobalView);
 
 Dict<int> GlobalView::primMST(const vector<int>& S, const vector<int>& mstnodes, const Mat<double> &oddist)
@@ -57,11 +58,19 @@ void GlobalView::initialize(int stage)
         topo = new cTopology("topo");
         topo->extractByProperty("node");
         int N = topo->getNumNodes();
-        topoDist.resize(N, vector<double>(N));
+        topoDist.resize(N, vector<double>(N, 0.0));
+        costAdj.resize(N, vector<double>(N, INFINITY));
         for (int i = 0; i < topo->getNumNodes(); i++) {
-            topo->calculateWeightedSingleShortestPathsTo(topo->getNode(i));
-            for (int j = 0; j < topo->getNumNodes(); j++) {
-                topoDist[i][j] = topo->getNode(j)->getDistanceToTarget();
+            auto u = topo->getNode(i);
+            topo->calculateWeightedSingleShortestPathsTo(u); // all paths v -> u
+            for (int j = i + 1; j < topo->getNumNodes(); j++) {
+                auto v = topo->getNode(j);
+                topoDist[j][i] = v->getDistanceToTarget();
+                topoDist[i][j] = topoDist[j][i];
+                if (v->getPath(0)->getRemoteNode() == u) { // ! if v is the adj node of u
+                    costAdj[j][i] = 1.0;
+                    costAdj[i][j] = 1.0;
+                }
                 // std::cout << i << " "
                 //           << j << " "
                 //           << topoDist[i][j] << endl;
@@ -85,6 +94,8 @@ void GlobalView::initialize(int stage)
         //     std::cout << nodeId2Addr[a] << " " << nodeId2Addr[b] << endl;
         // }
         // std::cout << endl;
+        // auto print = [](const std::vector<double>& n) { std::cout << n << endl; };
+        // std::for_each(costAdj.cbegin(), costAdj.cend(), print);
     }
 }
 
@@ -113,7 +124,7 @@ void GlobalView::collectNodes(cTopology *topo)
         }
         nodeId2Addr[i] = address;
         addr2NodeId[address] = i;
-        EV_TRACE << "node: " << i << " address: " << address << " isHost:"<< (isHost ? "true":"false")<< endl;
+        EV_DEBUG << "node: " << i << " address: " << address << endl;
     }
     EV_INFO << "There are " << hostNodes.size() << " hosts and " << topo->getNumNodes() - hostNodes.size() << " switches" << endl;
 }

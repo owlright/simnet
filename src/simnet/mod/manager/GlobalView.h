@@ -17,6 +17,8 @@ public:
     const std::vector<int> gethostIds() const {return hostNodes;}
     std::unordered_map<int, IntAddress> getNodeIdAddrMap() const {return nodeId2Addr;}
     std::unordered_map<IntAddress, int> getAddrNodeIdMap() const {return addr2NodeId;}
+    Mat<double> getDistMat() const {return topoDist;}
+    Mat<double> getCostAdj() const {return costAdj;}
     ~GlobalView() { delete topo; topo=nullptr;}
     Dict<int> primMST(const vector<int>& S, const vector<int>& mstnodes, const Mat<double>& oddist);
 
@@ -27,6 +29,7 @@ protected:
 private:
     cTopology* topo{nullptr};
     Mat<double> topoDist;
+    Mat<double> costAdj;
     std::vector<int> hostNodes;
 
     std::unordered_map<int, IntAddress> nodeId2Addr;

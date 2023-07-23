@@ -43,6 +43,9 @@ void GlobalManager::initialize(int stage)
         hostIds = globalView->gethostIds();
         nodeId2Addr = globalView->getNodeIdAddrMap();
         addr2NodeId = globalView->getAddrNodeIdMap();
+        distAdj = globalView->getDistMat();
+        // costAdj.resize(distAdj.size(), vector<double>(distAdj[0].size()));
+        costAdj = globalView->getCostAdj();
     }
     else if (stage == INITSTAGE_LAST) {
         ASSERT(topo);
