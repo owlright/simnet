@@ -59,9 +59,11 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
                 throw cRuntimeError("wrong line in module file: 2 items required, line: \"%s\"", line.c_str());
             // get fields from tokens
             auto workerAddrsStr = tokens[0].c_str();
-            auto workerAddrs = cStringTokenizer(workerAddrsStr, "[,]").asIntVector();
+            auto tmp = cStringTokenizer(workerAddrsStr, "[,]").asIntVector();
+            vector<IntAddress> workerAddrs(tmp.begin(), tmp.end());
             auto PSAddrsStr = tokens[1].c_str();
-            auto PSAddrs = cStringTokenizer(PSAddrsStr, "[,]").asIntVector();
+            tmp = cStringTokenizer(PSAddrsStr, "[,]").asIntVector();
+            vector<IntAddress> PSAddrs(tmp.begin(), tmp.end());
             EV << std::setw(50) << workerAddrsStr << std::setw(30) << PSAddrsStr << endl;
             insertJobInfodb(workerAddrs, PSAddrs);
         }
@@ -241,21 +243,21 @@ void GlobalGroupManager::placeJobs(const char *policyName)
         }
 
         for (auto i = 0; i < numGroups; i++) {
-            std::vector<int> workers(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
+            std::vector<IntAddress> workers(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
             // std::cout << workers << endl;
             worker_left_hosts.erase(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
             shuffle(worker_left_hosts, seed1);
             // std::cout << worker_left_hosts << endl;
             // ! s1 and s2 must be sorted
-            auto s1 = std::set<int>(ps_left_hosts.begin(), ps_left_hosts.end());
-            auto s2 = std::set<int>(workers.begin(), workers.end());
+            auto s1 = std::set<IntAddress>(ps_left_hosts.begin(), ps_left_hosts.end());
+            auto s2 = std::set<IntAddress>(workers.begin(), workers.end());
             decltype(s1) res;
             std::set_difference(s1.begin(), s1.end(),
                                 s2.begin(), s2.end(), std::inserter(res, res.end()));
 
             decltype(ps_left_hosts) tmp(res.begin(), res.end());
             // std::cout << "PS can use: " << tmp << endl;
-            std::vector<int> pses {tmp.back()}; // just pick the last element
+            std::vector<IntAddress> pses {tmp.back()}; // just pick the last element
             tmp.pop_back();
             // std::cout << "PS: "<< pses << endl;
             ps_left_hosts.resize(ps_left_hosts.size() - pses.size());
@@ -495,12 +497,12 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
     }
 }
 
-void GlobalGroupManager::insertJobInfodb(const std::vector<int>& workers, const std::vector<int>& pses)
+void GlobalGroupManager::insertJobInfodb(const std::vector<IntAddress>& workers, const std::vector<IntAddress>& pses)
 {
-    std::vector<int> workerPorts(workers.size(), INVALID_PORT);
+    std::vector<PortNumber> workerPorts(workers.size(), INVALID_PORT);
 
-    std::vector<int> PSPorts(pses.size(), INVALID_PORT);
-    std::vector<int> multicastAddrs;
+    std::vector<PortNumber> PSPorts(pses.size(), INVALID_PORT);
+    std::vector<IntAddress> multicastAddrs;
     for (auto i = 0; i < pses.size(); i++) {
         multicastAddrs.push_back(getNextGroupAddr());
     }

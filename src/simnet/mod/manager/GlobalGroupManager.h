@@ -11,13 +11,13 @@ using std::vector;
 struct JobHostInfo
 {
     uint16_t jobId;
-    std::vector<int> PSes;
-    std::vector<int> workers;
-    std::vector<int> workerPorts;
-    std::vector<int> PSPorts;
+    std::vector<IntAddress> PSes;
+    std::vector<IntAddress> workers;
+    std::vector<PortNumber> workerPorts;
+    std::vector<PortNumber> PSPorts;
     int numWorkers;
     int numPSes;
-    std::vector<int> multicastAddresses;
+    std::vector<IntAddress> multicastAddresses;
 };
 
 struct JobSwitchInfo
@@ -69,7 +69,7 @@ private:
     void createJobApps(int jobId);
     void calcAggTree(const char* policyName);
     // * jobId is the job's index in jobInfodb
-    void insertJobInfodb(const std::vector<int>& workers, const std::vector<int>& pses);
+    void insertJobInfodb(const std::vector<IntAddress>& workers, const std::vector<IntAddress>& pses);
     /* This function modifies the variable "tree" in-place to generate
        a Steiner tree based on "members" and "root".
        Note that members and root are both the indexes in GlobalView::topo
