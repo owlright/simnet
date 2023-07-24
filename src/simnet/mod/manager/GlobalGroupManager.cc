@@ -166,9 +166,9 @@ void GlobalGroupManager::addCostFrom(const cTopology* tree)
             visited.insert(getAddr(v));
         }
     }
-    auto get_edge = [this](decltype(edges.front()) e) -> cTopology::LinkOut* {
-        auto u = getNode(e.first);
-        auto v = getNode(e.second);
+    auto get_edge = [this](decltype(edges.front()) e, const cTopology* graph) -> cTopology::LinkOut* {
+        auto u = graph->getNodeFor(getMod(e.first));
+        auto v = graph->getNodeFor(getMod(e.second));
         auto nOutEdges = u->getNumOutLinks();
         for (auto k = 0; k < nOutEdges; k++) {
             auto outEdge = u->getLinkOut(k);
@@ -179,7 +179,9 @@ void GlobalGroupManager::addCostFrom(const cTopology* tree)
         return nullptr;
     };
     for (auto e:edges) {
-        auto edge = get_edge(e);
+        auto edge = get_edge(e, topo);
+        edge->setWeight(edge->getWeight() + edge_cost);
+        edge = get_edge(e, tree);
         edge->setWeight(edge->getWeight() + edge_cost);
     }
     // auto print = [](const std::pair<IntAddress, IntAddress>& e) { std::cout << e.first << "->" << e.second << endl; };
