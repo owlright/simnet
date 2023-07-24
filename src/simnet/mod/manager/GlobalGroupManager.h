@@ -74,11 +74,11 @@ private:
        a Steiner tree based on "members" and "root".
        Note that members and root are both the indexes in GlobalView::topo
     */
-    void buildSteinerTree(cTopology& tree, const std::vector<cTopology::Node*>& leaves, cTopology::Node* root);
+    cTopology* buildSteinerTree(const vector<IntAddress>& leaves, const IntAddress& root);
     // TODO make this function more clearly
     // ! add the shortest path between Node start and stop, note that only stop is in the tree
-    void addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop);
-    std::vector<IntAddress> getShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop);
-    void addCostFrom(const cTopology& tree);
+    void addShortestPath(cTopology* tree, cTopology::Node* start, cTopology::Node* stop);
+    std::vector<IntAddress> getShortestPath(cTopology* tree, cTopology::Node* start, cTopology::Node* stop);
+    void addCostFrom(const cTopology* tree);
 };
 

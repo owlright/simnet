@@ -70,30 +70,30 @@ void GlobalGroupManager::readHostConfig(const char * fileName)
     }
 }
 
-void GlobalGroupManager::addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop)
+void GlobalGroupManager::addShortestPath(cTopology* tree, cTopology::Node* start, cTopology::Node* stop)
 {
     topo->calculateWeightedSingleShortestPathsTo(stop);
     auto node = start;
     auto treeNode = new cTopology::Node(node->getModuleId()); // ! must new a node
-    tree.addNode(treeNode);
+    tree->addNode(treeNode);
     while (node != stop) {
         auto nextNode = node->getPath(0)->getRemoteNode();
         cTopology::Node* nextTreeNode = nullptr;
         if (nextNode != stop) {
             nextTreeNode = new cTopology::Node(nextNode->getModuleId());
-            tree.addNode(nextTreeNode);
+            tree->addNode(nextTreeNode);
         }
         else { // avoid add a node twice into tree
-            nextTreeNode = tree.getNodeFor(nextNode->getModule());
+            nextTreeNode = tree->getNodeFor(nextNode->getModule());
         }
         // the link is always a new one
-        tree.addLink(new cTopology::Link(), treeNode, nextTreeNode);
+        tree->addLink(new cTopology::Link(), treeNode, nextTreeNode);
         node = nextNode;
         treeNode = nextTreeNode;
     }
 }
 
-std::vector<IntAddress> GlobalGroupManager::getShortestPath(cTopology &tree, cTopology::Node *start, cTopology::Node *stop)
+std::vector<IntAddress> GlobalGroupManager::getShortestPath(cTopology* tree, cTopology::Node *start, cTopology::Node *stop)
 {
     // the end nodes must be host
     ASSERT(start->getModule()->getProperties()->get("host")!=nullptr &&
@@ -103,7 +103,7 @@ std::vector<IntAddress> GlobalGroupManager::getShortestPath(cTopology &tree, cTo
         };
     std::vector<IntAddress> path;
     auto node = start;
-    tree.calculateWeightedSingleShortestPathsTo(stop);
+    tree->calculateWeightedSingleShortestPathsTo(stop);
 
     while (node != stop) {
         path.emplace_back(node2addr(node));
@@ -114,15 +114,15 @@ std::vector<IntAddress> GlobalGroupManager::getShortestPath(cTopology &tree, cTo
     return path;
 }
 
-void GlobalGroupManager::addCostFrom(const cTopology &tree)
+void GlobalGroupManager::addCostFrom(const cTopology* tree)
 {
     const int node_cost = 0.1;
     const int edge_cost = 0.1;
     vector<IntAddress> leaves, aggNodes;
     IntAddress root;
     vector<std::pair<IntAddress, IntAddress>> edges; // duplication is allowed
-    for (auto i = 0; i < tree.getNumNodes(); i++) {
-        auto node = tree.getNode(i);
+    for (auto i = 0; i < tree->getNumNodes(); i++) {
+        auto node = tree->getNode(i);
         auto indegree = node->getNumInLinks();
         auto outdegree = node->getNumOutLinks();
         if (indegree >= 2) {
@@ -154,7 +154,7 @@ void GlobalGroupManager::addCostFrom(const cTopology &tree)
     while (!queue.empty()) {
         auto addr = queue.front();
         queue.pop();
-        auto u = tree.getNodeFor(getMod(addr));
+        auto u = tree->getNodeFor(getMod(addr));
         if (u->getNumOutLinks() == 0) {
             ASSERT(getAddr(u) == root);
         }
@@ -176,6 +176,7 @@ void GlobalGroupManager::addCostFrom(const cTopology &tree)
                 return outEdge;
             }
         }
+        return nullptr;
     };
     for (auto e:edges) {
         auto edge = get_edge(e);
@@ -185,30 +186,33 @@ void GlobalGroupManager::addCostFrom(const cTopology &tree)
     // std::for_each(edges.cbegin(), edges.cend(), print);
 }
 
-void GlobalGroupManager::buildSteinerTree(cTopology& tree, const std::vector<cTopology::Node*>& leaves, cTopology::Node* root)
+cTopology*
+GlobalGroupManager::buildSteinerTree(const std::vector<IntAddress>& leaves, const IntAddress& root)
 {
-    tree.addNode(new cTopology::Node(root->getModuleId())); // ! must new a node
-    for (auto& n:leaves) {
+    auto tree = new cTopology("steiner");
+    tree->addNode(new cTopology::Node(getNode(root)->getModuleId())); // ! must new a node
+    for (auto& leaf:leaves) {
         double dist = INFINITY;
         // * find the joint node to the tree
         cTopology::Node* jointNode = nullptr;
-        for (auto i = 0; i < tree.getNumNodes(); i++) {
+        for (auto i = 0; i < tree->getNumNodes(); i++) {
             // ! Node* of the same Module in tree and topo are different
-            auto nodeInTree = topo->getNodeFor(tree.getNode(i)->getModule());
-            if (nodeInTree == root ||
+            auto nodeInTree = topo->getNodeFor(tree->getNode(i)->getModule());
+            if (getAddr(nodeInTree) == root ||
                     nodeInTree->getModule()->getProperties()->get("switch")!=nullptr)
             { // ! ignore hosts
                 topo->calculateWeightedSingleShortestPathsTo(nodeInTree);
-                if (n->getDistanceToTarget() < dist) {
-                    dist = n->getDistanceToTarget();
+                if (getNode(leaf)->getDistanceToTarget() < dist) {
+                    dist = getNode(leaf)->getDistanceToTarget();
                     jointNode = nodeInTree;
                 }
             }
         }
         ASSERT(jointNode);
         // * add the node into tree using the shortest path
-        addShortestPath(tree, n, jointNode);
+        addShortestPath(tree, getNode(leaf), jointNode);
     }
+    return tree;
 }
 
 void GlobalGroupManager::placeJobs(const char *policyName)
@@ -367,12 +371,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
 
             // ! get an aggregation tree
             // TODO my own algorithm
-            cTopology tree = cTopology("steiner");
-            std::vector<cTopology::Node*> senderNodes;
-            for (auto& s:senders) {
-                senderNodes.push_back(getNode(s));
-            }
-            buildSteinerTree(tree, senderNodes, getNode(ps)); //  TODO multiple PSes
+            auto tree = buildSteinerTree(senders, ps); //  TODO multiple PSes
             // ! update graph edge's cost
             addCostFrom(tree);
 
@@ -387,7 +386,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             for (auto i = 0; i < senders.size(); i++) {
                 auto addr = senders[i];
                 auto m = senderMods[i];
-                auto path = getShortestPath(tree, tree.getNodeFor(m), tree.getNodeFor(getMod(ps)));
+                auto path = getShortestPath(tree, tree->getNodeFor(m), tree->getNodeFor(getMod(ps)));
                 ASSERT(path.size() >= 3);
                 EV_DEBUG << path.front() << "->" << path.back() << ":" << path << endl;
                 auto segments = std::vector<int>(path.begin()+1, path.end()-1);
@@ -397,7 +396,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 // * prepare args(indegree) at each segment
                 std::vector<int> indegrees;
                 for (auto& seg:segments) {
-                    indegrees.push_back(tree.getNodeFor(getMod(seg))->getNumInLinks());
+                    indegrees.push_back(tree->getNodeFor(getMod(seg))->getNumInLinks());
                 }
                 EV_TRACE << indegrees << endl;
                 segmentInfodb[jobid][addr][ps] = new JobSegmentsRoute();
@@ -411,6 +410,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                     }
                 }
             }
+            delete tree;
         }
     }
     else if (strcmp(policyName, "edge") == 0) {
@@ -422,12 +422,10 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             auto ps = group->PSes.at(0);
             auto psNode = getNode(ps);
             // EV_TRACE << senders << " " << ps << endl;
-            cTopology tree = cTopology("steiner");
             std::vector<cTopology::Node*> senderNodes;
             for (auto& s:senders) {
                 senderNodes.push_back(getNode(s));
             }
-            buildSteinerTree(tree, senderNodes, psNode);
             // ! if only do aggregation at edge, the indegree calculation is a litte harder
             std::unordered_map<IntAddress, int> indegrees;
             std::unordered_map<IntAddress, std::vector<IntAddress>> addrSegments;
