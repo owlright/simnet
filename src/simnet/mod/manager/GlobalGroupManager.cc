@@ -222,6 +222,73 @@ GlobalGroupManager::buildSteinerTree(const std::vector<IntAddress>& leaves, cons
     return tree;
 }
 
+std::unordered_map<IntAddress, vector<IntAddress>>
+GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddress> &aggNodes)
+{
+
+    std::unordered_map<IntAddress, vector<IntAddress>> equal_cost_aggs;
+    std::vector<IntAddress> children;
+    IntAddress parent;
+    for (auto agg : aggNodes) {
+        double local_cost = 0.0;
+        // ! find nodes around the aggnodes
+        auto agg_node = tree->getNodeFor(getMod(agg));
+        for (auto i = 0; i < agg_node->getNumInLinks(); i++) {
+            auto inedge = agg_node->getLinkIn(i);
+            local_cost += inedge->getWeight();
+            auto u = inedge->getRemoteNode();
+            while (u->getNumInLinks() == 1) {
+                inedge = u->getLinkIn(0);
+                local_cost += inedge->getWeight();
+                u = inedge->getRemoteNode();
+            }
+            children.push_back(getAddr(u));
+        }
+        ASSERT(agg_node->getNumOutLinks() == 1); // rember that root cannot be a aggregation node
+        auto outedge = agg_node->getLinkOut(0);
+        local_cost += outedge->getWeight();
+        auto u = outedge->getRemoteNode();
+        while(u->getNumOutLinks() && u->getNumInLinks() == 1) {
+            outedge = u->getLinkOut(0);
+            local_cost += outedge->getWeight();
+            u = outedge->getRemoteNode();
+        }
+        parent = getAddr(u);
+
+        std::unordered_set<int> excludes;
+        std::for_each(hostIds.cbegin(), hostIds.cend(), [&excludes](int nodeId){excludes.insert(nodeId);});
+        std::for_each(children.cbegin(), children.cend(), [this, &excludes](IntAddress n){excludes.insert(getNodeId(n));});
+        excludes.insert(getNodeId(parent));
+        auto N = topo->getNumNodes();
+        double dist[N][N];
+        for (auto i = 0; i < N; i++) {
+            for (auto j = 0; j < N; j++)
+                dist[i][j] = INFINITY;
+        }
+        topo->calculateWeightedSingleShortestPathsTo(getNode(parent));
+        for (auto i = 0; i < N; i++) {
+            dist[i][getNodeId(parent)] = topo->getNode(i)->getDistanceToTarget();
+        }
+//        topo->calculateWeightedSingleShortestPathsTo(getNode(agg));
+//        for (auto i = 0; i < N; i++) {
+//            dist[i][getNodeId(parent)] = topo->getNode(i)->getDistanceToTarget();
+//        }
+        for(auto i = 0; i < N; i++) {
+            if (excludes.find(i) != excludes.end()) {
+                topo->calculateWeightedSingleShortestPathsTo(topo->getNode(i));
+                auto tmp_cost = 0.0;
+                for (const auto& c:children) {
+                    tmp_cost += getNode(c)->getDistanceToTarget();
+                }
+                tmp_cost += dist[i][getNodeId(parent)];
+                if (tmp_cost - local_cost <= 3)
+                    equal_cost_aggs[agg].push_back(getAddr(i));
+            }
+        }
+    }
+    return equal_cost_aggs;
+}
+
 void GlobalGroupManager::placeJobs(const char *policyName)
 {
     if (strcmp(policyName, "manual") == 0) {
@@ -378,7 +445,9 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
 
             // ! get an aggregation tree
             // TODO my own algorithm
-            auto tree = buildSteinerTree(senders, ps); //  TODO multiple PSes
+            std::vector<IntAddress> aggNodes;
+            auto tree = buildSteinerTree(senders, ps, aggNodes); //  TODO multiple PSes
+            auto equal_cost_aggnodes = findEqualCostAggNodes(tree, aggNodes);
             // ! update graph edge's cost
             addCostFrom(tree);
 
