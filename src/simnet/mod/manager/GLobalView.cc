@@ -57,7 +57,7 @@ void GlobalView::initialize(int stage)
         EV << "network initialization." << endl;
         topo = new cTopology("topo");
         topo->extractByProperty("node");
-        int N = topo->getNumNodes();
+        // int N = topo->getNumNodes();
         // topoDist.resize(N, vector<double>(N, 0.0));
         // costAdj.resize(N, vector<double>(N, INFINITY));
         // for (int i = 0; i < topo->getNumNodes(); i++) {

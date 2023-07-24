@@ -135,14 +135,14 @@ void GlobalGroupManager::addCostFrom(const cTopology* tree)
             root = getAddr(node);
         }
     }
-    auto isAggNode = [aggNodes](IntAddress addr) -> bool {
-        bool Found = false;
-        for (const auto& a:aggNodes) {
-            if (a == addr)
-                Found = true;
-        }
-        return Found;
-    };
+    // auto isAggNode = [aggNodes](IntAddress addr) -> bool {
+    //     bool Found = false;
+    //     for (const auto& a:aggNodes) {
+    //         if (a == addr)
+    //             Found = true;
+    //     }
+    //     return Found;
+    // };
     for (auto n:aggNodes) {
         auto node = getNode(n);
         node->setWeight(node->getWeight() + node_cost);
@@ -217,7 +217,7 @@ GlobalGroupManager::buildSteinerTree(const std::vector<IntAddress>& leaves, cons
             aggNodes.push_back(addr);
         used.insert(addr);
         // * add the node into tree using the shortest path
-        addShortestPath(tree, getNode(leaf), jointNode);
+        addShortestPath(tree, getNode(leaf), jointNode); // TODO: add weight to avoid two path overlap;
     }
     return tree;
 }
