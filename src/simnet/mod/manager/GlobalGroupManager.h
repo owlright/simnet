@@ -73,7 +73,7 @@ private:
     /* Return an aggregation tree which in this case is
        a Steiner tree based on "members" and "root". indegree >= 2 will be push into aggNodes
     */
-    cTopology* buildSteinerTree(const vector<IntAddress>& leaves, const IntAddress& root);
+    cTopology* buildSteinerTree(const vector<IntAddress>& leaves, const IntAddress& root, vector<IntAddress>& aggNodes);
     // TODO make this function more clearly
     // ! add the shortest path between Node start and stop, note that only stop is in the tree
     void addShortestPath(cTopology* tree, cTopology::Node* start, cTopology::Node* stop);

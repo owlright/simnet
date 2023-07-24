@@ -189,10 +189,11 @@ void GlobalGroupManager::addCostFrom(const cTopology* tree)
 }
 
 cTopology*
-GlobalGroupManager::buildSteinerTree(const std::vector<IntAddress>& leaves, const IntAddress& root)
+GlobalGroupManager::buildSteinerTree(const std::vector<IntAddress>& leaves, const IntAddress& root, vector<IntAddress>& aggNodes)
 {
     auto tree = new cTopology("steiner");
     tree->addNode(new cTopology::Node(getNode(root)->getModuleId())); // ! must new a node
+    std::unordered_set<IntAddress> used{root};
     for (auto& leaf:leaves) {
         double dist = INFINITY;
         // * find the joint node to the tree
@@ -211,6 +212,10 @@ GlobalGroupManager::buildSteinerTree(const std::vector<IntAddress>& leaves, cons
             }
         }
         ASSERT(jointNode);
+        auto addr = getAddr(jointNode);
+        if (used.find(addr) == used.end())
+            aggNodes.push_back(addr);
+        used.insert(addr);
         // * add the node into tree using the shortest path
         addShortestPath(tree, getNode(leaf), jointNode);
     }
