@@ -116,8 +116,8 @@ std::vector<IntAddress> GlobalGroupManager::getShortestPath(cTopology* tree, cTo
 
 void GlobalGroupManager::addCostFrom(const cTopology* tree)
 {
-    const int node_cost = 0.1;
-    const int edge_cost = 0.1;
+    const double node_cost = 0.1;
+    const double edge_cost = 0.1;
     vector<IntAddress> leaves, aggNodes;
     IntAddress root;
     vector<std::pair<IntAddress, IntAddress>> edges; // duplication is allowed
