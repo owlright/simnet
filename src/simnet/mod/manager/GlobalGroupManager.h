@@ -33,7 +33,7 @@ struct JobSwitchInfo
 
 struct JobSegmentsRoute // ! for segment routing aggregation
 {
-    std::vector<int> segmentAddrs;
+    std::vector<IntAddress> segmentAddrs;
     std::vector<int> fanIndegrees;
 };
 
@@ -70,9 +70,8 @@ private:
     void calcAggTree(const char* policyName);
     // * jobId is the job's index in jobInfodb
     void insertJobInfodb(const std::vector<IntAddress>& workers, const std::vector<IntAddress>& pses);
-    /* This function modifies the variable "tree" in-place to generate
-       a Steiner tree based on "members" and "root".
-       Note that members and root are both the indexes in GlobalView::topo
+    /* Return an aggregation tree which in this case is
+       a Steiner tree based on "members" and "root". indegree >= 2 will be push into aggNodes
     */
     cTopology* buildSteinerTree(const vector<IntAddress>& leaves, const IntAddress& root);
     // TODO make this function more clearly

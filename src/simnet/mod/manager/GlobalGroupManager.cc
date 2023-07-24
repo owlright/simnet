@@ -389,7 +389,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 auto path = getShortestPath(tree, tree->getNodeFor(m), tree->getNodeFor(getMod(ps)));
                 ASSERT(path.size() >= 3);
                 EV_DEBUG << path.front() << "->" << path.back() << ":" << path << endl;
-                auto segments = std::vector<int>(path.begin()+1, path.end()-1);
+                auto segments = std::vector<IntAddress>(path.begin()+1, path.end()-1);
                 std::unordered_set<cTopology::Node*> visitedNodes;
                 std::unordered_set<cTopology::Link*> visitedLinks;
 
