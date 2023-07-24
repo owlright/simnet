@@ -9,6 +9,7 @@ class GlobalManager : public cModule
 public:
     IntAddress getAddr(int nodeId) const;
     IntAddress getAddr(cModule* mod) const;
+    IntAddress getAddr(cTopology::Node* node) const;
     int getNodeId(IntAddress addr) const;
     cModule* getMod(IntAddress addr) const;
     cTopology::Node* getNode(IntAddress addr) const;

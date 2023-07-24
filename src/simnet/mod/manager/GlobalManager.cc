@@ -3,6 +3,7 @@
 
 IntAddress GlobalManager::getAddr(int nodeId) const
 {
+    // ! nodeId must be in topo
     IntAddress addr = nodeId2Addr.at(nodeId);
     return addr;
 }
@@ -10,6 +11,13 @@ IntAddress GlobalManager::getAddr(int nodeId) const
 IntAddress GlobalManager::getAddr(cModule *mod) const
 {
     IntAddress addr = mod->par("address");
+    return addr;
+}
+
+IntAddress GlobalManager::getAddr(cTopology::Node *node) const
+{
+    // ! only module is the same in each topo
+    IntAddress addr = getAddr(node->getModule());
     return addr;
 }
 
