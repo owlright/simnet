@@ -3,6 +3,7 @@
 #include <algorithm> // std::shuffle
 #include <numeric>   // std::iota
 #include <random>    // std::default_random_engine
+#include <queue>
 #include "GlobalGroupManager.h"
 
 std::ostream& operator<<(std::ostream& os, const std::vector<cTopology::Node*>& array)
@@ -111,6 +112,77 @@ std::vector<IntAddress> GlobalGroupManager::getShortestPath(cTopology &tree, cTo
     return path;
 }
 
+void GlobalGroupManager::addCostFrom(const cTopology &tree)
+{
+    const int node_cost = 0.1;
+    const int edge_cost = 0.1;
+    vector<IntAddress> leaves, aggNodes;
+    IntAddress root;
+    vector<std::pair<IntAddress, IntAddress>> edges; // duplication is allowed
+    for (auto i = 0; i < tree.getNumNodes(); i++) {
+        auto node = tree.getNode(i);
+        auto indegree = node->getNumInLinks();
+        auto outdegree = node->getNumOutLinks();
+        if (indegree >= 2) {
+            aggNodes.push_back(getAddr(node));
+        }
+        else if (indegree == 0) {
+            leaves.push_back(getAddr(node));
+        }
+        else if (outdegree == 0) {
+            root = getAddr(node);
+        }
+    }
+    auto isAggNode = [aggNodes](IntAddress addr) -> bool {
+        bool Found = false;
+        for (const auto& a:aggNodes) {
+            if (a == addr)
+                Found = true;
+        }
+        return Found;
+    };
+    for (auto n:aggNodes) {
+        auto node = getNode(n);
+        node->setWeight(node->getWeight() + node_cost);
+    }
+    std::unordered_set<IntAddress> visited_startnodes;
+    std::queue<IntAddress, std::deque<IntAddress> > queue;
+    std::for_each(leaves.cbegin(), leaves.cend(), [&queue](IntAddress n){queue.push(n);});
+    std::unordered_set<IntAddress> visited;
+    while (!queue.empty()) {
+        auto addr = queue.front();
+        queue.pop();
+        auto u = tree.getNodeFor(getMod(addr));
+        if (u->getNumOutLinks() == 0) {
+            ASSERT(getAddr(u) == root);
+        }
+        else {
+            auto v = u->getLinkOut(0)->getRemoteNode();
+            edges.push_back(std::make_pair(getAddr(u), getAddr(v)));
+            if (visited.find(getAddr(v)) != visited.end())
+                queue.push(getAddr(v));
+            visited.insert(getAddr(v));
+        }
+    }
+    auto get_edge = [this](decltype(edges.front()) e) -> cTopology::LinkOut* {
+        auto u = getNode(e.first);
+        auto v = getNode(e.second);
+        auto nOutEdges = u->getNumOutLinks();
+        for (auto k = 0; k < nOutEdges; k++) {
+            auto outEdge = u->getLinkOut(k);
+            if (outEdge->getRemoteNode() == v) {
+                return outEdge;
+            }
+        }
+    };
+    for (auto e:edges) {
+        auto edge = get_edge(e);
+        edge->setWeight(edge->getWeight() + edge_cost);
+    }
+    // auto print = [](const std::pair<IntAddress, IntAddress>& e) { std::cout << e.first << "->" << e.second << endl; };
+    // std::for_each(edges.cbegin(), edges.cend(), print);
+}
+
 void GlobalGroupManager::buildSteinerTree(cTopology& tree, const std::vector<cTopology::Node*>& leaves, cTopology::Node* root)
 {
     tree.addNode(new cTopology::Node(root->getModuleId())); // ! must new a node
@@ -180,6 +252,7 @@ void GlobalGroupManager::placeJobs(const char *policyName)
             decltype(s1) res;
             std::set_difference(s1.begin(), s1.end(),
                                 s2.begin(), s2.end(), std::inserter(res, res.end()));
+
             decltype(ps_left_hosts) tmp(res.begin(), res.end());
             // std::cout << "PS can use: " << tmp << endl;
             std::vector<int> pses {tmp.back()}; // just pick the last element
@@ -281,7 +354,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
         // readSwitchConfig(par("groupSwitchFile").stringValue());
         // TODO manually set segments for each host
     }
-    else if (strcmp(policyName, "sptree") == 0)
+    else if (strcmp(policyName, "sptree") == 0) // TODO my own algorithms
     {
         for (auto it : jobInfodb) {
             auto jobid = it.first;
@@ -289,13 +362,17 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             auto group = it.second;
             auto senders = group->workers;
             auto ps = group->PSes.at(0);
-            cTopology tree = cTopology("steiner");
 
+            // ! get an aggregation tree
+            // TODO my own algorithm
+            cTopology tree = cTopology("steiner");
             std::vector<cTopology::Node*> senderNodes;
             for (auto& s:senders) {
                 senderNodes.push_back(getNode(s));
             }
             buildSteinerTree(tree, senderNodes, getNode(ps)); //  TODO multiple PSes
+            // ! update graph edge's cost
+            addCostFrom(tree);
 
             std::vector<cModule*> senderMods;
             for (auto& s:senders) {
@@ -314,23 +391,6 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 auto segments = std::vector<int>(path.begin()+1, path.end()-1);
                 std::unordered_set<cTopology::Node*> visitedNodes;
                 std::unordered_set<cTopology::Link*> visitedLinks;
-                for (auto j = 0; j < segments.size() - 1; j++) {
-                    auto u = getNode(segments[j]);
-                    auto v = getNode(segments[j+1]);
-                    if (visitedNodes.find(u) == visitedNodes.end()) {
-                        visitedNodes.insert(u);
-                        u->setWeight(u->getWeight() + 1);
-                    }
-                    // * get the edge u->v
-                    auto nOutEdges = u->getNumOutLinks();
-                    for (auto k = 0; k < nOutEdges; k++) {
-                        auto outEdge = u->getLinkOut(k);
-                        if (outEdge->getRemoteNode() == v && visitedLinks.find(outEdge) == visitedLinks.end()) {
-                            outEdge->setWeight(outEdge->getWeight() + 1); // ! avoid always use the same link
-                        }
-                    }
-
-                }
 
                 // * prepare args(indegree) at each segment
                 std::vector<int> indegrees;

@@ -7,7 +7,7 @@
 #include "GlobalManager.h"
 
 using namespace omnetpp;
-
+using std::vector;
 struct JobHostInfo
 {
     uint16_t jobId;
@@ -79,5 +79,6 @@ private:
     // ! add the shortest path between Node start and stop, note that only stop is in the tree
     void addShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop);
     std::vector<IntAddress> getShortestPath(cTopology& tree, cTopology::Node* start, cTopology::Node* stop);
+    void addCostFrom(const cTopology& tree);
 };
 
