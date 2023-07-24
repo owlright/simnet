@@ -58,28 +58,28 @@ void GlobalView::initialize(int stage)
         topo = new cTopology("topo");
         topo->extractByProperty("node");
         int N = topo->getNumNodes();
-        topoDist.resize(N, vector<double>(N, 0.0));
-        costAdj.resize(N, vector<double>(N, INFINITY));
-        for (int i = 0; i < topo->getNumNodes(); i++) {
-            auto u = topo->getNode(i);
-            topo->calculateWeightedSingleShortestPathsTo(u); // all paths v -> u
-            for (int j = i + 1; j < topo->getNumNodes(); j++) {
-                auto v = topo->getNode(j);
-                topoDist[j][i] = v->getDistanceToTarget();
-                topoDist[i][j] = topoDist[j][i];
-                if (v->getPath(0)->getRemoteNode() == u) { // ! if v is the adj node of u
-                    costAdj[j][i] = 1.0;
-                    costAdj[i][j] = 1.0;
-                }
-                // std::cout << i << " "
-                //           << j << " "
-                //           << topoDist[i][j] << endl;
-                // std::cout << topo->getNode(i)->getModule()->getClassAndFullPath() << " "
-                //           << topo->getNode(j)->getModule()->getClassAndFullPath() << " "
-                //           << topoDist[i][j] << endl;
-            }
-        }
-        EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
+        // topoDist.resize(N, vector<double>(N, 0.0));
+        // costAdj.resize(N, vector<double>(N, INFINITY));
+        // for (int i = 0; i < topo->getNumNodes(); i++) {
+        //     auto u = topo->getNode(i);
+        //     topo->calculateWeightedSingleShortestPathsTo(u); // all paths v -> u
+        //     for (int j = i + 1; j < topo->getNumNodes(); j++) {
+        //         auto v = topo->getNode(j);
+        //         topoDist[j][i] = v->getDistanceToTarget();
+        //         topoDist[i][j] = topoDist[j][i];
+        //         if (v->getPath(0)->getRemoteNode() == u) { // ! if v is the adj node of u
+        //             costAdj[j][i] = 1.0;
+        //             costAdj[i][j] = 1.0;
+        //         }
+        //         // std::cout << i << " "
+        //         //           << j << " "
+        //         //           << topoDist[i][j] << endl;
+        //         // std::cout << topo->getNode(i)->getModule()->getClassAndFullPath() << " "
+        //         //           << topo->getNode(j)->getModule()->getClassAndFullPath() << " "
+        //         //           << topoDist[i][j] << endl;
+        //     }
+        // }
+        // EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
         collectNodes(topo);
         // auto S = vector<int>{8, 9, 10, 11};
         // auto mstnodes = vector<int>{26, 2, 4, 7};

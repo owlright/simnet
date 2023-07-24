@@ -20,8 +20,8 @@ protected:
 
 protected:
     opp_component_ptr<GlobalView> globalView;
-    Mat<double> distAdj;
-    Mat<double> costAdj;
+    // Mat<double> distAdj;
+    // Mat<double> costAdj;
     cTopology* topo{nullptr};
     std::vector<int> hostIds;
     std::unordered_map<int, IntAddress> nodeId2Addr;
