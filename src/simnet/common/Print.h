@@ -2,6 +2,8 @@
 
 #include<iostream>
 #include<vector>
+#include<unordered_map>
+
 template<class T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& array)
 {
@@ -13,6 +15,13 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& array)
     return os;
 }
 
+template<typename K, typename V>
+std::ostream& operator<<(std::ostream& os, const std::unordered_map<K, V>& map) {
+    for (const auto& [key, value] : map) {
+        os << key << ": " << value << ", ";
+    }
+    return os;
+}
 
 namespace style {
 enum {

@@ -448,6 +448,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             std::vector<IntAddress> aggNodes;
             auto tree = buildSteinerTree(senders, ps, aggNodes); //  TODO multiple PSes
             auto equal_cost_aggnodes = findEqualCostAggNodes(tree, aggNodes);
+            EV_DEBUG << "equal_cost_agg_nodes: " << equal_cost_aggnodes << endl;
             // ! update graph edge's cost
             addCostFrom(tree);
 
