@@ -33,7 +33,7 @@ struct JobSwitchInfo
 
 struct JobSegmentsRoute // ! for segment routing aggregation
 {
-    std::vector<IntAddress> segmentAddrs;
+    std::vector<vector<IntAddress>> segmentAddrs;
     std::vector<int> fanIndegrees;
 };
 

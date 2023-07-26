@@ -140,7 +140,6 @@ void GlobalGroupManager::addCost(const cTopology* tree, double node_cost, double
         auto node = getNode(n);
         node->setWeight(node->getWeight() + node_cost);
     }
-    std::unordered_set<IntAddress> visited_startnodes;
     std::queue<IntAddress, std::deque<IntAddress> > queue;
     std::for_each(leaves.cbegin(), leaves.cend(), [&queue](IntAddress n){queue.push(n);});
     std::unordered_set<IntAddress> visited;
@@ -459,23 +458,30 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 auto path = getShortestPath(tree, tree->getNodeFor(m), tree->getNodeFor(getMod(ps)));
                 ASSERT(path.size() >= 3);
                 EV_DEBUG << path.front() << "->" << path.back() << ":" << path << endl;
-                auto segments = std::vector<IntAddress>(path.begin()+1, path.end()-1);
-                std::unordered_set<cTopology::Node*> visitedNodes;
-                std::unordered_set<cTopology::Link*> visitedLinks;
-
+                auto intermediates = std::vector<IntAddress>(path.begin()+1, path.end()-1); // exclude the paths ends
                 // * prepare args(indegree) at each segment
                 std::vector<int> indegrees;
-                for (auto& seg:segments) {
-                    indegrees.push_back(tree->getNodeFor(getMod(seg))->getNumInLinks());
+                vector<vector<IntAddress>> segment_addrs;
+                for (auto& node:intermediates) {
+                    auto indegree = tree->getNodeFor(getMod(node))->getNumInLinks();
+                    if (indegree >= 2) {
+                        indegrees.push_back(indegree);
+                        std::vector<IntAddress> tmp{node};
+                        if (equal_cost_aggnodes.find(node) != equal_cost_aggnodes.end()) {
+                            tmp.insert(tmp.end(), equal_cost_aggnodes[node].begin(), equal_cost_aggnodes[node].end());
+                        }
+                        segment_addrs.push_back(tmp);
+                    }
                 }
+
                 EV_TRACE << indegrees << endl;
                 segmentInfodb[jobid][addr][ps] = new JobSegmentsRoute();
-                segmentInfodb[jobid][addr][ps]->segmentAddrs = segments;
+                segmentInfodb[jobid][addr][ps]->segmentAddrs = segment_addrs;
                 segmentInfodb[jobid][addr][ps]->fanIndegrees = indegrees;
                 for (auto i = 0; i < m->getSubmoduleVectorSize("workers"); i++) {
                     auto app = m->getSubmodule("workers", i);
                     if (app->hasPar("segmentAddrs") && ps == app->par("destAddress").intValue()) {
-                        app->par("segmentAddrs") = vectorToString(segments);
+                        app->par("segmentAddrs") = vectorToString(segment_addrs);
                         app->par("fanIndegrees") = vectorToString(indegrees);
                     }
                 }
