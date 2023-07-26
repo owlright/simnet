@@ -92,7 +92,8 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     auto fit = fanIndegrees.rbegin();
     for (auto i = 0; i < segments.size(); i++)
     {
-        pk->setSegments(i, *sit++);
+        pk->setSegments(i, (*sit)[agtrIndex % sit->size()]); // TODO: maybe a hash function with probability is better
+        sit++;
         pk->setFuns(i, "aggregation");
         auto indegree = std::to_string(*fit++);
         pk->setArgs(i, indegree.c_str());

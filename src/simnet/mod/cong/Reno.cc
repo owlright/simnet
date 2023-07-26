@@ -26,6 +26,8 @@ void Reno::reset()
 }
 
 void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
+    Enter_Method("Reno::onRecvAck");
+    EV_DEBUG << "recv " << seq << endl;
     auto expectedSeq = maxAckedSeqNumber + segmentSize;
     if (seq == expectedSeq) {
         confirmedBytes += segmentSize;
@@ -50,7 +52,7 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
             // ! this seq is retransmitted by app last turn
             // ! we need to wait a RTT time to see if retransmitted is successful
             if (it.second == 0) {
-                it.second = cWnd;
+                it.second = cWnd > maxDisorderNumber ? cWnd : maxDisorderNumber; // * in case disorder happend at the begining
             }
             it.second--;
        } else {
