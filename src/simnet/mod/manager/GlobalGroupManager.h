@@ -74,11 +74,11 @@ private:
        a Steiner tree based on "members" and "root". indegree >= 2 will be push into aggNodes
     */
     cTopology* buildSteinerTree(const vector<IntAddress>& leaves, const IntAddress& root, vector<IntAddress>& aggNodes);
-    std::unordered_map<IntAddress, vector<IntAddress> > findEqualCostAggNodes(const cTopology* tree, vector<IntAddress>& aggNodes);
+    std::unordered_map<IntAddress, vector<IntAddress> > findEqualCostAggNodes(const cTopology* tree, vector<IntAddress>& aggNodes, double costThreshold);
     // TODO make this function more clearly
     // ! add the shortest path between Node start and stop, note that only stop is in the tree
     void addShortestPath(cTopology* tree, cTopology::Node* start, cTopology::Node* stop);
     std::vector<IntAddress> getShortestPath(cTopology* tree, cTopology::Node* start, cTopology::Node* stop);
-    void addCostFrom(const cTopology* tree);
+    void addCost(const cTopology* tree, double node_cost, double edge_cost);
 };
 

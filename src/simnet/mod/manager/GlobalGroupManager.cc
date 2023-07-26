@@ -114,10 +114,10 @@ std::vector<IntAddress> GlobalGroupManager::getShortestPath(cTopology* tree, cTo
     return path;
 }
 
-void GlobalGroupManager::addCostFrom(const cTopology* tree)
+void GlobalGroupManager::addCost(const cTopology* tree, double node_cost, double edge_cost)
 {
-    const double node_cost = 0.1;
-    const double edge_cost = 0.1;
+    // const double node_cost = 0.1;
+    // const double edge_cost = 0.1;
     vector<IntAddress> leaves, aggNodes;
     IntAddress root;
     vector<std::pair<IntAddress, IntAddress>> edges; // duplication is allowed
@@ -135,14 +135,7 @@ void GlobalGroupManager::addCostFrom(const cTopology* tree)
             root = getAddr(node);
         }
     }
-    // auto isAggNode = [aggNodes](IntAddress addr) -> bool {
-    //     bool Found = false;
-    //     for (const auto& a:aggNodes) {
-    //         if (a == addr)
-    //             Found = true;
-    //     }
-    //     return Found;
-    // };
+
     for (auto n:aggNodes) {
         auto node = getNode(n);
         node->setWeight(node->getWeight() + node_cost);
@@ -223,7 +216,7 @@ GlobalGroupManager::buildSteinerTree(const std::vector<IntAddress>& leaves, cons
 }
 
 std::unordered_map<IntAddress, vector<IntAddress>>
-GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddress> &aggNodes)
+GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddress> &aggNodes, double costThreshold)
 {
 
     std::unordered_map<IntAddress, vector<IntAddress>> equal_cost_aggs;
@@ -282,7 +275,7 @@ GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddre
                     tmp_cost += getNode(c)->getDistanceToTarget();
                 }
                 tmp_cost += dist[i][getNodeId(parent)];
-                if (tmp_cost - local_cost <= 1) // TODO: how to decide the threshold, at least it should not be more than the spt!
+                if (tmp_cost - local_cost <= costThreshold) // TODO: how to decide the threshold, at least it should not be more than the spt!
                     equal_cost_aggs[agg].push_back(getAddr(i));
             }
         }
@@ -448,18 +441,17 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             // TODO my own algorithm
             std::vector<IntAddress> aggNodes;
             auto tree = buildSteinerTree(senders, ps, aggNodes); //  TODO multiple PSes
-            auto equal_cost_aggnodes = findEqualCostAggNodes(tree, aggNodes);
+            auto equal_cost_aggnodes = findEqualCostAggNodes(tree, aggNodes, 1.0);
             EV_DEBUG << "equal_cost_agg_nodes: " << equal_cost_aggnodes << endl;
             // ! update graph edge's cost
-            addCostFrom(tree);
+            // TODO: how to decide the added cost
+            addCost(tree, 0.1, 0.1); // TODO: what about the equal cost aggnodes and their paths?
 
             std::vector<cModule*> senderMods;
             for (auto& s:senders) {
                 senderMods.push_back(getMod(s));
             }
 
-            // * HACK the simplest ecmp tree
-            // * iterate over all tree's edges and nodes, add weight 1 onto them in topo
             // * prepare segments
             for (auto i = 0; i < senders.size(); i++) {
                 auto addr = senders[i];
