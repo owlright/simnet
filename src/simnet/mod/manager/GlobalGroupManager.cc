@@ -259,6 +259,7 @@ GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddre
         std::for_each(hostIds.cbegin(), hostIds.cend(), [&excludes](int nodeId){excludes.insert(nodeId);});
         std::for_each(children.cbegin(), children.cend(), [this, &excludes](IntAddress n){excludes.insert(getNodeId(n));});
         excludes.insert(getNodeId(parent));
+        excludes.insert(getNodeId(agg));
         auto N = topo->getNumNodes();
         double dist[N][N];
         for (auto i = 0; i < N; i++) {
@@ -274,14 +275,14 @@ GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddre
 //            dist[i][getNodeId(parent)] = topo->getNode(i)->getDistanceToTarget();
 //        }
         for(auto i = 0; i < N; i++) {
-            if (excludes.find(i) != excludes.end()) {
+            if (excludes.find(i) == excludes.end()) {
                 topo->calculateWeightedSingleShortestPathsTo(topo->getNode(i));
                 auto tmp_cost = 0.0;
                 for (const auto& c:children) {
                     tmp_cost += getNode(c)->getDistanceToTarget();
                 }
                 tmp_cost += dist[i][getNodeId(parent)];
-                if (tmp_cost - local_cost <= 3)
+                if (tmp_cost - local_cost <= 1) // TODO: how to decide the threshold, at least it should not be more than the spt!
                     equal_cost_aggs[agg].push_back(getAddr(i));
             }
         }
