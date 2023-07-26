@@ -8,10 +8,12 @@ template<class T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& array)
 {
     os << "[";
-    for (auto &elem : array) {
-        os << " " << elem;
+    for (auto i = 0; i < array.size(); i++) {
+        if (i != 0)
+            os << ",";
+        os << array[i];
     }
-    os << " ] ";
+    os << "]";
     return os;
 }
 

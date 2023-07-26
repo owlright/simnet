@@ -11,7 +11,7 @@ protected:
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
 
 private:
-    std::vector<int> segments;
+    std::vector<std::vector<IntAddress>> segments;
     std::vector<int> fanIndegrees;
 };
 
@@ -26,7 +26,14 @@ void SRWorker::initialize(int stage)
     else if (stage == INITSTAGE_LAST) {
         EV << "SRWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
         EV << " PS(" << destAddr << ":" << destPort << ")" << endl;
-        segments = cStringTokenizer(par("segmentAddrs").stringValue()).asIntVector();
+        auto segmentAddrs = cStringTokenizer(par("segmentAddrs").stringValue(), " ").asVector();
+        segments.resize(segmentAddrs.size());
+        for (auto i = 0; i < segmentAddrs.size(); i++) {
+            auto tmp = cStringTokenizer(segmentAddrs[i].c_str(), "[,]").asIntVector();
+            std::vector<IntAddress> equal_agg_addrs;
+            for_each(tmp.begin(), tmp.end(), [&equal_agg_addrs](int& n){equal_agg_addrs.push_back(n);});
+            segments[i].insert(segments[i].end(), equal_agg_addrs.begin(), equal_agg_addrs.end());
+        }
         fanIndegrees = cStringTokenizer(par("fanIndegrees").stringValue()).asIntVector();
         EV << "sid: " << segments << endl;
         EV << "arg: " << fanIndegrees << endl;
