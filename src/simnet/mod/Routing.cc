@@ -229,8 +229,8 @@ void Routing::forwardIncoming(Packet *pk)
         srcAddr = myAddress + destAddr;
     }
 
-    if (segment == myAddress && entryIndex != 0) {
-        outGateIndex = getRouteGateIndex(srcAddr, pk->getSegments(entryIndex - 1)); // ! route to next router, otherwise ecmp may break this
+    if (pk->getPacketType() == AGG && pk->getSegmentsLeft() != 0) {
+        outGateIndex = getRouteGateIndex(srcAddr,  pk->getSegments(pk->getSegmentsLeft() - 1)); // ! route to next router, otherwise ecmp may break this
     }
     else {
         outGateIndex = getRouteGateIndex(srcAddr, destAddr);
