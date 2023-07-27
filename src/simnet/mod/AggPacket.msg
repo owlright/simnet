@@ -24,6 +24,7 @@ class AggPacket extends Packet
                            @sizeSetter(setRecordLen)
                            @getter(getRecord)
                            @setter(setRecord);
+    int receivedNumber;
 }
 
 cplusplus(AggPacket) {{

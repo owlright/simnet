@@ -87,19 +87,21 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pkt)
 {
     auto pk = check_and_cast<const AggPacket*>(pkt);
     char pkname[40];
+    auto seq = pk->getSeqNumber();
     sprintf(pkname, "MuACK-%" PRId64 "-seq%" PRId64,
-            localAddr, pk->getSeqNumber());
+            localAddr, seq);
     auto packet = new AggPacket(pkname);
-    packet->setSeqNumber(pk->getSeqNumber());
+    packet->setSeqNumber(seq);
     packet->setPacketType(MACK);
     packet->setByteLength(64);
     packet->setReceivedBytes(pk->getByteLength());
+    packet->setReceivedNumber(receivedNumber[seq]);
     packet->setJobId(pk->getJobId());
     packet->setRound(pk->getRound());
     packet->setStartTime(pk->getStartTime());
     packet->setQueueTime(pk->getQueueTime());
     packet->setTransmitTime(pk->getTransmitTime());
-    if (aggedEcns[pk->getSeqNumber()]) {
+    if (aggedEcns[seq]) {
         packet->setECE(true);
     }
     packet->setIsFlowFinished(pk->isFlowFinished());
@@ -142,13 +144,14 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
     }
     aggedEcns.at(seq) |= pk->getECN();
     auto& tmpWorkersRecord = aggedWorkers.at(seq);
+    receivedNumber[seq] += 1;
     for (auto& w:pk->getRecord()) {
         if (tmpWorkersRecord.find(w) != tmpWorkersRecord.end()) {
             ASSERT(pk->getResend());
             EV_WARN << "received a seen packet" << endl;
         }
         else {
-            receivedNumber[seq] += 1;
+            // receivedNumber[seq] += 1;
             if (workers.size() < numWorkers) { // ! just avoid push_back many times
                 workers.push_back(w);
                 workerPorts.push_back(pk->getLocalPort());
@@ -156,7 +159,7 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
         }
         tmpWorkersRecord.insert(w);
     }
-    EV_DEBUG << "Seq " << seq << " aggregated " << receivedNumber.at(seq) << " packets." << endl;
+    EV_DEBUG << "Seq " << seq << " aggregated " << tmpWorkersRecord.size() << " packets." << endl;
 
 }
 
