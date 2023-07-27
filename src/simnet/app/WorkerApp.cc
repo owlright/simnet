@@ -70,6 +70,8 @@ void WorkerApp::finish()
 {
     UnicastSenderApp::finish();
     if (currentRound != numRounds) {
-        EV_WARN << getClassAndFullPath() << " " << localAddr << " complete " << currentRound << " rounds,  not reach " << numRounds << endl;
+        EV_WARN << getClassAndFullPath() << "job " << jobId << " "
+                                        "address " << localAddr
+                                        << " complete " << currentRound << " rounds,  not reach " << numRounds << endl;
     }
 }
