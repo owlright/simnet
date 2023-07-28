@@ -219,6 +219,8 @@ GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddre
 {
 
     std::unordered_map<IntAddress, vector<IntAddress>> equal_cost_aggs;
+    if (costThreshold < 0) // * save the time
+        return equal_cost_aggs;
     std::vector<IntAddress> children;
     IntAddress parent;
     for (auto agg : aggNodes) {
@@ -440,7 +442,8 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             // TODO my own algorithm
             std::vector<IntAddress> aggNodes;
             auto tree = buildSteinerTree(senders, ps, aggNodes); //  TODO multiple PSes
-            auto equal_cost_aggnodes = findEqualCostAggNodes(tree, aggNodes, 1.0);
+            auto threshold = par("costThreshold").doubleValue();
+            auto equal_cost_aggnodes = findEqualCostAggNodes(tree, aggNodes, threshold);
             EV_DEBUG << "equal_cost_agg_nodes: " << equal_cost_aggnodes << endl;
             // ! update graph edge's cost
             // TODO: how to decide the added cost

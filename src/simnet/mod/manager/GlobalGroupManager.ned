@@ -12,6 +12,7 @@ module GlobalGroupManager
         int numPSes @mutable = default(1);
 
         string aggTreeType = default("sptree"); // ATP, sptree
+        double costThreshold = default(0.0);
         @class(GlobalGroupManager);
         @display("i=block/cogwheel");
 }
