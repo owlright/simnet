@@ -25,6 +25,7 @@ class AggPacket extends Packet
                            @getter(getRecord)
                            @setter(setRecord);
     int receivedNumber;
+    int64_t PSAddr;
 }
 
 cplusplus(AggPacket) {{

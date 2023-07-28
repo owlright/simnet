@@ -97,6 +97,7 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pkt)
     packet->setReceivedBytes(pk->getByteLength());
     packet->setReceivedNumber(receivedNumber[seq]);
     packet->setJobId(pk->getJobId());
+    packet->setPSAddr(localAddr);
     packet->setRound(pk->getRound());
     packet->setStartTime(pk->getStartTime());
     packet->setQueueTime(pk->getQueueTime());
@@ -134,7 +135,7 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
     // I left this for future debuging
     // if ( jobid == 4 && seq >= 500000 )
     //      std::cout << round << " PS: " << pk->getResend() << " "<< pk->getRecord() <<  " " << seq << endl;
-    EV_DEBUG << pk->getRecord() << endl;
+    EV_DEBUG << "Seq " << seq << " aggregated workers: " << pk->getRecord() << endl;
     // * first packet of the same seq
     if (aggedWorkers.find(seq) == aggedWorkers.end())
     {
@@ -159,7 +160,14 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
         }
         tmpWorkersRecord.insert(w);
     }
-    EV_DEBUG << "Seq " << seq << " aggregated " << tmpWorkersRecord.size() << " packets." << endl;
+    // if (localAddr ==785 && seq == 232000) {
+    //     std::cout << "PS receives " << pk->getRecord() << endl;
+    //     std::cout <<"aggregated ";
+    //     for (auto& t:tmpWorkersRecord) {
+    //         std::cout << t << " ";
+    //     }
+    //     std::cout << endl;
+    // }
 
 }
 
@@ -194,6 +202,7 @@ void ParameterServerApp::dealWithNoIncAggPacket(const cMessage *msg)
 
 void ParameterServerApp::dealWithIncAggPacket(Connection* connection, const cMessage* msg)
 {
+    Enter_Method("ParameterServerApp::dealWithIncAggPacket");
     auto pk = check_and_cast<const AggUseIncPacket*>(msg);
     auto seq = pk->getSeqNumber();
     aggedEcns.at(seq) |= pk->getEcn();
@@ -202,7 +211,6 @@ void ParameterServerApp::dealWithIncAggPacket(Connection* connection, const cMes
         EV_WARN << seq << " hash collision happen" << endl;
     if (pk->getResend())
         EV_WARN << seq << " is a resend packet" << endl;
-
     auto& tmpWorkersRecord = aggedWorkers.at(seq);
     auto aggedNumber = tmpWorkersRecord.size();
     if (aggedNumber == pk->getWorkerNumber())

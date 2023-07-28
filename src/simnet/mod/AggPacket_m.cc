@@ -187,6 +187,7 @@ void AggPacket::copy(const AggPacket& other)
     this->distance = other.distance;
     this->isAck_ = other.isAck_;
     this->receivedNumber = other.receivedNumber;
+    this->PSAddr = other.PSAddr;
 // cplusplus {{
     this->workerRecord = other.workerRecord;
 // }}
@@ -204,6 +205,7 @@ void AggPacket::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->isAck_);
     // field workerRecord is abstract or custom -- please do packing in customized class
     doParsimPacking(b,this->receivedNumber);
+    doParsimPacking(b,this->PSAddr);
 }
 
 void AggPacket::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -218,6 +220,7 @@ void AggPacket::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->isAck_);
     // field workerRecord is abstract or custom -- please do unpacking in customized class
     doParsimUnpacking(b,this->receivedNumber);
+    doParsimUnpacking(b,this->PSAddr);
 }
 
 AggPolicy AggPacket::getAggPolicy() const
@@ -300,6 +303,16 @@ void AggPacket::setReceivedNumber(int receivedNumber)
     this->receivedNumber = receivedNumber;
 }
 
+int64_t AggPacket::getPSAddr() const
+{
+    return this->PSAddr;
+}
+
+void AggPacket::setPSAddr(int64_t PSAddr)
+{
+    this->PSAddr = PSAddr;
+}
+
 class AggPacketDescriptor : public omnetpp::cClassDescriptor
 {
   private:
@@ -314,6 +327,7 @@ class AggPacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_isAck,
         FIELD_workerRecord,
         FIELD_receivedNumber,
+        FIELD_PSAddr,
     };
   public:
     AggPacketDescriptor();
@@ -380,7 +394,7 @@ const char *AggPacketDescriptor::getProperty(const char *propertyName) const
 int AggPacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 9+base->getFieldCount() : 9;
+    return base ? 10+base->getFieldCount() : 10;
 }
 
 unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
@@ -392,7 +406,7 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         field -= base->getFieldCount();
     }
     static unsigned int fieldTypeFlags[] = {
-        FD_ISEDITABLE,    // FIELD_aggPolicy
+        0,    // FIELD_aggPolicy
         FD_ISEDITABLE,    // FIELD_round
         FD_ISEDITABLE,    // FIELD_jobId
         FD_ISEDITABLE,    // FIELD_workerNumber
@@ -401,8 +415,9 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_isAck
         FD_ISARRAY | FD_ISEDITABLE | FD_ISRESIZABLE,    // FIELD_workerRecord
         FD_ISEDITABLE,    // FIELD_receivedNumber
+        FD_ISEDITABLE,    // FIELD_PSAddr
     };
-    return (field >= 0 && field < 9) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 10) ? fieldTypeFlags[field] : 0;
 }
 
 const char *AggPacketDescriptor::getFieldName(int field) const
@@ -423,8 +438,9 @@ const char *AggPacketDescriptor::getFieldName(int field) const
         "isAck",
         "workerRecord",
         "receivedNumber",
+        "PSAddr",
     };
-    return (field >= 0 && field < 9) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 10) ? fieldNames[field] : nullptr;
 }
 
 int AggPacketDescriptor::findField(const char *fieldName) const
@@ -440,6 +456,7 @@ int AggPacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "isAck") == 0) return baseIndex + 6;
     if (strcmp(fieldName, "workerRecord") == 0) return baseIndex + 7;
     if (strcmp(fieldName, "receivedNumber") == 0) return baseIndex + 8;
+    if (strcmp(fieldName, "PSAddr") == 0) return baseIndex + 9;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -461,8 +478,9 @@ const char *AggPacketDescriptor::getFieldTypeString(int field) const
         "bool",    // FIELD_isAck
         "int64_t",    // FIELD_workerRecord
         "int",    // FIELD_receivedNumber
+        "int64_t",    // FIELD_PSAddr
     };
-    return (field >= 0 && field < 9) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 10) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **AggPacketDescriptor::getFieldPropertyNames(int field) const
@@ -574,6 +592,7 @@ std::string AggPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, 
         case FIELD_isAck: return bool2string(pp->isAck());
         case FIELD_workerRecord: return int642string(pp->getRecord(i));
         case FIELD_receivedNumber: return long2string(pp->getReceivedNumber());
+        case FIELD_PSAddr: return int642string(pp->getPSAddr());
         default: return "";
     }
 }
@@ -590,7 +609,6 @@ void AggPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int fie
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_aggPolicy: pp->setAggPolicy((AggPolicy)string2enum(value, "AggPolicy")); break;
         case FIELD_round: pp->setRound(string2long(value)); break;
         case FIELD_jobId: pp->setJobId(string2int64(value)); break;
         case FIELD_workerNumber: pp->setWorkerNumber(string2long(value)); break;
@@ -599,6 +617,7 @@ void AggPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int fie
         case FIELD_isAck: pp->setIsAck(string2bool(value)); break;
         case FIELD_workerRecord: pp->setRecord(i,string2int64(value)); break;
         case FIELD_receivedNumber: pp->setReceivedNumber(string2long(value)); break;
+        case FIELD_PSAddr: pp->setPSAddr(string2int64(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'AggPacket'", field);
     }
 }
@@ -622,6 +641,7 @@ omnetpp::cValue AggPacketDescriptor::getFieldValue(omnetpp::any_ptr object, int 
         case FIELD_isAck: return pp->isAck();
         case FIELD_workerRecord: return pp->getRecord(i);
         case FIELD_receivedNumber: return pp->getReceivedNumber();
+        case FIELD_PSAddr: return pp->getPSAddr();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'AggPacket' as cValue -- field index out of range?", field);
     }
 }
@@ -638,7 +658,6 @@ void AggPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int 
     }
     AggPacket *pp = omnetpp::fromAnyPtr<AggPacket>(object); (void)pp;
     switch (field) {
-        case FIELD_aggPolicy: pp->setAggPolicy(static_cast<AggPolicy>(value.intValue())); break;
         case FIELD_round: pp->setRound(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_jobId: pp->setJobId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_workerNumber: pp->setWorkerNumber(omnetpp::checked_int_cast<int>(value.intValue())); break;
@@ -647,6 +666,7 @@ void AggPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int 
         case FIELD_isAck: pp->setIsAck(value.boolValue()); break;
         case FIELD_workerRecord: pp->setRecord(i,omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_receivedNumber: pp->setReceivedNumber(omnetpp::checked_int_cast<int>(value.intValue())); break;
+        case FIELD_PSAddr: pp->setPSAddr(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'AggPacket'", field);
     }
 }
