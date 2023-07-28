@@ -120,6 +120,7 @@ cplusplus(SegmentRoutingHeader) {{
 		virtual void popSegment() {segments.pop_back();}
 		virtual void popFun() {funs.pop_back();}
 		virtual void popArg() {args.pop_back();}
+        virtual const std::vector<int64_t>& getAllSegments() {return segments;}
 }}
 
 cplusplus(SegmentRoutingHeader::copy) {{
