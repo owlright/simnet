@@ -73,12 +73,22 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
 {
     auto pk = check_and_cast<AggPacket*>(msg);
     ASSERT(pk->getJobId() == connection->getConnectionId());
-    dealWithAggPacket(msg);
-    if (pk->getAggPolicy() == INC) {
-        dealWithIncAggPacket(connection, msg);
+    auto round = pk->getRound();
+    if (round > currentRound) {
+        // ! it's very important to clear information left by last Round
+        aggedWorkers.clear();
+        receivedNumber.clear();
+        aggedEcns.clear();
+        currentRound = round;
     }
-    else if (pk->getAggPolicy() == NOINC) {
-        dealWithNoIncAggPacket(msg);
+    if (round == currentRound) {
+        dealWithAggPacket(msg);
+        if (pk->getAggPolicy() == INC) {
+            dealWithIncAggPacket(connection, msg);
+        }
+        else if (pk->getAggPolicy() == NOINC) {
+            dealWithNoIncAggPacket(msg);
+        }
     }
     delete pk;
 }
@@ -105,6 +115,7 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pkt)
     if (aggedEcns[seq]) {
         packet->setECE(true);
     }
+    packet->setResend(pkt->getResend());
     packet->setIsFlowFinished(pk->isFlowFinished());
     check_and_cast<AggPacket*>(packet)->setIsAck(true);
     // * set these fields is for no-inc agg packets
@@ -123,18 +134,20 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
     auto pk = check_and_cast<const AggPacket*>(msg);
     ASSERT(pk->getPacketType() == AGG);
     auto seq = pk->getSeqNumber();
-    auto round = pk->getRound();
-    if (round > currentRound) {
-        // ! it's very important to clear information left by last Round
-        aggedWorkers.clear();
-        receivedNumber.clear();
-        aggedEcns.clear();
-        currentRound = round;
-    }
 
     // I left this for future debuging
-    // if ( jobid == 4 && seq >= 500000 )
-    //      std::cout << round << " PS: " << pk->getResend() << " "<< pk->getRecord() <<  " " << seq << endl;
+    // auto round = pk->getRound();
+    // auto record = pk->getRecord();
+    //  if (localAddr == 786 && round >= 4 && seq == 392000) {
+    //      std::cout << "PS receives "<< seq << " round "<< round << " "  << record << endl;
+    //      std::cout << simTime() << endl;
+//         std::cout << "aggregated ";
+//         for (auto& t:aggedWorkers.at(seq)) {
+//             std::cout << t << " ";
+//         }
+//         std::cout << endl;
+    //  }
+
     EV_DEBUG << "Seq " << seq << " aggregated workers: " << pk->getRecord() << endl;
     // * first packet of the same seq
     if (aggedWorkers.find(seq) == aggedWorkers.end())
@@ -149,7 +162,7 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
     for (auto& w:pk->getRecord()) {
         if (tmpWorkersRecord.find(w) != tmpWorkersRecord.end()) {
             ASSERT(pk->getResend());
-            EV_WARN << "received a seen packet" << endl;
+            EV_WARN << "received a seen resend packet" << endl;
         }
         else {
             // receivedNumber[seq] += 1;
@@ -160,14 +173,6 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
         }
         tmpWorkersRecord.insert(w);
     }
-    // if (localAddr ==785 && seq == 232000) {
-    //     std::cout << "PS receives " << pk->getRecord() << endl;
-    //     std::cout <<"aggregated ";
-    //     for (auto& t:tmpWorkersRecord) {
-    //         std::cout << t << " ";
-    //     }
-    //     std::cout << endl;
-    // }
 
 }
 
@@ -223,6 +228,8 @@ void ParameterServerApp::dealWithIncAggPacket(Connection* connection, const cMes
         aggedWorkers.erase(seq);
         receivedNumber.erase(seq);
         aggedEcns.erase(seq);
+        // if (localAddr == 786 && seq == 392000)
+        //     std::cout <<  "Seq " << seq <<" round " << pk->getRound() << " finished." << endl;
         EV_DEBUG << "Seq " << seq << " finished." << endl;
     }
 }
