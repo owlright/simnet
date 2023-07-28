@@ -79,7 +79,7 @@ std::vector<int> Routing::getReversePortIndexes(const MulticastID& mKey) const
 {
     if (incomingPortIndexes.find(mKey) == incomingPortIndexes.end())
         throw cRuntimeError("%" PRId64" Routing::getReversePortIndexes: group: %" PRId64 ":%u seq %" PRId64 "not found!",
-                                    myAddress, mKey.addr, mKey.port, mKey.seq);
+                                    myAddress, mKey.PSAddr, mKey.PSport, mKey.seq);
     return incomingPortIndexes.at(mKey);
 }
 
@@ -140,13 +140,16 @@ void Routing::forwardIncoming(Packet *pk)
     //         std::cout <<"Router "<< myAddress << " " << apk->getResend() << " "<< apk->getRecord() << "inport " << pk->getArrivalGate()->getIndex() << endl;
     //     }
     // }
+    auto nextAddr = entryIndex == 0 ? destAddr : pk->getSegments(entryIndex - 1);
+
     if (segment == myAddress) {
         auto& fun = pk->getFuns(entryIndex);
         if (fun == "aggregation") {
             auto apk = check_and_cast<AggUseIncPacket*>(pk);
             auto jobId = apk->getJobId();
             auto PSport = apk->getDestPort();
-            MulticastID mKey = {destAddr, PSport, seq};
+            MulticastID mKey = {jobId, destAddr, nextAddr, PSport, seq, true};
+            // MulticastID mKey = {destAddr, PSport, seq};
             recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
             if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
                 // the first time we see this group
@@ -161,8 +164,12 @@ void Routing::forwardIncoming(Packet *pk)
                 ASSERT(pk == apk);
                 if (incomingCount.find(mKey) == incomingCount.end())
                     incomingCount[mKey] = 1;
-                else
-                    incomingCount[mKey] += 1;
+                else {
+//                    ASSERT (apk->getCollision() || apk->getResend());
+                    if (!apk->getCollision())
+                        incomingCount[mKey] += 1;
+                }
+
                 // ! pop the segments, RFC not require this
                 apk->popSegment();
                 apk->popFun();
@@ -173,7 +180,7 @@ void Routing::forwardIncoming(Packet *pk)
                 auto job = apk->getJobId();
                 auto seq = apk->getSeqNumber();
                 auto agtr = aggregators.at(agtrIndex);
-                // ! 1. agtr can be nullptr when router is not responsible for this group
+                // // ! 1. agtr can be nullptr when router is not responsible for this group
                 // ! 2. collision may happen so the agtr doesn't belong to the packet
                 // ! 3. it's a resend packet arrives and there's no according agtr for it
                 if (agtr != nullptr
@@ -190,29 +197,63 @@ void Routing::forwardIncoming(Packet *pk)
         // ! this node don't do aggregation, but its still need to record incoming ports
         // ! because it needs this to send reverse multicast packets
         // ! but actually this should also be clarified in segments, which will cost more space to store the segments
+
+        auto jobid = check_and_cast<AggPacket*>(pk)->getJobId();
         auto PSport = pk->getDestPort();
-        MulticastID mKey = {destAddr, PSport, seq};
+        auto dest = segment != -1 ? segment : destAddr; // ! note segment is next hop
+        MulticastID mKey = {jobid, destAddr, dest, PSport, seq, false};
         recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
-        //!  in ATP, or future version resend packet may not go through segment==myAddress process
+
         if (incomingCount.find(mKey) == incomingCount.end())
             incomingCount[mKey] = 1;
-        else
+        else {
+//            ASSERT(pk->getResend()); //!  in ATP, or future version resend packet may not go through segment==myAddress process
             incomingCount[mKey] += 1;
+        }
     }
     else if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
-        MulticastID srcSeqKey = {srcAddr, pk->getLocalPort(), seq};
-        ASSERT(incomingCount.find(srcSeqKey) != incomingCount.end());
-        incomingCount.at(srcSeqKey) -= 1;
-        // ! if group does not deal with this group, then its group table is empty
-        // ! but it still need to send ACK reversely back to incoming ports
-        auto outGateIndexes = getReversePortIndexes(srcSeqKey);
-        // incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
-        if (incomingCount[srcSeqKey] == 0) {
-            incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
-            incomingCount.erase(srcSeqKey);
+        auto jobid = check_and_cast<AggPacket*>(pk)->getJobId();
+        auto psAddr = check_and_cast<AggPacket*>(pk)->getPSAddr();
+        MulticastID srcSeqKey = {jobid, psAddr, srcAddr, pk->getLocalPort(), seq, true};
+        // if (jobid == 4 && myAddress == 776 && seq == 232000)
+        //     std::cout << myAddress << " " << psAddr << " ack " << endl;
+        bool mustFindReverse = false;
+        if (incomingCount.find(srcSeqKey) != incomingCount.end()) {
+            incomingCount.at(srcSeqKey) -= 1;
+            // ! if group does not deal with this group, then its group table is empty
+            // ! but it still need to send ACK reversely back to incoming ports
+            auto outGateIndexes = getReversePortIndexes(srcSeqKey);
+
+            pk->setSrcAddr(myAddress);
+            // incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
+            if (incomingCount[srcSeqKey] == 0) {
+                incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
+                incomingCount.erase(srcSeqKey);
+            }
+            // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
+            broadcast(pk, outGateIndexes);
+            mustFindReverse = true;
         }
-        // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
-        broadcast(pk, outGateIndexes);
+
+        srcSeqKey.isAggedHere = false;
+        if (incomingCount.find(srcSeqKey) != incomingCount.end()) {
+            incomingCount.at(srcSeqKey) -= 1;
+            // ! if group does not deal with this group, then its group table is empty
+            // ! but it still need to send ACK reversely back to incoming ports
+            auto outGateIndexes = getReversePortIndexes(srcSeqKey);
+
+            // pk->setSrcAddr(myAddress);
+            // incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
+            if (incomingCount[srcSeqKey] == 0) {
+                incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
+                incomingCount.erase(srcSeqKey);
+            }
+            // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
+            broadcast(pk, outGateIndexes);
+            mustFindReverse = true;
+        }
+        ASSERT(mustFindReverse);
+
         return;
     }
 
@@ -311,8 +352,8 @@ void Routing::handleMessage(cMessage *msg)
         int count = 0;
         for (auto& groupSeqTimeout : seqDeadline) {
             MulticastID mKey = groupSeqTimeout.first;
-            auto group = mKey.addr;
-            auto seq = mKey.port;
+            auto group = mKey.PSAddr;
+            auto seq = mKey.PSport;
             auto timeout = SimTime(groupSeqTimeout.second, SIMTIME_NS);
             if (timeout <= simTime()) {
                 count += 1;

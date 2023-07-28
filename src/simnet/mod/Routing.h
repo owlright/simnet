@@ -25,18 +25,24 @@ class Routing : public cSimpleModule
     // };
     typedef struct MulticastID
     {
-        IntAddress addr;
-        PortNumber port;
+        IdNumber jobId;
+        IntAddress PSAddr;
+        IntAddress nextAddr;
+        PortNumber PSport; // TODO: is that possible two ps on the same host?
         SeqNumber seq;
-        MulticastID(IntAddress PSAddr, PortNumber PSport, SeqNumber seq)
+        bool isAggedHere;
+        MulticastID(IdNumber jobId, IntAddress PSAddr, IntAddress nextAddr, PortNumber PSport, SeqNumber seq, bool isAggedHere)
         {
-            this->addr = PSAddr;
-            this->port = PSport;
+            this->jobId = jobId;
+            this->PSAddr = PSAddr;
+            this->nextAddr = nextAddr;
+            this->PSport = PSport;
             this->seq = seq;
+            this->isAggedHere = isAggedHere;
         }
         // `operator==` is required to compare keys in case of a hash collision
         bool operator==(const MulticastID &key) const {
-            return addr == key.addr && port == key.port && seq == key.seq;
+            return jobId == key.jobId && PSAddr == key.PSAddr && nextAddr == key.nextAddr && PSport == key.PSport && seq == key.seq && isAggedHere == key.isAggedHere;
         }
     } MulticastID;
 
@@ -45,10 +51,13 @@ class Routing : public cSimpleModule
         std::size_t operator() (const MulticastID& key) const
         {
             auto hashfn = std::hash<int64_t>();
-            std::size_t h1 = hashfn(key.addr);
-            std::size_t h2 = hashfn((int64_t)key.port);
-            std::size_t h3 = hashfn(key.seq);
-            return h1 ^ h2 ^ h3;
+            std::size_t h1 = hashfn(key.jobId);
+            std::size_t h2 = hashfn(key.PSAddr);
+            std::size_t h3 = hashfn(key.nextAddr);
+            std::size_t h4 = hashfn((int64_t)key.PSport);
+            std::size_t h5 = hashfn(key.seq);
+            std::size_t h6 = hashfn((int64_t) key.isAggedHere);
+            return h1 ^ h2 ^ h3 ^ h4 ^ h5 ^ h6;
         }
     };
 
