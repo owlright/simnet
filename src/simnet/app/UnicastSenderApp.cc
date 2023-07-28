@@ -162,8 +162,11 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::ACK);
     auto seq = pk->getSeqNumber();
+    // if (localAddr == 270)
+    //     std::cout << seq << " " << pk->getResend() << endl;
     if (sentButNotAcked.find(seq) == sentButNotAcked.end()) {
         // ! receiver may ack to multiple resend packets, ignore the others
+        cong->onRecvAck(seq, pk->getReceivedBytes(), pk->getECE()); // let cong algo update state
         delete pk;
         return;
     }
