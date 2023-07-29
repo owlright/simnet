@@ -16,8 +16,8 @@ public:
     virtual void onSendData(SeqNumber seq) override;
 
 protected:
-    SeqNumber recover; // the same use as markSeq, but it's only triggered when seeing congestion
-    SeqNumber markSeq{0}; // when you wanna update something every rtt interval
+    SeqNumber recover; // the same use as rightEdge, but it's only triggered when seeing congestion
+    SeqNumber rightEdge{0}; // when you wanna update something every rtt interval
     SeqNumber maxAckedSeqNumber{0}; // max seq acked by now
     B confirmedBytes{0};
     B sentBytes{0}; // max seq sent by now

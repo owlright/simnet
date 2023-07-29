@@ -15,7 +15,7 @@ void Reno::initialize(int stage) {
 void Reno::reset()
 {
     cWnd = par("initWinSize");
-    markSeq = 0;
+    rightEdge = 0;
     maxAckedSeqNumber = 0;
     confirmedBytes = 0;
     sentBytes = 0;
@@ -65,7 +65,7 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
     }
 
     // * do calculations after each RTT finished
-    if (maxAckedSeqNumber == markSeq) {
+    if (maxAckedSeqNumber == rightEdge) {
         emit(cwndSignal, cWnd);
     }
 
@@ -143,7 +143,7 @@ B Reno::getSsThresh() {
 
 void Reno::onSendData(B numBytes) {
     sentBytes += numBytes;
-    if (maxAckedSeqNumber >= markSeq) {
-        markSeq = sentBytes; // current window's right edge
+    if (maxAckedSeqNumber >= rightEdge) {
+        rightEdge = sentBytes; // current window's right edge
     }
 };
