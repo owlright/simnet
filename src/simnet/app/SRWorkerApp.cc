@@ -62,7 +62,7 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     pk->setStartTime(simTime().dbl());
     pk->setTransmitTime(0);
     pk->setQueueTime(0);
-    if (sentBytes == confirmedBytes)
+    if (sentBytes == confirmedNormalBytes)
         pk->setIsFlowFinished(true);
 
     auto seqNumber = pk->getSeqNumber();
@@ -110,7 +110,7 @@ void SRWorker::connectionDataArrived(Connection *connection, cMessage *msg)
     //      std::cout << localAddr << " received ack"
     //                << seq << " "
     //                << pk->getRound() << " "
-    //                << confirmedBytes << endl;
+    //                << confirmedNormalBytes << endl;
     //  }
     WorkerApp::connectionDataArrived(connection, msg);
 

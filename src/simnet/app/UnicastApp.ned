@@ -23,6 +23,7 @@ module UnicastSenderApp extends UnicastApp {
 //        volatile double flowInterval @unit(s) = default(0s); // this means load = 1.0
         bool useJitter = default(false); // ! set this to true before using jitter
         volatile double jitterBeforeSending @unit(s) = default(0s);
+        int maxDisorderNumber = default(3);
         @signal[fct](type=simtime_t);
         @signal[idealFct](type=simtime_t);
         @signal[flowSize](type=int);

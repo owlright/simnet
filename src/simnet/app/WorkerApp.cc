@@ -57,7 +57,7 @@ Packet* WorkerApp::createDataPacket(SeqNumber seq, B packetBytes)
     pk->setStartTime(simTime().dbl());
     pk->setTransmitTime(0);
     pk->setQueueTime(0);
-    if (sentBytes == confirmedBytes)
+    if (sentBytes == confirmedNormalBytes)
         pk->setIsFlowFinished(true);
 
     if (seq < sentBytes) {

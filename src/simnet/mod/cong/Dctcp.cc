@@ -18,7 +18,7 @@ void Dctcp::resetCounter()
 {
     lastRTTAckedBytes = 0;
     ackedBytesWithECE = 0;
-    nextSeq = sentBytes; // begin a new observe window
+    nextSeq = maxSentSeqNumber; // begin a new observe window
 }
 
 void Dctcp::onRecvAck(SeqNumber seq, B segmentSize, bool congestion)
@@ -28,7 +28,7 @@ void Dctcp::onRecvAck(SeqNumber seq, B segmentSize, bool congestion)
         ackedBytesWithECE += segmentSize;
     }
     if (nextSeqFlag == false) {
-        nextSeq = sentBytes;
+        nextSeq = maxSentSeqNumber;
         nextSeqFlag = true;
         lastRTTAckedBytes = 0;
     }

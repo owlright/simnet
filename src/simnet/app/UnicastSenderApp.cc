@@ -35,8 +35,8 @@ void UnicastSenderApp::finish() {
     // if (currentRound != numRounds) {
     //     EV_WARN << getClassAndFullPath() << " " << localAddr << " complete " << currentRound << " rounds,  not reach " << numRounds << endl;
     // }
-    for (auto& seq: disorders) {
-        EV_WARN << seq << endl;
+    for (auto& [seq, n]: disorders) {
+        EV_WARN << seq  << endl;
     }
 //    for (auto&it: confirmedDisorders) {
 //        EV_WARN << it << " "<< endl;
@@ -48,6 +48,7 @@ void UnicastSenderApp::initialize(int stage)
     UnicastApp::initialize(stage);
     // ! if this moudle is created by manager in ASSIGN stage, the stages before it will not be executed
     if (stage == INITSTAGE_LOCAL) {
+        maxDisorderNumber = par("maxDisorderNumber");
         appState = Idle;
         messageLength = par("messageLength");
         useJitter = par("useJitter");
@@ -113,7 +114,7 @@ void UnicastSenderApp::sendPendingData()
         sentButNotAcked[sentBytes] = packetSize;
         auto packet = createDataPacket(sentBytes, packetSize);
         connection->send(packet);
-        cong->onSendData(packetSize);
+        cong->onSendData(sentBytes, packetSize);
     }
 
 }
@@ -127,19 +128,26 @@ void UnicastSenderApp::retransmitLostPacket(SeqNumber seq, B packetBytes)
 //      cong->onSendData(messageLength); // ? Do cong needs to know this
     // if (seq >= 500000)
     //    std::cout << localAddr <<" retransmit seq " << seq << endl;
-    retransmitBytes += packetBytes; // affect inflightBytes
+    retransmitBytes += packetBytes; // ! this will affect inflightBytes
+    // ! if retransmit too many, sendPendingData() will be blocked
+    // std::unordered_set<decltype(localAddr)> wantsee{137,140,394,400,655,659,654,782};
+    // if (localAddr == 400 && wantsee.find( localAddr ) != wantsee.end() && seq == 222000) {
+    //     std::cout << localAddr << " " << seq << cong->getcWnd() << " " << inflightBytes() << endl;
+    // }
 }
 
 void UnicastSenderApp::onFlowStart()
 {
     sentBytes = 0;
-    confirmedBytes = 0;
+    confirmedNormalBytes = 0;
     retransmitBytes = 0;
     confirmedRetransBytes = 0;
     currentBaseRTT = 0;
     flowStartTime = simTime().dbl();
     appState = Sending;
     ASSERT(sentButNotAcked.empty());
+    ASSERT(disorders.empty());
+    retrans.clear(); // ! some resend seqs (such as the last window of data) may arrive at next round
     ASSERT(!RTOTimeout->isScheduled());
     if (connection == nullptr) {
         throw cRuntimeError("conneciton is nullptr!");
@@ -162,36 +170,73 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::ACK);
     auto seq = pk->getSeqNumber();
-    // if (localAddr == 270)
-    //     std::cout << seq << " " << pk->getResend() << endl;
+    auto segmentSize = pk->getReceivedBytes();
+
+    if (localAddr==271 && localPort==2000 && seq==48000) {
+        std::cout << seq << " " << retransmitBytes <<  " " << confirmedRetransBytes << endl;
+        std::cout << leftEdge << endl;
+    }
+    cong->onRecvAck(seq, segmentSize, pk->getECE()); // let cong algo update state
+
+    leftEdge = sentButNotAcked.begin()->first;
+    ASSERT(seq > leftEdge);
     if (sentButNotAcked.find(seq) == sentButNotAcked.end()) {
         // ! receiver may ack to multiple resend packets, ignore the others
-        cong->onRecvAck(seq, pk->getReceivedBytes(), pk->getECE()); // let cong algo update state
+        ASSERT(retrans.find(seq) != retrans.end());
+        retrans[seq]--;
+        if (retrans[seq] == 0) // ? saving some memory ?
+            retrans.erase(seq);
+        // but let cong knows so that the rttBytes in cong can update correctly
+        cong->onRecvAck(seq, segmentSize, pk->getECE());
         delete pk;
         return;
     }
-    confirmedBytes += pk->getReceivedBytes();
-    cong->onRecvAck(pk->getSeqNumber(), pk->getReceivedBytes(), pk->getECE()); // let cong algo update state
 
-    // ! check if disordered packets are received
-    // std::vector<SeqNumber> removed;
-    auto disorderSeqs = cong->getDisorders();
+    // ! received a disorder seqnumber
 
-    // resend the countdown packets
-    for (auto& it : disorderSeqs) {
-        if (it.second == 0) {
-            disorders.insert(it.first);
-            // count down, must resend this seq
-            retransmitLostPacket(it.first, sentButNotAcked.at(it.first));
-        }
-    }
-    // check if resend packet is receieved
-    if (disorders.find(seq) != disorders.end()) { // first time we receive the ack
-        confirmedRetransBytes += sentButNotAcked.at(seq);
+    if (disorders.find(seq) != disorders.end()) { // ! deal with old seq
+        if ( retrans.find(seq) == retrans.end() ) // ! some disordered seqs are not resent yet but get its seq
+            confirmedNormalBytes += segmentSize;
+        else
+            confirmedRetransBytes += sentButNotAcked.at(seq);
         disorders.erase(seq);
     }
+    else { // ! this is a total new seq
+        confirmedNormalBytes += segmentSize;
 
-    sentButNotAcked.erase(seq);
+        for (auto it:sentButNotAcked) {
+            auto tmpseq = it.first;
+            auto right = cong->getMaxAckedSeqNumber();
+            if (tmpseq != seq && tmpseq > leftEdge && tmpseq < right
+                    && disorders.find(tmpseq) == disorders.end())
+                disorders[tmpseq] = maxDisorderNumber;
+            if (tmpseq > right)
+                break;
+        }
+
+    }
+
+    // resend the countdown packets
+    for (auto& it : disorders) {
+        if (it.second == 0) {
+            // count down, must resend this seq
+            auto tmp_seq = it.first;
+            ASSERT(sentButNotAcked.find(tmp_seq)!= sentButNotAcked.end());
+            retransmitLostPacket(tmp_seq, sentButNotAcked.at(tmp_seq));
+            auto rtt_timer = cong->getcWnd() / messageLength;
+            disorders[tmp_seq] = rtt_timer > maxDisorderNumber ? rtt_timer : maxDisorderNumber; // wait for a RTT
+            if (retrans.find(tmp_seq) == retrans.end()) // ! first time we resend
+                retrans[tmp_seq] = 0;
+            else
+                retrans[tmp_seq]++;
+        }
+        else {
+            it.second--;
+        }
+    }
+
+    sentButNotAcked.erase(seq); // no matter what just erase this seq
+    leftEdge = sentButNotAcked.begin()->first;
     auto pkRTT = simTime() - SimTime(pk->getStartTime());
     emit(rttSignal, pkRTT);
     currentBaseRTT = pkRTT - pk->getQueueTime() - pk->getTransmitTime();
@@ -209,7 +254,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         appState = AllDataSended;
     }
     //TODO if all packets are confirmed
-    if (confirmedBytes == flowSize) {
+    if (sentButNotAcked.empty()) {
         cancelEvent(RTOTimeout); // ! avoid affecting next flow
         onFlowStop();
         // if (localAddr == 53 || localAddr == 232 || localAddr == 234)

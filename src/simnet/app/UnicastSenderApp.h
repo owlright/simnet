@@ -29,7 +29,7 @@ protected:
     // helper functions
     void sendPendingData();
     void retransmitLostPacket(SeqNumber seq, B packetBytes);
-    B inflightBytes() {return sentBytes + retransmitBytes - confirmedBytes - confirmedRetransBytes;};
+    B inflightBytes() {return sentBytes + retransmitBytes - confirmedNormalBytes - confirmedRetransBytes;};
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes);
     virtual void onFlowStart();
     virtual void onFlowStop();
@@ -52,6 +52,7 @@ protected:
     // int numRounds{0};
 
     // ! ned parameters
+    int maxDisorderNumber{0};
     B messageLength{0};
     B flowSize{0};
     double flowStartTime;
@@ -67,19 +68,21 @@ protected:
 
     // ! state
     B sentBytes{0}; // TODO: maybe rename to maxSentSeq is better
-    B confirmedBytes{0};
+    B confirmedNormalBytes{0}; // bytes sent and receive ack only once
+    B confirmedRetransBytes{0}; //
     AppState_t appState{Idle};
     // B currentFlowSize{0};
 
-    B retransmitBytes{0};
-    B confirmedRetransBytes{0};
-    std::unordered_set<SeqNumber> disorders;
+    std::unordered_map<SeqNumber, int> disorders;
+    std::unordered_map<SeqNumber, int> retrans;
+    SeqNumber leftEdge;
     // std::unordered_set<SeqNumber> confirmedDisorders;
-    std::unordered_map<SeqNumber, B> sentButNotAcked;
+    std::map<SeqNumber, B> sentButNotAcked;
     simtime_t currentBaseRTT{0};
     // simtime_t currentFlowInterval{0};
     // int currentRound{0};
-
+    // statics
+     B retransmitBytes{0};
     // ! signals
     static simsignal_t fctSignal;
     static simsignal_t idealFctSignal;

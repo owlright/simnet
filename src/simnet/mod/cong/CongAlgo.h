@@ -16,14 +16,18 @@ protected:
 
 public:
     virtual B getcWnd() {return INT64_MAX;};
-    virtual void onSendData(SeqNumber seq) {};
+    virtual void onSendData(SeqNumber seq, B segmentSize) {};
     virtual void onSendAck(SeqNumber seq) {};
     // virtual void onRecvAck(SeqNumber seq, bool congestion) = 0;
     virtual void onRecvAck(SeqNumber seq, B segmentSize, bool congestion) = 0;
     // virtual void onRecvData(SeqNumber seq, B pkSize) = 0;
-    void setSegmentSize(B segmentSize) {this->segmentSize=segmentSize;};
+    [[deprecated]] void setSegmentSize(B segmentSize) {this->segmentSize=segmentSize;};
     virtual void reset() = 0;
-    const std::unordered_map<SeqNumber, int>& getDisorders() const {return disorderSeqs;}
+    inline const SeqNumber& getMaxSentSeqNumber() {return maxSentSeqNumber;}
+    inline const SeqNumber& getMaxAckedSeqNumber() {return maxAckedSeqNumber;};
+    // inline const SeqNumber& getLeftEdge() {return leftEdge;};
+    // inline const SeqNumber& getRightEdge() {return rightEdge;};
+    // const std::unordered_map<SeqNumber, int>& getDisorders() const {return disorderSeqs;}
 
 protected:
     virtual void initialize(int stage) override{};
@@ -32,5 +36,9 @@ protected:
 
 protected:
     B segmentSize{1500};
-    std::unordered_map<SeqNumber, int> disorderSeqs;
+    // SeqNumber rightEdge{0}; // when you wanna update something every rtt interval
+    // SeqNumber leftEdge{0}; // the max seq received in order
+    SeqNumber maxAckedSeqNumber{0}; // max seq acked by now
+    SeqNumber maxSentSeqNumber{0};
+    // std::unordered_map<SeqNumber, int> disorderSeqs;
 };

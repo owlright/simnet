@@ -8,64 +8,66 @@ simsignal_t Reno::cwndSignal = registerSignal("cwnd");
 void Reno::initialize(int stage) {
     if (stage==INITSTAGE_LOCAL) {
         cWnd = par("initWinSize");
-        maxDisorderNumber = par("maxDisorderNumber");
+        // rightEdge = cWnd;
+        rttBytes = cWnd;
+        // maxDisorderNumber = par("maxDisorderNumber");
     }
 }
 
 void Reno::reset()
 {
     cWnd = par("initWinSize");
-    rightEdge = 0;
+    // leftEdge = 0;
+    rttBytes = cWnd;
     maxAckedSeqNumber = 0;
     // confirmedBytes = 0;
-    sentBytes = 0;
+    // sentBytes = 0;
     ssThresh = INT64_MAX;
     congState = OPEN;
     cWndCnt = 0;
-    disorderSeqs.clear();
+    // disorderSeqs.clear();
 }
 
 void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
     Enter_Method("Reno::onRecvAck");
     EV_DEBUG << "recv " << seq << endl;
-    auto expectedSeq = maxAckedSeqNumber + segmentSize;
-    if (seq == expectedSeq) {
-        confirmedBytes += segmentSize;
-        maxAckedSeqNumber = seq;
-    } else {
-        if (seq > expectedSeq) { // ! always accept new packets
-            confirmedBytes += segmentSize;
-            maxAckedSeqNumber = seq;
-            EV_WARN << "disordering(ahead) expect  " << expectedSeq
-            << " but get " << seq << endl;
-            ASSERT(disorderSeqs.find(seq) == disorderSeqs.end()); // ! only insert new non-seen packets(disorder seq when it first happen);
-            disorderSeqs[expectedSeq] = maxDisorderNumber;
-        } else {
-            EV_WARN << "disordering(old) expect  " << expectedSeq
-                         << " but get " << seq << endl;
-        }
-    }
-    // ! check if former disordered packets are received
-    std::vector<SeqNumber> removed;
-    for (auto& it:disorderSeqs) {
-       if (seq != it.first) {
-            // ! this seq is retransmitted by app last turn
-            // ! we need to wait a RTT time to see if retransmitted is successful
-            if (it.second == 0) {
-                it.second = cWnd > maxDisorderNumber ? cWnd : maxDisorderNumber; // * in case disorder happend at the begining
-            }
-            it.second--;
-       } else {
-           // this retramsmitted seq is acked successfully, remove it
-           removed.push_back(seq);
-       }
-    }
-    for (auto& r:removed) {
-       disorderSeqs.erase(r);
-    }
+    rttBytes -= segmentSize;
+    maxAckedSeqNumber = seq > maxAckedSeqNumber ? seq : maxSentSeqNumber;
+    // else {
+    //     if (seq > expectedSeq) { // ! always accept new packets
+    //         confirmedBytes += segmentSize;
+    //         maxAckedSeqNumber = seq;
+    //         EV_WARN << "disordering(ahead) expect  " << expectedSeq
+    //         << " but get " << seq << endl;
+    //         ASSERT(disorderSeqs.find(seq) == disorderSeqs.end());
+    //         disorderSeqs[expectedSeq] = maxDisorderNumber;
+    //     } else {
+    //         EV_WARN << "disordering(old) expect  " << expectedSeq
+    //                      << " but get " << seq << endl;
+    //     }
+    // }
+    // // ! check if former disordered packets are received
+    // std::vector<SeqNumber> removed;
+    // for (auto& it:disorderSeqs) {
+    //    if (seq != it.first) {
+    //         // ! this seq is retransmitted by app last turn
+    //         // ! we need to wait a RTT time to see if retransmitted is successful
+    //         if (it.second == 0) {
+    //             auto wait_rtt = cWnd/segmentSize;
+    //             it.second = wait_rtt > maxDisorderNumber ? wait_rtt : maxDisorderNumber;
+    //         }
+    //         it.second--;
+    //    } else {
+    //        // this retramsmitted seq is acked successfully, remove it
+    //        removed.push_back(seq);
+    //    }
+    // }
+    // for (auto& r:removed) {
+    //    disorderSeqs.erase(r);
+    // }
 
     // * do calculations after each RTT finished
-    if (maxAckedSeqNumber == rightEdge) {
+    if (rttBytes == 0) {
         emit(cwndSignal, cWnd);
     }
 
@@ -87,7 +89,7 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
                 ssThresh = getSsThresh();
                 cWnd = ssThresh; // half the window(most of the time)
                 EV_DEBUG << "Reduce ssThresh and cWnd to " << cWnd << endl;
-                recover = sentBytes; // * assume sentBytes is about a RTT away
+                recover = seq + cWnd; // * wait for about a RTT
                 EV << "ssThresh will not be updated until packet " << recover << " is received" << endl;
                 congState = CWR;
                 break;
@@ -141,9 +143,10 @@ B Reno::getSsThresh() {
     return std::max<SeqNumber>(cWnd >> 1, segmentSize);
 }
 
-void Reno::onSendData(B numBytes) {
-    sentBytes += numBytes;
-    if (maxAckedSeqNumber >= rightEdge) {
-        rightEdge = sentBytes; // current window's right edge
-    }
+void Reno::onSendData(SeqNumber seq, B segmentSize) {
+    // sentBytes += segmentSize;
+    if (seq > maxSentSeqNumber)
+        maxSentSeqNumber = seq;
+    if (rttBytes == 0)
+        rttBytes = cWnd;
 };
