@@ -19,7 +19,7 @@ protected:
     SeqNumber recover; // the same use as rightEdge, but it's only triggered when seeing congestion
     SeqNumber rightEdge{0}; // when you wanna update something every rtt interval
     SeqNumber maxAckedSeqNumber{0}; // max seq acked by now
-    B confirmedBytes{0};
+    // B confirmedBytes{0};
     B sentBytes{0}; // max seq sent by now
     B cWnd{INT64_MAX};
     SeqNumber ssThresh{INT64_MAX};

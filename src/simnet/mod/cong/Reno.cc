@@ -17,7 +17,7 @@ void Reno::reset()
     cWnd = par("initWinSize");
     rightEdge = 0;
     maxAckedSeqNumber = 0;
-    confirmedBytes = 0;
+    // confirmedBytes = 0;
     sentBytes = 0;
     ssThresh = INT64_MAX;
     congState = OPEN;
