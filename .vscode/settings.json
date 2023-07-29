@@ -133,7 +133,8 @@
         "resourcelibrary": "cpp",
         "codecvt": "cpp",
         "future": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "*.ipp": "cpp"
     },
     "python.analysis.typeCheckingMode": "basic",
     "[python]": {
