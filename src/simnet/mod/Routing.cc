@@ -129,17 +129,19 @@ void Routing::forwardIncoming(Packet *pk)
         entryIndex -= 1;
         segment =  pk->getSegments(entryIndex);
     }
-    // if (pk->getPacketType() == AGG || pk->getPacketType() == MACK) {
-    //     auto apk = check_and_cast<const AggPacket*>(pk);
-    //     auto jobid = apk->getJobId();
-    //     auto seq = apk->getSeqNumber();
-    //     auto round = apk->getRound();
-    //     auto isresend = apk->getResend();
-    //     // I left this for future debuging
-    //     if ( seq >= 500000 && myAddress == 107 && round == 3 && jobid == 4) {
-    //         std::cout <<"Router "<< myAddress << " " << apk->getResend() << " "<< apk->getRecord() << "inport " << pk->getArrivalGate()->getIndex() << endl;
-    //     }
-    // }
+    // I left this for future debuging
+    //  if (pk->getPacketType() == AGG) {
+    //      auto apk = check_and_cast<const AggPacket*>(pk);
+    //      auto jobid = apk->getJobId();
+    //      auto seq = apk->getSeqNumber();
+    //      auto round = apk->getRound();
+    //      auto PSAddr = apk->getPSAddr();
+    //      std::unordered_set<decltype(myAddress)> wantstop {517,8,775,778,780};
+    //      if (wantstop.find(myAddress) != wantstop.end() && jobid == 1 && seq >=238000) {
+    //          std::cout << simTime() << " router: "<< myAddress << " resend: " << apk->getResend() << " seq " << seq << " "<< apk->getRecord() << " PS: " << destAddr << endl;
+    //      }
+    //   }
+
     auto nextAddr = entryIndex == 0 ? destAddr : pk->getSegments(entryIndex - 1);
 
     if (segment == myAddress) {

@@ -75,3 +75,21 @@ void WorkerApp::finish()
                                         << " complete " << currentRound << " rounds,  not reach " << numRounds << endl;
     }
 }
+
+void WorkerApp::connectionDataArrived(Connection *connection, cMessage *msg)
+{
+    auto apk = check_and_cast<AggPacket*>(msg);
+    auto seq = apk->getSeqNumber();
+//    std::unordered_set<decltype(localAddr)> wantsee{400};
+
+    auto round = apk->getRound();
+    if (round >= currentRound) {
+        // if (wantsee.find( localAddr ) != wantsee.end() && currentRound >= 3 &&  seq >= 229000) {
+        //     std::cout << seq << " " << disorders << endl;
+        // }
+        UnicastSenderApp::connectionDataArrived(connection, msg);
+    }
+    else {
+        delete msg; // this is last turn's reduandant resend's ack
+    }
+}

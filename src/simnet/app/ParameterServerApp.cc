@@ -136,17 +136,18 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
     auto seq = pk->getSeqNumber();
 
     // I left this for future debuging
-    // auto round = pk->getRound();
-    // auto record = pk->getRecord();
-    //  if (localAddr == 786 && round >= 4 && seq == 392000) {
-    //      std::cout << "PS receives "<< seq << " round "<< round << " "  << record << endl;
-    //      std::cout << simTime() << endl;
-//         std::cout << "aggregated ";
-//         for (auto& t:aggedWorkers.at(seq)) {
-//             std::cout << t << " ";
-//         }
-//         std::cout << endl;
-    //  }
+    //  auto round = pk->getRound();
+    //  auto record = pk->getRecord();
+    //  auto is_resend = pk->getResend();
+//     if (localAddr == 787 && seq == 48000) {
+//         std::cout << "PS receives "<< seq << " round "<< round << " resend " << is_resend << " " << record << endl;
+//         std::cout << simTime() << endl;
+//         // std::cout << "aggregated ";
+//         // for (auto& t:aggedWorkers.at(seq)) {
+//         //     std::cout << t << " ";
+//         // }
+//         // std::cout << endl;
+//     }
 
     EV_DEBUG << "Seq " << seq << " aggregated workers: " << pk->getRecord() << endl;
     // * first packet of the same seq
@@ -228,8 +229,10 @@ void ParameterServerApp::dealWithIncAggPacket(Connection* connection, const cMes
         aggedWorkers.erase(seq);
         receivedNumber.erase(seq);
         aggedEcns.erase(seq);
-        // if (localAddr == 786 && seq == 392000)
-        //     std::cout <<  "Seq " << seq <<" round " << pk->getRound() << " finished." << endl;
+         if (localAddr == 787 && seq==48000) {
+
+             std::cout <<  "Seq " << seq <<" round " << pk->getRound() << " finished." << endl;
+         }
         EV_DEBUG << "Seq " << seq << " finished." << endl;
     }
 }

@@ -47,6 +47,8 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
     char pkname[40];
     sprintf(pkname, "sr%" PRId64"-to-%" PRId64 "-seq%" PRId64,
             localAddr, destAddr, seq);
+    // if (seq == 392000 && jobId == 4 && currentRound >= 4)
+    //     std::cout << localAddr << " " << currentRound << endl;
     auto pk = new AggUseIncPacket(pkname);
     pk->setRound(currentRound);
     pk->setJobId(jobId);

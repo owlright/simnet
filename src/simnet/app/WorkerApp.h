@@ -9,6 +9,8 @@ protected:
     virtual void onFlowStop() override;
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
     virtual void finish() override;
+    virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
+
 
 protected:
     int jobId{-1};
