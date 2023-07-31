@@ -83,8 +83,13 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
         if (!sentButNotAcked.empty()) {
             auto leftRoom = cong->getcWnd() - inflightBytes();
             for (auto& it: sentButNotAcked) {
+                auto tmpseq = it.first;
                 if (leftRoom >= it.second) {
-                    retransmitLostPacket(it.first, it.second);
+                    retransmitLostPacket(tmpseq, it.second);
+                    if (retrans.find(tmpseq) == retrans.end())
+                        retrans[tmpseq] = 1;
+                    else
+                       retrans[tmpseq] += 1;
                     leftRoom -= it.second;
                 }
             }
@@ -178,9 +183,6 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         std::cout << leftEdge << endl;
     }
     cong->onRecvAck(seq, segmentSize, pk->getECE()); // let cong algo update state
-
-    leftEdge = sentButNotAcked.begin()->first;
-    ASSERT(seq > leftEdge);
     if (sentButNotAcked.find(seq) == sentButNotAcked.end()) {
         // ! receiver may ack to multiple resend packets, ignore the others
         ASSERT(pk->getResend());
@@ -194,41 +196,45 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         delete pk;
         return;
     }
-    leftEdge = sentButNotAcked.begin()->first;
-    ASSERT(seq >= leftEdge);
+    leftEdge = sentButNotAcked.begin()->first; // the closest seq we want
 
     // ! received a disorder seqnumber
-
     if (disorders.find(seq) != disorders.end()) { // ! deal with old seq
-        if ( retrans.find(seq) == retrans.end() ) // ! some disordered seqs are not resent yet but get its seq
-            confirmedNormalBytes += segmentSize;
-        else
+        if (!pk->getResend()) {
+            confirmedNormalBytes += segmentSize; // this ack is just a litte late
+        }
+        else {
+            retrans[seq]--;
             confirmedRetransBytes += sentButNotAcked.at(seq);
+        }
         disorders.erase(seq);
     }
     else { // ! this is a total new seq
+        ASSERT(seq >= leftEdge);
         confirmedNormalBytes += segmentSize;
+    }
+    sentButNotAcked.erase(seq); // no matter what just erase this seq
 
-        for (auto it:sentButNotAcked) {
-            auto tmpseq = it.first;
-            auto right = cong->getMaxAckedSeqNumber();
-            if (tmpseq != seq && tmpseq > leftEdge && tmpseq < right
-                    && disorders.find(tmpseq) == disorders.end())
-                disorders[tmpseq] = maxDisorderNumber;
-            if (tmpseq > right)
-                break;
+    auto right = cong->getMaxAckedSeqNumber();
+    for (auto it:sentButNotAcked) {
+        auto tmpseq = it.first;
+        if (tmpseq != seq && tmpseq >= leftEdge && tmpseq < right
+                && disorders.find(tmpseq) == disorders.end()) {
+            disorders[tmpseq] = maxDisorderNumber;
         }
-
+        if (tmpseq > right)
+            break;
     }
 
+
     // resend the countdown packets
+    auto rtt_timer = cong->getcWnd() / messageLength + 1;
     for (auto& it : disorders) {
         if (it.second == 0) {
             // count down, must resend this seq
             auto tmp_seq = it.first;
             ASSERT(sentButNotAcked.find(tmp_seq)!= sentButNotAcked.end());
             retransmitLostPacket(tmp_seq, sentButNotAcked.at(tmp_seq));
-            auto rtt_timer = cong->getcWnd() / messageLength + 1;
             disorders[tmp_seq] = rtt_timer > maxDisorderNumber ? rtt_timer : maxDisorderNumber; // wait for a RTT
             if (retrans.find(tmp_seq) == retrans.end()) // ! first time we resend
                 retrans[tmp_seq] = 1;
