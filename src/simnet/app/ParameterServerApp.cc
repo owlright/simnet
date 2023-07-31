@@ -20,6 +20,7 @@ protected:
     static simsignal_t aggRatioSignal;
 
 protected:
+    Connection* getListeningSocket() {return this->connection;};
     void dealWithAggPacket(const cMessage* msg);
     void dealWithIncAggPacket(Connection* connection, const cMessage* msg);
     void dealWithNoIncAggPacket(const cMessage* msg);
@@ -196,7 +197,7 @@ void ParameterServerApp::dealWithNoIncAggPacket(const cMessage *msg)
            packet->setPacketType(ACK);
            packet->setDestAddr(workers[i]);
            packet->setDestPort(workerPorts[i]);
-           connection->send(packet); // ! HACK: this connection is the listening socket
+           getListeningSocket()->send(packet); // ! HACK: this connection is the listening socket
         }
         emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedNumber) );
         aggedWorkers.erase(seq);
