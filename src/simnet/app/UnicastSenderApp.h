@@ -29,7 +29,7 @@ protected:
     // helper functions
     void sendPendingData();
     void retransmitLostPacket(SeqNumber seq, B packetBytes);
-    B inflightBytes() {return sentBytes + retransmitBytes - confirmedNormalBytes - confirmedRetransBytes;};
+    B inflightBytes() {return sentBytes + retransmitBytes - confirmedNormalBytes - confirmedRetransBytes - confirmedRedundantBytes;};
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes);
     virtual void onFlowStart();
     virtual void onFlowStop();
@@ -69,7 +69,9 @@ protected:
     // ! state
     B sentBytes{0}; // TODO: maybe rename to maxSentSeq is better
     B confirmedNormalBytes{0}; // bytes sent and receive ack only once
-    B confirmedRetransBytes{0}; //
+    B confirmedRetransBytes{0}; // bytes that are acked by resending packets
+    B confirmedRedundantBytes{0}; // bytes resend more than once
+
     AppState_t appState{Idle};
     // B currentFlowSize{0};
 

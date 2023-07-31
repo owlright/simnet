@@ -142,6 +142,7 @@ void UnicastSenderApp::onFlowStart()
     confirmedNormalBytes = 0;
     retransmitBytes = 0;
     confirmedRetransBytes = 0;
+    confirmedRedundantBytes = 0;
     currentBaseRTT = 0;
     flowStartTime = simTime().dbl();
     appState = Sending;
@@ -182,7 +183,9 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     ASSERT(seq > leftEdge);
     if (sentButNotAcked.find(seq) == sentButNotAcked.end()) {
         // ! receiver may ack to multiple resend packets, ignore the others
+        ASSERT(pk->getResend());
         ASSERT(retrans.find(seq) != retrans.end());
+        confirmedRedundantBytes += segmentSize;
         retrans[seq]--;
         if (retrans[seq] == 0) // ? saving some memory ?
             retrans.erase(seq);
@@ -191,6 +194,8 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         delete pk;
         return;
     }
+    leftEdge = sentButNotAcked.begin()->first;
+    ASSERT(seq >= leftEdge);
 
     // ! received a disorder seqnumber
 
@@ -223,10 +228,10 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
             auto tmp_seq = it.first;
             ASSERT(sentButNotAcked.find(tmp_seq)!= sentButNotAcked.end());
             retransmitLostPacket(tmp_seq, sentButNotAcked.at(tmp_seq));
-            auto rtt_timer = cong->getcWnd() / messageLength;
+            auto rtt_timer = cong->getcWnd() / messageLength + 1;
             disorders[tmp_seq] = rtt_timer > maxDisorderNumber ? rtt_timer : maxDisorderNumber; // wait for a RTT
             if (retrans.find(tmp_seq) == retrans.end()) // ! first time we resend
-                retrans[tmp_seq] = 0;
+                retrans[tmp_seq] = 1;
             else
                 retrans[tmp_seq]++;
         }
@@ -235,8 +240,6 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         }
     }
 
-    sentButNotAcked.erase(seq); // no matter what just erase this seq
-    leftEdge = sentButNotAcked.begin()->first;
     auto pkRTT = simTime() - SimTime(pk->getStartTime());
     emit(rttSignal, pkRTT);
     currentBaseRTT = pkRTT - pk->getQueueTime() - pk->getTransmitTime();
@@ -254,7 +257,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         appState = AllDataSended;
     }
     //TODO if all packets are confirmed
-    if (sentButNotAcked.empty()) {
+    if (confirmedNormalBytes + confirmedRetransBytes == sentBytes) {
         cancelEvent(RTOTimeout); // ! avoid affecting next flow
         onFlowStop();
         // if (localAddr == 53 || localAddr == 232 || localAddr == 234)
