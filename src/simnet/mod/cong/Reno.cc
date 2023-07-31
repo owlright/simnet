@@ -32,7 +32,7 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
     Enter_Method("Reno::onRecvAck");
     EV_DEBUG << "recv " << seq << endl;
     rttBytes -= segmentSize;
-    maxAckedSeqNumber = seq > maxAckedSeqNumber ? seq : maxSentSeqNumber;
+    maxAckedSeqNumber = seq > maxAckedSeqNumber ? seq : maxAckedSeqNumber;
     // else {
     //     if (seq > expectedSeq) { // ! always accept new packets
     //         confirmedBytes += segmentSize;
