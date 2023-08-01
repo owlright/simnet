@@ -189,53 +189,72 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     ASSERT(pk->getKind()==PacketType::ACK);
     auto seq = pk->getSeqNumber();
     auto segmentSize = pk->getReceivedBytes();
-
-    if (localAddr==271 && localPort==2000 && seq==48000) {
-        std::cout << seq << " " << retransmitBytes <<  " " << confirmedRetransBytes << endl;
-        std::cout << leftEdge << endl;
+    auto round = pk->getRound();
+    ASSERT(segmentSize > 0);
+#ifndef NDEBUG
+    if (localAddr == 784 && localPort==2000) {
+        std::cout <<round << " " << seq << endl;
     }
-    cong->onRecvAck(seq, segmentSize, pk->getECE()); // let cong algo update state
-    if (sentButNotAcked.find(seq) == sentButNotAcked.end()) {
-        // ! receiver may ack to multiple resend packets, ignore the others
-        ASSERT(pk->getResend());
-        ASSERT(retrans.find(seq) != retrans.end());
-        confirmedRedundantBytes += segmentSize;
-        retrans[seq]--;
-        if (retrans[seq] == 0) // ? saving some memory ?
-            retrans.erase(seq);
-        // but let cong knows so that the rttBytes in cong can update correctly
-        cong->onRecvAck(seq, segmentSize, pk->getECE());
+#endif
+    bool is_this_round = round == currentRound;
+    if (!is_this_round) {
+        // ! Cases that receive ack not this round:
+        // ! 1. resend packets may be sent out at last round's last window because of disorder but not lost
+        // ! 2. resend too many times and redundant acks arrive this round.
+        // ! since we've already begun a new round,
+        // ! we don't handle these packets, just delete it and return
         delete pk;
         return;
     }
-    leftEdge = sentButNotAcked.begin()->first; // the closest seq we want
 
-    // ! received a disorder seqnumber
-    if (disorders.find(seq) != disorders.end()) { // ! deal with old seq
-        if (!pk->getResend()) {
-            confirmedNormalBytes += segmentSize; // this ack is just a litte late
+
+    
+    else {
+        cong->onRecvAck(seq, segmentSize, pk->getECE()); // let cong algo update cWnd
+    }
+    ASSERT(is_this_round);
+    bool is_not_acked = sentButNotAcked.find(seq) != sentButNotAcked.end();
+    bool is_redundant_ack = !is_not_acked;
+
+    if (is_redundant_ack) {
+        if (localAddr == 784 && localPort==2000 && confirmedRedundantBytes==935000) {
+            std::cout << "redundant ack " << seq << " " << retransmitBytes << " " << confirmedRedundantBytes << endl;
         }
-        else {
+        // ! received a seq's ack more than once
+        confirmedRedundantBytes += segmentSize;
+    }
+    else {
+        // ! this first ack to this seq, here are some cases:
+        // ! 1. original ack arrive
+        // ! 2. packet is lost, resend's ack arrive
+        // ! 3. packet is not lost, but resend packet's ack arrive earlier.
+        if (pk->getResend())
+            confirmedRetransBytes += segmentSize;
+        else
+            confirmedNormalBytes += segmentSize;
+
+        if (retrans.find(seq) != retrans.end()) {
             retrans[seq]--;
-            confirmedRetransBytes += sentButNotAcked.at(seq);
+            if (retrans[seq] == 0)
+                retrans.erase(seq);
         }
-        disorders.erase(seq);
-    }
-    else { // ! this is a total new seq
-        ASSERT(seq >= leftEdge);
-        confirmedNormalBytes += segmentSize;
-    }
-    sentButNotAcked.erase(seq); // no matter what just erase this seq
 
-    auto right = cong->getMaxAckedSeqNumber();
-    for (auto it:sentButNotAcked) {
-        auto tmpseq = it.first;
-        if (tmpseq != seq && tmpseq >= leftEdge && tmpseq < right
-                && disorders.find(tmpseq) == disorders.end()) {
-            disorders[tmpseq] = maxDisorderNumber;
+        disorders.erase(seq);
+        sentButNotAcked.erase(seq);
+        // ! this could be empty for example: all data acked, but cWnd becomes 1, so after ack this, you will get empty
+        if (sentButNotAcked.empty()) {
+            // ! update new disorders
+            auto right = cong->getMaxAckedSeqNumber();
+            for (auto it:sentButNotAcked) {
+                auto tmpseq = it.first;
+                if (tmpseq != seq && tmpseq > leftEdge && tmpseq < right
+                        && disorders.find(tmpseq) == disorders.end()) {
+                    disorders[tmpseq] = maxDisorderNumber;
+                }
+                if (tmpseq > right) // ! sentButNotAcked must be ordered
+                    break;
+            }
         }
-        if (tmpseq > right)
-            break;
     }
 
     // resend the countdown packets
