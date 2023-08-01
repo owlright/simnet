@@ -81,21 +81,26 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
     } else if (msg == jitterTimeout) { // most times is a new window
         sendPendingData();
     } else if (msg == RTOTimeout) {
-        if (!sentButNotAcked.empty()) {
-            auto leftRoom = cong->getcWnd() - inflightBytes();
-            for (auto& it: sentButNotAcked) {
-                auto tmpseq = it.first;
-                if (leftRoom >= it.second) {
-                    retransmitLostPacket(tmpseq, it.second);
-                    if (retrans.find(tmpseq) == retrans.end())
-                        retrans[tmpseq] = 1;
-                    else
-                       retrans[tmpseq] += 1;
-                    leftRoom -= it.second;
+        switch(appState) {
+            case AllDataSended: // ! if the last window's data are lost, no more acks arrive, we have to trigger it by ourself
+                if (!sentButNotAcked.empty()) {
+                    for (const auto& [seq, pkSize] : sentButNotAcked) {
+                        addRetransPacket(seq, pkSize);
+                    }
+                    sendPendingData();
                 }
-            }
-            scheduleAfter(currentBaseRTT, RTOTimeout);
+                break;
+            case Sending:
+                if (leftEdge == oldLeftEdge) { // ! leftEdge should be the earliest ack we accept, if it doesnt change, something wrong
+                    ASSERT(sentButNotAcked.find(leftEdge) != sentButNotAcked.end());
+                    addRetransPacket(leftEdge, sentButNotAcked[leftEdge]);
+                    sendPendingData();
+                }
+                break;
+            default:
+                throw cRuntimeError("forget to add break.");
         }
+        scheduleAfter(estimatedRTT, RTOTimeout); // we have to repeadedly check, this will be canceled when appState==finished
     } else {
         UnicastApp::handleMessage(msg);
     }
@@ -121,6 +126,9 @@ void UnicastSenderApp::sendPendingData()
         auto packet = createDataPacket(sentBytes, packetSize);
         connection->send(packet);
         cong->onSendData(sentBytes, packetSize);
+        if (sentBytes == packetSize) { // the first packet
+            scheduleAfter(estimatedRTT, RTOTimeout);
+        }
     }
     while (cong->getcWnd() >= inflightBytes() && !holdRetrans.empty()) {
         auto packet = holdRetrans.front();
@@ -133,6 +141,7 @@ void UnicastSenderApp::sendPendingData()
         else
             retrans[seq]++;
     }
+    moveToNextEdge(leftEdge); // move leftEdge to next position
 
 }
 
@@ -228,7 +237,6 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         if (tmpseq > right)
             break;
     }
-
 
     // resend the countdown packets
     auto rtt_timer = cong->getcWnd() / messageLength + 1;

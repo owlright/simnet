@@ -34,7 +34,12 @@ protected:
     virtual void onFlowStart();
     virtual void onFlowStop();
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
-
+    inline void moveToNextEdge(SeqNumber& left) {
+        ASSERT(!sentButNotAcked.empty());
+        oldLeftEdge = left;
+        left = sentButNotAcked.begin()->first;
+    };
+    // virtual void onReceivedAck(const Packet* pk);
 
 protected:
     // inherited functions
@@ -78,6 +83,7 @@ protected:
     std::unordered_map<SeqNumber, int> retrans;
     std::queue<Packet*> holdRetrans;
     SeqNumber leftEdge;
+    SeqNumber oldLeftEdge;
     // std::unordered_set<SeqNumber> confirmedDisorders;
     std::map<SeqNumber, B> sentButNotAcked;
     simtime_t currentBaseRTT{0};
