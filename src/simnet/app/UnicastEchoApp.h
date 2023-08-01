@@ -1,6 +1,7 @@
 #pragma once
 #include <unordered_map>
-#include "UnicastApp.h"
+
+#include "SocketApp.h"
 using namespace omnetpp;
 
 class UnicastEchoApp : public UnicastApp
