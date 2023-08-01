@@ -33,6 +33,9 @@ private:
     std::vector<IntAddress> workers;
     std::vector<PortNumber> workerPorts;
     std::unordered_set<SeqNumber> ackedAlready;
+    std::unordered_set<SeqNumber> last_round_acked_already;
+    std::unordered_set<IntAddress> last_round_finished_workers;
+    bool isAllWorkersFinished{false};
 };
 
 Define_Module(ParameterServerApp);
@@ -76,8 +79,22 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
     auto pk = check_and_cast<AggPacket*>(msg);
     ASSERT(pk->getJobId() == connection->getConnectionId());
     auto round = pk->getRound();
-    if (round > currentRound) {
+    auto seq = pk->getSeqNumber();
+
+    if (!isAllWorkersFinished && round < currentRound) {
+        auto record = pk->getRecord();
+        for (auto& worker : record) {
+            last_round_finished_workers.insert(worker);
+        }
+        if (last_round_finished_workers.size() == numWorkers) {
+
+            last_round_acked_already.clear();
+            isAllWorkersFinished = true;
+        }
+    }
+    if (round > currentRound) { // new round begins, store and update infomation
         // ! it's very important to clear information left by last Round
+        last_round_acked_already = ackedAlready; // TODO: we should store everything in real environment
         aggedWorkers.clear();
         receivedNumber.clear();
         aggedEcns.clear();
@@ -116,6 +133,25 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
         else if (pk->getAggPolicy() == NOINC) {
             dealWithNoIncAggPacket(msg);
         }
+    }
+    else {
+        // ! some senders send next round too early, the info is updated upabove.
+        // ! Again, we answer only the first-batch resend packets and ingore the others.
+        if (last_round_acked_already.find(pk->getSeqNumber()) != last_round_acked_already.end()) {
+            ASSERT(pk->getResend());
+            auto packet = createAckPacket(pk);
+            char pkname[40];
+            sprintf(pkname, "ACK-%" PRId64 "-seq%" PRId64,
+                        localAddr, pk->getSeqNumber());
+            packet->setName(pkname);
+            packet->setPacketType(ACK);
+            packet->setDestAddr(pk->getSrcAddr());
+            packet->setDestPort(pk->getLocalPort());
+            getListeningSocket()->send(packet); // ! HACK: this connection is the listening socket
+            delete pk;
+            return;
+        }
+
     }
     delete pk;
 }
