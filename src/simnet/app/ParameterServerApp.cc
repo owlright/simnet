@@ -175,8 +175,11 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pkt)
     packet->setStartTime(pk->getStartTime());
     packet->setQueueTime(pk->getQueueTime());
     packet->setTransmitTime(pk->getTransmitTime());
-    if (aggedEcns[seq]) {
-        packet->setECE(true);
+    if (aggedEcns.find(seq) != aggedEcns.end()) {
+        packet->setECE(aggedEcns.at(seq));
+    }
+    else { // ! this is an ack to a single host
+        packet->setECE(pkt->getECN());
     }
     packet->setResend(pkt->getResend());
     packet->setIsFlowFinished(pk->isFlowFinished());
