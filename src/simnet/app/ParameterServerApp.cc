@@ -29,6 +29,7 @@ private:
     int jobid{-1};
     int numWorkers{0};
     int currentRound{0};
+    SeqNumber maxAckSeq{0}; // for debugging
     IntAddress groupAddr{INVALID_ADDRESS};
     std::vector<IntAddress> workers;
     std::vector<PortNumber> workerPorts;
@@ -95,6 +96,7 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
     if (round > currentRound) { // new round begins, store and update infomation
         // ! it's very important to clear information left by last Round
         last_round_acked_already = ackedAlready; // TODO: we should store everything in real environment
+        maxAckSeq = 0;
         aggedWorkers.clear();
         receivedNumber.clear();
         aggedEcns.clear();
@@ -108,7 +110,7 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
         // ! 1. deal with duplicate resend packets, we must answer these packets to help senders
         // ! remove the retransmitBytes, otherwise sender's cwnd will be occupied and stuck.
         // ! 2. if duplicate resend packets arrive nextRound, we don't need to send ack for them
-        // ! since new round begins, sender must receive all packets and reset it's state already
+        // ! since new round begins, sender must have already received all packets and reset it's state.
         if (ackedAlready.find(seq) != ackedAlready.end()) {
             // if (localAddr == 789 && pk->getSrcAddr() == 784 && currentRound == 2)
             //     std::cout << "redundant seq " << seq << " from " << pk->getSrcAddr() << endl;
@@ -163,6 +165,8 @@ Packet* ParameterServerApp::createAckPacket(const Packet* const pkt)
     auto seq = pk->getSeqNumber();
     sprintf(pkname, "MuACK-%" PRId64 "-seq%" PRId64,
             localAddr, seq);
+    if (seq > maxAckSeq)
+        maxAckSeq = seq;
     auto packet = new AggPacket(pkname);
     packet->setSeqNumber(seq);
     packet->setPacketType(MACK);
@@ -202,18 +206,13 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
     auto seq = pk->getSeqNumber();
 
     // I left this for future debuging
-    //  auto round = pk->getRound();
-    //  auto record = pk->getRecord();
-    //  auto is_resend = pk->getResend();
-//     if (localAddr == 787 && seq == 48000) {
-//         std::cout << "PS receives "<< seq << " round "<< round << " resend " << is_resend << " " << record << endl;
-//         std::cout << simTime() << endl;
-//         // std::cout << "aggregated ";
-//         // for (auto& t:aggedWorkers.at(seq)) {
-//         //     std::cout << t << " ";
-//         // }
-//         // std::cout << endl;
-//     }
+      auto round = pk->getRound();
+      auto record = pk->getRecord();
+      auto is_resend = pk->getResend();
+    if (localAddr == 785) {
+        std::cout << simTime() << " PS receives "<< seq << " round "<< round
+                << " resend " << is_resend << " " << record << " " << maxAckSeq << endl;
+    }
 
     EV_DEBUG << "Seq " << seq << " aggregated workers: " << pk->getRecord() << endl;
     // * first packet of the same seq
@@ -296,10 +295,11 @@ void ParameterServerApp::dealWithIncAggPacket(Connection* connection, const cMes
         aggedWorkers.erase(seq);
         receivedNumber.erase(seq);
         aggedEcns.erase(seq);
-         if (localAddr == 787 && seq==48000) {
-
-             std::cout <<  "Seq " << seq <<" round " << pk->getRound() << " finished." << endl;
-         }
+#ifndef NDEBUG
+//         if (localAddr == 789 && seq >= 1000 && currentRound == 2) {
+//           std::cout <<  "Seq " << seq <<" round " << pk->getRound() << " finished." << endl;
+//         }
+#endif
         EV_DEBUG << "Seq " << seq << " finished." << endl;
         ackedAlready.insert(seq);
     }
