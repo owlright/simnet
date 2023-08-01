@@ -12,7 +12,6 @@ class AggPacket extends Packet
 {
     packetType = AGG;
     AggPolicy aggPolicy = NOINC;
-    int round;
     int64_t jobId;
     int workerNumber;
     int treeCost;

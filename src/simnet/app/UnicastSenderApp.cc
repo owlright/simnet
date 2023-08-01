@@ -143,6 +143,7 @@ void UnicastSenderApp::retransmitLostPacket(SeqNumber seq, B packetBytes)
 
 void UnicastSenderApp::onFlowStart()
 {
+    currentRound += 1;
     sentBytes = 0;
     confirmedNormalBytes = 0;
     retransmitBytes = 0;
@@ -161,7 +162,6 @@ void UnicastSenderApp::onFlowStart()
     EV_INFO << " flowSize: " << flowSize << endl;
     cong->reset();
     emit(flowSizeSignal, flowSize);
-
 }
 
 void UnicastSenderApp::onFlowStop()
@@ -294,6 +294,7 @@ Packet* UnicastSenderApp::createDataPacket(SeqNumber seq, B packetBytes)
     sprintf(pkname, "conn%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
             connection->getConnectionId(), localAddr, destAddr, seq);
     auto pk = new Packet(pkname);
+    pk->setRound(currentRound);
     pk->setKind(DATA);
     pk->setSeqNumber(seq);
     pk->setByteLength(packetBytes);

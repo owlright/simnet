@@ -18,7 +18,6 @@ protected:
     int numWorkers{-1};
     int numRounds;
     double roundInterval;
-    int currentRound{0};
 
     opp_component_ptr<GlobalMetricCollector> jobMetricCollector;
 };

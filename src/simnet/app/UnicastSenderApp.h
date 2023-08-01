@@ -73,8 +73,7 @@ protected:
     B confirmedRedundantBytes{0}; // bytes resend more than once
 
     AppState_t appState{Idle};
-    // B currentFlowSize{0};
-
+    int currentRound{0};
     std::unordered_map<SeqNumber, int> disorders;
     std::unordered_map<SeqNumber, int> retrans;
     SeqNumber leftEdge;

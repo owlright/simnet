@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -2159,6 +2159,7 @@ void Packet::copy(const Packet& other)
     this->queueTime = other.queueTime;
     this->isFlowFinished_ = other.isFlowFinished_;
     this->resend = other.resend;
+    this->round = other.round;
 }
 
 void Packet::parsimPack(omnetpp::cCommBuffer *b) const
@@ -2177,6 +2178,7 @@ void Packet::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->queueTime);
     doParsimPacking(b,this->isFlowFinished_);
     doParsimPacking(b,this->resend);
+    doParsimPacking(b,this->round);
 }
 
 void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -2195,6 +2197,7 @@ void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->queueTime);
     doParsimUnpacking(b,this->isFlowFinished_);
     doParsimUnpacking(b,this->resend);
+    doParsimUnpacking(b,this->round);
 }
 
 int64_t Packet::getSeqNumber() const
@@ -2327,6 +2330,16 @@ void Packet::setResend(bool resend)
     this->resend = resend;
 }
 
+int Packet::getRound() const
+{
+    return this->round;
+}
+
+void Packet::setRound(int round)
+{
+    this->round = round;
+}
+
 class PacketDescriptor : public omnetpp::cClassDescriptor
 {
   private:
@@ -2345,6 +2358,7 @@ class PacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_queueTime,
         FIELD_isFlowFinished,
         FIELD_resend,
+        FIELD_round,
     };
   public:
     PacketDescriptor();
@@ -2411,7 +2425,7 @@ const char *PacketDescriptor::getProperty(const char *propertyName) const
 int PacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 13+base->getFieldCount() : 13;
+    return base ? 14+base->getFieldCount() : 14;
 }
 
 unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
@@ -2428,7 +2442,7 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_destPort
         FD_ISEDITABLE,    // FIELD_ECN
         FD_ISEDITABLE,    // FIELD_ECE
-        0,    // FIELD_packetType
+        FD_ISEDITABLE,    // FIELD_packetType
         FD_ISEDITABLE,    // FIELD_connectionId
         FD_ISEDITABLE,    // FIELD_receivedBytes
         FD_ISEDITABLE,    // FIELD_startTime
@@ -2436,8 +2450,9 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_queueTime
         FD_ISEDITABLE,    // FIELD_isFlowFinished
         FD_ISEDITABLE,    // FIELD_resend
+        FD_ISEDITABLE,    // FIELD_round
     };
-    return (field >= 0 && field < 13) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 14) ? fieldTypeFlags[field] : 0;
 }
 
 const char *PacketDescriptor::getFieldName(int field) const
@@ -2462,8 +2477,9 @@ const char *PacketDescriptor::getFieldName(int field) const
         "queueTime",
         "isFlowFinished",
         "resend",
+        "round",
     };
-    return (field >= 0 && field < 13) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 14) ? fieldNames[field] : nullptr;
 }
 
 int PacketDescriptor::findField(const char *fieldName) const
@@ -2483,6 +2499,7 @@ int PacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 10;
     if (strcmp(fieldName, "isFlowFinished") == 0) return baseIndex + 11;
     if (strcmp(fieldName, "resend") == 0) return baseIndex + 12;
+    if (strcmp(fieldName, "round") == 0) return baseIndex + 13;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -2508,8 +2525,9 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "double",    // FIELD_queueTime
         "bool",    // FIELD_isFlowFinished
         "bool",    // FIELD_resend
+        "int",    // FIELD_round
     };
-    return (field >= 0 && field < 13) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 14) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **PacketDescriptor::getFieldPropertyNames(int field) const
@@ -2612,6 +2630,7 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
         case FIELD_queueTime: return double2string(pp->getQueueTime());
         case FIELD_isFlowFinished: return bool2string(pp->isFlowFinished());
         case FIELD_resend: return bool2string(pp->getResend());
+        case FIELD_round: return long2string(pp->getRound());
         default: return "";
     }
 }
@@ -2633,6 +2652,7 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
         case FIELD_destPort: pp->setDestPort(string2ulong(value)); break;
         case FIELD_ECN: pp->setECN(string2bool(value)); break;
         case FIELD_ECE: pp->setECE(string2bool(value)); break;
+        case FIELD_packetType: pp->setPacketType((PacketType)string2enum(value, "PacketType")); break;
         case FIELD_connectionId: pp->setConnectionId(string2int64(value)); break;
         case FIELD_receivedBytes: pp->setReceivedBytes(string2int64(value)); break;
         case FIELD_startTime: pp->setStartTime(string2double(value)); break;
@@ -2640,6 +2660,7 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
         case FIELD_queueTime: pp->setQueueTime(string2double(value)); break;
         case FIELD_isFlowFinished: pp->setIsFlowFinished(string2bool(value)); break;
         case FIELD_resend: pp->setResend(string2bool(value)); break;
+        case FIELD_round: pp->setRound(string2long(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
     }
 }
@@ -2667,6 +2688,7 @@ omnetpp::cValue PacketDescriptor::getFieldValue(omnetpp::any_ptr object, int fie
         case FIELD_queueTime: return pp->getQueueTime();
         case FIELD_isFlowFinished: return pp->isFlowFinished();
         case FIELD_resend: return pp->getResend();
+        case FIELD_round: return pp->getRound();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'Packet' as cValue -- field index out of range?", field);
     }
 }
@@ -2688,6 +2710,7 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
         case FIELD_destPort: pp->setDestPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
         case FIELD_ECN: pp->setECN(value.boolValue()); break;
         case FIELD_ECE: pp->setECE(value.boolValue()); break;
+        case FIELD_packetType: pp->setPacketType(static_cast<PacketType>(value.intValue())); break;
         case FIELD_connectionId: pp->setConnectionId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_receivedBytes: pp->setReceivedBytes(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_startTime: pp->setStartTime(value.doubleValue()); break;
@@ -2695,6 +2718,7 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
         case FIELD_queueTime: pp->setQueueTime(value.doubleValue()); break;
         case FIELD_isFlowFinished: pp->setIsFlowFinished(value.boolValue()); break;
         case FIELD_resend: pp->setResend(value.boolValue()); break;
+        case FIELD_round: pp->setRound(omnetpp::checked_int_cast<int>(value.intValue())); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
     }
 }

@@ -22,7 +22,6 @@ void WorkerApp::initialize(int stage)
 void WorkerApp::onFlowStart()
 {
     UnicastSenderApp::onFlowStart();
-    currentRound += 1;
     EV_INFO << "current round seq: " << currentRound << endl;
     if (jobMetricCollector)
         jobMetricCollector->reportFlowStart(jobId, numWorkers, workerId, simTime());
@@ -78,18 +77,5 @@ void WorkerApp::finish()
 
 void WorkerApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
-    auto apk = check_and_cast<AggPacket*>(msg);
-    auto seq = apk->getSeqNumber();
-//    std::unordered_set<decltype(localAddr)> wantsee{400};
-
-    auto round = apk->getRound();
-    if (round >= currentRound) {
-        // if (wantsee.find( localAddr ) != wantsee.end() && currentRound >= 3 &&  seq >= 229000) {
-        //     std::cout << seq << " " << disorders << endl;
-        // }
-        UnicastSenderApp::connectionDataArrived(connection, msg);
-    }
-    else {
-        delete msg; // this is last turn's reduandant resend's ack
-    }
+    UnicastSenderApp::connectionDataArrived(connection, msg);
 }
