@@ -1,7 +1,7 @@
 #pragma once
-#include "UnicastSenderApp.h"
+#include "CongApp.h"
 #include "simnet/mod/manager/GlobalMetricCollector.h"
-class WorkerApp : public UnicastSenderApp
+class WorkerApp : public CongApp
 {
 protected:
     void initialize(int stage) override;

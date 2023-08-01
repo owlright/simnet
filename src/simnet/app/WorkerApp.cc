@@ -6,7 +6,7 @@ Define_Module(WorkerApp);
 
 void WorkerApp::initialize(int stage)
 {
-    UnicastSenderApp::initialize(stage);
+    CongApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         jobId = par("jobId");
         workerId = par("workerId");
@@ -21,7 +21,7 @@ void WorkerApp::initialize(int stage)
 
 void WorkerApp::onFlowStart()
 {
-    UnicastSenderApp::onFlowStart();
+    CongApp::onFlowStart();
     EV_INFO << "current round seq: " << currentRound << endl;
     if (jobMetricCollector)
         jobMetricCollector->reportFlowStart(jobId, numWorkers, workerId, simTime());
@@ -67,7 +67,7 @@ Packet* WorkerApp::createDataPacket(SeqNumber seq, B packetBytes)
 
 void WorkerApp::finish()
 {
-    UnicastSenderApp::finish();
+    CongApp::finish();
     if (currentRound != numRounds) {
         EV_WARN << getClassAndFullPath() << "job " << jobId << " "
                                         "address " << localAddr
@@ -77,5 +77,5 @@ void WorkerApp::finish()
 
 void WorkerApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
-    UnicastSenderApp::connectionDataArrived(connection, msg);
+    CongApp::connectionDataArrived(connection, msg);
 }

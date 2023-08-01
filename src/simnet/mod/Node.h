@@ -1,7 +1,7 @@
 #include <omnetpp.h>
 #include "simnet/common/Defs.h"
 #include "simnet/common/ModuleAccess.h"
-#include "simnet/app/UnicastSenderApp.h"
+#include "simnet/app/CongApp.h"
 #include "simnet/mod/manager/TrafficPatternManager.h"
 
 using namespace omnetpp;
@@ -41,12 +41,12 @@ protected:
     cMessage* newFlowTimer{nullptr};
 
 private:
-    UnicastSenderApp* createUnicastSenderApp();
+    CongApp* createCongApp();
     void startNewFlow();
     IntAddress generateDestAddr();
 
 private:
-    std::vector<opp_component_ptr<UnicastSenderApp>> unicastSenders;
+    std::vector<opp_component_ptr<CongApp>> unicastSenders;
     opp_component_ptr<TrafficPatternManager> tpManager;
     bool loadMode{false};
     int numFlows{0};

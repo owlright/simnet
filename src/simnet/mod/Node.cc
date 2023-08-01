@@ -107,14 +107,14 @@ void HostNode::finish()
     // }
 }
 
-UnicastSenderApp* HostNode::createUnicastSenderApp()
+CongApp* HostNode::createCongApp()
 {
     auto appExistSize = getSubmoduleVectorSize("apps");
     if (appExistSize == 0)
         throw cRuntimeError("apps[0] must be UnicastEchoApp.");
-    EV_TRACE << "create UnicastSenderApp with port " << 1001 + appExistSize << endl;
+    EV_TRACE << "create CongApp with port " << 1001 + appExistSize << endl;
     setSubmoduleVectorSize("apps", appExistSize + 1);
-    auto appType = "simnet.app.UnicastSenderApp";
+    auto appType = "simnet.app.CongApp";
     cModule *app = cModuleType::get(appType)->create("apps", this, appExistSize);
     app->par("address") = address;
     app->par("port") = 1000 + appExistSize;
@@ -132,7 +132,7 @@ UnicastSenderApp* HostNode::createUnicastSenderApp()
     at->gate("localOut",  at->gateSize("localIn")-1)->connectTo(inGate);
     outGate->connectTo(at->gate("localIn", at->gateSize("localOut")-1));
     app->callInitialize();
-    return check_and_cast<UnicastSenderApp*>(app);
+    return check_and_cast<CongApp*>(app);
 }
 
 void HostNode::startNewFlow()
@@ -148,7 +148,7 @@ void HostNode::startNewFlow()
         }
     }
     if (!foundIdleApp) { // we need to create a new app
-        auto app = createUnicastSenderApp();
+        auto app = createCongApp();
         unicastSenders.push_back(app);
     }
 }

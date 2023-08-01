@@ -51,7 +51,7 @@ module Host extends Node
         @display("i=abstract/server_s");
 
     submodules:
-        apps[numApps]: <default("UnicastSenderApp")> like IApp {
+        apps[numApps]: <default("CongApp")> like IApp {
             port = 1000 + index;
             @display("p=42,125.06667,r,100");
         }

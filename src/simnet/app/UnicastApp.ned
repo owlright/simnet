@@ -10,9 +10,9 @@ simple UnicastApp like IApp {
         output out;
 }
 
-module UnicastSenderApp extends UnicastApp {
+module CongApp extends UnicastApp {
     parameters:
-        @class(UnicastSenderApp);
+        @class(CongApp);
         port = default(-1);
         int destAddress @mutable = default(-1);
         int destPort = default(1000);
@@ -44,7 +44,7 @@ module UnicastEchoApp extends UnicastApp {
         @class(UnicastEchoApp);
 }
 
-// module ATPWorker extends UnicastSenderApp {
+// module ATPWorker extends CongApp {
 //     parameters:
 //         port = default(2000);
 //         destPort = default(2001);

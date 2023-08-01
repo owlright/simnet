@@ -13,7 +13,7 @@ enum AppState_t
 };
 
 
-class UnicastSenderApp : public UnicastApp
+class CongApp : public UnicastApp
 {
 public:
     const AppState_t getAppState() const {return appState;};
@@ -103,7 +103,7 @@ protected:
     double bandwidth;
 
 public:
-    virtual ~UnicastSenderApp();
+    virtual ~CongApp();
 
 private:
     bool bindRemote();

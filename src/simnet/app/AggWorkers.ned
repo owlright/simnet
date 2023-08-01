@@ -1,6 +1,6 @@
 package simnet.app;
 
-module WorkerApp extends UnicastSenderApp {
+module WorkerApp extends CongApp {
 parameters:
     port = default(2000);
     destPort = default(3001);

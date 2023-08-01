@@ -1,21 +1,21 @@
-#include "UnicastSenderApp.h"
+#include "CongApp.h"
 #include "simnet/common/AddressResolver.h"
 #include "simnet/common/ModuleAccess.h"
-Define_Module(UnicastSenderApp);
+Define_Module(CongApp);
 //signals
-simsignal_t UnicastSenderApp::fctSignal = registerSignal("fct");
-simsignal_t UnicastSenderApp::idealFctSignal = registerSignal("idealFct");
-simsignal_t UnicastSenderApp::flowSizeSignal = registerSignal("flowSize");
-simsignal_t UnicastSenderApp::rttSignal = registerSignal("rtt");
-simsignal_t UnicastSenderApp::inflightBytesSignal = registerSignal("inflightBytes");
+simsignal_t CongApp::fctSignal = registerSignal("fct");
+simsignal_t CongApp::idealFctSignal = registerSignal("idealFct");
+simsignal_t CongApp::flowSizeSignal = registerSignal("flowSize");
+simsignal_t CongApp::rttSignal = registerSignal("rtt");
+simsignal_t CongApp::inflightBytesSignal = registerSignal("inflightBytes");
 
-UnicastSenderApp::~UnicastSenderApp() {
+CongApp::~CongApp() {
     cancelAndDelete(flowStartTimer);
     cancelAndDelete(jitterTimeout);
     cancelAndDelete(RTOTimeout);
 }
 
-bool UnicastSenderApp::bindRemote()
+bool CongApp::bindRemote()
 {
     if(destAddr != INVALID_ADDRESS && destPort != INVALID_PORT) {
         connection->bindRemote(destAddr, destPort); // ! bind remote before using send
@@ -27,7 +27,7 @@ bool UnicastSenderApp::bindRemote()
     }
 }
 
-void UnicastSenderApp::finish() {
+void CongApp::finish() {
     if (destAddr == INVALID_ADDRESS)
         return;
 
@@ -43,7 +43,7 @@ void UnicastSenderApp::finish() {
 //    }
 }
 
-void UnicastSenderApp::initialize(int stage)
+void CongApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
     // ! if this moudle is created by manager in ASSIGN stage, the stages before it will not be executed
@@ -71,7 +71,7 @@ void UnicastSenderApp::initialize(int stage)
     }
 }
 
-void UnicastSenderApp::handleMessage(cMessage *msg)
+void CongApp::handleMessage(cMessage *msg)
 {
     if (msg == flowStartTimer) { // new flow
         if (!getEnvir()->isExpressMode())
@@ -106,14 +106,14 @@ void UnicastSenderApp::handleMessage(cMessage *msg)
     }
 }
 
-void UnicastSenderApp::scheduleNextFlowAt(simtime_t_cref time)
+void CongApp::scheduleNextFlowAt(simtime_t_cref time)
 {
     ASSERT(!flowStartTimer->isScheduled());
     scheduleAt(time, flowStartTimer);
     appState = Scheduled;
 }
 
-void UnicastSenderApp::sendPendingData()
+void CongApp::sendPendingData()
 {
     while (cong->getcWnd() >= inflightBytes() && sentBytes < flowSize) {
         auto packetSize = messageLength;
@@ -145,7 +145,7 @@ void UnicastSenderApp::sendPendingData()
 
 }
 
-void UnicastSenderApp::addRetransPacket(SeqNumber seq, B packetBytes)
+void CongApp::addRetransPacket(SeqNumber seq, B packetBytes)
 {
     EV_DEBUG << "add resend seq " << seq << endl;
     auto packet = createDataPacket(seq, packetBytes);
@@ -153,7 +153,7 @@ void UnicastSenderApp::addRetransPacket(SeqNumber seq, B packetBytes)
     holdRetrans.push(packet);
 }
 
-void UnicastSenderApp::onFlowStart()
+void CongApp::onFlowStart()
 {
     currentRound += 1;
     sentBytes = 0;
@@ -176,14 +176,14 @@ void UnicastSenderApp::onFlowStart()
     emit(flowSizeSignal, flowSize);
 }
 
-void UnicastSenderApp::onFlowStop()
+void CongApp::onFlowStop()
 {
     emit(fctSignal, (simTime() - flowStartTime));
     emit(idealFctSignal, currentBaseRTT + SimTime((flowSize*8) / bandwidth));
     appState = Finished;
 }
 
-void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *msg)
+void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::ACK);
@@ -208,7 +208,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     }
 
 
-    
+
     else {
         cong->onRecvAck(seq, segmentSize, pk->getECE()); // let cong algo update cWnd
     }
@@ -301,7 +301,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
     delete pk;
 }
 
-void UnicastSenderApp::handleParameterChange(const char *parameterName)
+void CongApp::handleParameterChange(const char *parameterName)
 {
     UnicastApp::handleParameterChange(parameterName);
     // this can happen when node change the app destionation
@@ -316,7 +316,7 @@ void UnicastSenderApp::handleParameterChange(const char *parameterName)
 
 }
 
-Packet* UnicastSenderApp::createDataPacket(SeqNumber seq, B packetBytes)
+Packet* CongApp::createDataPacket(SeqNumber seq, B packetBytes)
 {
     char pkname[40];
     sprintf(pkname, "conn%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
@@ -335,7 +335,7 @@ Packet* UnicastSenderApp::createDataPacket(SeqNumber seq, B packetBytes)
     return pk;
 }
 
-void UnicastSenderApp::refreshDisplay() const
+void CongApp::refreshDisplay() const
 {
     if (!getEnvir()->isExpressMode()) {
         char buf[50];
