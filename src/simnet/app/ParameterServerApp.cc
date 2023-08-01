@@ -32,6 +32,7 @@ private:
     IntAddress groupAddr{INVALID_ADDRESS};
     std::vector<IntAddress> workers;
     std::vector<PortNumber> workerPorts;
+    std::unordered_set<SeqNumber> ackedAlready;
 };
 
 Define_Module(ParameterServerApp);
@@ -80,9 +81,34 @@ void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage 
         aggedWorkers.clear();
         receivedNumber.clear();
         aggedEcns.clear();
+        ackedAlready.clear();
         currentRound = round;
     }
-    if (round == currentRound) {
+   if (round == currentRound) {
+        if (pk->isFlowFinished())
+            isAllWorkersFinished = false;
+        auto seq = pk->getSeqNumber();
+        // ! 1. deal with duplicate resend packets, we must answer these packets to help senders
+        // ! remove the retransmitBytes, otherwise sender's cwnd will be occupied and stuck.
+        // ! 2. if duplicate resend packets arrive nextRound, we don't need to send ack for them
+        // ! since new round begins, sender must receive all packets and reset it's state already
+        if (ackedAlready.find(seq) != ackedAlready.end()) {
+            // if (localAddr == 789 && pk->getSrcAddr() == 784 && currentRound == 2)
+            //     std::cout << "redundant seq " << seq << " from " << pk->getSrcAddr() << endl;
+            ASSERT(pk->getResend());
+            auto packet = createAckPacket(pk);
+            char pkname[40];
+            sprintf(pkname, "ACK-%" PRId64 "-seq%" PRId64,
+                        localAddr, pk->getSeqNumber());
+            packet->setName(pkname);
+            packet->setPacketType(ACK);
+            packet->setDestAddr(pk->getSrcAddr());
+            packet->setDestPort(pk->getLocalPort());
+
+            getListeningSocket()->send(packet); // ! HACK: this connection is the listening socket
+            delete pk;
+            return;
+        }
         dealWithAggPacket(msg);
         if (pk->getAggPolicy() == INC) {
             dealWithIncAggPacket(connection, msg);
@@ -203,6 +229,7 @@ void ParameterServerApp::dealWithNoIncAggPacket(const cMessage *msg)
         aggedWorkers.erase(seq);
         receivedNumber.erase(seq);
         aggedEcns.erase(seq);
+        ackedAlready.insert(seq);
         EV_DEBUG << "Seq " << seq << " finished." << endl;
     }
 }
@@ -235,5 +262,6 @@ void ParameterServerApp::dealWithIncAggPacket(Connection* connection, const cMes
              std::cout <<  "Seq " << seq <<" round " << pk->getRound() << " finished." << endl;
          }
         EV_DEBUG << "Seq " << seq << " finished." << endl;
+        ackedAlready.insert(seq);
     }
 }
