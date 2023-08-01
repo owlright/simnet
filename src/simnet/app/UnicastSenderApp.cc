@@ -110,7 +110,7 @@ void UnicastSenderApp::scheduleNextFlowAt(simtime_t_cref time)
 
 void UnicastSenderApp::sendPendingData()
 {
-    while (cong->getcWnd() > inflightBytes() && sentBytes < flowSize) {
+    while (cong->getcWnd() >= inflightBytes() && sentBytes < flowSize) {
         auto packetSize = messageLength;
         if (messageLength + sentBytes > flowSize) {
             packetSize = flowSize - sentBytes; // ! incase the data about to send is too small, such as the last packet or flowSize is too small
