@@ -122,24 +122,26 @@ void UnicastSenderApp::sendPendingData()
         connection->send(packet);
         cong->onSendData(sentBytes, packetSize);
     }
+    while (cong->getcWnd() >= inflightBytes() && !holdRetrans.empty()) {
+        auto packet = holdRetrans.front();
+        auto seq = packet->getSeqNumber();
+        connection->send(packet);
+        retransmitBytes += packet->getByteLength();
+        holdRetrans.pop();
+        if (retrans.find(seq) == retrans.end()) // ! first time we resend
+            retrans[seq] = 1;
+        else
+            retrans[seq]++;
+    }
 
 }
 
-void UnicastSenderApp::retransmitLostPacket(SeqNumber seq, B packetBytes)
+void UnicastSenderApp::addRetransPacket(SeqNumber seq, B packetBytes)
 {
-    EV_WARN << "resend seq " << seq << endl;
+    EV_DEBUG << "add resend seq " << seq << endl;
     auto packet = createDataPacket(seq, packetBytes);
     packet->setResend(true);
-    connection->send(packet);
-//      cong->onSendData(messageLength); // ? Do cong needs to know this
-    // if (seq >= 500000)
-    //    std::cout << localAddr <<" retransmit seq " << seq << endl;
-    retransmitBytes += packetBytes; // ! this will affect inflightBytes
-    // ! if retransmit too many, sendPendingData() will be blocked
-    // std::unordered_set<decltype(localAddr)> wantsee{137,140,394,400,655,659,654,782};
-    // if (localAddr == 400 && wantsee.find( localAddr ) != wantsee.end() && seq == 222000) {
-    //     std::cout << localAddr << " " << seq << cong->getcWnd() << " " << inflightBytes() << endl;
-    // }
+    holdRetrans.push(packet);
 }
 
 void UnicastSenderApp::onFlowStart()
@@ -155,7 +157,7 @@ void UnicastSenderApp::onFlowStart()
     appState = Sending;
     ASSERT(sentButNotAcked.empty());
     ASSERT(disorders.empty());
-    retrans.clear(); // ! some resend seqs (such as the last window of data) may arrive at next round
+    retrans.clear(); // ! it may not come to zero at this round's end, see Case 2 below
     ASSERT(!RTOTimeout->isScheduled());
     if (connection == nullptr) {
         throw cRuntimeError("conneciton is nullptr!");
@@ -235,12 +237,8 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
             // count down, must resend this seq
             auto tmp_seq = it.first;
             ASSERT(sentButNotAcked.find(tmp_seq)!= sentButNotAcked.end());
-            retransmitLostPacket(tmp_seq, sentButNotAcked.at(tmp_seq));
+            addRetransPacket(tmp_seq, sentButNotAcked.at(tmp_seq));
             disorders[tmp_seq] = rtt_timer > maxDisorderNumber ? rtt_timer : maxDisorderNumber; // wait for a RTT
-            if (retrans.find(tmp_seq) == retrans.end()) // ! first time we resend
-                retrans[tmp_seq] = 1;
-            else
-                retrans[tmp_seq]++;
         }
         else {
             it.second--;

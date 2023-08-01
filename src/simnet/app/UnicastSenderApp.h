@@ -1,7 +1,7 @@
 #pragma once
 #include "UnicastApp.h"
 #include "simnet/mod/cong/CongAlgo.h"
-
+#include <queue>
 
 enum AppState_t
 {
@@ -28,7 +28,7 @@ public:
 protected:
     // helper functions
     void sendPendingData();
-    void retransmitLostPacket(SeqNumber seq, B packetBytes);
+    virtual void addRetransPacket(SeqNumber seq, B packetBytes);
     B inflightBytes() {return sentBytes + retransmitBytes - confirmedNormalBytes - confirmedRetransBytes - confirmedRedundantBytes;};
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes);
     virtual void onFlowStart();
@@ -76,6 +76,7 @@ protected:
     int currentRound{0};
     std::unordered_map<SeqNumber, int> disorders;
     std::unordered_map<SeqNumber, int> retrans;
+    std::queue<Packet*> holdRetrans;
     SeqNumber leftEdge;
     // std::unordered_set<SeqNumber> confirmedDisorders;
     std::map<SeqNumber, B> sentButNotAcked;
