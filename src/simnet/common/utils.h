@@ -2,8 +2,6 @@
 #include <vector>
 #include <sstream>
 #include <string>
-#include "omnetpp.h"
-using namespace omnetpp;
 
 template<typename T>
 std::string vectorToString(const std::vector<T>& vec)
