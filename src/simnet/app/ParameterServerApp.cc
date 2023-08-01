@@ -206,14 +206,15 @@ void ParameterServerApp::dealWithAggPacket(const cMessage *msg)
     auto seq = pk->getSeqNumber();
 
     // I left this for future debuging
-      auto round = pk->getRound();
-      auto record = pk->getRecord();
-      auto is_resend = pk->getResend();
+    auto round = pk->getRound();
+    auto record = pk->getRecord();
+    auto is_resend = pk->getResend();
+#ifndef NDEBUG
     if (localAddr == 785) {
         std::cout << simTime() << " PS receives "<< seq << " round "<< round
                 << " resend " << is_resend << " " << record << " " << maxAckSeq << endl;
     }
-
+#endif
     EV_DEBUG << "Seq " << seq << " aggregated workers: " << pk->getRecord() << endl;
     // * first packet of the same seq
     if (aggedWorkers.find(seq) == aggedWorkers.end())
