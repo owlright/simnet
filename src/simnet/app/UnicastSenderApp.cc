@@ -289,10 +289,11 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         rescheduleAfter(estimatedRTT, RTOTimeout);
         appState = AllDataSended;
     }
-    //TODO if all packets are confirmed
-    if (confirmedNormalBytes + confirmedRetransBytes == sentBytes) {
+
+    if (confirmedNormalBytes + confirmedRetransBytes == flowSize) {
         cancelEvent(RTOTimeout); // ! avoid affecting next flow
-        onFlowStop();
+        if (!flowStartTimer->isScheduled())  // ! avoid schedule timer multiple times
+            onFlowStop();
         // if (localAddr == 53 || localAddr == 232 || localAddr == 234)
         //     std::cout << localAddr << " flow finished!" << endl;
     }
