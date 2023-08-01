@@ -57,6 +57,7 @@ void UnicastSenderApp::initialize(int stage)
         flowStartTime = par("flowStartTime");
         flowStartTimer = new cMessage("flowStart");
         RTOTimeout = new cMessage("RTOTimeout");
+        estimatedRTT = par("initRTO");
         // flowInterval = &par("flowInterval");
         if (useJitter)
             jitterBeforeSending = &par("jitterBeforeSending");
@@ -246,9 +247,10 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
         }
     }
 
-    auto pkRTT = simTime() - SimTime(pk->getStartTime());
-    emit(rttSignal, pkRTT);
-    currentBaseRTT = pkRTT - pk->getQueueTime() - pk->getTransmitTime();
+    auto sampleRTT = simTime() - SimTime(pk->getStartTime());
+    emit(rttSignal, sampleRTT);
+    currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
+    estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
     if (sentBytes < flowSize) {
         if (useJitter && !jitterTimeout->isScheduled()) // ! in case multiple acks arrived at the same time
         {
@@ -259,7 +261,7 @@ void UnicastSenderApp::connectionDataArrived(Connection *connection, cMessage *m
             sendPendingData();
 
     } else {
-        rescheduleAfter(pkRTT, RTOTimeout);
+        rescheduleAfter(estimatedRTT, RTOTimeout);
         appState = AllDataSended;
     }
     //TODO if all packets are confirmed

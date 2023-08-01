@@ -17,7 +17,7 @@ module UnicastSenderApp extends UnicastApp {
         int destAddress @mutable = default(-1);
         int destPort = default(1000);
         int messageLength @unit(B) = default(1kB);
-
+        double initRTO @unit(s) = default(1us);
         int flowSize @unit(B) = default(8kB); // in bytes
         double flowStartTime @unit(s) = default(0.0s);
 //        volatile double flowInterval @unit(s) = default(0s); // this means load = 1.0

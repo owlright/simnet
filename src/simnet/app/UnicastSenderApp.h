@@ -71,7 +71,7 @@ protected:
     B confirmedNormalBytes{0}; // bytes sent and receive ack only once
     B confirmedRetransBytes{0}; // bytes that are acked by resending packets
     B confirmedRedundantBytes{0}; // bytes resend more than once
-
+    simtime_t estimatedRTT;
     AppState_t appState{Idle};
     int currentRound{0};
     std::unordered_map<SeqNumber, int> disorders;
