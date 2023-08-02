@@ -1,6 +1,6 @@
 #pragma once
+#include <set>
 #include "simnet/mod/cong/CongAlgo.h"
-#include <queue>
 #include "SocketApp.h"
 
 enum AppState_t
@@ -81,7 +81,7 @@ protected:
     int currentRound{0};
     std::unordered_map<SeqNumber, int> disorders;
     std::unordered_map<SeqNumber, int> retrans;
-    std::queue<Packet*> holdRetrans;
+    std::map<SeqNumber, Packet*> holdRetrans;
     SeqNumber leftEdge;
     SeqNumber oldLeftEdge;
     // std::unordered_set<SeqNumber> confirmedDisorders;

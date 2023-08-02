@@ -94,7 +94,15 @@ void CongApp::handleMessage(cMessage *msg)
                 if (leftEdge == oldLeftEdge) { // ! leftEdge should be the earliest ack we accept, if it doesnt change, something wrong
                     ASSERT(sentButNotAcked.find(leftEdge) != sentButNotAcked.end());
                     addRetransPacket(leftEdge, sentButNotAcked[leftEdge]);
-                    sendPendingData();
+                    auto seq = holdRetrans.begin()->first;
+                    auto pk = holdRetrans.begin()->second;
+                    connection->send(pk);
+                    retransmitBytes += pk->getByteLength();
+                    holdRetrans.erase(seq);
+                    if (retrans.find(seq) == retrans.end()) // ! first time we resend
+                        retrans[seq] = 1;
+                    else
+                        retrans[seq]++;
                 }
                 break;
             default:
@@ -115,6 +123,18 @@ void CongApp::scheduleNextFlowAt(simtime_t_cref time)
 
 void CongApp::sendPendingData()
 {
+    while (cong->getcWnd() >= inflightBytes() && !holdRetrans.empty()) {
+        auto seq = holdRetrans.begin()->first;
+        auto pk = holdRetrans.begin()->second;
+        connection->send(pk);
+        retransmitBytes += pk->getByteLength();
+        holdRetrans.erase(seq);
+        if (retrans.find(seq) == retrans.end()) // ! first time we resend
+            retrans[seq] = 1;
+        else
+            retrans[seq]++;
+    }
+
     while (cong->getcWnd() >= inflightBytes() && sentBytes < flowSize) {
         auto packetSize = messageLength;
         if (messageLength + sentBytes > flowSize) {
@@ -130,17 +150,6 @@ void CongApp::sendPendingData()
             scheduleAfter(estimatedRTT, RTOTimeout);
         }
     }
-    while (cong->getcWnd() >= inflightBytes() && !holdRetrans.empty()) {
-        auto packet = holdRetrans.front();
-        auto seq = packet->getSeqNumber();
-        connection->send(packet);
-        retransmitBytes += packet->getByteLength();
-        holdRetrans.pop();
-        if (retrans.find(seq) == retrans.end()) // ! first time we resend
-            retrans[seq] = 1;
-        else
-            retrans[seq]++;
-    }
     moveToNextEdge(leftEdge); // move leftEdge to next position
 
 }
@@ -148,9 +157,15 @@ void CongApp::sendPendingData()
 void CongApp::addRetransPacket(SeqNumber seq, B packetBytes)
 {
     EV_DEBUG << "add resend seq " << seq << endl;
-    auto packet = createDataPacket(seq, packetBytes);
-    packet->setResend(true);
-    holdRetrans.push(packet);
+    // debug
+    // if (localAddr == 395 && localPort==2000 && seq == 185000) {
+    //     std::cout << holdRetrans << endl;
+    // }
+    if (holdRetrans.find(seq) == holdRetrans.end()) {
+        auto pk = createDataPacket(seq, packetBytes);
+        pk->setResend(true);
+        holdRetrans[seq] = pk;
+    }
 }
 
 void CongApp::onFlowStart()
