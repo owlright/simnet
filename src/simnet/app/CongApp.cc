@@ -191,11 +191,11 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     auto segmentSize = pk->getReceivedBytes();
     auto round = pk->getRound();
     ASSERT(segmentSize > 0);
-#ifndef NDEBUG
-    if (localAddr == 784 && localPort==2000) {
-        std::cout <<round << " " << seq << endl;
-    }
-#endif
+// #ifndef NDEBUG
+//     if (localAddr == 656 && localPort==2000) {
+//         std::cout <<round << " " << seq << endl;
+//     }
+// #endif
     bool is_this_round = round == currentRound;
     if (!is_this_round) {
         // ! Cases that receive ack not this round:
@@ -206,9 +206,6 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
         delete pk;
         return;
     }
-
-
-
     else {
         cong->onRecvAck(seq, segmentSize, pk->getECE()); // let cong algo update cWnd
     }
@@ -217,9 +214,11 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     bool is_redundant_ack = !is_not_acked;
 
     if (is_redundant_ack) {
-        if (localAddr == 784 && localPort==2000 && confirmedRedundantBytes==935000) {
-            std::cout << "redundant ack " << seq << " " << retransmitBytes << " " << confirmedRedundantBytes << endl;
-        }
+        // #ifndef NDEBUG
+        // if (localAddr == 784 && localPort==2000 && confirmedRedundantBytes==935000) {
+        //     std::cout << "redundant ack " << seq << " " << retransmitBytes << " " << confirmedRedundantBytes << endl;
+        // }
+        // #endif
         // ! received a seq's ack more than once
         confirmedRedundantBytes += segmentSize;
     }
