@@ -9,7 +9,6 @@ protected:
     void initialize(int stage) override;
     virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    virtual void addRetransPacket(SeqNumber seq, B packetBytes) override;
 
 private:
     std::vector<std::vector<IntAddress>> segments;
@@ -119,13 +118,3 @@ void SRWorker::connectionDataArrived(Connection *connection, cMessage *msg)
 
 }
 
-void SRWorker::addRetransPacket(SeqNumber seq, B packetBytes)
-{
-    EV_WARN << "resend seq " << seq << endl;
-    // std::cout << "resend seq " << seq << endl;
-    auto packet = createDataPacket(seq, packetBytes);
-    packet->setRound(currentRound);
-    packet->setResend(true);
-    connection->send(packet);
-    retransmitBytes += packetBytes; // ! this will affect inflightBytes
-}
