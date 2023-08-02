@@ -25,6 +25,14 @@ std::ostream& operator<<(std::ostream& os, const std::unordered_map<K, V>& map) 
     return os;
 }
 
+template<typename K, typename V>
+std::ostream& operator<<(std::ostream& os, const std::map<K, V>& map) {
+    for (const auto& [key, value] : map) {
+        os << key << ": " << value << ", ";
+    }
+    return os;
+}
+
 template<class T>
 std::ostream& operator<<(std::ostream& os, const std::unordered_set<T>& array)
 {
