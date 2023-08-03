@@ -62,7 +62,7 @@ void HostNode::initialize(int stage)
             par("bandwidth") = bandwidth; // ! apps will read this value
         }
     }
-    else if (stage == INITSTAGE_LAST) {
+    else if (stage == INITSTAGE_ACCEPT) { // ! after jobs are assigned
         if (getSubmoduleVectorSize("workers") > 0 || getSubmoduleVectorSize("pses") > 0) {
             loadMode = false;
         }
@@ -107,14 +107,14 @@ void HostNode::finish()
     // }
 }
 
-CongApp* HostNode::createCongApp()
+FlowApp* HostNode::createCongApp()
 {
     auto appExistSize = getSubmoduleVectorSize("apps");
     if (appExistSize == 0)
-        throw cRuntimeError("apps[0] must be UnicastEchoApp.");
+        throw cRuntimeError("apps[0] must be EchoApp.");
     EV_TRACE << "create CongApp with port " << 1001 + appExistSize << endl;
     setSubmoduleVectorSize("apps", appExistSize + 1);
-    auto appType = "simnet.app.CongApp";
+    auto appType = "simnet.app.FlowApp";
     cModule *app = cModuleType::get(appType)->create("apps", this, appExistSize);
     app->par("address") = address;
     app->par("port") = 1000 + appExistSize;
@@ -132,7 +132,7 @@ CongApp* HostNode::createCongApp()
     at->gate("localOut",  at->gateSize("localIn")-1)->connectTo(inGate);
     outGate->connectTo(at->gate("localIn", at->gateSize("localOut")-1));
     app->callInitialize();
-    return check_and_cast<CongApp*>(app);
+    return check_and_cast<FlowApp*>(app);
 }
 
 void HostNode::startNewFlow()
