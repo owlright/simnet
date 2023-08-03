@@ -49,7 +49,7 @@ Packet *EchoApp::createAckPacket(const Packet* const pk)
     sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
             localAddr, pk->getSrcAddr(), pk->getSeqNumber());
     auto packet = new Packet(pkname);
-    packet->setSeqNumber(pk->getSeqNumber());
+    packet->setAckNumber(pk->getSeqNumber() + pk->getByteLength());
     packet->setKind(PacketType::ACK);
     packet->setByteLength(64);
     // packet->setReceivedBytes(pk->getByteLength());
