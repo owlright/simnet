@@ -1,8 +1,8 @@
 #include "UnicastEchoApp.h"
 
-Define_Module(UnicastEchoApp);
+Define_Module(EchoApp);
 
-UnicastEchoApp::~UnicastEchoApp()
+EchoApp::~EchoApp()
 {
     for (auto&it : connections) {
         delete  it.second;
@@ -10,12 +10,12 @@ UnicastEchoApp::~UnicastEchoApp()
     }
 }
 
-void UnicastEchoApp::initialize(int stage)
+void EchoApp::initialize(int stage)
 {
     UnicastApp::initialize(stage);
 }
 
-void UnicastEchoApp::handleMessage(cMessage *msg)
+void EchoApp::handleMessage(cMessage *msg)
 {
     auto pk = check_and_cast<Packet*>(msg);
     auto connectionId = pk->getConnectionId();
@@ -26,13 +26,13 @@ void UnicastEchoApp::handleMessage(cMessage *msg)
     connections.at(connectionId)->processMessage(pk);
 }
 
-void UnicastEchoApp::onNewConnectionArrived(IdNumber connId, const Packet* const pk)
+void EchoApp::onNewConnectionArrived(IdNumber connId, const Packet* const pk)
 {
     connections[connId] = createConnection(connId);
     connections[connId]->bindRemote(pk->getSrcAddr(), pk->getLocalPort());
 }
 
-void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg)
+void EchoApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
     auto pk = check_and_cast<Packet*>(msg);
     ASSERT(pk->getKind()==PacketType::DATA);
@@ -43,7 +43,7 @@ void UnicastEchoApp::connectionDataArrived(Connection *connection, cMessage *msg
     delete pk;
 }
 
-Packet *UnicastEchoApp::createAckPacket(const Packet* const pk)
+Packet *EchoApp::createAckPacket(const Packet* const pk)
 {
     char pkname[40];
     sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
@@ -52,18 +52,18 @@ Packet *UnicastEchoApp::createAckPacket(const Packet* const pk)
     packet->setSeqNumber(pk->getSeqNumber());
     packet->setKind(PacketType::ACK);
     packet->setByteLength(64);
-    packet->setReceivedBytes(pk->getByteLength());
+    // packet->setReceivedBytes(pk->getByteLength());
     packet->setStartTime(pk->getStartTime());
     packet->setQueueTime(pk->getQueueTime());
     packet->setTransmitTime(pk->getTransmitTime());
     if (pk->getECN()) {
         packet->setECE(true);
     }
-    packet->setIsFlowFinished(pk->isFlowFinished());
+    // packet->setIsFlowFinished(pk->isFlowFinished());
     return packet;
 }
 
-void UnicastEchoApp::refreshDisplay() const
+void EchoApp::refreshDisplay() const
 {
     if (!getEnvir()->isExpressMode()) {
         char buf[20];

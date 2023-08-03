@@ -12,36 +12,43 @@ simple UnicastApp like IApp {
 
 module CongApp extends UnicastApp {
     parameters:
-        @class(CongApp);
         port = default(-1);
         int destAddress @mutable = default(-1);
         int destPort = default(1000);
         int messageLength @unit(B) = default(1kB);
         double initRTO @unit(s) = default(1us);
-        int flowSize @unit(B) = default(8kB); // in bytes
-        double flowStartTime @unit(s) = default(0.0s);
-//        volatile double flowInterval @unit(s) = default(0s); // this means load = 1.0
-        bool useJitter = default(false); // ! set this to true before using jitter
-        volatile double jitterBeforeSending @unit(s) = default(0s);
         int maxDisorderNumber = default(3);
-        @signal[fct](type=simtime_t);
-        @signal[idealFct](type=simtime_t);
-        @signal[flowSize](type=int);
+
+        @class(CongApp);
         @signal[rtt](type=simtime_t);
         @signal[inflightBytes](type=int);
-        @statistic[fct](title="flow complete time"; source=fct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
-        @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
-        @statistic[flowSize](title="flow total bytes"; source=flowSize; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[rtt](title="rtt"; source=rtt; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[inflightBytes](title="inflight bytes"; source=inflightBytes; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=linear);
+
    submodules:
         cong: <default("Reno")> like Cong;
 }
 
-module UnicastEchoApp extends UnicastApp {
+module FlowApp extends CongApp {
+    parameters:
+        int flowSize @unit(B) = default(8kB); // in bytes
+        double flowStartTime @unit(s) = default(0.0s);
+        bool useJitter = default(false); // ! set this to true before using jitter
+        volatile double jitterBeforeSending @unit(s) = default(0s);
+
+        @class(FlowApp);
+        @signal[fct](type=simtime_t);
+        @signal[idealFct](type=simtime_t);
+        @signal[flowSize](type=int);
+        @statistic[fct](title="flow complete time"; source=fct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[flowSize](title="flow total bytes"; source=flowSize; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+}
+
+module EchoApp extends UnicastApp {
     parameters:
         port = default(1001);
-        @class(UnicastEchoApp);
+        @class(EchoApp);
 }
 
 // module ATPWorker extends CongApp {
@@ -52,7 +59,7 @@ module UnicastEchoApp extends UnicastApp {
 //         @class(ATPWorker);
 // }
 
-module ParameterServerApp extends UnicastEchoApp {
+module ParameterServerApp extends CongApp {
     parameters:
         port = default(1000);
         int jobId = default(-1);

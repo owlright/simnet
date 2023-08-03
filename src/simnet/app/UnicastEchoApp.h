@@ -1,10 +1,9 @@
 #pragma once
 #include <unordered_map>
-
 #include "SocketApp.h"
 using namespace omnetpp;
 
-class UnicastEchoApp : public UnicastApp
+class EchoApp : public UnicastApp
 {
 protected:
     // configuration
@@ -12,13 +11,12 @@ protected:
     B receivedBytes;
 
 public:
-    virtual ~UnicastEchoApp();
+    virtual ~EchoApp();
 
 protected:
     // inherited functions
     void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
-    int numInitStages() const override { return Stage::NUM_INIT_STAGES; }
     // helper functions
     virtual void onNewConnectionArrived(IdNumber connId, const Packet* const packet);
 
