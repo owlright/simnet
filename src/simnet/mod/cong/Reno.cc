@@ -147,6 +147,6 @@ void Reno::onSendData(SeqNumber seq, B segmentSize) {
     // sentBytes += segmentSize;
     if (seq > maxSentSeqNumber)
         maxSentSeqNumber = seq;
-    if (rttBytes == 0)
+    if (rttBytes <= 0)
         rttBytes = cWnd;
 };
