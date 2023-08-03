@@ -73,18 +73,20 @@ class Packet extends SegmentRoutingHeader
 {
     // udp/tcp fields
     int64_t seqNumber;
+    int64_t ackNumber;
     uint16_t localPort;
     uint16_t destPort;
-    bool ECN;
+    bool FIN = false;
+    bool FINACK = false;
+    bool ECN = false;
     bool ECE;
     // cheating fields
     PacketType packetType;
     int64_t connectionId;
-    int64_t receivedBytes;
     double startTime;
     double transmitTime;
     double queueTime;
-    bool isFlowFinished;
+    //bool isFlowFinished;
     bool resend;
     int round;
 }

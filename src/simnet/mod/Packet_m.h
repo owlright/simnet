@@ -361,18 +361,20 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, SegmentRoutingHeader& obj
  * {
  *     // udp/tcp fields
  *     int64_t seqNumber;
+ *     int64_t ackNumber;
  *     uint16_t localPort;
  *     uint16_t destPort;
- *     bool ECN;
+ *     bool FIN = false;
+ *     bool FINACK = false;
+ *     bool ECN = false;
  *     bool ECE;
  *     // cheating fields
  *     PacketType packetType;
  *     int64_t connectionId;
- *     int64_t receivedBytes;
  *     double startTime;
  *     double transmitTime;
  *     double queueTime;
- *     bool isFlowFinished;
+ *     //bool isFlowFinished;
  *     bool resend;
  *     int round;
  * }
@@ -382,17 +384,18 @@ class Packet : public ::SegmentRoutingHeader
 {
   protected:
     int64_t seqNumber = 0;
+    int64_t ackNumber = 0;
     uint16_t localPort = 0;
     uint16_t destPort = 0;
+    bool FIN = false;
+    bool FINACK = false;
     bool ECN = false;
     bool ECE = false;
     PacketType packetType = static_cast<PacketType>(-1);
     int64_t connectionId = 0;
-    int64_t receivedBytes = 0;
     double startTime = 0;
     double transmitTime = 0;
     double queueTime = 0;
-    bool isFlowFinished_ = false;
     bool resend = false;
     int round = 0;
 
@@ -414,11 +417,20 @@ class Packet : public ::SegmentRoutingHeader
     virtual int64_t getSeqNumber() const;
     virtual void setSeqNumber(int64_t seqNumber);
 
+    virtual int64_t getAckNumber() const;
+    virtual void setAckNumber(int64_t ackNumber);
+
     virtual uint16_t getLocalPort() const;
     virtual void setLocalPort(uint16_t localPort);
 
     virtual uint16_t getDestPort() const;
     virtual void setDestPort(uint16_t destPort);
+
+    virtual bool getFIN() const;
+    virtual void setFIN(bool FIN);
+
+    virtual bool getFINACK() const;
+    virtual void setFINACK(bool FINACK);
 
     virtual bool getECN() const;
     virtual void setECN(bool ECN);
@@ -432,9 +444,6 @@ class Packet : public ::SegmentRoutingHeader
     virtual int64_t getConnectionId() const;
     virtual void setConnectionId(int64_t connectionId);
 
-    virtual int64_t getReceivedBytes() const;
-    virtual void setReceivedBytes(int64_t receivedBytes);
-
     virtual double getStartTime() const;
     virtual void setStartTime(double startTime);
 
@@ -443,9 +452,6 @@ class Packet : public ::SegmentRoutingHeader
 
     virtual double getQueueTime() const;
     virtual void setQueueTime(double queueTime);
-
-    virtual bool isFlowFinished() const;
-    virtual void setIsFlowFinished(bool isFlowFinished);
 
     virtual bool getResend() const;
     virtual void setResend(bool resend);

@@ -32,6 +32,7 @@ OBJS = \
     $O/distribution/CdfDistribution.o \
     $O/distribution/NedFunctions.o \
     $O/simnet/app/CongApp.o \
+    $O/simnet/app/FlowApp.o \
     $O/simnet/app/ParameterServerApp.o \
     $O/simnet/app/SocketApp.o \
     $O/simnet/app/SRWorkerApp.o \

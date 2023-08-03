@@ -10,8 +10,6 @@ simsignal_t CongApp::rttSignal = registerSignal("rtt");
 simsignal_t CongApp::inflightBytesSignal = registerSignal("inflightBytes");
 
 CongApp::~CongApp() {
-    cancelAndDelete(flowStartTimer);
-    cancelAndDelete(jitterTimeout);
     cancelAndDelete(RTOTimeout);
 }
 
@@ -19,7 +17,8 @@ bool CongApp::bindRemote()
 {
     if(destAddr != INVALID_ADDRESS && destPort != INVALID_PORT) {
         connection->bindRemote(destAddr, destPort); // ! bind remote before using send
-        appState = Scheduled;
+        // appState = Scheduled;
+        tcpState = OPEN;
         return true;
     }
     else {
@@ -27,20 +26,22 @@ bool CongApp::bindRemote()
     }
 }
 
+void CongApp::resetState()
+{
+    currentRound += 1;
+    nextSentSeq = 0;
+    maxConfirmedSeq = 0;
+    resentBytes = 0;
+//    confirmedResendBytes = 0;
+    currentBaseRTT = 0;
+    tcpState = OPEN;
+}
+
 void CongApp::finish() {
     if (destAddr == INVALID_ADDRESS)
         return;
-
-    EV << localAddr << " retransmit bytes: " << retransmitBytes << endl;
-    // if (currentRound != numRounds) {
-    //     EV_WARN << getClassAndFullPath() << " " << localAddr << " complete " << currentRound << " rounds,  not reach " << numRounds << endl;
-    // }
-    for (auto& [seq, n]: disorders) {
-        EV_WARN << seq  << endl;
-    }
-//    for (auto&it: confirmedDisorders) {
-//        EV_WARN << it << " "<< endl;
-//    }
+    EV << localAddr << " retransmit bytes: " << resentBytes << endl;
+    EV_WARN << "seq " << txBuffer << " not acked." << endl;
 }
 
 void CongApp::initialize(int stage)
@@ -49,271 +50,173 @@ void CongApp::initialize(int stage)
     // ! if this moudle is created by manager in ASSIGN stage, the stages before it will not be executed
     if (stage == INITSTAGE_LOCAL) {
         maxDisorderNumber = par("maxDisorderNumber");
-        appState = Idle;
-        messageLength = par("messageLength");
-        useJitter = par("useJitter");
         bandwidth = getParentModule()->par("bandwidth");
-        flowSize = par("flowSize");
-        flowStartTime = par("flowStartTime");
-        flowStartTimer = new cMessage("flowStart");
         RTOTimeout = new cMessage("RTOTimeout");
         estimatedRTT = par("initRTO");
         // flowInterval = &par("flowInterval");
-        if (useJitter)
-            jitterBeforeSending = &par("jitterBeforeSending");
+        messageLength = par("messageLength");
         cong = check_and_cast<CongAlgo*>(getSubmodule("cong"));
         cong->setSegmentSize(messageLength);
         destAddr = par("destAddress");
         destPort = par("destPort");
-        if (bindRemote()) {
-            scheduleAt(flowStartTime, flowStartTimer);
-        }
     }
 }
 
 void CongApp::handleMessage(cMessage *msg)
 {
-    if (msg == flowStartTimer) { // new flow
-        if (!getEnvir()->isExpressMode())
-            getParentModule()->bubble("a new flow!");
-        onFlowStart();
-        sendPendingData();
-    } else if (msg == jitterTimeout) { // most times is a new window
-        sendPendingData();
-    } else if (msg == RTOTimeout) {
-        switch(appState) {
-            case AllDataSended: // ! if the last window's data are lost, no more acks arrive, we have to trigger it by ourself
-                if (!sentButNotAcked.empty()) {
-                    for (const auto& [seq, pkSize] : sentButNotAcked) {
-                        addRetransPacket(seq, pkSize);
-                    }
-                    sendPendingData();
-                }
-                break;
-            case Sending:
-                if (leftEdge == oldLeftEdge) { // ! leftEdge should be the earliest ack we accept, if it doesnt change, something wrong
-                    ASSERT(sentButNotAcked.find(leftEdge) != sentButNotAcked.end());
-                    addRetransPacket(leftEdge, sentButNotAcked[leftEdge]);
-                    auto seq = holdRetrans.begin()->first;
-                    auto pk = holdRetrans.begin()->second;
-                    connection->send(pk);
-                    retransmitBytes += pk->getByteLength();
-                    holdRetrans.erase(seq);
-                    if (retrans.find(seq) == retrans.end()) // ! first time we resend
-                        retrans[seq] = 1;
-                    else
-                        retrans[seq]++;
-                }
-                break;
-            default:
-                throw cRuntimeError("forget to add break.");
-        }
+    if (msg == RTOTimeout) {
+        if (last_oldestNotAckedSeq == oldestNotAckedSeq)
+            resendOldestSeq();
         scheduleAfter(estimatedRTT, RTOTimeout); // we have to repeadedly check, this will be canceled when appState==finished
     } else {
         UnicastApp::handleMessage(msg);
     }
 }
 
-void CongApp::scheduleNextFlowAt(simtime_t_cref time)
-{
-    ASSERT(!flowStartTimer->isScheduled());
-    scheduleAt(time, flowStartTimer);
-    appState = Scheduled;
-}
-
 void CongApp::sendPendingData()
 {
-    while (cong->getcWnd() >= inflightBytes() && !holdRetrans.empty()) {
-        auto seq = holdRetrans.begin()->first;
-        auto pk = holdRetrans.begin()->second;
+    // if (last_oldestNotAckedSeq == oldestNotAckedSeq)
+    //     resendOldestSeq();
+
+    // ASSERT(!txBuffer.empty());
+    auto tx_item_it = txBuffer.begin();
+    // auto pkt = tx_item.pkt->dup();
+    // auto pktSize = pkt->getByteLength();
+    while (tx_item_it != txBuffer.end() && cong->getcWnd() - inflightBytes() >= tx_item_it->second.pktSize) {
+        auto tx_item = tx_item_it->second;
+        auto pkt = tx_item.pkt->dup();
+        auto pktSize = tx_item.pktSize;
+        if (tx_item.is_sent) {
+            pkt->setResend(true);
+            resentBytes += pktSize;
+            tx_item.is_resend_already = true;
+        }
+        else {
+            tx_item.is_sent = true;
+            nextSentSeq = tx_item.seq + pktSize;
+        }
+        pkt->setAckNumber(nextAckSeq);
+        connection->send(pkt);
+        cong->onSendData(tx_item.seq, pktSize);
+        tx_item_it++;
+        // if (nextSentSeq == pktSize) { // ! in case the first packet is lost
+        //     // ! if cwnd==1, and this packet is lost, no more acks will arrive, sender will be stuck
+        //     scheduleAfter(estimatedRTT, RTOTimeout);
+        // }
+    }
+}
+
+void CongApp::resendOldestSeq()
+{
+    auto entry = txBuffer.begin()->second;
+    auto pk = entry.pkt;
+    if (entry.resend_timer == 0 && cong->getcWnd() - inflightBytes() >= pk->getByteLength()) {
         connection->send(pk);
-        retransmitBytes += pk->getByteLength();
-        holdRetrans.erase(seq);
-        if (retrans.find(seq) == retrans.end()) // ! first time we resend
-            retrans[seq] = 1;
-        else
-            retrans[seq]++;
+        entry.is_resend_already = true;
+        resentBytes += pk->getByteLength(); // ! this will affect inflightBytes
+        entry.resend_timer = maxDisorderNumber > cong->getcWnd() ? maxDisorderNumber : cong->getcWnd();
+    }
+}
+
+void CongApp::onReceivedAck(const Packet* pk)
+{
+    auto ack_seq = pk->getAckNumber();
+    // ASSERT(txBuffer.find(ack_seq) != txBuffer.end());
+//    if (!txBuffer.at(ack_seq).is_resend_already) {
+    if (ack_seq <= maxConfirmedSeq) {// ! redundant ack
+        txBuffer.at(ack_seq).resend_timer--;
+        return;
     }
 
-    while (cong->getcWnd() >= inflightBytes() && sentBytes < flowSize) {
-        auto packetSize = messageLength;
-        if (messageLength + sentBytes > flowSize) {
-            packetSize = flowSize - sentBytes; // ! incase the data about to send is too small, such as the last packet or flowSize is too small
+    maxConfirmedSeq = ack_seq;
+    SeqNumber next_seq{ack_seq};
+    for (auto& [old_seq, pkt_buffer]: txBuffer) {
+        if (old_seq < ack_seq) {
+            delete pkt_buffer.pkt;
         }
-        sentBytes += packetSize;
-        ASSERT(sentButNotAcked.find(sentBytes) == sentButNotAcked.end());
-        sentButNotAcked[sentBytes] = packetSize;
-        auto packet = createDataPacket(sentBytes, packetSize);
-        connection->send(packet);
-        cong->onSendData(sentBytes, packetSize);
-        if (sentBytes == packetSize) { // the first packet
-            scheduleAfter(estimatedRTT, RTOTimeout);
+        else {
+            next_seq = ack_seq;
         }
     }
-    moveToNextEdge(leftEdge); // move leftEdge to next position
-
-}
-
-void CongApp::addRetransPacket(SeqNumber seq, B packetBytes)
-{
-    EV_DEBUG << "add resend seq " << seq << endl;
-    // debug
-    // if (localAddr == 395 && localPort==2000 && seq == 185000) {
-    //     std::cout << holdRetrans << endl;
-    // }
-    if (holdRetrans.find(seq) == holdRetrans.end()) {
-        auto pk = createDataPacket(seq, packetBytes);
-        pk->setResend(true);
-        holdRetrans[seq] = pk;
+    if (!txBuffer.empty()) {
+        auto itup = txBuffer.upper_bound(next_seq);
+        txBuffer.erase(txBuffer.begin(), itup);
+        last_oldestNotAckedSeq = oldestNotAckedSeq;
+        oldestNotAckedSeq = txBuffer.begin()->first;
     }
 }
 
-void CongApp::onFlowStart()
+void CongApp::onReceivedData(const Packet* pk)
 {
-    currentRound += 1;
-    sentBytes = 0;
-    confirmedNormalBytes = 0;
-    retransmitBytes = 0;
-    confirmedRetransBytes = 0;
-    confirmedRedundantBytes = 0;
-    currentBaseRTT = 0;
-    flowStartTime = simTime().dbl();
-    appState = Sending;
-    ASSERT(sentButNotAcked.empty());
-    ASSERT(disorders.empty());
-    retrans.clear(); // ! it may not come to zero at this round's end, see Case 2 below
-    ASSERT(!RTOTimeout->isScheduled());
-    if (connection == nullptr) {
-        throw cRuntimeError("conneciton is nullptr!");
-    }
-    EV_INFO << " flowSize: " << flowSize << endl;
-    cong->reset();
-    emit(flowSizeSignal, flowSize);
-}
-
-void CongApp::onFlowStop()
-{
-    emit(fctSignal, (simTime() - flowStartTime));
-    emit(idealFctSignal, currentBaseRTT + SimTime((flowSize*8) / bandwidth));
-    appState = Finished;
+    // * measure something
+    auto sampleRTT = simTime() - SimTime(pk->getStartTime());
+    emit(rttSignal, sampleRTT);
+    currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
+    estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
 }
 
 void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
     auto pk = check_and_cast<Packet*>(msg);
-    ASSERT(pk->getKind()==PacketType::ACK);
-    auto seq = pk->getSeqNumber();
-    auto segmentSize = pk->getReceivedBytes();
-    auto round = pk->getRound();
-    ASSERT(segmentSize > 0);
-// #ifndef NDEBUG
-//     if (localAddr == 656 && localPort==2000) {
-//         std::cout <<round << " " << seq << endl;
-//     }
-// #endif
-    bool is_this_round = round == currentRound;
-    if (!is_this_round) {
-        // ! Cases that receive ack not this round:
-        // ! 1. resend packets may be sent out at last round's last window because of disorder but not lost
-        // ! 2. resend too many times and redundant acks arrive this round.
-        // ! since we've already begun a new round,
-        // ! we don't handle these packets, just delete it and return
-        delete pk;
-        return;
-    }
-    else {
-        cong->onRecvAck(seq, segmentSize, pk->getECE()); // let cong algo update cWnd
-    }
-    ASSERT(is_this_round);
-    bool is_not_acked = sentButNotAcked.find(seq) != sentButNotAcked.end();
-    bool is_redundant_ack = !is_not_acked;
 
-    if (is_redundant_ack) {
-        // #ifndef NDEBUG
-        // if (localAddr == 784 && localPort==2000 && confirmedRedundantBytes==935000) {
-        //     std::cout << "redundant ack " << seq << " " << retransmitBytes << " " << confirmedRedundantBytes << endl;
-        // }
-        // #endif
-        // ! received a seq's ack more than once
-        confirmedRedundantBytes += segmentSize;
-    }
-    else {
-        // ! this first ack to this seq, here are some cases:
-        // ! 1. original ack arrive
-        // ! 2. packet is lost, resend's ack arrive
-        // ! 3. packet is not lost, but resend packet's ack arrive earlier.
-        if (pk->getResend())
-            confirmedRetransBytes += segmentSize;
-        else
-            confirmedNormalBytes += segmentSize;
+    auto ackSeq = pk->getAckNumber();
+    ASSERT(ackSeq >= oldestNotAckedSeq);
 
-        if (retrans.find(seq) != retrans.end()) {
-            retrans[seq]--;
-            if (retrans[seq] == 0)
-                retrans.erase(seq);
-        }
+    cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
-        disorders.erase(seq);
-        sentButNotAcked.erase(seq);
-        // ! this could be empty for example: all data acked, but cWnd becomes 1, so after ack this, you will get empty
-        if (sentButNotAcked.empty()) {
-            // ! update new disorders
-            auto right = cong->getMaxAckedSeqNumber();
-            for (auto it:sentButNotAcked) {
-                auto tmpseq = it.first;
-                if (tmpseq != seq && tmpseq > leftEdge && tmpseq < right
-                        && disorders.find(tmpseq) == disorders.end()) {
-                    disorders[tmpseq] = maxDisorderNumber;
-                }
-                if (tmpseq > right) // ! sentButNotAcked must be ordered
-                    break;
-            }
-        }
-    }
-
-    // resend the countdown packets
-    auto rtt_timer = cong->getcWnd() / messageLength + 1;
-    for (auto& it : disorders) {
-        if (it.second == 0) {
-            // count down, must resend this seq
-            auto tmp_seq = it.first;
-            ASSERT(sentButNotAcked.find(tmp_seq)!= sentButNotAcked.end());
-            addRetransPacket(tmp_seq, sentButNotAcked.at(tmp_seq));
-            disorders[tmp_seq] = rtt_timer > maxDisorderNumber ? rtt_timer : maxDisorderNumber; // wait for a RTT
-        }
-        else {
-            it.second--;
-        }
-    }
-
-    auto sampleRTT = simTime() - SimTime(pk->getStartTime());
-    emit(rttSignal, sampleRTT);
-    currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
-    estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
-    if (sentBytes < flowSize) {
-        if (useJitter && !jitterTimeout->isScheduled()) // ! in case multiple acks arrived at the same time
-        {
-            auto jitter = jitterBeforeSending->doubleValueInUnit("s");
-            scheduleAfter(jitter, jitterTimeout);
-        }
-        else
-            sendPendingData();
-
-    } else {
-        rescheduleAfter(estimatedRTT, RTOTimeout);
-        appState = AllDataSended;
-    }
-
-    if (confirmedNormalBytes + confirmedRetransBytes == flowSize) {
-        cancelEvent(RTOTimeout); // ! avoid affecting next flow
-        if (!flowStartTimer->isScheduled())  // ! avoid schedule timer multiple times
-            onFlowStop();
-        // if (localAddr == 53 || localAddr == 232 || localAddr == 234)
-        //     std::cout << localAddr << " flow finished!" << endl;
-    }
-
+    onReceivedAck(pk);
+    transitToNextState(pk);
+    onReceivedData(pk);
+    insertRxBuffer(pk);
     delete pk;
+
+    if (txBuffer.empty() && tcpState == OPEN) {
+        // * if I have save sent all my packets out, then send FIN and wait
+        char pkname[40];
+        sprintf(pkname, "FIN%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
+        connection->getConnectionId(), localAddr, destAddr, getNextSeq());
+        auto fin_pk = new Packet(pkname);
+        insertTxBuffer(fin_pk); // ! FIN packet
+        tcpState = FIN_WAIT;
+    }
+
+    if (tcpState == CLOSED) {
+        cancelEvent(RTOTimeout);
+    }
+    else {
+        sendPendingData();
+    }
+
 }
+
+void CongApp::transitToNextState(const Packet* pk)
+{
+    if (pk->getFIN()) { // * the other side has received all my packets
+        ASSERT(txBuffer.empty());
+        switch (tcpState) {
+            case OPEN: // I'm still sending
+                tcpState = CLOSE_WAIT;
+                break;
+
+            case CLOSE_WAIT: // received mupltiple FINs
+                tcpState = CLOSE_WAIT;
+                break;
+
+            case FIN_WAIT: // although not fin_ack, but the other side must have finished sending.
+                tcpState = CLOSED;
+                break;
+
+            default:
+                throw cRuntimeError("unthought case");
+        }
+    }
+
+    if (pk->getFINACK() && tcpState == FIN_WAIT) {
+        ASSERT(txBuffer.empty());
+        tcpState = CLOSED;
+    }
+}
+
 
 void CongApp::handleParameterChange(const char *parameterName)
 {
@@ -321,32 +224,51 @@ void CongApp::handleParameterChange(const char *parameterName)
     // this can happen when node change the app destionation
     if (strcmp(parameterName, "destAddress") == 0) {
         destAddr = par("destAddress");
-        bindRemote();
     }
     else if (strcmp(parameterName, "destPort") == 0) {
         destPort = par("destPort");
-        bindRemote();
     }
 
 }
 
-Packet* CongApp::createDataPacket(SeqNumber seq, B packetBytes)
+void CongApp::insertRxBuffer(Packet* pk)
 {
-    char pkname[40];
-    sprintf(pkname, "conn%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            connection->getConnectionId(), localAddr, destAddr, seq);
-    auto pk = new Packet(pkname);
+    auto seq = pk->getSeqNumber();
+    if (rxBuffer.find(seq) == rxBuffer.end()) {
+        // ! these seqs arrive too early, store them for now
+        ASSERT(seq > nextAckSeq);
+        rxBuffer[seq] = pk;
+    }
+    else {
+        delete pk; // redundant ack
+    }
+
+    if (seq == nextAckSeq) { // ! we can safely remove some confirmed tx packets
+        while (rxBuffer.find(seq) != rxBuffer.end()) {
+            delete rxBuffer[seq];
+            nextAckSeq = seq + pk->getByteLength();
+        }
+    }
+
+}
+
+void CongApp::insertTxBuffer(Packet* pk)
+{
+    pk->setSeqNumber(nextSeq);
+    setField(pk);
+    txBuffer[nextSeq] = TxItem(pk);
+    nextSeq += pk->getByteLength();
+}
+
+void CongApp::setField(Packet* pk)
+{
+    pk->setDestAddr(destAddr);
     pk->setRound(currentRound);
     pk->setKind(DATA);
-    pk->setSeqNumber(seq);
-    pk->setByteLength(packetBytes);
     pk->setECN(false);
     pk->setStartTime(simTime().dbl());
     pk->setTransmitTime(0);
     pk->setQueueTime(0);
-    if (sentBytes == flowSize)
-        pk->setIsFlowFinished(true);
-    return pk;
 }
 
 void CongApp::refreshDisplay() const

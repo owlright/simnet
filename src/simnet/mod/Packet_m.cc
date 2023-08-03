@@ -2147,17 +2147,18 @@ Packet& Packet::operator=(const Packet& other)
 void Packet::copy(const Packet& other)
 {
     this->seqNumber = other.seqNumber;
+    this->ackNumber = other.ackNumber;
     this->localPort = other.localPort;
     this->destPort = other.destPort;
+    this->FIN = other.FIN;
+    this->FINACK = other.FINACK;
     this->ECN = other.ECN;
     this->ECE = other.ECE;
     this->packetType = other.packetType;
     this->connectionId = other.connectionId;
-    this->receivedBytes = other.receivedBytes;
     this->startTime = other.startTime;
     this->transmitTime = other.transmitTime;
     this->queueTime = other.queueTime;
-    this->isFlowFinished_ = other.isFlowFinished_;
     this->resend = other.resend;
     this->round = other.round;
 }
@@ -2166,17 +2167,18 @@ void Packet::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::SegmentRoutingHeader::parsimPack(b);
     doParsimPacking(b,this->seqNumber);
+    doParsimPacking(b,this->ackNumber);
     doParsimPacking(b,this->localPort);
     doParsimPacking(b,this->destPort);
+    doParsimPacking(b,this->FIN);
+    doParsimPacking(b,this->FINACK);
     doParsimPacking(b,this->ECN);
     doParsimPacking(b,this->ECE);
     doParsimPacking(b,this->packetType);
     doParsimPacking(b,this->connectionId);
-    doParsimPacking(b,this->receivedBytes);
     doParsimPacking(b,this->startTime);
     doParsimPacking(b,this->transmitTime);
     doParsimPacking(b,this->queueTime);
-    doParsimPacking(b,this->isFlowFinished_);
     doParsimPacking(b,this->resend);
     doParsimPacking(b,this->round);
 }
@@ -2185,17 +2187,18 @@ void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::SegmentRoutingHeader::parsimUnpack(b);
     doParsimUnpacking(b,this->seqNumber);
+    doParsimUnpacking(b,this->ackNumber);
     doParsimUnpacking(b,this->localPort);
     doParsimUnpacking(b,this->destPort);
+    doParsimUnpacking(b,this->FIN);
+    doParsimUnpacking(b,this->FINACK);
     doParsimUnpacking(b,this->ECN);
     doParsimUnpacking(b,this->ECE);
     doParsimUnpacking(b,this->packetType);
     doParsimUnpacking(b,this->connectionId);
-    doParsimUnpacking(b,this->receivedBytes);
     doParsimUnpacking(b,this->startTime);
     doParsimUnpacking(b,this->transmitTime);
     doParsimUnpacking(b,this->queueTime);
-    doParsimUnpacking(b,this->isFlowFinished_);
     doParsimUnpacking(b,this->resend);
     doParsimUnpacking(b,this->round);
 }
@@ -2208,6 +2211,16 @@ int64_t Packet::getSeqNumber() const
 void Packet::setSeqNumber(int64_t seqNumber)
 {
     this->seqNumber = seqNumber;
+}
+
+int64_t Packet::getAckNumber() const
+{
+    return this->ackNumber;
+}
+
+void Packet::setAckNumber(int64_t ackNumber)
+{
+    this->ackNumber = ackNumber;
 }
 
 uint16_t Packet::getLocalPort() const
@@ -2228,6 +2241,26 @@ uint16_t Packet::getDestPort() const
 void Packet::setDestPort(uint16_t destPort)
 {
     this->destPort = destPort;
+}
+
+bool Packet::getFIN() const
+{
+    return this->FIN;
+}
+
+void Packet::setFIN(bool FIN)
+{
+    this->FIN = FIN;
+}
+
+bool Packet::getFINACK() const
+{
+    return this->FINACK;
+}
+
+void Packet::setFINACK(bool FINACK)
+{
+    this->FINACK = FINACK;
 }
 
 bool Packet::getECN() const
@@ -2270,16 +2303,6 @@ void Packet::setConnectionId(int64_t connectionId)
     this->connectionId = connectionId;
 }
 
-int64_t Packet::getReceivedBytes() const
-{
-    return this->receivedBytes;
-}
-
-void Packet::setReceivedBytes(int64_t receivedBytes)
-{
-    this->receivedBytes = receivedBytes;
-}
-
 double Packet::getStartTime() const
 {
     return this->startTime;
@@ -2310,16 +2333,6 @@ void Packet::setQueueTime(double queueTime)
     this->queueTime = queueTime;
 }
 
-bool Packet::isFlowFinished() const
-{
-    return this->isFlowFinished_;
-}
-
-void Packet::setIsFlowFinished(bool isFlowFinished)
-{
-    this->isFlowFinished_ = isFlowFinished;
-}
-
 bool Packet::getResend() const
 {
     return this->resend;
@@ -2346,17 +2359,18 @@ class PacketDescriptor : public omnetpp::cClassDescriptor
     mutable const char **propertyNames;
     enum FieldConstants {
         FIELD_seqNumber,
+        FIELD_ackNumber,
         FIELD_localPort,
         FIELD_destPort,
+        FIELD_FIN,
+        FIELD_FINACK,
         FIELD_ECN,
         FIELD_ECE,
         FIELD_packetType,
         FIELD_connectionId,
-        FIELD_receivedBytes,
         FIELD_startTime,
         FIELD_transmitTime,
         FIELD_queueTime,
-        FIELD_isFlowFinished,
         FIELD_resend,
         FIELD_round,
     };
@@ -2425,7 +2439,7 @@ const char *PacketDescriptor::getProperty(const char *propertyName) const
 int PacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 14+base->getFieldCount() : 14;
+    return base ? 15+base->getFieldCount() : 15;
 }
 
 unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
@@ -2438,21 +2452,22 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
     }
     static unsigned int fieldTypeFlags[] = {
         FD_ISEDITABLE,    // FIELD_seqNumber
+        FD_ISEDITABLE,    // FIELD_ackNumber
         FD_ISEDITABLE,    // FIELD_localPort
         FD_ISEDITABLE,    // FIELD_destPort
+        FD_ISEDITABLE,    // FIELD_FIN
+        FD_ISEDITABLE,    // FIELD_FINACK
         FD_ISEDITABLE,    // FIELD_ECN
         FD_ISEDITABLE,    // FIELD_ECE
         FD_ISEDITABLE,    // FIELD_packetType
         FD_ISEDITABLE,    // FIELD_connectionId
-        FD_ISEDITABLE,    // FIELD_receivedBytes
         FD_ISEDITABLE,    // FIELD_startTime
         FD_ISEDITABLE,    // FIELD_transmitTime
         FD_ISEDITABLE,    // FIELD_queueTime
-        FD_ISEDITABLE,    // FIELD_isFlowFinished
         FD_ISEDITABLE,    // FIELD_resend
         FD_ISEDITABLE,    // FIELD_round
     };
-    return (field >= 0 && field < 14) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 15) ? fieldTypeFlags[field] : 0;
 }
 
 const char *PacketDescriptor::getFieldName(int field) const
@@ -2465,21 +2480,22 @@ const char *PacketDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "seqNumber",
+        "ackNumber",
         "localPort",
         "destPort",
+        "FIN",
+        "FINACK",
         "ECN",
         "ECE",
         "packetType",
         "connectionId",
-        "receivedBytes",
         "startTime",
         "transmitTime",
         "queueTime",
-        "isFlowFinished",
         "resend",
         "round",
     };
-    return (field >= 0 && field < 14) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 15) ? fieldNames[field] : nullptr;
 }
 
 int PacketDescriptor::findField(const char *fieldName) const
@@ -2487,19 +2503,20 @@ int PacketDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
     int baseIndex = base ? base->getFieldCount() : 0;
     if (strcmp(fieldName, "seqNumber") == 0) return baseIndex + 0;
-    if (strcmp(fieldName, "localPort") == 0) return baseIndex + 1;
-    if (strcmp(fieldName, "destPort") == 0) return baseIndex + 2;
-    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 3;
-    if (strcmp(fieldName, "ECE") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "packetType") == 0) return baseIndex + 5;
-    if (strcmp(fieldName, "connectionId") == 0) return baseIndex + 6;
-    if (strcmp(fieldName, "receivedBytes") == 0) return baseIndex + 7;
-    if (strcmp(fieldName, "startTime") == 0) return baseIndex + 8;
-    if (strcmp(fieldName, "transmitTime") == 0) return baseIndex + 9;
-    if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 10;
-    if (strcmp(fieldName, "isFlowFinished") == 0) return baseIndex + 11;
-    if (strcmp(fieldName, "resend") == 0) return baseIndex + 12;
-    if (strcmp(fieldName, "round") == 0) return baseIndex + 13;
+    if (strcmp(fieldName, "ackNumber") == 0) return baseIndex + 1;
+    if (strcmp(fieldName, "localPort") == 0) return baseIndex + 2;
+    if (strcmp(fieldName, "destPort") == 0) return baseIndex + 3;
+    if (strcmp(fieldName, "FIN") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "FINACK") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 6;
+    if (strcmp(fieldName, "ECE") == 0) return baseIndex + 7;
+    if (strcmp(fieldName, "packetType") == 0) return baseIndex + 8;
+    if (strcmp(fieldName, "connectionId") == 0) return baseIndex + 9;
+    if (strcmp(fieldName, "startTime") == 0) return baseIndex + 10;
+    if (strcmp(fieldName, "transmitTime") == 0) return baseIndex + 11;
+    if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 12;
+    if (strcmp(fieldName, "resend") == 0) return baseIndex + 13;
+    if (strcmp(fieldName, "round") == 0) return baseIndex + 14;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -2513,21 +2530,22 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "int64_t",    // FIELD_seqNumber
+        "int64_t",    // FIELD_ackNumber
         "uint16_t",    // FIELD_localPort
         "uint16_t",    // FIELD_destPort
+        "bool",    // FIELD_FIN
+        "bool",    // FIELD_FINACK
         "bool",    // FIELD_ECN
         "bool",    // FIELD_ECE
         "PacketType",    // FIELD_packetType
         "int64_t",    // FIELD_connectionId
-        "int64_t",    // FIELD_receivedBytes
         "double",    // FIELD_startTime
         "double",    // FIELD_transmitTime
         "double",    // FIELD_queueTime
-        "bool",    // FIELD_isFlowFinished
         "bool",    // FIELD_resend
         "int",    // FIELD_round
     };
-    return (field >= 0 && field < 14) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 15) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **PacketDescriptor::getFieldPropertyNames(int field) const
@@ -2618,17 +2636,18 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
         case FIELD_seqNumber: return int642string(pp->getSeqNumber());
+        case FIELD_ackNumber: return int642string(pp->getAckNumber());
         case FIELD_localPort: return ulong2string(pp->getLocalPort());
         case FIELD_destPort: return ulong2string(pp->getDestPort());
+        case FIELD_FIN: return bool2string(pp->getFIN());
+        case FIELD_FINACK: return bool2string(pp->getFINACK());
         case FIELD_ECN: return bool2string(pp->getECN());
         case FIELD_ECE: return bool2string(pp->getECE());
         case FIELD_packetType: return enum2string(pp->getPacketType(), "PacketType");
         case FIELD_connectionId: return int642string(pp->getConnectionId());
-        case FIELD_receivedBytes: return int642string(pp->getReceivedBytes());
         case FIELD_startTime: return double2string(pp->getStartTime());
         case FIELD_transmitTime: return double2string(pp->getTransmitTime());
         case FIELD_queueTime: return double2string(pp->getQueueTime());
-        case FIELD_isFlowFinished: return bool2string(pp->isFlowFinished());
         case FIELD_resend: return bool2string(pp->getResend());
         case FIELD_round: return long2string(pp->getRound());
         default: return "";
@@ -2648,17 +2667,18 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
         case FIELD_seqNumber: pp->setSeqNumber(string2int64(value)); break;
+        case FIELD_ackNumber: pp->setAckNumber(string2int64(value)); break;
         case FIELD_localPort: pp->setLocalPort(string2ulong(value)); break;
         case FIELD_destPort: pp->setDestPort(string2ulong(value)); break;
+        case FIELD_FIN: pp->setFIN(string2bool(value)); break;
+        case FIELD_FINACK: pp->setFINACK(string2bool(value)); break;
         case FIELD_ECN: pp->setECN(string2bool(value)); break;
         case FIELD_ECE: pp->setECE(string2bool(value)); break;
         case FIELD_packetType: pp->setPacketType((PacketType)string2enum(value, "PacketType")); break;
         case FIELD_connectionId: pp->setConnectionId(string2int64(value)); break;
-        case FIELD_receivedBytes: pp->setReceivedBytes(string2int64(value)); break;
         case FIELD_startTime: pp->setStartTime(string2double(value)); break;
         case FIELD_transmitTime: pp->setTransmitTime(string2double(value)); break;
         case FIELD_queueTime: pp->setQueueTime(string2double(value)); break;
-        case FIELD_isFlowFinished: pp->setIsFlowFinished(string2bool(value)); break;
         case FIELD_resend: pp->setResend(string2bool(value)); break;
         case FIELD_round: pp->setRound(string2long(value)); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);
@@ -2676,17 +2696,18 @@ omnetpp::cValue PacketDescriptor::getFieldValue(omnetpp::any_ptr object, int fie
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
         case FIELD_seqNumber: return pp->getSeqNumber();
+        case FIELD_ackNumber: return pp->getAckNumber();
         case FIELD_localPort: return (omnetpp::intval_t)(pp->getLocalPort());
         case FIELD_destPort: return (omnetpp::intval_t)(pp->getDestPort());
+        case FIELD_FIN: return pp->getFIN();
+        case FIELD_FINACK: return pp->getFINACK();
         case FIELD_ECN: return pp->getECN();
         case FIELD_ECE: return pp->getECE();
         case FIELD_packetType: return static_cast<int>(pp->getPacketType());
         case FIELD_connectionId: return pp->getConnectionId();
-        case FIELD_receivedBytes: return pp->getReceivedBytes();
         case FIELD_startTime: return pp->getStartTime();
         case FIELD_transmitTime: return pp->getTransmitTime();
         case FIELD_queueTime: return pp->getQueueTime();
-        case FIELD_isFlowFinished: return pp->isFlowFinished();
         case FIELD_resend: return pp->getResend();
         case FIELD_round: return pp->getRound();
         default: throw omnetpp::cRuntimeError("Cannot return field %d of class 'Packet' as cValue -- field index out of range?", field);
@@ -2706,17 +2727,18 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
     Packet *pp = omnetpp::fromAnyPtr<Packet>(object); (void)pp;
     switch (field) {
         case FIELD_seqNumber: pp->setSeqNumber(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
+        case FIELD_ackNumber: pp->setAckNumber(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_localPort: pp->setLocalPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
         case FIELD_destPort: pp->setDestPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
+        case FIELD_FIN: pp->setFIN(value.boolValue()); break;
+        case FIELD_FINACK: pp->setFINACK(value.boolValue()); break;
         case FIELD_ECN: pp->setECN(value.boolValue()); break;
         case FIELD_ECE: pp->setECE(value.boolValue()); break;
         case FIELD_packetType: pp->setPacketType(static_cast<PacketType>(value.intValue())); break;
         case FIELD_connectionId: pp->setConnectionId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
-        case FIELD_receivedBytes: pp->setReceivedBytes(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_startTime: pp->setStartTime(value.doubleValue()); break;
         case FIELD_transmitTime: pp->setTransmitTime(value.doubleValue()); break;
         case FIELD_queueTime: pp->setQueueTime(value.doubleValue()); break;
-        case FIELD_isFlowFinished: pp->setIsFlowFinished(value.boolValue()); break;
         case FIELD_resend: pp->setResend(value.boolValue()); break;
         case FIELD_round: pp->setRound(omnetpp::checked_int_cast<int>(value.intValue())); break;
         default: throw omnetpp::cRuntimeError("Cannot set field %d of class 'Packet'", field);

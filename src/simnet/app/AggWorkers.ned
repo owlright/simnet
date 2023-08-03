@@ -1,6 +1,6 @@
 package simnet.app;
 
-module WorkerApp extends CongApp {
+module WorkerApp extends FlowApp {
 parameters:
     port = default(2000);
     destPort = default(3001);

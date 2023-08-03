@@ -6,22 +6,30 @@ Define_Module(WorkerApp);
 
 void WorkerApp::initialize(int stage)
 {
-    CongApp::initialize(stage);
+    FlowApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         jobId = par("jobId");
         workerId = par("workerId");
         numWorkers = par("numWorkers");
         numRounds = par("numRounds");
         roundInterval = par("roundInterval").doubleValueInUnit("s");
+        scheduleNextFlowAt(roundInterval);
         jobMetricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
         if (jobMetricCollector == nullptr)
             EV_WARN << "No job metrics will be collected." << endl;
     }
 }
 
-void WorkerApp::onFlowStart()
-{
-    CongApp::onFlowStart();
+void WorkerApp::setField(AggPacket* pk) {
+    pk->setRound(currentRound);
+    pk->setJobId(jobId);
+    pk->setWorkerNumber(numWorkers);
+    pk->setRecordLen(1);
+    pk->addRecord(localAddr);
+}
+
+void WorkerApp::onFlowStart() {
+    FlowApp::onFlowStart();
     EV_INFO << "current round seq: " << currentRound << endl;
     if (jobMetricCollector)
         jobMetricCollector->reportFlowStart(jobId, numWorkers, workerId, simTime());
@@ -36,32 +44,14 @@ void WorkerApp::onFlowStop()
         jobMetricCollector->reportFlowStop(jobId, numWorkers, workerId, simTime());
 }
 
-Packet* WorkerApp::createDataPacket(SeqNumber seq, B packetBytes)
+Packet* WorkerApp::createDataPacket(B packetBytes)
 {
     char pkname[40];
     sprintf(pkname, "NOINC-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            localAddr, destAddr, seq);
+            localAddr, destAddr, getNextSeq());
     auto pk = new AggPacket(pkname);
-    pk->setRound(currentRound);
-    pk->setJobId(jobId);
-    pk->setDestAddr(destAddr);
-    pk->setWorkerNumber(numWorkers);
+    setField(pk);
 
-    pk->setSeqNumber(seq);
-    pk->setByteLength(packetBytes);
-    pk->setECN(false);
-    // some cheating fields
-    pk->setRecordLen(1);
-    pk->addRecord(localAddr);
-    pk->setStartTime(simTime().dbl());
-    pk->setTransmitTime(0);
-    pk->setQueueTime(0);
-    if (sentBytes == flowSize)
-        pk->setIsFlowFinished(true);
-
-    if (seq < sentBytes) {
-        throw cRuntimeError("This is a no-inc agg packet, should not have resend packets");
-    }
     return pk;
 }
 
@@ -72,11 +62,6 @@ void WorkerApp::finish()
         EV_WARN << getClassAndFullPath() << "job " << jobId << " "
                                         "address " << localAddr
                                         << " round " << currentRound << " not finish." << endl;
-        EV_WARN << "seq " << sentButNotAcked.begin()->first << " not acked." << endl;
-    }
-}
 
-void WorkerApp::connectionDataArrived(Connection *connection, cMessage *msg)
-{
-    CongApp::connectionDataArrived(connection, msg);
+    }
 }

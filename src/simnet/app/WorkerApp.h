@@ -1,15 +1,21 @@
 #pragma once
-#include "CongApp.h"
+#include "FlowApp.h"
+#include "simnet/mod/AggPacket_m.h"
 #include "simnet/mod/manager/GlobalMetricCollector.h"
-class WorkerApp : public CongApp
+class WorkerApp : public FlowApp
 {
 protected:
-    void initialize(int stage) override;
+    void setField(AggPacket* pk);
+
+protected:
     virtual void onFlowStart() override;
     virtual void onFlowStop() override;
-    virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
+    virtual Packet* createDataPacket(B packetBytes) override;
+
+protected:
+    void initialize(int stage) override;
     virtual void finish() override;
-    virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
+
 
 
 protected:
