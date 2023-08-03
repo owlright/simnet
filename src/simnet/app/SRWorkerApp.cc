@@ -1,14 +1,13 @@
 #include "WorkerApp.h"
 #include "simnet/common/ModuleAccess.h"
-#include "simnet/mod/AggPacket_m.h"
 #include "simnet/common/utils.h"
 #include <functional>
 class SRWorker : public WorkerApp
 {
 protected:
     void initialize(int stage) override;
-    virtual Packet* createDataPacket(SeqNumber seq, B packetBytes) override;
-    virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
+    Packet* createDataPacket(B packetBytes) override;
+    void setField(AggUseIncPacket* pk);
 
 private:
     std::vector<std::vector<IntAddress>> segments;
@@ -21,9 +20,7 @@ Define_Module(SRWorker);
 void SRWorker::initialize(int stage)
 {
     WorkerApp::initialize(stage);
-    if (stage == INITSTAGE_LOCAL) {
-    }
-    else if (stage == INITSTAGE_LAST) {
+    if (stage == INITSTAGE_LAST) {
         EV << "SRWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
         EV << " PS(" << destAddr << ":" << destPort << ")" << endl;
         auto segmentAddrs = cStringTokenizer(par("segmentAddrs").stringValue(), " ").asVector();
@@ -41,44 +38,23 @@ void SRWorker::initialize(int stage)
 
 }
 
-
-Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
+Packet* SRWorker::createDataPacket(B packetBytes)
 {
     char pkname[40];
     sprintf(pkname, "sr%" PRId64"-to-%" PRId64 "-seq%" PRId64,
-            localAddr, destAddr, seq);
-    // if (seq == 392000 && jobId == 4 && currentRound >= 4)
-    //     std::cout << localAddr << " " << currentRound << endl;
+            localAddr, destAddr, getNextSeq());
     auto pk = new AggUseIncPacket(pkname);
-    pk->setRound(currentRound);
-    pk->setJobId(jobId);
-    pk->setDestAddr(destAddr);
-    pk->setSeqNumber(seq);
-    pk->setByteLength(packetBytes);
-    pk->setECN(false);
-//    if (seq==500000)
-//        std::cout << localAddr << simTime() << endl;
-    // some cheating fields
-    pk->setRecordLen(1);
-    pk->addRecord(localAddr);
-    pk->setStartTime(simTime().dbl());
-    pk->setTransmitTime(0);
-    pk->setQueueTime(0);
-    if (sentBytes == confirmedNormalBytes)
-        pk->setIsFlowFinished(true);
+    pk->setByteLength(messageLength);
+    setField(pk);
+    return pk;
+}
 
+void SRWorker::setField(AggUseIncPacket* pk)
+{
+    WorkerApp::setField(pk);
     auto seqNumber = pk->getSeqNumber();
     auto jobID = pk->getJobId();
-    // if (seq < sentBytes) {
-    //     pk->setResend(true);
-    // }
-    // I left this for future debuging
-    //  if (jobId == 4 && seq >= 500000)
-    //     std::cout << localAddr << " round " << currentRound << " will send out " << pk->getSeqNumber() << endl;
-    // TODO avoid overflow
-    // auto hseq = reinterpret_cast<uint16_t&>(seqNumber);
-    // auto hjobid = reinterpret_cast<uint16_t&>(jobID);
-    // auto agtrIndex = hashAggrIndex(hjobid, hseq);
+
     std::size_t agtrIndex = seqNumber ^ jobID;
     hash_combine(agtrIndex, jobID);
     hash_combine(agtrIndex, seqNumber);
@@ -100,21 +76,4 @@ Packet* SRWorker::createDataPacket(SeqNumber seq, B packetBytes)
         auto indegree = std::to_string(*fit++);
         pk->setArgs(i, indegree.c_str());
     }
-    return pk;
 }
-
-void SRWorker::connectionDataArrived(Connection *connection, cMessage *msg)
-{
-    // I left this for future debuging
-    //  auto pk = check_and_cast<AggPacket*>(msg);
-    //  auto seq = pk->getSeqNumber();
-    //  if (jobId == 4 && seq >=500000) {
-    //      std::cout << localAddr << " received ack"
-    //                << seq << " "
-    //                << pk->getRound() << " "
-    //                << confirmedNormalBytes << endl;
-    //  }
-    WorkerApp::connectionDataArrived(connection, msg);
-
-}
-

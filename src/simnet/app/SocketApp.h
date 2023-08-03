@@ -20,7 +20,7 @@ protected:
     // inherited functions
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
-    virtual int numInitStages() const override { return Stage::NUM_INIT_STAGES; }
+    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     // for callback function use
     virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
 
