@@ -121,28 +121,25 @@ void CongApp::resendOldestSeq()
 void CongApp::onReceivedAck(const Packet* pk)
 {
     auto ack_seq = pk->getAckNumber();
-    // ASSERT(txBuffer.find(ack_seq) != txBuffer.end());
-//    if (!txBuffer.at(ack_seq).is_resend_already) {
-    if (ack_seq <= maxConfirmedSeq) {// ! redundant ack
+    if (ack_seq < maxConfirmedSeq) { // ! redundant ack
         txBuffer.at(ack_seq).resend_timer--;
         return;
     }
 
     maxConfirmedSeq = ack_seq;
-    SeqNumber next_seq{ack_seq};
-    for (auto& [old_seq, pkt_buffer]: txBuffer) {
-        if (old_seq < ack_seq) {
+    for (auto& [seq, pkt_buffer]: txBuffer) {
+        if (seq < maxConfirmedSeq) {
             delete pkt_buffer.pkt;
         }
         else {
-            next_seq = ack_seq;
+            break;
         }
     }
     if (!txBuffer.empty()) {
-        auto itup = txBuffer.upper_bound(next_seq);
+        auto itup = txBuffer.upper_bound(maxConfirmedSeq);
         txBuffer.erase(txBuffer.begin(), itup);
-        last_oldestNotAckedSeq = oldestNotAckedSeq;
-        oldestNotAckedSeq = txBuffer.begin()->first;
+//        last_oldestNotAckedSeq = oldestNotAckedSeq;
+//        oldestNotAckedSeq = txBuffer.begin()->first;
     }
 }
 
@@ -234,9 +231,9 @@ void CongApp::handleParameterChange(const char *parameterName)
 void CongApp::insertRxBuffer(Packet* pk)
 {
     auto seq = pk->getSeqNumber();
+    auto pk_size = pk->getByteLength();
     if (rxBuffer.find(seq) == rxBuffer.end()) {
         // ! these seqs arrive too early, store them for now
-        ASSERT(seq > nextAckSeq);
         rxBuffer[seq] = pk;
     }
     else {
@@ -246,7 +243,7 @@ void CongApp::insertRxBuffer(Packet* pk)
     if (seq == nextAckSeq) { // ! we can safely remove some confirmed tx packets
         while (rxBuffer.find(seq) != rxBuffer.end()) {
             delete rxBuffer[seq];
-            nextAckSeq = seq + pk->getByteLength();
+            nextAckSeq = seq + pk_size;
         }
     }
 

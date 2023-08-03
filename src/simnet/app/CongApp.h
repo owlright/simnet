@@ -103,7 +103,7 @@ private:
 
     B resentBytes{0};
     // B sentBytes{0};
-    SeqNumber maxConfirmedSeq{-1}; // bytes sent and receive ack only once
+    SeqNumber maxConfirmedSeq{0}; // bytes sent and receive ack only once
 //    B confirmedResendBytes{0}; // bytes that are acked by resending packets
 //    B confirmedRedundantBytes{0}; // bytes resend more than once
     simtime_t estimatedRTT;
