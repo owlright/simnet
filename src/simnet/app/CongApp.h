@@ -58,7 +58,7 @@ protected:
     virtual void onReceivedData(const Packet* pk);
     void sendPendingData();
     void resendOldestSeq();
-    B inflightBytes() {return nextSentSeq + resentBytes - nextAskedSeq;};
+    B inflightBytes() {return nextSentSeq - nextAskedSeq;};
 
     void setField(Packet* pk);
     void insertTxBuffer(Packet* pk);
