@@ -37,13 +37,10 @@ void FlowApp::handleMessage(cMessage *msg)
     }
 }
 
-void FlowApp::onReceivedAck(const Packet* pk)
+void FlowApp::onConnectionClose()
 {
-    CongApp::onReceivedAck(pk);
-    if (pk->getFINACK()) {
-        if (!flowStartTimer->isScheduled()) // ! avoid duplicate fin_ack schedule timer multiple times
-            onFlowStop();
-    }
+    if (!flowStartTimer->isScheduled()) // ! avoid duplicate fin_ack schedule timer multiple times
+        onFlowStop();
 }
 
 void FlowApp::onFlowStart()

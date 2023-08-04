@@ -28,6 +28,11 @@ bool CongApp::bindRemote()
     }
 }
 
+void CongApp::onConnectionClose()
+{
+    // do nothing
+}
+
 void CongApp::resetState()
 {
     currentRound += 1;
@@ -180,6 +185,7 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     }
 
     if (tcpState == CLOSED) {
+        onConnectionClose();
         cancelEvent(RTOTimeout);
     }
     else {

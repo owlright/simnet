@@ -66,6 +66,7 @@ protected:
 
     void resetState();
     bool bindRemote();
+    virtual void onConnectionClose();
 
 protected:
 
