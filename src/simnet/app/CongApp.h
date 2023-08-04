@@ -6,9 +6,17 @@
 enum TcpState_t
 {
     OPEN,
+    SEND_FIN,
     FIN_WAIT,
     CLOSE_WAIT,
     CLOSED
+};
+
+enum TcpEvent_t
+{
+    NORMAL,
+    FIN,
+    FIN_ACK
 };
 
 class CongApp : public UnicastApp
@@ -125,5 +133,5 @@ public:
 
 private:
     void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    void transitToNextState(const Packet* pk);
+    void tcpStateGoto(const TcpEvent_t& event);
 };

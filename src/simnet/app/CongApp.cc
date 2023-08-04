@@ -164,17 +164,24 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     auto pk = check_and_cast<Packet*>(msg);
 
     auto ackSeq = pk->getAckNumber();
+    bool is_FIN = pk->getFIN();
+    bool is_FINACK = pk->getFINACK();
     ASSERT(ackSeq >= oldestNotAckedSeq);
 
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     onReceivedAck(pk);
-    transitToNextState(pk);
     onReceivedData(pk);
-    insertRxBuffer(pk);
-    delete pk;
+    insertRxBuffer(pk); // ! pk maybe deleted here, do not use it below
 
-    if (txBuffer.empty() && tcpState == OPEN) {
+    if (is_FIN)
+        tcpStateGoto(FIN);
+    else if (is_FINACK)
+        tcpStateGoto(FIN_ACK);
+    else
+        tcpStateGoto(NORMAL);
+
+    if (tcpState == SEND_FIN) {
         // * if I have save sent all my packets out, then send FIN and wait
         char pkname[40];
         sprintf(pkname, "FIN%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
@@ -194,31 +201,42 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
 
 }
 
-void CongApp::transitToNextState(const Packet* pk)
+void CongApp::tcpStateGoto(const TcpEvent_t& event)
 {
-    if (pk->getFIN()) { // * the other side has received all my packets
-        ASSERT(txBuffer.empty());
-        switch (tcpState) {
-            case OPEN: // I'm still sending
-                tcpState = CLOSE_WAIT;
+    switch (event) {
+        case NORMAL:
+            if (txBuffer.empty()) {
+                tcpState = SEND_FIN;
+            }
+            break;
+
+        case FIN: // * the other side has received all my packets
+            ASSERT(txBuffer.empty());
+            switch (tcpState) {
+                case OPEN: // I'm still sending
+                    tcpState = CLOSE_WAIT;
+                    break;
+
+                case CLOSE_WAIT: // received mupltiple FINs
+                    tcpState = CLOSE_WAIT;
+                    break;
+
+                case FIN_WAIT: // although not fin_ack, but the other side must have finished sending.
+                    tcpState = CLOSED;
+                    break;
+
+                default:
+                    throw cRuntimeError("unthought case");
                 break;
+            }
 
-            case CLOSE_WAIT: // received mupltiple FINs
-                tcpState = CLOSE_WAIT;
-                break;
+        case FIN_ACK:
+            ASSERT(txBuffer.empty());
+            tcpState = CLOSED;
+            break;
 
-            case FIN_WAIT: // although not fin_ack, but the other side must have finished sending.
-                tcpState = CLOSED;
-                break;
-
-            default:
-                throw cRuntimeError("unthought case");
-        }
-    }
-
-    if (pk->getFINACK() && tcpState == FIN_WAIT) {
-        ASSERT(txBuffer.empty());
-        tcpState = CLOSED;
+        default:
+            cRuntimeError("should not run here.");
     }
 }
 
