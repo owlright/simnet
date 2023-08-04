@@ -76,6 +76,8 @@ void FlowApp::prepareTxBuffer()
     while (leftData > 0) {
         auto packetSize = messageLength < leftData ? messageLength : leftData;
         auto pk = createDataPacket(packetSize);
+        if (leftData == packetSize) // last packet
+            pk->setFIN(true);
         insertTxBuffer(pk);
         leftData -= packetSize;
     }

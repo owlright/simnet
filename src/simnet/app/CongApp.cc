@@ -111,17 +111,24 @@ void CongApp::sendPendingData()
             tx_item.is_sent = true;
             nextSentSeq = tx_item.seq + pktSize;
         }
-        auto pkt = tx_item.pkt->dup();
+        auto pk = tx_item.pkt->dup();
         char pkname[50];
-        sprintf(pkname, "data%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-                    currentRound, localAddr, destAddr, pkt->getSeqNumber(), nextAckSeq);
-        pkt->setName(pkname);
+        if (pk->getFIN()) {
+            sprintf(pkname, "FIN-round-%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%" PRId64,
+                    currentRound, localAddr, destAddr, pk->getSeqNumber(), nextAckSeq);
+            tcpStateGoto(SEND_FIN);
+        } else {
+            sprintf(pkname, "DATA-round-%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%" PRId64,
+                    currentRound, localAddr, destAddr, pk->getSeqNumber(), nextAckSeq);
+        }
+
+        pk->setName(pkname);
         if (localAddr == 137)
             std::cout << pkname << endl;
 
-        pkt->setAckNumber(nextAckSeq);
-        EV_DEBUG << pkt << endl;
-        connection->send(pkt);
+        pk->setAckNumber(nextAckSeq);
+        EV_DEBUG << pk << endl;
+        connection->send(pk);
         cong->onSendData(tx_item.seq, pktSize);
         tx_item_it++;
         // if (nextSentSeq == pktSize) { // ! in case the first packet is lost
@@ -197,23 +204,9 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     insertRxBuffer(pk); // ! pk maybe deleted here, do not use it below
 
     if (is_FIN)
-        tcpStateGoto(FIN);
+        tcpStateGoto(RECV_FIN);
     else if (is_FINACK)
-        tcpStateGoto(FIN_ACK);
-    else
-        tcpStateGoto(NORMAL);
-
-    if (tcpState == SEND_FIN) {
-        // * if I have save sent all my packets out, then send FIN and wait
-        char pkname[40];
-        sprintf(pkname, "FIN%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-        connection->getConnectionId(), localAddr, destAddr, getNextSeq());
-        auto fin_pk = new Packet(pkname);
-        fin_pk->setByteLength(1);
-        fin_pk->setFIN(true);
-        insertTxBuffer(fin_pk); // ! FIN packet
-        tcpState = FIN_WAIT;
-    }
+        tcpStateGoto(RECV_FINACK);
 
     if (tcpState == CLOSED) {
         onConnectionClose();
@@ -228,13 +221,11 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
 void CongApp::tcpStateGoto(const TcpEvent_t& event)
 {
     switch (event) {
-        case NORMAL:
-            if (txBuffer.empty()) {
-                tcpState = SEND_FIN;
-            }
+        case SEND_FIN:
+            tcpState = FIN_WAIT;
             break;
 
-        case FIN: // * the other side has received all my packets
+        case RECV_FIN: // * the other side has received all my packets
             ASSERT(txBuffer.empty());
             switch (tcpState) {
                 case OPEN: // I'm still sending
@@ -254,7 +245,7 @@ void CongApp::tcpStateGoto(const TcpEvent_t& event)
                 break;
             }
 
-        case FIN_ACK:
+        case RECV_FINACK:
             ASSERT(txBuffer.empty());
             tcpState = CLOSED;
             break;

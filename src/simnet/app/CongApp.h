@@ -6,7 +6,6 @@
 enum TcpState_t
 {
     OPEN,
-    SEND_FIN,
     FIN_WAIT,
     CLOSE_WAIT,
     CLOSED
@@ -14,9 +13,9 @@ enum TcpState_t
 
 enum TcpEvent_t
 {
-    NORMAL,
-    FIN,
-    FIN_ACK
+    SEND_FIN,
+    RECV_FIN,
+    RECV_FINACK
 };
 
 class CongApp : public UnicastApp
