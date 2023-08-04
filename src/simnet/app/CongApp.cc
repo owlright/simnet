@@ -90,13 +90,21 @@ void CongApp::sendPendingData()
     // auto pkt = tx_item.pkt->dup();
     // auto pktSize = pkt->getByteLength();
     while (tx_item_it != txBuffer.end() && cong->getcWnd() - inflightBytes() >= tx_item_it->second.pktSize) {
-        auto tx_item = tx_item_it->second;
-        auto pkt = tx_item.pkt->dup();
+        auto& tx_item = tx_item_it->second;
         auto pktSize = tx_item.pktSize;
         if (tx_item.is_sent) {
-            pkt->setResend(true);
-            resentBytes += pktSize;
-            tx_item.is_resend_already = true;
+            if (tx_item.resend_timer == 0) {
+                auto pkt = tx_item.pkt->dup();
+                pkt->setResend(true);
+                resentBytes += pktSize;
+                tx_item.resend_timer = (cong->getcWnd() / messageLength); // wait for about a RTT
+                tx_item.is_resend_already = true;
+                EV_DEBUG << "resend seq " << pkt->getSeqNumber() << endl;
+            }
+            else {
+                tx_item_it++;
+                continue; // * move to next seq
+            }
         }
         else {
             tx_item.is_sent = true;
