@@ -83,11 +83,12 @@ void FlowApp::prepareTxBuffer()
 
 Packet* FlowApp::createDataPacket(B packetBytes)
 {
-    char pkname[40];
-    auto pk = new Packet(pkname);
+//    char pkname[40];
+    auto pk = new Packet();
+//    sprintf(pkname, "flow%" PRId64 "-to-%" PRId64 "-seq%" PRId64, localAddr, destAddr, getNextSeq());
+    pk->setPacketType(DATA);
     pk->setByteLength(packetBytes);
-    sprintf(pkname, "data%" PRId64 "-to-%" PRId64 "-seq%" PRId64, localAddr, destAddr, getNextSeq());
-    pk->setName(pkname);
+//    pk->setName(pkname);
     return pk;
 }
 

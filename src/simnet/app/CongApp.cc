@@ -110,6 +110,11 @@ void CongApp::sendPendingData()
             tx_item.is_sent = true;
             nextSentSeq = tx_item.seq + pktSize;
         }
+        auto pkt = tx_item.pkt->dup();
+        char pkname[50];
+        sprintf(pkname, "data%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+                    currentRound, localAddr, destAddr, pkt->getSeqNumber(), nextAckSeq);
+        pkt->setName(pkname);
         pkt->setAckNumber(nextAckSeq);
         connection->send(pkt);
         cong->onSendData(tx_item.seq, pktSize);
