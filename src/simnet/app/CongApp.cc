@@ -48,7 +48,8 @@ void CongApp::finish() {
     if (destAddr == INVALID_ADDRESS)
         return;
     EV << localAddr << " retransmit bytes: " << resentBytes << endl;
-    EV_WARN << "seq " << txBuffer << " not acked." << endl;
+    ASSERT(txBuffer.empty());
+    ASSERT(rxBuffer.empty());
 }
 
 void CongApp::initialize(int stage)
@@ -115,7 +116,11 @@ void CongApp::sendPendingData()
         sprintf(pkname, "data%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
                     currentRound, localAddr, destAddr, pkt->getSeqNumber(), nextAckSeq);
         pkt->setName(pkname);
+        if (localAddr == 137)
+            std::cout << pkname << endl;
+
         pkt->setAckNumber(nextAckSeq);
+        EV_DEBUG << pkt << endl;
         connection->send(pkt);
         cong->onSendData(tx_item.seq, pktSize);
         tx_item_it++;
@@ -142,6 +147,7 @@ void CongApp::onReceivedAck(const Packet* pk)
 {
     auto ack_seq = pk->getAckNumber();
     if (ack_seq <= nextAskedSeq) { // ! redundant ack
+        EV_DEBUG << "old ack " << ack_seq << endl;
         txBuffer.at(ack_seq).resend_timer--;
         return;
     }
@@ -149,6 +155,7 @@ void CongApp::onReceivedAck(const Packet* pk)
     nextAskedSeq = ack_seq;
     for (auto& [seq, pkt_buffer]: txBuffer) {
         if (seq < nextAskedSeq) {
+            EV_DEBUG << seq << " is safe to delete." << endl;
             delete pkt_buffer.pkt;
         }
         else {
@@ -175,8 +182,10 @@ void CongApp::onReceivedData(const Packet* pk)
 void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
 {
     auto pk = check_and_cast<Packet*>(msg);
-
+    EV_DEBUG << pk << endl;
     auto ackSeq = pk->getAckNumber();
+    if (localAddr==137)
+          std::cout << pk->getName() << endl;
     bool is_FIN = pk->getFIN();
     bool is_FINACK = pk->getFINACK();
     ASSERT(ackSeq >= oldestNotAckedSeq);

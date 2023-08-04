@@ -30,7 +30,7 @@ void Reno::reset()
 
 void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
     Enter_Method("Reno::onRecvAck");
-    EV_DEBUG << "recv " << seq << endl;
+    EV_DEBUG << "recv ack " << seq << endl;
     rttBytes -= segmentSize;
     maxAckedSeqNumber = seq > maxAckedSeqNumber ? seq : maxAckedSeqNumber;
     // else {
