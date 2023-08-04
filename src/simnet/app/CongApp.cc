@@ -282,12 +282,16 @@ void CongApp::insertRxBuffer(Packet* pk)
     }
 
     if (seq == nextAckSeq) { // ! we can safely remove some confirmed tx packets
-        while (rxBuffer.find(seq) != rxBuffer.end()) {
-            delete rxBuffer[seq];
-            nextAckSeq = seq + pk_size;
+        auto remove_seq = seq;
+        auto remove_pk_size = 0;
+        while (rxBuffer.find(remove_seq) != rxBuffer.end()) {
+            remove_pk_size = rxBuffer[remove_seq]->getByteLength();
+            delete rxBuffer[remove_seq];
+            rxBuffer.erase(remove_seq);
+            remove_seq = remove_seq - remove_pk_size;
         }
+        nextAckSeq = seq + pk_size;
     }
-
 }
 
 void CongApp::insertTxBuffer(Packet* pk)
