@@ -9,6 +9,8 @@ simsignal_t CongApp::flowSizeSignal = registerSignal("flowSize");
 simsignal_t CongApp::rttSignal = registerSignal("rtt");
 simsignal_t CongApp::inflightBytesSignal = registerSignal("inflightBytes");
 
+int CongApp::maxDisorderNumber = 0;
+
 CongApp::~CongApp() {
     cancelAndDelete(RTOTimeout);
 }

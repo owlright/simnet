@@ -37,6 +37,7 @@ public:
             seq = pk->getSeqNumber();
             pktSize = pk->getByteLength();
             pkt = pk;
+            resend_timer = maxDisorderNumber;
         }
     };
     friend std::ostream& operator<<(std::ostream& os, const TxItem item) {
@@ -51,8 +52,6 @@ protected:
     virtual void finish() override;
     virtual void refreshDisplay() const override;
     virtual void handleParameterChange(const char *parameterName) override;
-
-
 
 protected:
     virtual void onReceivedAck(const Packet* pk);
@@ -83,7 +82,7 @@ protected:
     PortNumber destPort{INVALID_PORT};
 
     B messageLength{0};
-    int maxDisorderNumber{0};
+    static int maxDisorderNumber;
     int currentRound{0};
 
     opp_component_ptr<CongAlgo> cong;
