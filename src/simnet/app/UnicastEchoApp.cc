@@ -30,6 +30,7 @@ void EchoApp::onNewConnectionArrived(IdNumber connId, const Packet* const pk)
 {
     connections[connId] = createConnection(connId);
     connections[connId]->bindRemote(pk->getSrcAddr(), pk->getLocalPort());
+    maxReceivedSeq[pk->getSrcAddr()] = pk->getSeqNumber();
 }
 
 void EchoApp::connectionDataArrived(Connection *connection, cMessage *msg)
@@ -46,10 +47,18 @@ void EchoApp::connectionDataArrived(Connection *connection, cMessage *msg)
 Packet *EchoApp::createAckPacket(const Packet* const pk)
 {
     char pkname[40];
-    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            localAddr, pk->getSrcAddr(), pk->getSeqNumber());
+    auto nextSeq = pk->getAckNumber();
+    auto srcAddr = pk->getSrcAddr();
+    auto ackSeq = pk->getSeqNumber() + pk->getByteLength();
+    ackSeq = ackSeq > maxReceivedSeq[srcAddr] ? ackSeq : maxReceivedSeq[srcAddr];
+    maxReceivedSeq[srcAddr] = ackSeq;
+    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+            localAddr, srcAddr, nextSeq, ackSeq);
     auto packet = new Packet(pkname);
-    packet->setAckNumber(pk->getSeqNumber() + pk->getByteLength());
+    packet->setSeqNumber(nextSeq);
+    packet->setAckNumber(ackSeq);
+    if (pk->getFIN())
+        packet->setFINACK(true);
     packet->setKind(PacketType::ACK);
     packet->setByteLength(64);
     // packet->setReceivedBytes(pk->getByteLength());

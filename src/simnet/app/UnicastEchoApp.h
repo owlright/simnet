@@ -8,6 +8,7 @@ class EchoApp : public UnicastApp
 protected:
     // configuration
     std::unordered_map<IdNumber, Connection*> connections;
+    std::unordered_map<IntAddress, SeqNumber> maxReceivedSeq;
     B receivedBytes;
 
 public:
