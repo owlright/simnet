@@ -121,7 +121,7 @@ void CongApp::resendOldestSeq()
 void CongApp::onReceivedAck(const Packet* pk)
 {
     auto ack_seq = pk->getAckNumber();
-    if (ack_seq < maxConfirmedSeq) { // ! redundant ack
+    if (ack_seq <= nextAskedSeq) { // ! redundant ack
         txBuffer.at(ack_seq).resend_timer--;
         return;
     }
