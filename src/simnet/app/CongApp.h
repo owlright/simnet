@@ -59,7 +59,7 @@ protected:
     virtual void onReceivedData(const Packet* pk);
     void sendPendingData();
     void resendOldestSeq();
-    B inflightBytes() {return nextSentSeq + resentBytes - maxConfirmedSeq;};
+    B inflightBytes() {return nextSentSeq + resentBytes - nextAskedSeq;};
 
     void setField(Packet* pk);
     void insertTxBuffer(Packet* pk);
@@ -72,7 +72,7 @@ protected:
 
     // std::map<SeqNumber, TxItem> getTxBufferCopy() {return txBuffer;}
     const SeqNumber& getNextSeq() const {return nextSeq;};
-//    const B& getConfirmedNormalBytes() const {return maxConfirmedSeq;};
+//    const B& getConfirmedNormalBytes() const {return nextAskedSeq;};
 //    const B& getConfirmedResendBytes() const {return confirmedResendBytes;};
     const simtime_t& getCurrentBaseRTT() const {return currentBaseRTT;};
     const double& getMaxSendingRate() const {return bandwidth;}
@@ -97,13 +97,13 @@ protected:
 
 private:
     // ! state
-    SeqNumber nextSeq{0};
-    SeqNumber nextSentSeq{0};
-    SeqNumber nextAckSeq{0};
-
+    SeqNumber nextSeq{0};     // ! when a new packet insert txBuffer
+    SeqNumber nextSentSeq{0}; // ! the next seq actually will be sent out
+    SeqNumber nextAckSeq{0};  // ! the next seq I want
+    SeqNumber nextAskedSeq{0}; // ! the next seq the other side want
     B resentBytes{0};
     // B sentBytes{0};
-    SeqNumber maxConfirmedSeq{0}; // bytes sent and receive ack only once
+
 //    B confirmedResendBytes{0}; // bytes that are acked by resending packets
 //    B confirmedRedundantBytes{0}; // bytes resend more than once
     simtime_t estimatedRTT;

@@ -30,7 +30,7 @@ void CongApp::resetState()
 {
     currentRound += 1;
     nextSentSeq = 0;
-    maxConfirmedSeq = 0;
+    nextAskedSeq = 0;
     resentBytes = 0;
 //    confirmedResendBytes = 0;
     currentBaseRTT = 0;
@@ -126,9 +126,9 @@ void CongApp::onReceivedAck(const Packet* pk)
         return;
     }
 
-    maxConfirmedSeq = ack_seq;
+    nextAskedSeq = ack_seq;
     for (auto& [seq, pkt_buffer]: txBuffer) {
-        if (seq < maxConfirmedSeq) {
+        if (seq < nextAskedSeq) {
             delete pkt_buffer.pkt;
         }
         else {
@@ -136,7 +136,7 @@ void CongApp::onReceivedAck(const Packet* pk)
         }
     }
     if (!txBuffer.empty()) {
-        auto itup = txBuffer.upper_bound(maxConfirmedSeq);
+        auto itup = txBuffer.upper_bound(nextAskedSeq);
         txBuffer.erase(txBuffer.begin(), itup);
 //        last_oldestNotAckedSeq = oldestNotAckedSeq;
 //        oldestNotAckedSeq = txBuffer.begin()->first;
