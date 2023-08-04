@@ -156,8 +156,8 @@ void CongApp::onReceivedAck(const Packet* pk)
         }
     }
     if (!txBuffer.empty()) {
-        auto itup = txBuffer.upper_bound(nextAskedSeq);
-        txBuffer.erase(txBuffer.begin(), itup);
+        auto itup = txBuffer.lower_bound(nextAskedSeq);
+        txBuffer.erase(txBuffer.begin(), itup); // ! nextAskedSeq will still be in txBuffer
 //        last_oldestNotAckedSeq = oldestNotAckedSeq;
 //        oldestNotAckedSeq = txBuffer.begin()->first;
     }
