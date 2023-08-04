@@ -187,6 +187,8 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
         sprintf(pkname, "FIN%" PRId64 "-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
         connection->getConnectionId(), localAddr, destAddr, getNextSeq());
         auto fin_pk = new Packet(pkname);
+        fin_pk->setByteLength(1);
+        fin_pk->setFIN(true);
         insertTxBuffer(fin_pk); // ! FIN packet
         tcpState = FIN_WAIT;
     }
