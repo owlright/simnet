@@ -58,7 +58,8 @@ void SRWorker::setField(AggUseIncPacket* pk)
     std::size_t agtrIndex = seqNumber ^ jobID;
     hash_combine(agtrIndex, jobID);
     hash_combine(agtrIndex, seqNumber);
-//    EV_DEBUG << "aggregator index: " << agtrIndex << endl;
+
+    EV_DEBUG << "seqNumber " << seqNumber << " jobID " << jobID << " aggregator: " << agtrIndex % MAX_AGTR_COUNT << endl;
     pk->setAggregatorIndex(agtrIndex % MAX_AGTR_COUNT);
     pk->setWorkerNumber(numWorkers);
     pk->setDistance(0);

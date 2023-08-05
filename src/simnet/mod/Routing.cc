@@ -166,6 +166,7 @@ void Routing::forwardIncoming(Packet *pk)
                 return;
             } else { // TODO: do we release resource at aggpacket leave or ACK arrive?
                 ASSERT(pk == apk);
+                if (apk->getCollision())
                     EV_DEBUG << "collision happen on destAddr " << destAddr << " seq " << seq << endl;
                 if (incomingCount.find(mKey) == incomingCount.end())
                     incomingCount[mKey] = 1;

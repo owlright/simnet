@@ -167,7 +167,7 @@ void CongApp::onReceivedAck(const Packet* pk)
     nextAskedSeq = ack_seq;
     for (auto& [seq, pkt_buffer]: txBuffer) {
         if (seq < nextAskedSeq) {
-            EV_DEBUG << seq << " is safe to delete." << endl;
+            EV_DEBUG << "delete seq " << seq << endl;
             delete pkt_buffer.pkt;
         }
         else {
