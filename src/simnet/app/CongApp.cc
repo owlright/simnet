@@ -203,12 +203,27 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     onReceivedData(pk);
     insertRxBuffer(pk); // ! pk maybe deleted here, do not use it below
 
-    if (is_FIN)
-        tcpStateGoto(RECV_FIN);
-    else if (is_FINACK)
-        tcpStateGoto(RECV_FINACK);
+    if (is_FIN) {// * the other side has received all my packets
+        transitTcpStateOnEvent(RECV_FIN);
+    }
 
-    if (tcpState == CLOSED) {
+    if (is_FINACK) {
+        transitTcpStateOnEvent(RECV_FINACK);
+    }
+
+    if ( txBuffer.empty() && (tcpState ==  TIME_WAIT || tcpState == CLOSE_WAIT) ) {
+        char pkname[50];
+        auto packet = new Packet();
+        sprintf(pkname, "FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+        localAddr, destAddr, nextSeq, ackSeq);
+        packet->setName(pkname);
+        packet->setFIN(true);
+        packet->setFINACK(true);
+        packet->setByteLength(64);
+        insertTxBuffer(packet);
+    }
+    else if (tcpState == CLOSED) {
+        ASSERT(txBuffer.empty());
         onConnectionClose();
         cancelEvent(RTOTimeout);
     }

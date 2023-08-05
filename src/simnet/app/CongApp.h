@@ -6,9 +6,12 @@
 enum TcpState_t
 {
     OPEN,
-    FIN_WAIT,
+    FIN_WAIT_1, // After send out FIN
+    FIN_WAIT_2, // received FINACK but not FIN
+    TIME_WAIT,
     CLOSE_WAIT,
-    CLOSED
+    CLOSED,
+    LAST_ACK
 };
 
 enum TcpEvent_t
