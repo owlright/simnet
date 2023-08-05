@@ -54,6 +54,7 @@ void ParameterServerApp::initialize(int stage)
         jobid = par("jobId");
         numWorkers = par("numWorkers");
         groupAddr = par("groupAddress");
+        destAddr = groupAddr;
         auto worker_addrs = cStringTokenizer(par("workers").stringValue(), " ").asIntVector();
         std::for_each(worker_addrs.begin(), worker_addrs.end(), [this](int& n){workers.push_back(n);});
         ASSERT(workers.size() == numWorkers);
@@ -153,6 +154,8 @@ void ParameterServerApp::onReceivedData(const Packet* pkt)
             is_agg_finished = dealWithIncAggPacket(check_and_cast<const AggUseIncPacket*>(pk));
             if (is_agg_finished) {
                 auto mpk = createAckPacket(pk);
+                mpk->setDestAddr(groupAddr);
+                mpk->setDestPort(2000);  // TODO this is no use
                 mpk->setReceivedNumber(receivedNumber[seq]);
                 mpk->setECE(aggedEcns[seq]);
                 insertTxBuffer(mpk);
