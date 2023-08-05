@@ -408,9 +408,9 @@ void GlobalGroupManager::createJobApps(int jobId)
         app->par("numWorkers") = nWorkers;
         app->par("destAddress") = job->PSes[0];
         app->par("destPort") = job->PSPorts[0];
+        app->par("flowStartTime") = simTime().dbl();
         app->finalizeParameters();
         app->buildInside();
-        app->scheduleStart(simTime());
         auto inGate = app->gate("in");
         auto outGate = app->gate("out");
         auto at = node->getSubmodule("at");

@@ -13,7 +13,6 @@ void WorkerApp::initialize(int stage)
         numWorkers = par("numWorkers");
         numRounds = par("numRounds");
         roundInterval = par("roundInterval").doubleValueInUnit("s");
-        scheduleNextFlowAt(roundInterval);
         jobMetricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
         if (jobMetricCollector == nullptr)
             EV_WARN << "No job metrics will be collected." << endl;
