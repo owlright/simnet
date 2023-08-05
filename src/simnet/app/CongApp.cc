@@ -128,7 +128,7 @@ void CongApp::sendPendingData()
         }
 
         pk->setName(pkname);
-        if (localAddr == 137)
+        if (localAddr == 268 && destAddr == 138)
             std::cout << pkname << endl;
 
         pk->setAckNumber(nextAckSeq);
@@ -158,7 +158,7 @@ void CongApp::resendOldestSeq()
 void CongApp::onReceivedAck(const Packet* pk)
 {
     auto ack_seq = pk->getAckNumber();
-    if (ack_seq <= nextAskedSeq) { // ! redundant ack
+    if (ack_seq < nextAskedSeq) { // ! redundant ack
         EV_DEBUG << "old ack " << ack_seq << endl;
         txBuffer.at(ack_seq).resend_timer--;
         return;
@@ -196,8 +196,8 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     auto pk = check_and_cast<Packet*>(msg);
     EV_DEBUG << pk << endl;
     auto ackSeq = pk->getAckNumber();
-    if (localAddr==137)
-          std::cout << pk->getName() << endl;
+    if (localAddr == 268 && destAddr == 138 && ackSeq == 5110)
+        std::cout << pk->getName() << endl;
     bool is_FIN = pk->getFIN();
     bool is_FINACK = pk->getFINACK();
     ASSERT(ackSeq >= oldestNotAckedSeq);

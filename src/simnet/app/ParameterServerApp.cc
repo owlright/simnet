@@ -12,7 +12,7 @@ protected:
     // virtual void onReceivedAck(const Packet* pk) override;
     virtual void onReceivedData(const Packet* pk) override;
     AggPacket* createAckPacket(const AggPacket* pk);
-    virtual void finish() override;
+    // virtual void finish() override;
 
 protected:
     void initialize(int stage) override;
@@ -54,7 +54,9 @@ void ParameterServerApp::initialize(int stage)
         jobid = par("jobId");
         numWorkers = par("numWorkers");
         groupAddr = par("groupAddress");
+        auto worker_addrs = cStringTokenizer(par("workers").stringValue(), " ").asIntVector();
         std::for_each(worker_addrs.begin(), worker_addrs.end(), [this](int& n){workers.push_back(n);});
+        ASSERT(workers.size() == numWorkers);
     }
 }
 
@@ -83,7 +85,7 @@ void ParameterServerApp::initialize(int stage)
 // void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage *msg)
 // {
 
-//     delete pk;
+//     CongApp::connectionDataArrived(connection, msg);
 // }
 
 // void ParameterServerApp::onReceivedAck(const Packet *pkt)
@@ -229,11 +231,6 @@ AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
     packet->setDestAddr(INVALID_ADDRESS);
     packet->setDestPort(INVALID_PORT);
     return packet;
-}
-
-void ParameterServerApp::finish()
-{
-
 }
 
 void ParameterServerApp::dealWithAggPacket(const AggPacket *pk)
