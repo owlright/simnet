@@ -52,13 +52,21 @@ Packet *EchoApp::createAckPacket(const Packet* const pk)
     auto ackSeq = pk->getSeqNumber() + pk->getByteLength();
     ackSeq = ackSeq > maxReceivedSeq[srcAddr] ? ackSeq : maxReceivedSeq[srcAddr];
     maxReceivedSeq[srcAddr] = ackSeq;
-    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+    auto packet = new Packet();
+    if (pk->getFIN()) {
+        packet->setFIN(true); // ! EchoApp doesn't have to wait
+        packet->setFINACK(true);
+        sprintf(pkname, "FIN-FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
             localAddr, srcAddr, nextSeq, ackSeq);
-    auto packet = new Packet(pkname);
+    }
+    else {
+        sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+            localAddr, srcAddr, nextSeq, ackSeq);
+    }
+    packet->setName(pkname);
     packet->setSeqNumber(nextSeq);
     packet->setAckNumber(ackSeq);
-    if (pk->getFIN())
-        packet->setFINACK(true);
+
     packet->setKind(PacketType::ACK);
     packet->setByteLength(64);
     // packet->setReceivedBytes(pk->getByteLength());

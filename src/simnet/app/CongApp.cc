@@ -113,12 +113,17 @@ void CongApp::sendPendingData()
         }
         auto pk = tx_item.pkt->dup();
         char pkname[50];
-        if (pk->getFIN()) {
-            sprintf(pkname, "FIN-round-%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%" PRId64,
-                    currentRound, localAddr, destAddr, pk->getSeqNumber(), nextAckSeq);
-            tcpStateGoto(SEND_FIN);
+        if (pk->getFIN() && !pk->getFINACK()) {
+            sprintf(pkname, "FIN-round-%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
+                            currentRound, localAddr, destAddr, pk->getSeqNumber(), nextAckSeq);
+            transitTcpStateOnEvent(SEND_FIN);
+        }
+        else if (pk->getFIN() && pk->getFINACK() ) {
+            sprintf(pkname, "FIN-FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+                                        localAddr, destAddr, nextSeq + 1, nextAckSeq);
+            transitTcpStateOnEvent(SEND_FIN);
         } else {
-            sprintf(pkname, "DATA-round-%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%" PRId64,
+            sprintf(pkname, "DATA-round-%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
                     currentRound, localAddr, destAddr, pk->getSeqNumber(), nextAckSeq);
         }
 
