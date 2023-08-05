@@ -40,10 +40,10 @@ void SRWorker::initialize(int stage)
 
 Packet* SRWorker::createDataPacket(B packetBytes)
 {
-    char pkname[40];
-    sprintf(pkname, "sr%" PRId64"-to-%" PRId64 "-seq%" PRId64,
-            localAddr, destAddr, getNextSeq());
-    auto pk = new AggUseIncPacket(pkname);
+    // char pkname[40];
+    // sprintf(pkname, "sr%" PRId64"-to-%" PRId64 "-seq%" PRId64,
+    //         localAddr, destAddr, getNextSeq());
+    auto pk = new AggUseIncPacket();
     pk->setByteLength(messageLength);
     setField(pk);
     return pk;

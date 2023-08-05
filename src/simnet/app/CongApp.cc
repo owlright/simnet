@@ -114,17 +114,25 @@ void CongApp::sendPendingData()
         auto pk = tx_item.pkt->dup();
         char pkname[50];
         if (pk->getFIN() && !pk->getFINACK()) {
-            sprintf(pkname, "FIN-round-%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
-                            currentRound, localAddr, destAddr, pk->getSeqNumber(), nextAckSeq);
+            sprintf(pkname, "FIN-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
+                            localAddr, dest_addr, pk->getSeqNumber(), nextAckSeq);
             transitTcpStateOnEvent(SEND_FIN);
         }
         else if (pk->getFIN() && pk->getFINACK() ) {
             sprintf(pkname, "FIN-FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-                                        localAddr, destAddr, nextSeq + 1, nextAckSeq);
+                                        localAddr, dest_addr, nextSeq, nextAckSeq);
             transitTcpStateOnEvent(SEND_FIN);
+        }
+        else if (pk->getPacketType() == ACK) {
+            sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+            localAddr, dest_addr, nextSeq, nextAckSeq);
+        }
+        else if (pk->getPacketType() == MACK) {
+            sprintf(pkname, "MACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+            localAddr, dest_addr, nextSeq, nextAckSeq);
         } else {
             sprintf(pkname, "DATA-round-%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
-                    currentRound, localAddr, destAddr, pk->getSeqNumber(), nextAckSeq);
+                    currentRound, localAddr, dest_addr, pk->getSeqNumber(), nextAckSeq);
         }
 
         pk->setName(pkname);

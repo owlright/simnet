@@ -203,12 +203,12 @@ void ParameterServerApp::onReceivedData(const Packet* pkt)
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
 {
-    char pkname[40];
-    // auto seq = pk->getSeqNumber();
-    sprintf(pkname, "MuACK-%" PRId64 "-seq%" PRId64,
-            localAddr, getNextSeq());
+    // char pkname[40];
+    // // auto seq = pk->getSeqNumber();
+    // sprintf(pkname, "MuACK-%" PRId64 "-seq%" PRId64,
+    //         localAddr, getNextSeq());
 
-    auto packet = new AggPacket(pkname);
+    auto packet = new AggPacket();
     // packet->setSeqNumber(seq);
     packet->setPacketType(MACK);
     packet->setByteLength(64);
