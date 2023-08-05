@@ -135,5 +135,5 @@ public:
 
 private:
     void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    void tcpStateGoto(const TcpEvent_t& event);
+    void transitTcpStateOnEvent(const TcpEvent_t& event);
 };

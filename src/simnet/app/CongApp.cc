@@ -238,40 +238,64 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
 
 }
 
-void CongApp::tcpStateGoto(const TcpEvent_t& event)
+void CongApp::transitTcpStateOnEvent(const TcpEvent_t& event)
 {
     switch (event) {
         case SEND_FIN:
-            tcpState = FIN_WAIT;
+            switch (tcpState) {
+                case OPEN: // * client
+                    tcpState = FIN_WAIT_1;
+                    break;
+
+                case CLOSE_WAIT: // * server
+                    tcpState = LAST_ACK;
+                    break;
+
+                default:
+                    cRuntimeError("unknown state.");
+            }
             break;
 
-        case RECV_FIN: // * the other side has received all my packets
-            ASSERT(txBuffer.empty());
+        case RECV_FIN:
             switch (tcpState) {
-                case OPEN: // I'm still sending
+                case OPEN: // server may still have data to send
                     tcpState = CLOSE_WAIT;
                     break;
 
-                case CLOSE_WAIT: // received mupltiple FINs
+                case CLOSE_WAIT: // ? received mupltiple FINs
                     tcpState = CLOSE_WAIT;
                     break;
 
-                case FIN_WAIT: // although not fin_ack, but the other side must have finished sending.
-                    tcpState = CLOSED;
+                case FIN_WAIT_1:
+                case FIN_WAIT_2:
+                    tcpState = TIME_WAIT;
                     break;
 
                 default:
                     throw cRuntimeError("unthought case");
-                break;
             }
+            break;
 
         case RECV_FINACK:
-            ASSERT(txBuffer.empty());
-            tcpState = CLOSED;
+            switch (tcpState) {
+                case FIN_WAIT_1: // * client
+                    tcpState = FIN_WAIT_2;
+                case TIME_WAIT:
+                case CLOSE_WAIT: // * server
+                    tcpState = CLOSED;
+                    break;
+
+                case LAST_ACK: // * server
+                    tcpState = CLOSED;
+                    break;
+
+                default:
+                    cRuntimeError("unknown state.");
+            }
             break;
 
         default:
-            cRuntimeError("should not run here.");
+            cRuntimeError("unknown state.");
     }
 }
 
