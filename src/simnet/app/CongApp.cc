@@ -167,6 +167,11 @@ void CongApp::resendOldestSeq()
 void CongApp::onReceivedAck(const Packet* pk)
 {
     auto ack_seq = pk->getAckNumber();
+    if (txBuffer.empty() && ack_seq == 0) {
+        // ! we should bind srcAddr and srcPort here,
+        // ! but for mulitcast applications, there are many srcAddrs
+        tcpState = OPEN;
+    }
     if (ack_seq < nextAskedSeq) { // ! redundant ack
         EV_DEBUG << "old ack " << ack_seq << endl;
         txBuffer.at(ack_seq).resend_timer--;
