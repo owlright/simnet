@@ -2,7 +2,7 @@
 #include "simnet/common/ModuleAccess.h"
 #include "simnet/mod/manager/GlobalGroupManager.h"
 #include "simnet/mod/AggPacket_m.h"
-
+#include <functional>
 class ParameterServerApp : public CongApp
 {
 protected:
@@ -54,6 +54,7 @@ void ParameterServerApp::initialize(int stage)
         jobid = par("jobId");
         numWorkers = par("numWorkers");
         groupAddr = par("groupAddress");
+        std::for_each(worker_addrs.begin(), worker_addrs.end(), [this](int& n){workers.push_back(n);});
     }
 }
 
@@ -287,7 +288,6 @@ bool ParameterServerApp::dealWithNoIncAggPacket(Connection* connection, const Ag
     auto aggedNumber = tmpWorkersRecord.size();
     if (aggedNumber == pk->getWorkerNumber())
     {
-        ASSERT(workers.size() == numWorkers);
         ASSERT(aggedNumber == numWorkers);
         EV_DEBUG << "Seq " << seq << " finished." << endl;
         return true;
@@ -306,7 +306,6 @@ bool ParameterServerApp::dealWithIncAggPacket(const AggUseIncPacket* pk)
     auto aggedNumber = tmpWorkersRecord.size();
     if (aggedNumber == pk->getWorkerNumber()) // * aggregation is finished
     {
-        ASSERT(workers.size() == numWorkers);
         ASSERT(aggedNumber == numWorkers);
         return true;
     }
