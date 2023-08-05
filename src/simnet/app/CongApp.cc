@@ -113,6 +113,7 @@ void CongApp::sendPendingData()
         }
         auto pk = tx_item.pkt->dup();
         char pkname[50];
+        auto dest_addr = pk->getDestAddr();
         if (pk->getFIN() && !pk->getFINACK()) {
             sprintf(pkname, "FIN-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
                             localAddr, dest_addr, pk->getSeqNumber(), nextAckSeq);
@@ -356,9 +357,9 @@ void CongApp::insertTxBuffer(Packet* pk)
 
 void CongApp::setField(Packet* pk)
 {
-    pk->setDestAddr(destAddr);
+    // pk->setDestAddr(destAddr);
     pk->setRound(currentRound);
-    pk->setKind(DATA);
+    // pk->setKind(DATA);
     pk->setECN(false);
     pk->setStartTime(simTime().dbl());
     pk->setTransmitTime(0);
