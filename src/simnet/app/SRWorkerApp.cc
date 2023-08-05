@@ -52,7 +52,7 @@ Packet* SRWorker::createDataPacket(B packetBytes)
 void SRWorker::setField(AggUseIncPacket* pk)
 {
     WorkerApp::setField(pk);
-    auto seqNumber = pk->getSeqNumber();
+    auto seqNumber = getNextSeq(); // ! only when packet insert into txBuffer, then it can have seqnumber
     auto jobID = pk->getJobId();
 
     std::size_t agtrIndex = seqNumber ^ jobID;
