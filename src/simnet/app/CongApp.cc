@@ -317,15 +317,15 @@ void CongApp::insertRxBuffer(Packet* pk)
 {
     auto seq = pk->getSeqNumber();
     auto pk_size = pk->getByteLength();
-    if (rxBuffer.find(seq) == rxBuffer.end()) {
+    if (rxBuffer.find(seq) == rxBuffer.end() && !pk->getFINACK()) {
         // ! these seqs arrive too early, store them for now
         rxBuffer[seq] = pk;
     }
     else {
-        delete pk; // redundant ack
+        delete pk; // redundant ack or the last ack packet
     }
 
-    if (seq == nextAckSeq) { // ! we can safely remove some confirmed tx packets
+    if (seq <= nextAckSeq) { // ! we can safely remove some confirmed tx packets
         auto remove_seq = seq;
         auto remove_pk_size = 0;
         while (rxBuffer.find(remove_seq) != rxBuffer.end()) {
