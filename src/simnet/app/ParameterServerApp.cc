@@ -229,6 +229,10 @@ AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
 
     auto packet = new AggPacket();
     // packet->setSeqNumber(seq);
+    if (pk->getFIN()) {
+        packet->setFIN(true);
+        packet->setFINACK(true);
+    }
     packet->setAggSeqNumber(pk->getAggSeqNumber());
     packet->setPacketType(MACK);
     packet->setByteLength(64);

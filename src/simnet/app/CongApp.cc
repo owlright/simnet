@@ -244,13 +244,14 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     onReceivedData(pk);
     insertRxBuffer(pk); // ! pk maybe deleted here, do not use it below
 
+    if (is_FINACK) {
+        transitTcpStateOnEvent(RECV_FINACK);
+    }
+
     if (is_FIN) {// * the other side has received all my packets
         transitTcpStateOnEvent(RECV_FIN);
     }
 
-    if (is_FINACK) {
-        transitTcpStateOnEvent(RECV_FINACK);
-    }
 
     if ( txBuffer.empty() && (tcpState ==  TIME_WAIT || tcpState == CLOSE_WAIT) ) {
         char pkname[50];
@@ -276,14 +277,40 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
 
 void CongApp::transitTcpStateOnEvent(const TcpEvent_t& event)
 {
+    // ! server will always sent FIN and FINACK together, so
+    // ! server will go: OPEN->(RECV_FIN)->(SEND_FINACK)->CLOSE_WAIT->(SEND_FIN)->LAST_ACK->(RECV_FINACK)->CLOSED
+    // ! client will go: OPEN->(SEND_FIN)->FIN_WAIT_1->(RECV_FINACK)->FIN_WAIT_2->(RECV_FIN)->TIME_WAIT->(SEND_FIN)->CLOSED
     switch (event) {
         case SEND_FIN:
             switch (tcpState) {
-                case OPEN: // * client
+                // client side
+                case OPEN: // 1. client has sent out all data
                     tcpState = FIN_WAIT_1;
                     break;
+                case TIME_WAIT: // 2. client has receieved server's FIN
+                    tcpState = TIME_WAIT; // ! wait for ack to this FIN
+                    break;
 
-                case CLOSE_WAIT: // * server
+                //server side
+                 // ! server will only sent FIN when it receieves FIN, so it's state must be CLOSE_WAIT
+                case CLOSE_WAIT:
+                    tcpState = LAST_ACK; // ! server wait for ack to this FIN
+                    break;
+
+                default:
+                    cRuntimeError("unknown state.");
+            }
+            break;
+
+        case SEND_FINACK:
+            switch (tcpState) {
+                // client side
+                case TIME_WAIT: // TODO: We assume server must receive this ACK, but what if this packet is lost ?
+                    tcpState = TIME_WAIT;
+                    break;
+
+                // server side
+                case LAST_ACK:
                     tcpState = LAST_ACK;
                     break;
 
@@ -294,16 +321,22 @@ void CongApp::transitTcpStateOnEvent(const TcpEvent_t& event)
 
         case RECV_FIN:
             switch (tcpState) {
-                case OPEN: // server may still have data to send
+                // server side
+                // ! server will only sent FIN when it receieves client's FIN, so it's impossible for client's OPEN state
+                case OPEN:
+                case CLOSE_WAIT: // received mupltiple FINs
                     tcpState = CLOSE_WAIT;
                     break;
-
-                case CLOSE_WAIT: // ? received mupltiple FINs
-                    tcpState = CLOSE_WAIT;
+                case LAST_ACK: // duplicate FINs
+                    tcpState = LAST_ACK;
+                    break;
+                case CLOSED: // dulicate FINs
+                    tcpState = CLOSED;
                     break;
 
-                case FIN_WAIT_1:
-                case FIN_WAIT_2:
+                // client side
+                case FIN_WAIT_2: // ! we always deal FINACK first, so the state must be FIN_WAIT_2(server will never sent FIN first)
+                case TIME_WAIT:  // dulicate FINACKs
                     tcpState = TIME_WAIT;
                     break;
 
@@ -314,14 +347,18 @@ void CongApp::transitTcpStateOnEvent(const TcpEvent_t& event)
 
         case RECV_FINACK:
             switch (tcpState) {
-                case FIN_WAIT_1: // * client
+                // client side
+                case FIN_WAIT_1:
+                case FIN_WAIT_2: // do not change state until client receieve server's FIN
                     tcpState = FIN_WAIT_2;
-                case TIME_WAIT:
-                case CLOSE_WAIT: // * server
-                    tcpState = CLOSED;
+                    break;
+                case TIME_WAIT: // dulicate FINACKs
+                    tcpState = TIME_WAIT;
                     break;
 
-                case LAST_ACK: // * server
+                // server side
+                case LAST_ACK:
+                case CLOSED: // dulicate FINACKs
                     tcpState = CLOSED;
                     break;
 
