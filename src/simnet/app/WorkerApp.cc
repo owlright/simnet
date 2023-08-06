@@ -39,6 +39,8 @@ void WorkerApp::onFlowStop()
 {
     if (currentRound < numRounds) {// note it's '<' here
         scheduleAfter(roundInterval, flowStartTimer);
+        appState = Scheduled;
+        nextAggSeq = 0;
     }
     if (jobMetricCollector)
         jobMetricCollector->reportFlowStop(jobId, numWorkers, workerId, simTime());

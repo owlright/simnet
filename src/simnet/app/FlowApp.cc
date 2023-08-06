@@ -39,8 +39,10 @@ void FlowApp::handleMessage(cMessage *msg)
 
 void FlowApp::onConnectionClose()
 {
-    if (!flowStartTimer->isScheduled()) // ! avoid duplicate fin_ack schedule timer multiple times
+    if (!flowStartTimer->isScheduled()) {// ! avoid duplicate fin_ack schedule timer multiple times
         onFlowStop();
+        CongApp::resetState();
+    }
 }
 
 void FlowApp::onFlowStart()
@@ -48,8 +50,9 @@ void FlowApp::onFlowStart()
     if (!bindRemote()) {
         throw cRuntimeError("Failed to setup connection!");
     }
-    resetState();
-    cong->reset();
+    currentRound += 1;
+    ASSERT(tcpState == CLOSED);
+    tcpState = OPEN;
     ASSERT(appState == Scheduled);
     appState = Sending;
     flowStartTime = simTime().dbl(); // ! reset flow start_time, so fct is correct

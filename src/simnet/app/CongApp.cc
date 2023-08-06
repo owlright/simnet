@@ -19,8 +19,6 @@ bool CongApp::bindRemote()
 {
     if(destAddr != INVALID_ADDRESS && destPort != INVALID_PORT) {
         connection->bindRemote(destAddr, destPort); // ! bind remote before using send
-        // appState = Scheduled;
-        tcpState = OPEN;
         return true;
     }
     else {
@@ -30,18 +28,19 @@ bool CongApp::bindRemote()
 
 void CongApp::onConnectionClose()
 {
-    // do nothing
+    resetState();
 }
 
 void CongApp::resetState()
 {
-    currentRound += 1;
+    ASSERT(tcpState == CLOSED);
     nextSentSeq = 0;
     nextAskedSeq = 0;
+    nextAckSeq = 0;
+    nextSeq = 0;
     resentBytes = 0;
-//    confirmedResendBytes = 0;
     currentBaseRTT = 0;
-    tcpState = OPEN;
+    cong->reset();
 }
 
 void CongApp::finish() {
