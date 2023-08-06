@@ -131,19 +131,7 @@ void ParameterServerApp::onReceivedData(const Packet* pkt) {
     //         isAllWorkersFinished = true;
     //     }
     // }
-    if (round > currentRound) {
-        ASSERT(aggedWorkers.empty());
-        ASSERT(aggedEcns.empty());
-        ASSERT(receivedNumber.empty());
-    //     // ! it's very important to clear information left by last Round
-    //     // lastTxBuffer = getTxBufferCopy();
-    //     // minAckedSeq = 0;
-    //     aggedWorkers.clear();
-    //     receivedNumber.clear();
-    //     aggedEcns.clear();
-    //     // txBuffer.clear();
-    //     currentRound = round;
-    }
+
     // if (round == currentRound) {
         // if (pk->isFlowFinished()) isAllWorkersFinished = false;
         // auto seq = pk->getSeqNumber();
@@ -168,6 +156,7 @@ void ParameterServerApp::onReceivedData(const Packet* pkt) {
         //     return;
         // }
         bool is_agg_finished = false;
+        std::cout << pk->getName() << " is resend? " << pk->getResend() << " round " << pk->getRound() << endl;
         if (pk->getFINACK()) {
             ASSERT(tcpState==LAST_ACK);
             // ! do nothing there is no ACK to FINACK
@@ -210,6 +199,7 @@ void ParameterServerApp::onReceivedData(const Packet* pkt) {
             receivedNumber.erase(seq);
             aggedEcns.erase(seq);
         }
+        CongApp::onReceivedData(pk);
     // } else {
         // // ! some senders send next round too early, the info is updated upabove.
         // // ! Again, we answer only the first-batch resend packets and ingore the others.

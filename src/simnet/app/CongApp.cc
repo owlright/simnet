@@ -126,26 +126,34 @@ void CongApp::sendPendingData()
         auto pk = tx_item.pkt->dup();
         char pkname[50];
         auto dest_addr = pk->getDestAddr();
-        if (pk->getFIN() && !pk->getFINACK()) {
+        auto seq = pk->getSeqNumber();
+        if (pk->getFIN() && pk->getFINACK() ) {
+            sprintf(pkname, "FIN-FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+                                        localAddr, dest_addr, seq, nextAckSeq);
+            transitTcpStateOnEvent(SEND_FIN);
+            transitTcpStateOnEvent(SEND_FINACK);
+        }
+        else if (pk->getFIN() && !pk->getFINACK()) {
             sprintf(pkname, "FIN-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
-                            localAddr, dest_addr, pk->getSeqNumber(), nextAckSeq);
+                            localAddr, dest_addr, seq, nextAckSeq);
             transitTcpStateOnEvent(SEND_FIN);
         }
-        else if (pk->getFIN() && pk->getFINACK() ) {
-            sprintf(pkname, "FIN-FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-                                        localAddr, dest_addr, nextSeq, nextAckSeq);
-            transitTcpStateOnEvent(SEND_FIN);
+        else if (pk->getFINACK()  && !pk->getFIN()) {
+            sprintf(pkname, "FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
+                            localAddr, dest_addr, seq, nextAckSeq);
+            transitTcpStateOnEvent(SEND_FINACK);
         }
         else if (pk->getPacketType() == ACK) {
             sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-            localAddr, dest_addr, nextSeq, nextAckSeq);
+            localAddr, dest_addr, seq, nextAckSeq);
         }
         else if (pk->getPacketType() == MACK) {
             sprintf(pkname, "MACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-            localAddr, dest_addr, nextSeq, nextAckSeq);
-        } else {
+            localAddr, dest_addr, seq, nextAckSeq);
+        }
+        else {
             sprintf(pkname, "DATA-round-%d-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
-                    currentRound, localAddr, dest_addr, pk->getSeqNumber(), nextAckSeq);
+                    currentRound, localAddr, dest_addr, seq, nextAckSeq);
         }
 
         pk->setName(pkname);
@@ -229,7 +237,6 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
         std::cout << pk->getName() << endl;
     bool is_FIN = pk->getFIN();
     bool is_FINACK = pk->getFINACK();
-    ASSERT(ackSeq >= oldestNotAckedSeq);
 
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
