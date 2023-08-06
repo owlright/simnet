@@ -17,6 +17,7 @@ enum TcpState_t
 enum TcpEvent_t
 {
     SEND_FIN,
+    SEND_FINACK,
     RECV_FIN,
     RECV_FINACK
 };
@@ -66,6 +67,9 @@ protected:
 protected:
     virtual void onReceivedAck(const Packet* pk);
     virtual void onReceivedData(const Packet* pk);
+    virtual Packet* createDataPacket(B packetBytes) {
+        throw cRuntimeError("you must override this function");
+    };
     void sendPendingData();
     void resendOldestSeq();
     B inflightBytes() {return nextSentSeq - nextAskedSeq;};
@@ -82,6 +86,7 @@ protected:
 
     // std::map<SeqNumber, TxItem> getTxBufferCopy() {return txBuffer;}
     const SeqNumber& getNextSeq() const {return nextSeq;};
+    bool isInTxBuffer(SeqNumber seq) {return txBuffer.find(seq) != txBuffer.end();};
 //    const B& getConfirmedNormalBytes() const {return nextAskedSeq;};
 //    const B& getConfirmedResendBytes() const {return confirmedResendBytes;};
     const simtime_t& getCurrentBaseRTT() const {return currentBaseRTT;};
@@ -118,8 +123,8 @@ private:
 //    B confirmedRedundantBytes{0}; // bytes resend more than once
     simtime_t estimatedRTT;
 
-    SeqNumber oldestNotAckedSeq{0};
-    SeqNumber last_oldestNotAckedSeq{0};
+    SeqNumber markSeq{0};
+    SeqNumber last_markSeq{0};
 
     std::map<SeqNumber, TxItem> txBuffer;
     std::map<SeqNumber, Packet*> rxBuffer;

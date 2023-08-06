@@ -253,19 +253,22 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     }
 
 
-    if ( txBuffer.empty() && (tcpState ==  TIME_WAIT || tcpState == CLOSE_WAIT) ) {
-        char pkname[50];
-        auto packet = new Packet();
-        sprintf(pkname, "FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-        localAddr, destAddr, nextSeq, ackSeq);
-        packet->setName(pkname);
+    // ! we only send FINACK when txBuffer is empty
+    if ( txBuffer.empty() && (tcpState ==  TIME_WAIT
+                           || tcpState == CLOSE_WAIT) ) {
+        // char pkname[50];
+        auto packet = createDataPacket(1);
+        // sprintf(pkname, "FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+        // localAddr, destAddr, nextSeq, ackSeq);
+        // packet->setName(pkname);
         packet->setFIN(true);
         packet->setFINACK(true);
-        packet->setByteLength(64);
         insertTxBuffer(packet);
     }
-    else if (tcpState == CLOSED) {
+
+    if (tcpState == CLOSED) {
         ASSERT(txBuffer.empty());
+        ASSERT(rxBuffer.empty());
         onConnectionClose();
         cancelEvent(RTOTimeout);
     }
