@@ -17,7 +17,7 @@ enum TcpState_t
 enum TcpEvent_t
 {
     SEND_FIN,
-    SEND_FINACK,
+    SEND_ACK,
     RECV_FIN,
     RECV_FINACK
 };
@@ -124,7 +124,6 @@ private:
     simtime_t estimatedRTT;
 
     SeqNumber markSeq{0};
-    SeqNumber last_markSeq{0};
 
     std::map<SeqNumber, TxItem> txBuffer;
     std::map<SeqNumber, Packet*> rxBuffer;
