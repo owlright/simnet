@@ -9,7 +9,7 @@ protected:
     // virtual void handleMessage(cMessage *msg) override;
     // void onNewConnectionArrived(IdNumber connId, const Packet* const packet);
     // virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    // virtual void onReceivedAck(const Packet* pk) override;
+    virtual void onReceivedAck(const Packet* pk) override;
     virtual void onReceivedData(const Packet* pk) override;
     AggPacket* createAckPacket(const AggPacket* pk);
     // virtual void finish() override;
@@ -95,11 +95,30 @@ void ParameterServerApp::initialize(int stage)
 //     CongApp::onReceivedAck(pk);
 // }
 
-void ParameterServerApp::onReceivedData(const Packet* pkt)
+void ParameterServerApp::onReceivedAck(const Packet* pk)
 {
+    auto round = pk->getRound();
+    if (round > currentRound) {
+        ASSERT(tcpState == CLOSED);
+        ASSERT(aggedWorkers.empty());
+        ASSERT(aggedEcns.empty());
+        ASSERT(receivedNumber.empty());
+    //     // ! it's very important to clear information left by last Round
+    //     // lastTxBuffer = getTxBufferCopy();
+    //     // minAckedSeq = 0;
+    //     aggedWorkers.clear();
+    //     receivedNumber.clear();
+    //     aggedEcns.clear();
+    //     // txBuffer.clear();
+        currentRound = round;
+    }
+    CongApp::onReceivedAck(pk);
+}
+
+void ParameterServerApp::onReceivedData(const Packet* pkt) {
     auto pk = check_and_cast<const AggPacket*>(pkt);
     ASSERT(pk->getJobId() == jobid);
-    auto round = pk->getRound();
+
     auto seq = pk->getSeqNumber();
 
     // if (!isAllWorkersFinished && round < currentRound) {
