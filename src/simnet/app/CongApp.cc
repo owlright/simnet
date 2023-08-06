@@ -72,9 +72,20 @@ void CongApp::initialize(int stage)
 void CongApp::handleMessage(cMessage *msg)
 {
     if (msg == RTOTimeout) {
-        if (last_oldestNotAckedSeq == oldestNotAckedSeq)
+        if (tcpState == TIME_WAIT) {
+            tcpState = CLOSED;
+            ASSERT(txBuffer.size() == 1);
+            auto item = txBuffer.begin()->second;
+            delete item.pkt;
+            txBuffer.erase(item.seq);
+            onConnectionClose();
+            return;
+        }
+        else if (markSeq == nextSentSeq) {
             resendOldestSeq();
-        scheduleAfter(estimatedRTT, RTOTimeout); // we have to repeadedly check, this will be canceled when appState==finished
+        }
+        markSeq = nextSentSeq;
+        scheduleAfter(2*estimatedRTT, RTOTimeout); // we have to repeadedly check, this will be canceled when appState==finished
     } else {
         UnicastApp::handleMessage(msg);
     }
@@ -97,7 +108,8 @@ void CongApp::sendPendingData()
                 auto pkt = tx_item.pkt->dup();
                 pkt->setResend(true);
                 resentBytes += pktSize;
-                tx_item.resend_timer = (cong->getcWnd() / messageLength); // wait for about a RTT
+                auto rtt_count = cong->getcWnd() / messageLength;
+                tx_item.resend_timer = maxDisorderNumber > rtt_count ? maxDisorderNumber : rtt_count; // wait for about a RTT
                 tx_item.is_resend_already = true;
                 EV_DEBUG << "resend seq " << pkt->getSeqNumber() << endl;
             }
@@ -108,6 +120,7 @@ void CongApp::sendPendingData()
         }
         else {
             tx_item.is_sent = true;
+            markSeq = nextSentSeq;
             nextSentSeq = tx_item.seq + pktSize;
         }
         auto pk = tx_item.pkt->dup();
@@ -144,23 +157,26 @@ void CongApp::sendPendingData()
         connection->send(pk);
         cong->onSendData(tx_item.seq, pktSize);
         tx_item_it++;
-        // if (nextSentSeq == pktSize) { // ! in case the first packet is lost
-        //     // ! if cwnd==1, and this packet is lost, no more acks will arrive, sender will be stuck
-        //     scheduleAfter(estimatedRTT, RTOTimeout);
-        // }
+        if (seq == 0) {
+            scheduleAfter(estimatedRTT, RTOTimeout);
+        }
+        if (tcpState == TIME_WAIT) {
+            rescheduleAfter(2*estimatedRTT, RTOTimeout);
+        }
     }
 }
 
 void CongApp::resendOldestSeq()
 {
     auto entry = txBuffer.begin()->second;
-    auto pk = entry.pkt;
-    if (entry.resend_timer == 0 && cong->getcWnd() - inflightBytes() >= pk->getByteLength()) {
-        connection->send(pk);
-        entry.is_resend_already = true;
-        resentBytes += pk->getByteLength(); // ! this will affect inflightBytes
-        entry.resend_timer = maxDisorderNumber > cong->getcWnd() ? maxDisorderNumber : cong->getcWnd();
-    }
+    auto pk = entry.pkt->dup();
+    pk->setResend(true);
+    connection->send(pk);
+    entry.is_resend_already = true;
+    resentBytes += entry.pktSize; // ! this will affect inflightBytes
+    auto rtt_count = cong->getcWnd() / messageLength;
+    entry.resend_timer = maxDisorderNumber > rtt_count ? maxDisorderNumber : rtt_count;
+
 }
 
 void CongApp::onReceivedAck(const Packet* pk)
