@@ -20,6 +20,7 @@ void WorkerApp::initialize(int stage)
 }
 
 void WorkerApp::setField(AggPacket* pk) {
+    pk->setAggSeqNumber(nextAggSeq++);
     pk->setRound(currentRound);
     pk->setJobId(jobId);
     pk->setWorkerNumber(numWorkers);
@@ -45,10 +46,10 @@ void WorkerApp::onFlowStop()
 
 Packet* WorkerApp::createDataPacket(B packetBytes)
 {
-    char pkname[40];
-    sprintf(pkname, "NOINC-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-            localAddr, destAddr, getNextSeq());
-    auto pk = new AggPacket(pkname);
+    // char pkname[40];
+    // sprintf(pkname, "NOINC-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
+    //         localAddr, destAddr, getNextSeq());
+    auto pk = new AggPacket();
     setField(pk);
 
     return pk;

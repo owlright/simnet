@@ -213,6 +213,7 @@ AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
 
     auto packet = new AggPacket();
     // packet->setSeqNumber(seq);
+    packet->setAggSeqNumber(pk->getAggSeqNumber());
     packet->setPacketType(MACK);
     packet->setByteLength(64);
     // packet->setReceivedBytes(pk->getByteLength());

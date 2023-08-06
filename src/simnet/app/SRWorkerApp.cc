@@ -51,15 +51,15 @@ Packet* SRWorker::createDataPacket(B packetBytes)
 
 void SRWorker::setField(AggUseIncPacket* pk)
 {
-    WorkerApp::setField(pk);
-    auto seqNumber = getNextSeq(); // ! only when packet insert into txBuffer, then it can have seqnumber
+    WorkerApp::setField(pk); // ! we need the aggSeqNumber
+    auto seqNumber = pk->getAggSeqNumber();
     auto jobID = pk->getJobId();
 
     std::size_t agtrIndex = seqNumber ^ jobID;
     hash_combine(agtrIndex, jobID);
     hash_combine(agtrIndex, seqNumber);
 
-    EV_DEBUG << "seqNumber " << seqNumber << " jobID " << jobID << " aggregator: " << agtrIndex % MAX_AGTR_COUNT << endl;
+    EV_DEBUG << "aggSeqNumber " << seqNumber << " jobID " << jobID << " aggregator: " << agtrIndex % MAX_AGTR_COUNT << endl;
     pk->setAggregatorIndex(agtrIndex % MAX_AGTR_COUNT);
     pk->setWorkerNumber(numWorkers);
     pk->setDistance(0);

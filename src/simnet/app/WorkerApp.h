@@ -16,9 +16,8 @@ protected:
     void initialize(int stage) override;
     virtual void finish() override;
 
-
-
 protected:
+    SeqNumber nextAggSeq{1};
     int jobId{-1};
     int workerId{-1};
     int numWorkers{-1};

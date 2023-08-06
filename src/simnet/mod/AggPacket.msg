@@ -13,6 +13,7 @@ class AggPacket extends Packet
     packetType = AGG;
     AggPolicy aggPolicy = NOINC;
     int64_t jobId;
+    int64_t aggSeqNumber;
     int workerNumber;
     int treeCost;
     int distance;

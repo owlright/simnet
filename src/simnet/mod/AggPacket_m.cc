@@ -181,6 +181,7 @@ void AggPacket::copy(const AggPacket& other)
 {
     this->aggPolicy = other.aggPolicy;
     this->jobId = other.jobId;
+    this->aggSeqNumber = other.aggSeqNumber;
     this->workerNumber = other.workerNumber;
     this->treeCost = other.treeCost;
     this->distance = other.distance;
@@ -197,6 +198,7 @@ void AggPacket::parsimPack(omnetpp::cCommBuffer *b) const
     ::Packet::parsimPack(b);
     doParsimPacking(b,this->aggPolicy);
     doParsimPacking(b,this->jobId);
+    doParsimPacking(b,this->aggSeqNumber);
     doParsimPacking(b,this->workerNumber);
     doParsimPacking(b,this->treeCost);
     doParsimPacking(b,this->distance);
@@ -211,6 +213,7 @@ void AggPacket::parsimUnpack(omnetpp::cCommBuffer *b)
     ::Packet::parsimUnpack(b);
     doParsimUnpacking(b,this->aggPolicy);
     doParsimUnpacking(b,this->jobId);
+    doParsimUnpacking(b,this->aggSeqNumber);
     doParsimUnpacking(b,this->workerNumber);
     doParsimUnpacking(b,this->treeCost);
     doParsimUnpacking(b,this->distance);
@@ -238,6 +241,16 @@ int64_t AggPacket::getJobId() const
 void AggPacket::setJobId(int64_t jobId)
 {
     this->jobId = jobId;
+}
+
+int64_t AggPacket::getAggSeqNumber() const
+{
+    return this->aggSeqNumber;
+}
+
+void AggPacket::setAggSeqNumber(int64_t aggSeqNumber)
+{
+    this->aggSeqNumber = aggSeqNumber;
 }
 
 int AggPacket::getWorkerNumber() const
@@ -307,6 +320,7 @@ class AggPacketDescriptor : public omnetpp::cClassDescriptor
     enum FieldConstants {
         FIELD_aggPolicy,
         FIELD_jobId,
+        FIELD_aggSeqNumber,
         FIELD_workerNumber,
         FIELD_treeCost,
         FIELD_distance,
@@ -380,7 +394,7 @@ const char *AggPacketDescriptor::getProperty(const char *propertyName) const
 int AggPacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 9+base->getFieldCount() : 9;
+    return base ? 10+base->getFieldCount() : 10;
 }
 
 unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
@@ -394,6 +408,7 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
     static unsigned int fieldTypeFlags[] = {
         FD_ISEDITABLE,    // FIELD_aggPolicy
         FD_ISEDITABLE,    // FIELD_jobId
+        FD_ISEDITABLE,    // FIELD_aggSeqNumber
         FD_ISEDITABLE,    // FIELD_workerNumber
         FD_ISEDITABLE,    // FIELD_treeCost
         FD_ISEDITABLE,    // FIELD_distance
@@ -402,7 +417,7 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_receivedNumber
         FD_ISEDITABLE,    // FIELD_PSAddr
     };
-    return (field >= 0 && field < 9) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 10) ? fieldTypeFlags[field] : 0;
 }
 
 const char *AggPacketDescriptor::getFieldName(int field) const
@@ -416,6 +431,7 @@ const char *AggPacketDescriptor::getFieldName(int field) const
     static const char *fieldNames[] = {
         "aggPolicy",
         "jobId",
+        "aggSeqNumber",
         "workerNumber",
         "treeCost",
         "distance",
@@ -424,7 +440,7 @@ const char *AggPacketDescriptor::getFieldName(int field) const
         "receivedNumber",
         "PSAddr",
     };
-    return (field >= 0 && field < 9) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 10) ? fieldNames[field] : nullptr;
 }
 
 int AggPacketDescriptor::findField(const char *fieldName) const
@@ -433,13 +449,14 @@ int AggPacketDescriptor::findField(const char *fieldName) const
     int baseIndex = base ? base->getFieldCount() : 0;
     if (strcmp(fieldName, "aggPolicy") == 0) return baseIndex + 0;
     if (strcmp(fieldName, "jobId") == 0) return baseIndex + 1;
-    if (strcmp(fieldName, "workerNumber") == 0) return baseIndex + 2;
-    if (strcmp(fieldName, "treeCost") == 0) return baseIndex + 3;
-    if (strcmp(fieldName, "distance") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "isAck") == 0) return baseIndex + 5;
-    if (strcmp(fieldName, "workerRecord") == 0) return baseIndex + 6;
-    if (strcmp(fieldName, "receivedNumber") == 0) return baseIndex + 7;
-    if (strcmp(fieldName, "PSAddr") == 0) return baseIndex + 8;
+    if (strcmp(fieldName, "aggSeqNumber") == 0) return baseIndex + 2;
+    if (strcmp(fieldName, "workerNumber") == 0) return baseIndex + 3;
+    if (strcmp(fieldName, "treeCost") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "distance") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "isAck") == 0) return baseIndex + 6;
+    if (strcmp(fieldName, "workerRecord") == 0) return baseIndex + 7;
+    if (strcmp(fieldName, "receivedNumber") == 0) return baseIndex + 8;
+    if (strcmp(fieldName, "PSAddr") == 0) return baseIndex + 9;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -454,6 +471,7 @@ const char *AggPacketDescriptor::getFieldTypeString(int field) const
     static const char *fieldTypeStrings[] = {
         "AggPolicy",    // FIELD_aggPolicy
         "int64_t",    // FIELD_jobId
+        "int64_t",    // FIELD_aggSeqNumber
         "int",    // FIELD_workerNumber
         "int",    // FIELD_treeCost
         "int",    // FIELD_distance
@@ -462,7 +480,7 @@ const char *AggPacketDescriptor::getFieldTypeString(int field) const
         "int",    // FIELD_receivedNumber
         "int64_t",    // FIELD_PSAddr
     };
-    return (field >= 0 && field < 9) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 10) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **AggPacketDescriptor::getFieldPropertyNames(int field) const
@@ -567,6 +585,7 @@ std::string AggPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, 
     switch (field) {
         case FIELD_aggPolicy: return enum2string(pp->getAggPolicy(), "AggPolicy");
         case FIELD_jobId: return int642string(pp->getJobId());
+        case FIELD_aggSeqNumber: return int642string(pp->getAggSeqNumber());
         case FIELD_workerNumber: return long2string(pp->getWorkerNumber());
         case FIELD_treeCost: return long2string(pp->getTreeCost());
         case FIELD_distance: return long2string(pp->getDistance());
@@ -592,6 +611,7 @@ void AggPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int fie
     switch (field) {
         case FIELD_aggPolicy: pp->setAggPolicy((AggPolicy)string2enum(value, "AggPolicy")); break;
         case FIELD_jobId: pp->setJobId(string2int64(value)); break;
+        case FIELD_aggSeqNumber: pp->setAggSeqNumber(string2int64(value)); break;
         case FIELD_workerNumber: pp->setWorkerNumber(string2long(value)); break;
         case FIELD_treeCost: pp->setTreeCost(string2long(value)); break;
         case FIELD_distance: pp->setDistance(string2long(value)); break;
@@ -615,6 +635,7 @@ omnetpp::cValue AggPacketDescriptor::getFieldValue(omnetpp::any_ptr object, int 
     switch (field) {
         case FIELD_aggPolicy: return static_cast<int>(pp->getAggPolicy());
         case FIELD_jobId: return pp->getJobId();
+        case FIELD_aggSeqNumber: return pp->getAggSeqNumber();
         case FIELD_workerNumber: return pp->getWorkerNumber();
         case FIELD_treeCost: return pp->getTreeCost();
         case FIELD_distance: return pp->getDistance();
@@ -640,6 +661,7 @@ void AggPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int 
     switch (field) {
         case FIELD_aggPolicy: pp->setAggPolicy(static_cast<AggPolicy>(value.intValue())); break;
         case FIELD_jobId: pp->setJobId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
+        case FIELD_aggSeqNumber: pp->setAggSeqNumber(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_workerNumber: pp->setWorkerNumber(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_treeCost: pp->setTreeCost(omnetpp::checked_int_cast<int>(value.intValue())); break;
         case FIELD_distance: pp->setDistance(omnetpp::checked_int_cast<int>(value.intValue())); break;

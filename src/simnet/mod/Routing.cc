@@ -119,7 +119,7 @@ void Routing::forwardIncoming(Packet *pk)
 {
     auto destAddr = pk->getDestAddr();
     auto srcAddr = pk->getSrcAddr();
-    auto seq = pk->getSeqNumber();
+    // auto seq = pk->getSeqNumber();
     // auto destSeqKey = std::make_pair(destAddr, seq);
 
     auto entryIndex = pk->getSegmentsLeft();
@@ -152,6 +152,7 @@ void Routing::forwardIncoming(Packet *pk)
             auto apk = check_and_cast<AggUseIncPacket*>(pk);
             auto jobId = apk->getJobId();
             auto PSport = apk->getDestPort();
+            auto seq = apk->getAggSeqNumber();
             MulticastID mKey = {jobId, destAddr, nextAddr, PSport, seq, true};
             // MulticastID mKey = {destAddr, PSport, seq};
             recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
@@ -203,9 +204,10 @@ void Routing::forwardIncoming(Packet *pk)
         // ! this node don't do aggregation, but its still need to record incoming ports
         // ! because it needs this to send reverse multicast packets
         // ! but actually this should also be clarified in segments, which will cost more space to store the segments
-
-        auto jobid = check_and_cast<AggPacket*>(pk)->getJobId();
+        auto apk = check_and_cast<AggPacket*>(pk);
+        auto jobid = apk->getJobId();
         auto PSport = pk->getDestPort();
+        auto seq = apk->getAggSeqNumber();
         auto dest = segment != -1 ? segment : destAddr; // ! note segment is next hop
         MulticastID mKey = {jobid, destAddr, dest, PSport, seq, false};
         recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
@@ -218,8 +220,10 @@ void Routing::forwardIncoming(Packet *pk)
         }
     }
     else if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
-        auto jobid = check_and_cast<AggPacket*>(pk)->getJobId();
-        auto psAddr = check_and_cast<AggPacket*>(pk)->getPSAddr();
+        auto apk = check_and_cast<AggPacket*>(pk);
+        auto jobid = apk->getJobId();
+        auto psAddr = apk->getPSAddr();
+        auto seq = apk->getAggSeqNumber();
         MulticastID srcSeqKey = {jobid, psAddr, srcAddr, pk->getLocalPort(), seq, true};
         // if (jobid == 4 && myAddress == 776 && seq == 232000)
         //     std::cout << myAddress << " " << psAddr << " ack " << endl;
