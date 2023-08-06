@@ -168,30 +168,37 @@ void ParameterServerApp::onReceivedData(const Packet* pkt) {
         //     return;
         // }
         bool is_agg_finished = false;
-        dealWithAggPacket(pk);
-        if (pk->getAggPolicy() == INC) {
-            is_agg_finished = dealWithIncAggPacket(check_and_cast<const AggUseIncPacket*>(pk));
-            if (is_agg_finished) {
-                auto mpk = createAckPacket(pk);
-                mpk->setDestAddr(groupAddr);
-                mpk->setDestPort(2000);  // TODO this is no use
-                mpk->setReceivedNumber(receivedNumber[seq]);
-                mpk->setECE(aggedEcns[seq]);
-                insertTxBuffer(mpk);
-            }
-        } else if (pk->getAggPolicy() == NOINC) {
-            is_agg_finished = dealWithNoIncAggPacket(connection, check_and_cast<const AggNoIncPacket*>(pk));
-            if (is_agg_finished) {
-                for (auto i = 0; i < workers.size(); i++) {
-                    auto packet = createAckPacket(pk);
-                    char pkname[40];
-                    sprintf(pkname, "ACK-%" PRId64 "-seq%" PRId64, localAddr, pk->getSeqNumber());
-                    packet->setName(pkname);
-                    packet->setPacketType(ACK);
-                    packet->setDestAddr(workers[i]);
-                    packet->setDestPort(workerPorts[i]);
-                    insertTxBuffer(packet);
-                    // getListeningSocket()->send(packet);  // ! HACK: this connection is the listening socket
+        if (pk->getFINACK()) {
+            ASSERT(tcpState==LAST_ACK);
+            // ! do nothing there is no ACK to FINACK
+        }
+        else if (!isInTxBuffer(seq)) { // duplicate seqs, TODO: do not care, is this always right?
+            dealWithAggPacket(pk);
+            if (pk->getAggPolicy() == INC) {
+                is_agg_finished = dealWithIncAggPacket(check_and_cast<const AggUseIncPacket*>(pk));
+                if (is_agg_finished) {
+                    auto mpk = createAckPacket(pk);
+                    mpk->setPacketType(MACK);
+                    mpk->setDestAddr(groupAddr);
+                    mpk->setDestPort(2000);  // TODO this is no use
+                    mpk->setReceivedNumber(receivedNumber[seq]);
+                    mpk->setECE(aggedEcns[seq]);
+                    insertTxBuffer(mpk);
+                }
+            } else if (pk->getAggPolicy() == NOINC) {
+                is_agg_finished = dealWithNoIncAggPacket(connection, check_and_cast<const AggNoIncPacket*>(pk));
+                if (is_agg_finished) {
+                    for (auto i = 0; i < workers.size(); i++) {
+                        auto packet = createAckPacket(pk);
+                        char pkname[40];
+                        sprintf(pkname, "ACK-%" PRId64 "-seq%" PRId64, localAddr, pk->getSeqNumber());
+                        packet->setName(pkname);
+                        packet->setPacketType(ACK);
+                        packet->setDestAddr(workers[i]);
+                        packet->setDestPort(workerPorts[i]);
+                        insertTxBuffer(packet);
+                        // getListeningSocket()->send(packet);  // ! HACK: this connection is the listening socket
+                    }
                 }
             }
         }
