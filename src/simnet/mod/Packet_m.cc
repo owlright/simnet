@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -150,7 +150,7 @@ void doParsimUnpacking(omnetpp::cCommBuffer *, T& t)
 
 }  // namespace omnetpp
 
-Register_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::AGG, PacketType::REMIND, PacketType::MACK, PacketType::NOUSE));
+Register_Enum(PacketType, (PacketType::ACK, PacketType::DATA, PacketType::AGG, PacketType::MACK));
 
 Register_Class(EthernetMacHeader)
 
@@ -2151,7 +2151,6 @@ void Packet::copy(const Packet& other)
     this->localPort = other.localPort;
     this->destPort = other.destPort;
     this->FIN = other.FIN;
-    this->FINACK = other.FINACK;
     this->ECN = other.ECN;
     this->ECE = other.ECE;
     this->packetType = other.packetType;
@@ -2171,7 +2170,6 @@ void Packet::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->localPort);
     doParsimPacking(b,this->destPort);
     doParsimPacking(b,this->FIN);
-    doParsimPacking(b,this->FINACK);
     doParsimPacking(b,this->ECN);
     doParsimPacking(b,this->ECE);
     doParsimPacking(b,this->packetType);
@@ -2191,7 +2189,6 @@ void Packet::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->localPort);
     doParsimUnpacking(b,this->destPort);
     doParsimUnpacking(b,this->FIN);
-    doParsimUnpacking(b,this->FINACK);
     doParsimUnpacking(b,this->ECN);
     doParsimUnpacking(b,this->ECE);
     doParsimUnpacking(b,this->packetType);
@@ -2251,16 +2248,6 @@ bool Packet::getFIN() const
 void Packet::setFIN(bool FIN)
 {
     this->FIN = FIN;
-}
-
-bool Packet::getFINACK() const
-{
-    return this->FINACK;
-}
-
-void Packet::setFINACK(bool FINACK)
-{
-    this->FINACK = FINACK;
 }
 
 bool Packet::getECN() const
@@ -2363,7 +2350,6 @@ class PacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_localPort,
         FIELD_destPort,
         FIELD_FIN,
-        FIELD_FINACK,
         FIELD_ECN,
         FIELD_ECE,
         FIELD_packetType,
@@ -2439,7 +2425,7 @@ const char *PacketDescriptor::getProperty(const char *propertyName) const
 int PacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 15+base->getFieldCount() : 15;
+    return base ? 14+base->getFieldCount() : 14;
 }
 
 unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
@@ -2456,10 +2442,9 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_localPort
         FD_ISEDITABLE,    // FIELD_destPort
         FD_ISEDITABLE,    // FIELD_FIN
-        FD_ISEDITABLE,    // FIELD_FINACK
         FD_ISEDITABLE,    // FIELD_ECN
         FD_ISEDITABLE,    // FIELD_ECE
-        FD_ISEDITABLE,    // FIELD_packetType
+        0,    // FIELD_packetType
         FD_ISEDITABLE,    // FIELD_connectionId
         FD_ISEDITABLE,    // FIELD_startTime
         FD_ISEDITABLE,    // FIELD_transmitTime
@@ -2467,7 +2452,7 @@ unsigned int PacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_resend
         FD_ISEDITABLE,    // FIELD_round
     };
-    return (field >= 0 && field < 15) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 14) ? fieldTypeFlags[field] : 0;
 }
 
 const char *PacketDescriptor::getFieldName(int field) const
@@ -2484,7 +2469,6 @@ const char *PacketDescriptor::getFieldName(int field) const
         "localPort",
         "destPort",
         "FIN",
-        "FINACK",
         "ECN",
         "ECE",
         "packetType",
@@ -2495,7 +2479,7 @@ const char *PacketDescriptor::getFieldName(int field) const
         "resend",
         "round",
     };
-    return (field >= 0 && field < 15) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 14) ? fieldNames[field] : nullptr;
 }
 
 int PacketDescriptor::findField(const char *fieldName) const
@@ -2507,16 +2491,15 @@ int PacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "localPort") == 0) return baseIndex + 2;
     if (strcmp(fieldName, "destPort") == 0) return baseIndex + 3;
     if (strcmp(fieldName, "FIN") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "FINACK") == 0) return baseIndex + 5;
-    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 6;
-    if (strcmp(fieldName, "ECE") == 0) return baseIndex + 7;
-    if (strcmp(fieldName, "packetType") == 0) return baseIndex + 8;
-    if (strcmp(fieldName, "connectionId") == 0) return baseIndex + 9;
-    if (strcmp(fieldName, "startTime") == 0) return baseIndex + 10;
-    if (strcmp(fieldName, "transmitTime") == 0) return baseIndex + 11;
-    if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 12;
-    if (strcmp(fieldName, "resend") == 0) return baseIndex + 13;
-    if (strcmp(fieldName, "round") == 0) return baseIndex + 14;
+    if (strcmp(fieldName, "ECN") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "ECE") == 0) return baseIndex + 6;
+    if (strcmp(fieldName, "packetType") == 0) return baseIndex + 7;
+    if (strcmp(fieldName, "connectionId") == 0) return baseIndex + 8;
+    if (strcmp(fieldName, "startTime") == 0) return baseIndex + 9;
+    if (strcmp(fieldName, "transmitTime") == 0) return baseIndex + 10;
+    if (strcmp(fieldName, "queueTime") == 0) return baseIndex + 11;
+    if (strcmp(fieldName, "resend") == 0) return baseIndex + 12;
+    if (strcmp(fieldName, "round") == 0) return baseIndex + 13;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -2534,7 +2517,6 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "uint16_t",    // FIELD_localPort
         "uint16_t",    // FIELD_destPort
         "bool",    // FIELD_FIN
-        "bool",    // FIELD_FINACK
         "bool",    // FIELD_ECN
         "bool",    // FIELD_ECE
         "PacketType",    // FIELD_packetType
@@ -2545,7 +2527,7 @@ const char *PacketDescriptor::getFieldTypeString(int field) const
         "bool",    // FIELD_resend
         "int",    // FIELD_round
     };
-    return (field >= 0 && field < 15) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 14) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **PacketDescriptor::getFieldPropertyNames(int field) const
@@ -2640,7 +2622,6 @@ std::string PacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, int
         case FIELD_localPort: return ulong2string(pp->getLocalPort());
         case FIELD_destPort: return ulong2string(pp->getDestPort());
         case FIELD_FIN: return bool2string(pp->getFIN());
-        case FIELD_FINACK: return bool2string(pp->getFINACK());
         case FIELD_ECN: return bool2string(pp->getECN());
         case FIELD_ECE: return bool2string(pp->getECE());
         case FIELD_packetType: return enum2string(pp->getPacketType(), "PacketType");
@@ -2671,10 +2652,8 @@ void PacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int field,
         case FIELD_localPort: pp->setLocalPort(string2ulong(value)); break;
         case FIELD_destPort: pp->setDestPort(string2ulong(value)); break;
         case FIELD_FIN: pp->setFIN(string2bool(value)); break;
-        case FIELD_FINACK: pp->setFINACK(string2bool(value)); break;
         case FIELD_ECN: pp->setECN(string2bool(value)); break;
         case FIELD_ECE: pp->setECE(string2bool(value)); break;
-        case FIELD_packetType: pp->setPacketType((PacketType)string2enum(value, "PacketType")); break;
         case FIELD_connectionId: pp->setConnectionId(string2int64(value)); break;
         case FIELD_startTime: pp->setStartTime(string2double(value)); break;
         case FIELD_transmitTime: pp->setTransmitTime(string2double(value)); break;
@@ -2700,7 +2679,6 @@ omnetpp::cValue PacketDescriptor::getFieldValue(omnetpp::any_ptr object, int fie
         case FIELD_localPort: return (omnetpp::intval_t)(pp->getLocalPort());
         case FIELD_destPort: return (omnetpp::intval_t)(pp->getDestPort());
         case FIELD_FIN: return pp->getFIN();
-        case FIELD_FINACK: return pp->getFINACK();
         case FIELD_ECN: return pp->getECN();
         case FIELD_ECE: return pp->getECE();
         case FIELD_packetType: return static_cast<int>(pp->getPacketType());
@@ -2731,10 +2709,8 @@ void PacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int i, 
         case FIELD_localPort: pp->setLocalPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
         case FIELD_destPort: pp->setDestPort(omnetpp::checked_int_cast<uint16_t>(value.intValue())); break;
         case FIELD_FIN: pp->setFIN(value.boolValue()); break;
-        case FIELD_FINACK: pp->setFINACK(value.boolValue()); break;
         case FIELD_ECN: pp->setECN(value.boolValue()); break;
         case FIELD_ECE: pp->setECE(value.boolValue()); break;
-        case FIELD_packetType: pp->setPacketType(static_cast<PacketType>(value.intValue())); break;
         case FIELD_connectionId: pp->setConnectionId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_startTime: pp->setStartTime(value.doubleValue()); break;
         case FIELD_transmitTime: pp->setTransmitTime(value.doubleValue()); break;

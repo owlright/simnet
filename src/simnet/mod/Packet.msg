@@ -8,9 +8,9 @@ enum PacketType
     ACK      = 0;
     DATA     = 1;
     AGG      = 2;
-    REMIND   = 3;
-    MACK     = 4; // multicast ack
-    NOUSE    = 5;
+//    REMIND   = 3;
+    MACK     = 3; // multicast ack
+//    NOUSE    = 5;
 };
 
 packet EthernetMacHeader
@@ -50,8 +50,8 @@ class IPv6Header extends EthernetMacHeader
 //    uint16_t payloadLength; // 2B
 //    uint8_t nextHeader; // 1B
 //    uint8_t TTL; // 1B
-    int64_t srcAddr; // 16B
-    int64_t destAddr; // 16B
+    int64_t srcAddr = -1; // 16B
+    int64_t destAddr = -1; // 16B
 }
 
 class SegmentRoutingHeader extends IPv6Header
@@ -77,7 +77,7 @@ class Packet extends SegmentRoutingHeader
     uint16_t localPort;
     uint16_t destPort;
     bool FIN = false;
-    bool FINACK = false;
+//    bool FINACK = false;
     bool ECN = false;
     bool ECE;
     // cheating fields

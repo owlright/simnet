@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/Packet.msg.
+// Generated file, do not edit! Created by opp_msgtool 6.0 from simnet/mod/../mod/Packet.msg.
 //
 
 #ifndef __PACKET_M_H
@@ -27,16 +27,15 @@ using omnetpp::opp_string;
 // }}
 
 /**
- * Enum generated from <tt>simnet/mod/Packet.msg:7</tt> by opp_msgtool.
+ * Enum generated from <tt>simnet/mod/../mod/Packet.msg:7</tt> by opp_msgtool.
  * <pre>
  * enum PacketType
  * {
  *     ACK = 0;
  *     DATA = 1;
  *     AGG = 2;
- *     REMIND = 3;
- *     MACK = 4; // multicast ack
- *     NOUSE = 5;
+ *     //    REMIND   = 3;
+ *     MACK = 3; // multicast ack
  * }
  * </pre>
  */
@@ -44,16 +43,14 @@ enum PacketType {
     ACK = 0,
     DATA = 1,
     AGG = 2,
-    REMIND = 3,
-    MACK = 4,
-    NOUSE = 5
+    MACK = 3
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const PacketType& e) { b->pack(static_cast<int>(e)); }
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, PacketType& e) { int n; b->unpack(n); e = static_cast<PacketType>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:17</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:17</tt> by opp_msgtool.
  * <pre>
  * packet EthernetMacHeader
  * {
@@ -101,7 +98,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const EthernetMacHeader& ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, EthernetMacHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:26</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:26</tt> by opp_msgtool.
  * <pre>
  * class IPv4Header extends EthernetMacHeader
  * {
@@ -203,7 +200,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IPv4Header& obj) {obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv4Header& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:45</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:45</tt> by opp_msgtool.
  * <pre>
  * class IPv6Header extends EthernetMacHeader
  * {
@@ -214,8 +211,8 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv4Header& obj) {obj.par
  *     //    uint16_t payloadLength; // 2B
  *     //    uint8_t nextHeader; // 1B
  *     //    uint8_t TTL; // 1B
- *     int64_t srcAddr; // 16B
- *     int64_t destAddr; // 16B
+ *     int64_t srcAddr = -1; // 16B
+ *     int64_t destAddr = -1; // 16B
  * }
  * </pre>
  */
@@ -223,8 +220,8 @@ class IPv6Header : public ::EthernetMacHeader
 {
   protected:
     uint8_t version = 6;
-    int64_t srcAddr = 0;
-    int64_t destAddr = 0;
+    int64_t srcAddr = -1;
+    int64_t destAddr = -1;
 
   private:
     void copy(const IPv6Header& other);
@@ -255,7 +252,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const IPv6Header& obj) {obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, IPv6Header& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:58</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:58</tt> by opp_msgtool.
  * <pre>
  * class SegmentRoutingHeader extends IPv6Header
  * {
@@ -355,7 +352,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const SegmentRoutingHeader&
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, SegmentRoutingHeader& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/Packet.msg:73</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/../mod/Packet.msg:73</tt> by opp_msgtool.
  * <pre>
  * class Packet extends SegmentRoutingHeader
  * {
@@ -365,7 +362,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, SegmentRoutingHeader& obj
  *     uint16_t localPort;
  *     uint16_t destPort;
  *     bool FIN = false;
- *     bool FINACK = false;
+ *     //    bool FINACK = false;
  *     bool ECN = false;
  *     bool ECE;
  *     // cheating fields
@@ -388,7 +385,6 @@ class Packet : public ::SegmentRoutingHeader
     uint16_t localPort = 0;
     uint16_t destPort = 0;
     bool FIN = false;
-    bool FINACK = false;
     bool ECN = false;
     bool ECE = false;
     PacketType packetType = static_cast<PacketType>(-1);
@@ -428,9 +424,6 @@ class Packet : public ::SegmentRoutingHeader
 
     virtual bool getFIN() const;
     virtual void setFIN(bool FIN);
-
-    virtual bool getFINACK() const;
-    virtual void setFINACK(bool FINACK);
 
     virtual bool getECN() const;
     virtual void setECN(bool ECN);
