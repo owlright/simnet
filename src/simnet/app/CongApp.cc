@@ -327,7 +327,7 @@ void CongApp::insertRxBuffer(Packet* pk)
 {
     auto seq = pk->getSeqNumber();
     auto pk_size = pk->getByteLength();
-    if (rxBuffer.find(seq) == rxBuffer.end() && !pk->getFINACK()) { // ! there will be no ACK to FINACK
+    if (rxBuffer.find(seq) == rxBuffer.end() && (tcpState != CLOSED)) { // ! there will be no ACK to FINACK
         // ! these seqs arrive too early, store them for now
         rxBuffer[seq] = pk;
     }
