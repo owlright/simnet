@@ -133,10 +133,20 @@ void CongApp::sendPendingData()
                             localAddr, dest_addr, seq, nextAckSeq);
         if (pk->getFIN()) {
             sprintf(pkname, "FIN-");
-            tcpState = FIN_WAIT_1;
+            switch (tcpState) {
+            case TIME_WAIT:
+            case CLOSE_WAIT:
+                break;
+            case OPEN:
+                tcpState = FIN_WAIT_1;
+                break;
+            default:
+                throw cRuntimeError("Unknown state case");
+            }
         }
-        else
+        else {
             sprintf(pkname, "");
+        }
         char pktype[10];
         switch (pk->getPacketType()) {
             case ACK:
@@ -157,6 +167,8 @@ void CongApp::sendPendingData()
         strcat(pkname, pktype);
         strcat(pkname, src_dest_seq_ack);
         pk->setName(pkname);
+//        if (localAddr == 789)
+//            std::cout << pk->getName() << endl;
         // ! nextAckSeq may keep changing when many ACKs arrive at the same time
         // ! we must set it when sending out
         pk->setAckNumber(nextAckSeq);
