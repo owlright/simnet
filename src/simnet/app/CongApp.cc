@@ -226,13 +226,15 @@ void CongApp::onReceivedAck(const Packet* pk)
 
     if (pk->getFIN()) {// * the other side has received all my packets
         switch (tcpState) {
-            case OPEN:
+            case OPEN: // ! only server will receieve FIN when OPEN
                 tcpState = CLOSE_WAIT;
                 break;
             case FIN_WAIT_2:
                 tcpState = TIME_WAIT;
                 break;
-            case CLOSED: // ! this is only for simple flow app that doesn't want to wait 2MSL
+
+            case CLOSE_WAIT: // server sent out FIN and received a FIN(duplicate)
+            case CLOSED:
                 break;
             default:
                 throw cRuntimeError("unthought state case");
