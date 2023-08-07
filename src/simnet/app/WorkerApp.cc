@@ -20,6 +20,7 @@ void WorkerApp::initialize(int stage)
 }
 
 void WorkerApp::setField(AggPacket* pk) {
+    pk->setDestAddr(destAddr);
     pk->setAggSeqNumber(nextAggSeq++);
     pk->setRound(currentRound);
     pk->setJobId(jobId);
