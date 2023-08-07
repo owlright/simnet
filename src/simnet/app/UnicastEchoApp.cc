@@ -55,8 +55,7 @@ Packet *EchoApp::createAckPacket(const Packet* const pk)
     auto packet = new Packet();
     if (pk->getFIN()) {
         packet->setFIN(true); // ! EchoApp doesn't have to wait
-        packet->setFINACK(true);
-        sprintf(pkname, "FIN-FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+        sprintf(pkname, "FIN-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
             localAddr, srcAddr, nextSeq, ackSeq);
     }
     else {

@@ -120,55 +120,45 @@ void CongApp::sendPendingData()
         }
         else {
             tx_item.is_sent = true;
-            markSeq = nextSentSeq;
+            markSeq = nextSentSeq; // ! if markSeq not change for a RTOTimeout, we resend the oldest not acked seq
             nextSentSeq = tx_item.seq + pktSize;
         }
         auto pk = tx_item.pkt->dup();
         auto dest_addr = pk->getDestAddr();
         auto seq = pk->getSeqNumber();
+        // ! prepare the packet name
         char pkname[50];
-        char round_src_dest_seq_ack[50];
-        sprintf(round_src_dest_seq_ack, "-round-%d-%" PRId64 "to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
-                            currentRound, localAddr, dest_addr, seq, nextAckSeq);
-
+        char src_dest_seq_ack[50];
+        sprintf(src_dest_seq_ack, "%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+                            localAddr, dest_addr, seq, nextAckSeq);
         if (pk->getFIN()) {
-            sprintf(pkname, "FIN");
-            transitTcpStateOnEvent(SEND_FIN);
+            sprintf(pkname, "FIN-");
+            tcpState = FIN_WAIT_1;
         }
-        // if (pk->getFIN() && pk->getFINACK() ) {
-        //     sprintf(pkname, "FIN-FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-        //                                 localAddr, dest_addr, seq, nextAckSeq);
-        //     transitTcpStateOnEvent(SEND_FIN);
-        //     transitTcpStateOnEvent(SEND_FINACK);
-        // }
-        // else if (pk->getFIN() && !pk->getFINACK()) {
-        //     sprintf(pkname, "FIN-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
-        //                     localAddr, dest_addr, seq, nextAckSeq);
-        //     transitTcpStateOnEvent(SEND_FIN);
-        // }
-        // else if (pk->getFINACK()  && !pk->getFIN()) {
-        //     sprintf(pkname, "FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack%-" PRId64,
-        //                     localAddr, dest_addr, seq, nextAckSeq);
-        //     transitTcpStateOnEvent(SEND_FINACK);
-        // }
-        if (pk->getPacketType() == ACK) {
-            sprintf(pkname, "ACK");
-            transitTcpStateOnEvent(SEND_ACK);
+        else
+            sprintf(pkname, "");
+        char pktype[10];
+        switch (pk->getPacketType()) {
+            case ACK:
+                sprintf(pktype, "ACK-");
+                break;
+            case MACK:
+                sprintf(pktype, "MACK-");
+                break;
+            case DATA:
+                sprintf(pktype, "DATA-");
+                break;
+            case AGG:
+                sprintf(pktype, "AGG-");
+                break;
+            default:
+                throw cRuntimeError("Unknown packet type");
         }
-
-        if (pk->getPacketType() == MACK) {
-            sprintf(pkname, "MACK");
-            transitTcpStateOnEvent(SEND_ACK);
-        }
-        else {
-            sprintf(pkname, "DATA");
-        }
-
-        strcat(pkname, round_src_dest_seq_ack);
+        strcat(pkname, pktype);
+        strcat(pkname, src_dest_seq_ack);
         pk->setName(pkname);
-        if (localAddr == 268 && destAddr == 138)
-            std::cout << pkname << endl;
-
+        // ! nextAckSeq may keep changing when many ACKs arrive at the same time
+        // ! we must set it when sending out
         pk->setAckNumber(nextAckSeq);
         EV_DEBUG << pk << endl;
         connection->send(pk);
@@ -198,7 +188,36 @@ void CongApp::resendOldestSeq()
 
 void CongApp::onReceivedAck(const Packet* pk)
 {
+    bool is_FIN = pk->getFIN();
+    // bool is_FINACK = pk->getFINACK();
     auto ack_seq = pk->getAckNumber();
+
+    if (  nextAckSeq == pk->getSeqNumber() ) {
+        switch (tcpState) { // ! receive ACK to FIN
+            case CLOSE_WAIT:
+                tcpState = CLOSED;
+                break;
+            case FIN_WAIT_1:
+                tcpState = FIN_WAIT_2;
+                break;
+            default:
+                throw cRuntimeError("unthought state case");
+        }
+    }
+
+    if (is_FIN) {// * the other side has received all my packets
+        switch (tcpState) {
+            case OPEN:
+                tcpState = CLOSE_WAIT;
+                break;
+            case FIN_WAIT_2:
+                tcpState = TIME_WAIT;
+                break;
+            default:
+                throw cRuntimeError("unthought state case");
+        }
+    }
+
     if (txBuffer.empty() && ack_seq == 0) {
         // ! we should bind srcAddr and srcPort here,
         // ! but for mulitcast applications, there are many srcAddrs
@@ -244,23 +263,13 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     auto ackSeq = pk->getAckNumber();
     if (localAddr == 268 && destAddr == 138 && ackSeq == 5110)
         std::cout << pk->getName() << endl;
-    bool is_FIN = pk->getFIN();
-    bool is_FINACK = pk->getFINACK();
+
 
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     onReceivedAck(pk);
     onReceivedData(pk);
     insertRxBuffer(pk); // ! pk maybe deleted here, do not use it below
-
-    if (is_FINACK) {
-        transitTcpStateOnEvent(RECV_FINACK);
-    }
-
-    if (is_FIN) {// * the other side has received all my packets
-        transitTcpStateOnEvent(RECV_FIN);
-    }
-
 
     // ! we only send FINACK when txBuffer is empty
     if ( txBuffer.empty() && (tcpState ==  TIME_WAIT
@@ -287,102 +296,102 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
 
 }
 
-void CongApp::transitTcpStateOnEvent(const TcpEvent_t& event)
-{
-    // ! server will always sent FIN and FINACK together, so
-    // ! server will go: OPEN->(RECV_FIN)->(SEND_FINACK)->CLOSE_WAIT->(SEND_FIN)->LAST_ACK->(RECV_FINACK)->CLOSED
-    // ! client will go: OPEN->(SEND_FIN)->FIN_WAIT_1->(RECV_FINACK)->FIN_WAIT_2->(RECV_FIN)->TIME_WAIT->(SEND_FIN)->CLOSED
-    switch (event) {
-        case SEND_FIN:
-            switch (tcpState) {
-                // client side
-                case OPEN: // 1. client has sent out all data
-                    tcpState = FIN_WAIT_1;
-                    break;
-                case TIME_WAIT: // 2. client has receieved server's FIN
-                    tcpState = TIME_WAIT; // ! wait for ack to this FIN
-                    break;
+// void CongApp::transitTcpStateOnEvent(const TcpEvent_t& event)
+// {
+//     // ! server will always sent FIN and FINACK together, so
+//     // ! server will go: OPEN->(RECV_FIN)->(SEND_FINACK)->CLOSE_WAIT->(SEND_FIN)->LAST_ACK->(RECV_FINACK)->CLOSED
+//     // ! client will go: OPEN->(SEND_FIN)->FIN_WAIT_1->(RECV_FINACK)->FIN_WAIT_2->(RECV_FIN)->TIME_WAIT->(SEND_FIN)->CLOSED
+//     switch (event) {
+//         case SEND_FIN:
+//             switch (tcpState) {
+//                 // client side
+//                 case OPEN: // 1. client has sent out all data
+//                     tcpState = FIN_WAIT_1;
+//                     break;
+//                 case TIME_WAIT: // 2. client has receieved server's FIN
+//                     tcpState = TIME_WAIT; // ! wait for ack to this FIN
+//                     break;
 
-                //server side
-                 // ! server will only sent FIN when it receieves FIN, so it's state must be CLOSE_WAIT
-                case CLOSE_WAIT:
-                    tcpState = LAST_ACK; // ! server wait for ack to this FIN
-                    break;
+//                 //server side
+//                  // ! server will only sent FIN when it receieves FIN, so it's state must be CLOSE_WAIT
+//                 case CLOSE_WAIT:
+//                     tcpState = LAST_ACK; // ! server wait for ack to this FIN
+//                     break;
 
-                default:
-                    cRuntimeError("unknown state.");
-            }
-            break;
+//                 default:
+//                     cRuntimeError("unknown state.");
+//             }
+//             break;
 
-        case SEND_ACK:
-            switch (tcpState) {
-                // client side
-                case TIME_WAIT: // TODO: We assume server must receive this ACK, but what if this packet is lost ?
-                    tcpState = TIME_WAIT;
-                    break;
+//         case SEND_ACK:
+//             switch (tcpState) {
+//                 // client side
+//                 case TIME_WAIT: // TODO: We assume server must receive this ACK, but what if this packet is lost ?
+//                     tcpState = TIME_WAIT;
+//                     break;
 
-                // server side
-                case LAST_ACK:
-                    tcpState = LAST_ACK;
-                    break;
+//                 // server side
+//                 case LAST_ACK:
+//                     tcpState = LAST_ACK;
+//                     break;
 
-                default:
-                    cRuntimeError("unknown state.");
-            }
-            break;
+//                 default:
+//                     cRuntimeError("unknown state.");
+//             }
+//             break;
 
-        case RECV_FIN:
-            switch (tcpState) {
-                // server side
-                // ! server will only sent FIN when it receieves client's FIN, so it's impossible for client's OPEN state
-                case OPEN:
-                case CLOSE_WAIT: // received mupltiple FINs
-                    tcpState = CLOSE_WAIT;
-                    break;
-                case LAST_ACK: // duplicate FINs
-                    tcpState = LAST_ACK;
-                    break;
-                case CLOSED: // dulicate FINs
-                    tcpState = CLOSED;
-                    break;
+//         case RECV_FIN:
+//             switch (tcpState) {
+//                 // server side
+//                 // ! server will only sent FIN when it receieves client's FIN, so it's impossible for client's OPEN state
+//                 case OPEN:
+//                 case CLOSE_WAIT: // received mupltiple FINs
+//                     tcpState = CLOSE_WAIT;
+//                     break;
+//                 case LAST_ACK: // duplicate FINs
+//                     tcpState = LAST_ACK;
+//                     break;
+//                 case CLOSED: // dulicate FINs
+//                     tcpState = CLOSED;
+//                     break;
 
-                // client side
-                case FIN_WAIT_2: // ! we always deal FINACK first, so the state must be FIN_WAIT_2(server will never sent FIN first)
-                case TIME_WAIT:  // dulicate FINACKs
-                    tcpState = TIME_WAIT;
-                    break;
+//                 // client side
+//                 case FIN_WAIT_2: // ! we always deal FINACK first, so the state must be FIN_WAIT_2(server will never sent FIN first)
+//                 case TIME_WAIT:  // dulicate FINACKs
+//                     tcpState = TIME_WAIT;
+//                     break;
 
-                default:
-                    throw cRuntimeError("unthought case");
-            }
-            break;
+//                 default:
+//                     throw cRuntimeError("unthought case");
+//             }
+//             break;
 
-        case RECV_FINACK:
-            switch (tcpState) {
-                // client side
-                case FIN_WAIT_1:
-                case FIN_WAIT_2: // do not change state until client receieve server's FIN
-                    tcpState = FIN_WAIT_2;
-                    break;
-                case TIME_WAIT: // dulicate FINACKs
-                    tcpState = TIME_WAIT;
-                    break;
+//         case RECV_ACK:
+//             switch (tcpState) {
+//                 // client side
+//                 case FIN_WAIT_1:
+//                 case FIN_WAIT_2: // do not change state until client receieve server's FIN
+//                     tcpState = FIN_WAIT_2;
+//                     break;
+//                 case TIME_WAIT: // dulicate FINACKs
+//                     tcpState = TIME_WAIT;
+//                     break;
 
-                // server side
-                case LAST_ACK:
-                case CLOSED: // dulicate FINACKs
-                    tcpState = CLOSED;
-                    break;
+//                 // server side
+//                 case LAST_ACK:
+//                 case CLOSED: // dulicate FINACKs
+//                     tcpState = CLOSED;
+//                     break;
 
-                default:
-                    cRuntimeError("unknown state.");
-            }
-            break;
+//                 default:
+//                     cRuntimeError("unknown state.");
+//             }
+//             break;
 
-        default:
-            cRuntimeError("unknown state.");
-    }
-}
+//         default:
+//             cRuntimeError("unknown state.");
+//     }
+// }
 
 
 void CongApp::handleParameterChange(const char *parameterName)

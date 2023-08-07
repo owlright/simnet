@@ -19,7 +19,7 @@ enum TcpEvent_t
     SEND_FIN,
     SEND_ACK,
     RECV_FIN,
-    RECV_FINACK
+    RECV_ACK
 };
 
 class CongApp : public UnicastApp
@@ -139,5 +139,5 @@ public:
 
 private:
     void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    void transitTcpStateOnEvent(const TcpEvent_t& event);
+    // void transitTcpStateOnEvent(const TcpEvent_t& event);
 };
