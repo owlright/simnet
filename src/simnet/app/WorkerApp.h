@@ -25,6 +25,7 @@ protected:
 protected:
     cMessage *roundStartTimer = nullptr;
     SeqNumber nextAggSeq{1};
+    SeqNumber roundStartSeq{0};
     int jobId{-1};
     int workerId{-1};
     int numWorkers{-1};

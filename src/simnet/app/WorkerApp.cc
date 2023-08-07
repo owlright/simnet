@@ -71,7 +71,7 @@ void WorkerApp::onReceivedAck(const Packet* pk)
 
 void WorkerApp::onReceivedData(const Packet* pk)
 {
-    if (pk->getAckNumber() == flowSize) {
+    if (pk->getAckNumber() - roundStartSeq == flowSize) {
         onRoundStop();
     }
     CongApp::onReceivedData(pk);
@@ -90,6 +90,7 @@ Packet* WorkerApp::createDataPacket(B packetBytes)
 void WorkerApp::onRoundStart()
 {
     currentRound += 1;
+    roundStartSeq = getNextSentSeq();
     ASSERT(tcpState == OPEN);
     EV_INFO << "current round:" << currentRound << " flowSize:" << flowSize << endl;
     prepareTxBuffer();
@@ -102,7 +103,7 @@ void WorkerApp::onRoundStop()
     cong->reset(); // ! reuse connection but cong must be reset.
     if (currentRound < numRounds) {// note it's '<' here
         scheduleAfter(roundInterval, roundStartTimer);
-        nextAggSeq = 0;
+        nextAggSeq = 0; // TODO is this necessary ?
     }
     if (jobMetricCollector)
         jobMetricCollector->reportFlowStop(jobId, numWorkers, workerId, simTime());

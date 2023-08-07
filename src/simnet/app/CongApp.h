@@ -86,6 +86,7 @@ protected:
 
     // std::map<SeqNumber, TxItem> getTxBufferCopy() {return txBuffer;}
     const SeqNumber& getNextSeq() const {return nextSeq;};
+    const SeqNumber& getNextSentSeq() const {return nextSentSeq;};
     bool isInTxBuffer(SeqNumber seq) {return txBuffer.find(seq) != txBuffer.end();};
 //    const B& getConfirmedNormalBytes() const {return nextAskedSeq;};
 //    const B& getConfirmedResendBytes() const {return confirmedResendBytes;};
