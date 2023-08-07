@@ -217,8 +217,7 @@ void CongApp::onReceivedAck(const Packet* pk)
 {
     auto ack_seq = pk->getAckNumber();
     if (txBuffer.empty() && ack_seq == 0) {
-        // ! we should bind srcAddr and srcPort here,
-        // ! but for mulitcast applications, there are many srcAddrs
+        // ! server received the first packet
         ASSERT(tcpState==CLOSED);
         tcpState = OPEN;
     }
@@ -256,28 +255,29 @@ void CongApp::onReceivedAck(const Packet* pk)
         }
     }
 
-    if (ack_seq < nextAskedSeq) { // ! redundant ack
+    if (ack_seq != 0 && ack_seq <= nextAskedSeq) { // ! redundant ack, except the first packet
         EV_DEBUG << "old ack " << ack_seq << endl;
+        ASSERT(txBuffer.find(ack_seq) != txBuffer.end());
         txBuffer.at(ack_seq).resend_timer--;
-        return;
+    }
+    else {
+        nextAskedSeq = ack_seq;
+        for (auto& [seq, pkt_buffer]: txBuffer) {
+            if (seq < nextAskedSeq) {
+                EV_DEBUG << "delete seq " << seq << endl;
+                delete pkt_buffer.pkt;
+            }
+            else {
+                break;
+            }
+        }
+        if (!txBuffer.empty()) {
+            auto itup = txBuffer.lower_bound(nextAskedSeq);
+            txBuffer.erase(txBuffer.begin(), itup); // ! nextAskedSeq will still be in txBuffer
+        }
     }
 
-    nextAskedSeq = ack_seq;
-    for (auto& [seq, pkt_buffer]: txBuffer) {
-        if (seq < nextAskedSeq) {
-            EV_DEBUG << "delete seq " << seq << endl;
-            delete pkt_buffer.pkt;
-        }
-        else {
-            break;
-        }
-    }
-    if (!txBuffer.empty()) {
-        auto itup = txBuffer.lower_bound(nextAskedSeq);
-        txBuffer.erase(txBuffer.begin(), itup); // ! nextAskedSeq will still be in txBuffer
-//        last_oldestNotAckedSeq = oldestNotAckedSeq;
-//        oldestNotAckedSeq = txBuffer.begin()->first;
-    }
+
 }
 
 void CongApp::onReceivedData(const Packet* pk)
