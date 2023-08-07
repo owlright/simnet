@@ -280,7 +280,6 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     if (localAddr == 268 && destAddr == 138 && ackSeq == 5110)
         std::cout << pk->getName() << endl;
 
-
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     onReceivedAck(pk);
@@ -294,8 +293,8 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
         // sprintf(pkname, "FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
         // localAddr, destAddr, nextSeq, ackSeq);
         // packet->setName(pkname);
-        packet->setFIN(true);
-        packet->setFINACK(true);
+        // packet->setFIN(true);
+        // packet->setFINACK(true);
         insertTxBuffer(packet);
     }
 
