@@ -8,6 +8,9 @@ protected:
     void setField(AggPacket* pk);
 
 protected:
+    virtual void onReceivedAck(const Packet* pk) override;
+
+protected:
     virtual void onFlowStart() override;
     virtual void onFlowStop() override;
     virtual Packet* createDataPacket(B packetBytes) override;

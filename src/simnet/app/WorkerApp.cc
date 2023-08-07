@@ -29,6 +29,11 @@ void WorkerApp::setField(AggPacket* pk) {
     pk->addRecord(localAddr);
 }
 
+void WorkerApp::onReceivedAck(const Packet* pk)
+{
+    CongApp::onReceivedAck(pk); // ! do not use FlowApp::onReceivedAck
+}
+
 void WorkerApp::onFlowStart() {
     FlowApp::onFlowStart();
     EV_INFO << "current round seq: " << currentRound << endl;
