@@ -100,7 +100,6 @@ void ParameterServerApp::onReceivedAck(const Packet* pk)
     auto round = pk->getRound();
     if (round > currentRound) {
         EV_DEBUG << "Round: " << round << endl;
-        ASSERT(tcpState == CLOSED);
         ASSERT(aggedWorkers.empty());
         ASSERT(aggedEcns.empty());
         ASSERT(receivedNumber.empty());

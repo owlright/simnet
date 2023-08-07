@@ -1,9 +1,10 @@
 package simnet.app;
 
-module WorkerApp extends FlowApp {
+module WorkerApp extends CongApp {
 parameters:
     port = default(2000);
     destPort = default(3001);
+    int flowSize @unit(B) = default(8kB);
     int numRounds = default(1);
     int jobId           = default(-1);
     int workerId        = default(-1);

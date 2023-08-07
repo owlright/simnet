@@ -408,7 +408,6 @@ void GlobalGroupManager::createJobApps(int jobId)
         app->par("numWorkers") = nWorkers;
         app->par("destAddress") = job->PSes[0];
         app->par("destPort") = job->PSPorts[0];
-        app->par("flowStartTime") = simTime().dbl();
         app->finalizeParameters();
         app->buildInside();
         auto inGate = app->gate("in");
