@@ -31,6 +31,60 @@ void CongApp::onConnectionClose()
     resetState();
 }
 
+void CongApp::setPacketBeforeSentOut(Packet* pk)
+{
+    auto dest_addr = pk->getDestAddr();
+    auto seq = pk->getSeqNumber();
+    // ! prepare the packet name
+    char pkname[50] = {};
+    if (pk->getResend())
+        sprintf(pkname, "Resend-");
+
+    char fin_prefix[10] = {};
+    if (pk->getFIN()) {
+        sprintf(pkname, "FIN-");
+        switch (tcpState) {
+        case FIN_WAIT_1:
+        case TIME_WAIT:
+        case CLOSE_WAIT:
+            break;
+        case OPEN:
+            tcpState = FIN_WAIT_1;
+            break;
+        default:
+            throw cRuntimeError("Unknown state case");
+        }
+    }
+    strcat(pkname, fin_prefix);
+
+    char pktype[10] = {};
+    switch (pk->getPacketType()) {
+        case ACK:
+            sprintf(pktype, "ACK-");
+            break;
+        case MACK:
+            sprintf(pktype, "MACK-");
+            break;
+        case DATA:
+            sprintf(pktype, "DATA-");
+            break;
+        case AGG:
+            sprintf(pktype, "AGG-");
+            break;
+        default:
+            throw cRuntimeError("Unknown packet type");
+    }
+    strcat(pkname, pktype);
+
+    char src_dest_seq_ack[50];
+    sprintf(src_dest_seq_ack, "%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+                        localAddr, dest_addr, seq, nextAckSeq);
+    strcat(pkname, src_dest_seq_ack);
+
+    pk->setName(pkname);
+    pk->setAckNumber(nextAckSeq);
+}
+
 void CongApp::resetState()
 {
     ASSERT(tcpState == CLOSED);
@@ -124,58 +178,17 @@ void CongApp::sendPendingData()
             nextSentSeq = tx_item.seq + pktSize;
         }
         auto pk = tx_item.pkt->dup();
-        auto dest_addr = pk->getDestAddr();
-        auto seq = pk->getSeqNumber();
-        // ! prepare the packet name
-        char pkname[50];
-        char src_dest_seq_ack[50];
-        sprintf(src_dest_seq_ack, "%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-                            localAddr, dest_addr, seq, nextAckSeq);
-        if (pk->getFIN()) {
-            sprintf(pkname, "FIN-");
-            switch (tcpState) {
-            case TIME_WAIT:
-            case CLOSE_WAIT:
-                break;
-            case OPEN:
-                tcpState = FIN_WAIT_1;
-                break;
-            default:
-                throw cRuntimeError("Unknown state case");
-            }
-        }
-        else {
-            sprintf(pkname, "");
-        }
-        char pktype[10];
-        switch (pk->getPacketType()) {
-            case ACK:
-                sprintf(pktype, "ACK-");
-                break;
-            case MACK:
-                sprintf(pktype, "MACK-");
-                break;
-            case DATA:
-                sprintf(pktype, "DATA-");
-                break;
-            case AGG:
-                sprintf(pktype, "AGG-");
-                break;
-            default:
-                throw cRuntimeError("Unknown packet type");
-        }
-        strcat(pkname, pktype);
-        strcat(pkname, src_dest_seq_ack);
-        pk->setName(pkname);
+
 //        if (localAddr == 789)
 //            std::cout << pk->getName() << endl;
         // ! nextAckSeq may keep changing when many ACKs arrive at the same time
         // ! we must set it when sending out
-        pk->setAckNumber(nextAckSeq);
+        setPacketBeforeSentOut(pk);
         EV_DEBUG << pk << endl;
         connection->send(pk);
         cong->onSendData(tx_item.seq, pktSize);
         tx_item_it++;
+        auto seq = pk->getSeqNumber();
         if (seq == 0) {
             scheduleAfter(estimatedRTT, RTOTimeout);
         }
@@ -187,15 +200,17 @@ void CongApp::sendPendingData()
 
 void CongApp::resendOldestSeq()
 {
-    auto entry = txBuffer.begin()->second;
-    auto pk = entry.pkt->dup();
-    pk->setResend(true);
-    connection->send(pk);
-    entry.is_resend_already = true;
-    resentBytes += entry.pktSize; // ! this will affect inflightBytes
-    auto rtt_count = cong->getcWnd() / messageLength;
-    entry.resend_timer = maxDisorderNumber > rtt_count ? maxDisorderNumber : rtt_count;
-
+    if (!txBuffer.empty()) {
+        auto entry = txBuffer.begin()->second;
+        auto pk = entry.pkt->dup();
+        pk->setResend(true);
+        setPacketBeforeSentOut(pk);
+        connection->send(pk);
+        entry.is_resend_already = true;
+        resentBytes += entry.pktSize; // ! this will affect inflightBytes
+        auto rtt_count = cong->getcWnd() / messageLength;
+        entry.resend_timer = maxDisorderNumber > rtt_count ? maxDisorderNumber : rtt_count;
+    }
 }
 
 void CongApp::onReceivedAck(const Packet* pk)

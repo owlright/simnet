@@ -92,6 +92,7 @@ protected:
 //    const B& getConfirmedResendBytes() const {return confirmedResendBytes;};
     const simtime_t& getCurrentBaseRTT() const {return currentBaseRTT;};
     const double& getMaxSendingRate() const {return bandwidth;}
+    void setPacketBeforeSentOut(Packet* pk);
 
 protected:
     std::vector<IntAddress> destAddresses;
