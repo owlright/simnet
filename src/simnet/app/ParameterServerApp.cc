@@ -155,8 +155,8 @@ void ParameterServerApp::onReceivedData(const Packet* pkt) {
         aggedWorkers.erase(seq);
         receivedNumber.erase(seq);
         aggedEcns.erase(seq);
+        CongApp::onReceivedData(pk);
     }
-    CongApp::onReceivedData(pk);
 }
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
