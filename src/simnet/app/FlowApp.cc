@@ -37,8 +37,16 @@ void FlowApp::handleMessage(cMessage *msg)
     }
 }
 
-void FlowApp::onConnectionClose()
+void FlowApp::onReceivedAck(const Packet* pk)
 {
+    if (pk->getFIN()) {
+        ASSERT(tcpState == FIN_WAIT_1);
+        tcpState = CLOSED; // ! for simple flow app, we don't want to wait for 2MSL
+    }
+    CongApp::onReceivedAck(pk);
+}
+
+void FlowApp::onConnectionClose() {
     if (!flowStartTimer->isScheduled()) {// ! avoid duplicate fin_ack schedule timer multiple times
         onFlowStop();
         CongApp::resetState();

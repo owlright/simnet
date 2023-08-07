@@ -22,6 +22,7 @@ protected:
     virtual void handleMessage(cMessage *msg) override;
 
 protected:
+    virtual void onReceivedAck(const Packet* pk) override;
     virtual void onConnectionClose() override;
 
 protected:
