@@ -113,12 +113,12 @@ void ParameterServerApp::onReceivedData(const Packet* pkt) {
     ASSERT(pk->getJobId() == jobid);
 
     auto seq = pk->getSeqNumber();
-
+    auto ack_seq = pk->getAckNumber();
     bool is_agg_finished = false;
     if (tcpState == CLOSED) {  // this packet is ACK to FIN
         // ! do nothing there is no ACK to FINACK
-    } else if (!isInTxBuffer(seq)) {  // duplicate seqs, TODO: do not care, is this always right?
-        std::cout << pk->getName() << " is resend? " << pk->getResend() << " round " << pk->getRound() << endl;
+    } else if (!isInTxBuffer(ack_seq)) {  // duplicate seqs, TODO: do not care, is this always right?
+
         dealWithAggPacket(pk);
         if (pk->getAggPolicy() == INC) {
             is_agg_finished = dealWithIncAggPacket(check_and_cast<const AggUseIncPacket*>(pk));
