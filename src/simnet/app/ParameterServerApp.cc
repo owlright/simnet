@@ -99,17 +99,11 @@ void ParameterServerApp::onReceivedAck(const Packet* pk)
 {
     auto round = pk->getRound();
     if (round > currentRound) {
+        EV_DEBUG << "Round: " << round << endl;
         ASSERT(tcpState == CLOSED);
         ASSERT(aggedWorkers.empty());
         ASSERT(aggedEcns.empty());
         ASSERT(receivedNumber.empty());
-    //     // ! it's very important to clear information left by last Round
-    //     // lastTxBuffer = getTxBufferCopy();
-    //     // minAckedSeq = 0;
-    //     aggedWorkers.clear();
-    //     receivedNumber.clear();
-    //     aggedEcns.clear();
-    //     // txBuffer.clear();
         currentRound = round;
     }
     CongApp::onReceivedAck(pk);
@@ -121,103 +115,49 @@ void ParameterServerApp::onReceivedData(const Packet* pkt) {
 
     auto seq = pk->getSeqNumber();
 
-    // if (!isAllWorkersFinished && round < currentRound) {
-    //     auto record = pk->getRecord();
-    //     for (auto& worker : record) {
-    //         last_round_finished_workers.insert(worker);
-    //     }
-    //     if (last_round_finished_workers.size() == numWorkers) {
-    //         lastTxBuffer.clear();
-    //         isAllWorkersFinished = true;
-    //     }
-    // }
-
-    // if (round == currentRound) {
-        // if (pk->isFlowFinished()) isAllWorkersFinished = false;
-        // auto seq = pk->getSeqNumber();
-        // // ! 1. deal with duplicate resend packets, we must answer these packets to help senders
-        // // ! remove the retransmitBytes, otherwise sender's cwnd will be occupied and stuck.
-        // // ! 2. if duplicate resend packets arrive nextRound, we don't need to send ack for them
-        // // ! since new round begins, sender must have already received all packets and reset it's state.
-        // if (txBuffer.find(seq) != txBuffer.end()) {
-        //     // if (localAddr == 789 && pk->getSrcAddr() == 784 && currentRound == 2)
-        //     //     std::cout << "redundant seq " << seq << " from " << pk->getSrcAddr() << endl;
-        //     ASSERT(pk->getResend());
-        //     auto packet = createAckPacket(pk);
-        //     char pkname[40];
-        //     sprintf(pkname, "ACK-%" PRId64 "-seq%" PRId64, localAddr, pk->getSeqNumber());
-        //     packet->setName(pkname);
-        //     packet->setPacketType(ACK);
-        //     packet->setDestAddr(pk->getSrcAddr());
-        //     packet->setDestPort(pk->getLocalPort());
-
-        //     getListeningSocket()->send(packet);  // ! HACK: this connection is the listening socket
-        //     delete pk;
-        //     return;
-        // }
-        bool is_agg_finished = false;
+    bool is_agg_finished = false;
+    if (tcpState == CLOSED) {  // this packet is ACK to FIN
+        // ! do nothing there is no ACK to FINACK
+    } else if (!isInTxBuffer(seq)) {  // duplicate seqs, TODO: do not care, is this always right?
         std::cout << pk->getName() << " is resend? " << pk->getResend() << " round " << pk->getRound() << endl;
-        if (pk->getFINACK()) {
-            ASSERT(tcpState==LAST_ACK);
-            // ! do nothing there is no ACK to FINACK
-        }
-        else if (!isInTxBuffer(seq)) { // duplicate seqs, TODO: do not care, is this always right?
-            dealWithAggPacket(pk);
-            if (pk->getAggPolicy() == INC) {
-                is_agg_finished = dealWithIncAggPacket(check_and_cast<const AggUseIncPacket*>(pk));
-                if (is_agg_finished) {
-                    auto mpk = createAckPacket(pk);
-                    mpk->setPacketType(MACK);
-                    mpk->setDestAddr(groupAddr);
-                    mpk->setDestPort(2000);  // TODO this is no use
-                    mpk->setReceivedNumber(receivedNumber[seq]);
-                    mpk->setECE(aggedEcns[seq]);
-                    insertTxBuffer(mpk);
-                }
-            } else if (pk->getAggPolicy() == NOINC) {
-                is_agg_finished = dealWithNoIncAggPacket(connection, check_and_cast<const AggNoIncPacket*>(pk));
-                if (is_agg_finished) {
-                    for (auto i = 0; i < workers.size(); i++) {
-                        auto packet = createAckPacket(pk);
-                        char pkname[40];
-                        sprintf(pkname, "ACK-%" PRId64 "-seq%" PRId64, localAddr, pk->getSeqNumber());
-                        packet->setName(pkname);
-                        packet->setPacketType(ACK);
-                        packet->setDestAddr(workers[i]);
-                        packet->setDestPort(workerPorts[i]);
-                        insertTxBuffer(packet);
-                        // getListeningSocket()->send(packet);  // ! HACK: this connection is the listening socket
-                    }
+        dealWithAggPacket(pk);
+        if (pk->getAggPolicy() == INC) {
+            is_agg_finished = dealWithIncAggPacket(check_and_cast<const AggUseIncPacket*>(pk));
+            if (is_agg_finished) {
+                auto mpk = createAckPacket(pk);
+                mpk->setPacketType(MACK);
+                mpk->setDestAddr(groupAddr);
+                mpk->setDestPort(2000);  // TODO this is no use
+                mpk->setReceivedNumber(receivedNumber[seq]);
+                mpk->setECE(aggedEcns[seq]);
+                insertTxBuffer(mpk);
+            }
+        } else if (pk->getAggPolicy() == NOINC) {
+            is_agg_finished = dealWithNoIncAggPacket(connection, check_and_cast<const AggNoIncPacket*>(pk));
+            if (is_agg_finished) {
+                for (auto i = 0; i < workers.size(); i++) {
+                    auto packet = createAckPacket(pk);
+                    char pkname[40];
+                    sprintf(pkname, "ACK-%" PRId64 "-seq%" PRId64, localAddr, pk->getSeqNumber());
+                    packet->setName(pkname);
+                    packet->setPacketType(ACK);
+                    packet->setDestAddr(workers[i]);
+                    packet->setDestPort(workerPorts[i]);
+                    insertTxBuffer(packet);
+                    // getListeningSocket()->send(packet);  // ! HACK: this connection is the listening socket
                 }
             }
         }
+    }
 
-        if (is_agg_finished) {
-            EV_DEBUG << "Seq " << seq << " finished." << endl;
-            emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedWorkers.size()) );
-            aggedWorkers.erase(seq);
-            receivedNumber.erase(seq);
-            aggedEcns.erase(seq);
-        }
-        CongApp::onReceivedData(pk);
-    // } else {
-        // // ! some senders send next round too early, the info is updated upabove.
-        // // ! Again, we answer only the first-batch resend packets and ingore the others.
-        // if (lastTxBuffer.find(pk->getSeqNumber()) != lastTxBuffer.end()) {
-        //     ASSERT(pk->getResend());
-        //     auto packet = createAckPacket(pk);
-        //     char pkname[40];
-        //     sprintf(pkname, "ACK-%" PRId64 "-seq%" PRId64, localAddr, pk->getSeqNumber());
-        //     packet->setName(pkname);
-        //     packet->setPacketType(ACK);
-        //     packet->setDestAddr(pk->getSrcAddr());
-        //     packet->setDestPort(pk->getLocalPort());
-        //     insertTxBuffer(packet);
-        //     // getListeningSocket()->send(packet);  // ! HACK: this connection is the listening socket
-        //     // delete pk;
-        //     return;
-        // }
-    // }
+    if (is_agg_finished) {
+        EV_DEBUG << "Seq " << seq << " finished." << endl;
+        emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedWorkers.size()));
+        aggedWorkers.erase(seq);
+        receivedNumber.erase(seq);
+        aggedEcns.erase(seq);
+    }
+    CongApp::onReceivedData(pk);
 }
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
