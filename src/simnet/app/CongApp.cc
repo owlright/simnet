@@ -159,13 +159,7 @@ void CongApp::sendPendingData()
         auto pktSize = tx_item.pktSize;
         if (tx_item.is_sent) {
             if (tx_item.resend_timer == 0) {
-                auto pkt = tx_item.pkt->dup();
-                pkt->setResend(true);
-                resentBytes += pktSize;
-                auto rtt_count = cong->getcWnd() / messageLength;
-                tx_item.resend_timer = maxDisorderNumber > rtt_count ? maxDisorderNumber : rtt_count; // wait for about a RTT
-                tx_item.is_resend_already = true;
-                EV_DEBUG << "resend seq " << pkt->getSeqNumber() << endl;
+                resend(tx_item);
             }
             else {
                 tx_item_it++;
@@ -201,16 +195,23 @@ void CongApp::sendPendingData()
 void CongApp::resendOldestSeq()
 {
     if (!txBuffer.empty()) {
-        auto entry = txBuffer.begin()->second;
-        auto pk = entry.pkt->dup();
-        pk->setResend(true);
-        setPacketBeforeSentOut(pk);
-        connection->send(pk);
-        entry.is_resend_already = true;
-        resentBytes += entry.pktSize; // ! this will affect inflightBytes
-        auto rtt_count = cong->getcWnd() / messageLength;
-        entry.resend_timer = maxDisorderNumber > rtt_count ? maxDisorderNumber : rtt_count;
+        auto item = txBuffer.begin()->second;
+        ASSERT(item.is_sent);
+        resend(item);
     }
+}
+
+void CongApp::resend(TxItem& item)
+{
+    auto pk = item.pkt->dup();
+    pk->setResend(true);
+    setPacketBeforeSentOut(pk);
+    std::cout << "resend " << pk->getName() << endl;
+    connection->send(pk);
+    item.is_resend_already = true;
+    resentBytes += item.pktSize; // ! this will affect inflightBytes
+    auto rtt_count = cong->getcWnd() / messageLength;
+    item.resend_timer = maxDisorderNumber > rtt_count ? maxDisorderNumber : rtt_count;
 }
 
 void CongApp::confirmAckNumber(const Packet* pk)
