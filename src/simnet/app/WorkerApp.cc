@@ -83,6 +83,7 @@ Packet* WorkerApp::createDataPacket(B packetBytes)
     // sprintf(pkname, "NOINC-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
     //         localAddr, destAddr, getNextSeq());
     auto pk = new AggPacket();
+    pk->setByteLength(packetBytes);
     setField(pk);
     return pk;
 }

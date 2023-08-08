@@ -44,7 +44,7 @@ Packet* SRWorker::createDataPacket(B packetBytes)
     // sprintf(pkname, "sr%" PRId64"-to-%" PRId64 "-seq%" PRId64,
     //         localAddr, destAddr, getNextSeq());
     auto pk = new AggUseIncPacket();
-    pk->setByteLength(messageLength);
+    pk->setByteLength(packetBytes);
     setField(pk);
     return pk;
 }
