@@ -90,7 +90,7 @@ protected:
     // std::map<SeqNumber, TxItem> getTxBufferCopy() {return txBuffer;}
     const SeqNumber& getNextSeq() const {return nextSeq;};
     const SeqNumber& getNextSentSeq() const {return nextSentSeq;};
-    bool isInTxBuffer(SeqNumber seq) {return txBuffer.find(seq) != txBuffer.end();};
+    bool isInRxBuffer(SeqNumber seq) {return rxBuffer.find(seq) != rxBuffer.end();};
 //    const B& getConfirmedNormalBytes() const {return nextAskedSeq;};
 //    const B& getConfirmedResendBytes() const {return confirmedResendBytes;};
     const simtime_t& getCurrentBaseRTT() const {return currentBaseRTT;};
