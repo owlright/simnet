@@ -112,6 +112,7 @@ void WorkerApp::onRoundStop()
 void WorkerApp::finish()
 {
     CongApp::finish();
+    cancelAndDelete(roundStartTimer);
     if (currentRound != numRounds) {
         EV_WARN << getClassAndFullPath() << "job " << jobId << " "
                                         "address " << localAddr
