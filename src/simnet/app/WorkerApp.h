@@ -10,8 +10,8 @@ protected:
     virtual void finish() override;
 
 protected:
-    virtual void onReceivedAck(const Packet* pk) override;
-    virtual void onReceivedData(const Packet* pk) override;
+    virtual void confirmAckNumber(const Packet* pk) override;
+    virtual void onReceivedData(Packet* pk) override;
     virtual Packet* createDataPacket(B packetBytes) override; // ! ACK to PS's FIN will use this
 
 protected:

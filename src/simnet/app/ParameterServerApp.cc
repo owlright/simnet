@@ -9,8 +9,8 @@ protected:
     // virtual void handleMessage(cMessage *msg) override;
     // void onNewConnectionArrived(IdNumber connId, const Packet* const packet);
     // virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    virtual void onReceivedAck(const Packet* pk) override;
-    virtual void onReceivedData(const Packet* pk) override;
+    virtual void confirmAckNumber(const Packet* pk) override;
+    virtual void onReceivedData(Packet* pk) override;
     AggPacket* createAckPacket(const AggPacket* pk);
     // virtual void finish() override;
 
@@ -61,42 +61,12 @@ void ParameterServerApp::initialize(int stage)
     }
 }
 
-// void ParameterServerApp::handleMessage(cMessage *msg)
-// {
-//     auto pk = check_and_cast<AggPacket*>(msg);
-//     auto connectionId = pk->getJobId();
-//     auto it = connections.find(connectionId);
-//     if (it == connections.end()) {
-//         onNewConnectionArrived(connectionId, pk);
-//     }
-//     connections.at(connectionId)->processMessage(pk);
-// }
+void ParameterServerApp::onReceivedData(Packet* pkt) {
 
-// void ParameterServerApp::onNewConnectionArrived(IdNumber connId, const Packet* const pk)
-// {
-//     ASSERT(connId == jobid);
-//     if (connections.size() > 1)
-//         throw cRuntimeError("a PS only serves one group");
-//     EV_DEBUG << "Create new connection id by jobId " << connId << endl;
-//     connections[connId] = createConnection(connId);
-//     auto connection = connections.at(connId);
-//     connection->bindRemote(groupAddr, pk->getLocalPort());
-// }
-
-// void ParameterServerApp::connectionDataArrived(Connection *connection, cMessage *msg)
-// {
-
-//     CongApp::connectionDataArrived(connection, msg);
-// }
-
-// void ParameterServerApp::onReceivedAck(const Packet *pkt)
-// {
-
-//     CongApp::onReceivedAck(pk);
-// }
-
-void ParameterServerApp::onReceivedAck(const Packet* pk)
-{
+    auto pk = check_and_cast<AggPacket*>(pkt);
+    ASSERT(pk->getJobId() == jobid);
+    auto seq = pk->getSeqNumber();
+    std::cout <<"PS received: " << pk->getName() << endl;
     auto round = pk->getRound();
     if (round > currentRound) {
         EV_DEBUG << "Round: " << round << endl;
@@ -105,20 +75,11 @@ void ParameterServerApp::onReceivedAck(const Packet* pk)
         ASSERT(receivedNumber.empty());
         currentRound = round;
     }
-    CongApp::onReceivedAck(pk);
-}
-
-void ParameterServerApp::onReceivedData(const Packet* pkt) {
-    auto pk = check_and_cast<const AggPacket*>(pkt);
-    ASSERT(pk->getJobId() == jobid);
-
-    auto seq = pk->getSeqNumber();
-    auto ack_seq = pk->getAckNumber();
     bool is_agg_finished = false;
     if (tcpState == CLOSED) {  // this packet is ACK to FIN
         // ! do nothing there is no ACK to FINACK
-    } else if (!isInTxBuffer(ack_seq)) {  // duplicate seqs, TODO: do not care, is this always right?
-
+    }
+    else if (!isInRxBuffer(seq)) {  // duplicate seqs, TODO: do not care, is this always right?
         dealWithAggPacket(pk);
         if (pk->getAggPolicy() == INC) {
             is_agg_finished = dealWithIncAggPacket(check_and_cast<const AggUseIncPacket*>(pk));
@@ -150,12 +111,13 @@ void ParameterServerApp::onReceivedData(const Packet* pkt) {
     }
 
     if (is_agg_finished) {
+        std::cout << "Seq " << seq << " finished." << endl;
         EV_DEBUG << "Seq " << seq << " finished." << endl;
         emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedWorkers.size()));
         aggedWorkers.erase(seq);
         receivedNumber.erase(seq);
         aggedEcns.erase(seq);
-        CongApp::onReceivedData(pk);
+        CongApp::onReceivedData(pk); // ! we see a fully aggregation packet as received a packet
     }
 }
 

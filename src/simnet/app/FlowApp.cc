@@ -37,13 +37,13 @@ void FlowApp::handleMessage(cMessage *msg)
     }
 }
 
-void FlowApp::onReceivedAck(const Packet* pk)
+void FlowApp::confirmAckNumber(const Packet* pk)
 {
     if (pk->getFIN()) {
         ASSERT(tcpState == FIN_WAIT_1);
         tcpState = CLOSED; // ! for simple flow app, we don't want to wait for 2MSL
     }
-    CongApp::onReceivedAck(pk);
+    CongApp::confirmAckNumber(pk);
 }
 
 void FlowApp::onConnectionClose() {

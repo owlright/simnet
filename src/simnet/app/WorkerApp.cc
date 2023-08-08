@@ -64,12 +64,12 @@ void WorkerApp::prepareTxBuffer()
     }
 }
 
-void WorkerApp::onReceivedAck(const Packet* pk)
+void WorkerApp::confirmAckNumber(const Packet* pk)
 {
-    CongApp::onReceivedAck(pk); // ! do not use FlowApp::onReceivedAck
+    CongApp::confirmAckNumber(pk); // ! do not use FlowApp::confirmAckNumber
 }
 
-void WorkerApp::onReceivedData(const Packet* pk)
+void WorkerApp::onReceivedData(Packet* pk)
 {
     if (pk->getAckNumber() - roundStartSeq == flowSize) {
         onRoundStop();
