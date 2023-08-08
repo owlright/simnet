@@ -213,18 +213,14 @@ void CongApp::resendOldestSeq()
     }
 }
 
-void CongApp::onReceivedAck(const Packet* pk)
+void CongApp::confirmAckNumber(const Packet* pk)
 {
-    auto ack_seq = pk->getAckNumber();
-    if (txBuffer.empty() && ack_seq == 0) {
-        // ! server received the first packet
-        ASSERT(tcpState==CLOSED);
-        tcpState = OPEN;
-    }
-
-    if (nextAckSeq == pk->getSeqNumber()) {
-        switch (tcpState) { // ! receive ACK to FIN
-            case CLOSE_WAIT:
+    auto seqNumber = pk->getSeqNumber();
+    auto ackNumber = pk->getAckNumber();
+    bool isFIN = pk->getFIN();
+    if (nextAckSeq == seqNumber) {
+        switch (tcpState) {
+            case CLOSE_WAIT: // ! receive ACK to FIN
                 tcpState = CLOSED;
                 break;
             case FIN_WAIT_1:
@@ -237,8 +233,9 @@ void CongApp::onReceivedAck(const Packet* pk)
                 throw cRuntimeError("Unthoughtful state case");
         }
     }
-
-    if (pk->getFIN()) {// * the other side has received all my packets
+    // ! there are some time between FIN_WAIT_2 and TIME_WAIT because
+    // ! last window of packets sent with the same ACK seq, but only the last packet will labeled FIN
+    if (isFIN) {// * the other side has received all my packets
         switch (tcpState) {
             case OPEN: // ! only server will receieve FIN when OPEN
                 tcpState = CLOSE_WAIT;
@@ -255,13 +252,13 @@ void CongApp::onReceivedAck(const Packet* pk)
         }
     }
 
-    if (ack_seq < nextAskedSeq) {
-        EV_DEBUG << "old ack " << ack_seq << endl;
-        ASSERT(txBuffer.find(ack_seq) != txBuffer.end());
-        txBuffer.at(ack_seq).resend_timer--;
+    if (ackNumber < nextAskedSeq) { // ! the other side want an old sent seq
+        EV_DEBUG << "old ack " << ackNumber << endl;
+        ASSERT(txBuffer.find(ackNumber) != txBuffer.end());
+        txBuffer.at(ackNumber).resend_timer--;
     }
     else {
-        nextAskedSeq = ack_seq;
+        nextAskedSeq = ackNumber;
         for (auto& [seq, pkt_buffer]: txBuffer) {
             if (seq < nextAskedSeq) {
                 EV_DEBUG << "delete seq " << seq << endl;
@@ -280,13 +277,33 @@ void CongApp::onReceivedAck(const Packet* pk)
 
 }
 
-void CongApp::onReceivedData(const Packet* pk)
+void CongApp::confirmSeqNumber(const Packet* pk)
 {
     // * measure something
     auto sampleRTT = simTime() - SimTime(pk->getStartTime());
     emit(rttSignal, sampleRTT);
     currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
     estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
+    // * clear tcpState transmit and clear rxBuffer
+    auto seq = pk->getSeqNumber();
+    auto pk_size = pk->getByteLength();
+    if (rxBuffer.empty() && seq == 0) {
+        // ! server received the first packet
+        ASSERT(tcpState==CLOSED);
+        tcpState = OPEN;
+    }
+
+    if (seq == nextAckSeq) { // ! I get the seq I want
+        nextAckSeq += pk_size;
+        clearOldSeqInRxBuffer();
+    }
+}
+
+void CongApp::onReceivedData(Packet* pk)
+{
+    confirmSeqNumber(pk);
+    confirmAckNumber(pk);
+    insertRxBuffer(pk);
 }
 
 void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
@@ -298,11 +315,7 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
         std::cout << pk->getName() << endl;
 
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
-
-    onReceivedAck(pk);
     onReceivedData(pk);
-    insertRxBuffer(pk); // ! pk maybe deleted here, do not use it below
-
     // ! we only send FINACK when txBuffer is empty
     if ( txBuffer.empty() && (tcpState ==  TIME_WAIT) ) {
         // char pkname[50];
@@ -340,29 +353,15 @@ void CongApp::handleParameterChange(const char *parameterName)
 
 }
 
-void CongApp::insertRxBuffer(Packet* pk)
+void CongApp::clearOldSeqInRxBuffer()
 {
-    auto seq = pk->getSeqNumber();
-    auto pk_size = pk->getByteLength();
-    if (rxBuffer.find(seq) == rxBuffer.end() && (tcpState != CLOSED)) { // ! there will be no ACK to FINACK
-        // ! these seqs arrive too early, store them for now
-        rxBuffer[seq] = pk;
+    B pk_size = 0;
+    while (rxBuffer.find(nextAckSeq) != rxBuffer.end()) { // ! remove those early arrived seqs
+        pk_size = rxBuffer[nextAckSeq]->getByteLength();
+        delete rxBuffer[nextAckSeq];
+        rxBuffer.erase(nextAckSeq);
+        nextAckSeq += pk_size;
     }
-    else {
-        delete pk; // redundant ack or the last ack packet
-    }
-
-    if (seq <= nextAckSeq) { // ! remove some old rx packets
-        auto remove_seq = seq;
-        auto remove_pk_size = 0;
-        while (rxBuffer.find(remove_seq) != rxBuffer.end()) {
-            remove_pk_size = rxBuffer[remove_seq]->getByteLength();
-            delete rxBuffer[remove_seq];
-            rxBuffer.erase(remove_seq);
-            remove_seq = remove_seq - remove_pk_size;
-        }
-    }
-    nextAckSeq = seq + pk_size; // seq > nextAckSeq is possible as the other can always sent new seqs if cWnd is big enough
 }
 
 void CongApp::insertTxBuffer(Packet* pk)
@@ -371,6 +370,25 @@ void CongApp::insertTxBuffer(Packet* pk)
     setField(pk);
     txBuffer[nextSeq] = TxItem(pk);
     nextSeq += pk->getByteLength();
+}
+
+void CongApp::insertRxBuffer(Packet* pk)
+{
+    auto seq = pk->getSeqNumber();
+    auto pk_size = pk->getByteLength();
+    if (seq == nextAckSeq && (tcpState != CLOSED)) {
+        delete pk;// ! I get the seq I want, delete the seq is OK
+        pk = nullptr;
+    }
+    else if (seq > nextAckSeq) {
+        ASSERT(rxBuffer.find(seq) == rxBuffer.end());
+         // ! these seqs arrive too early, store them for now
+        rxBuffer[seq] = pk;
+    }
+    else { // ! seq < nextAckSeq or seq == nextAckSeq but tcpState == CLOSED, which means this is a ACK to FIN
+        delete pk;
+        pk = nullptr;
+    }
 }
 
 void CongApp::setField(Packet* pk)

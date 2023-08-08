@@ -65,8 +65,10 @@ protected:
     virtual void handleParameterChange(const char *parameterName) override;
 
 protected:
-    virtual void onReceivedAck(const Packet* pk);
-    virtual void onReceivedData(const Packet* pk);
+    virtual void onReceivedData(Packet* pk);
+    virtual void confirmSeqNumber(const Packet* pk);
+    virtual void confirmAckNumber(const Packet* pk);
+
     virtual Packet* createDataPacket(B packetBytes) {
         throw cRuntimeError("you must override this function");
     };
@@ -77,6 +79,7 @@ protected:
     void setField(Packet* pk);
     void insertTxBuffer(Packet* pk);
     void insertRxBuffer(Packet* pk);
+    void clearOldSeqInRxBuffer();
 
     void resetState();
     bool bindRemote();
