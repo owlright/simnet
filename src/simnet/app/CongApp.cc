@@ -361,8 +361,8 @@ void CongApp::insertRxBuffer(Packet* pk)
             rxBuffer.erase(remove_seq);
             remove_seq = remove_seq - remove_pk_size;
         }
-        nextAckSeq = seq + pk_size;
     }
+    nextAckSeq = seq + pk_size; // seq > nextAckSeq is possible as the other can always sent new seqs if cWnd is big enough
 }
 
 void CongApp::insertTxBuffer(Packet* pk)
