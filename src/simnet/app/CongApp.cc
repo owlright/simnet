@@ -255,7 +255,7 @@ void CongApp::onReceivedAck(const Packet* pk)
         }
     }
 
-    if (ack_seq != 0 && ack_seq <= nextAskedSeq) { // ! redundant ack, except the first packet
+    if (ack_seq < nextAskedSeq) {
         EV_DEBUG << "old ack " << ack_seq << endl;
         ASSERT(txBuffer.find(ack_seq) != txBuffer.end());
         txBuffer.at(ack_seq).resend_timer--;
