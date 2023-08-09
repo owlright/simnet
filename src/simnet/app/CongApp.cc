@@ -219,47 +219,15 @@ void CongApp::resend(TxItem& item)
 
 void CongApp::confirmAckNumber(const Packet* pk)
 {
-    auto seqNumber = pk->getSeqNumber();
     auto ackNumber = pk->getAckNumber();
-    bool isFIN = pk->getFIN();
-    if (nextAckSeq == seqNumber) {
-        switch (tcpState) {
-            case CLOSE_WAIT: // ! receive ACK to FIN
-                tcpState = CLOSED;
-                break;
-            case FIN_WAIT_1:
-                tcpState = FIN_WAIT_2;
-                break;
-            case OPEN:
-            case CLOSED: // ! this is only for simple flow app that doesn't want to wait 2MSL
-                break;
-            default:
-                throw cRuntimeError("Unthoughtful state case");
-        }
-    }
-    // ! there are some time between FIN_WAIT_2 and TIME_WAIT because
-    // ! last window of packets sent with the same ACK seq, but only the last packet will labeled FIN
-    if (isFIN) {// * the other side has received all my packets
-        switch (tcpState) {
-            case OPEN: // ! only server will receieve FIN when OPEN
-                tcpState = CLOSE_WAIT;
-                break;
-            case FIN_WAIT_2:
-                tcpState = TIME_WAIT;
-                break;
-
-            case CLOSE_WAIT: // server sent out FIN and received a FIN(duplicate)
-            case CLOSED:
-                break;
-            default:
-                throw cRuntimeError("unthought state case");
-        }
-    }
-
     if (ackNumber < nextAskedSeq) { // ! the other side want an old sent seq
         EV_DEBUG << "old ack " << ackNumber << endl;
-        ASSERT(txBuffer.find(ackNumber) != txBuffer.end());
-        txBuffer.at(ackNumber).resend_timer--;
+        // ! 1. the ackNumber is a sent but not confirmed seq(it should be the oldest)
+        // ! 2. the ackNumber is too old, and the sender must have received this seq, otherwise
+        // !    our nextAskedSeq cannot move to next, so do nothing about this ack
+        if (txBuffer.find(ackNumber) != txBuffer.end()) {
+            txBuffer.at(ackNumber).resend_timer--;
+        }
     }
     else {
         nextAskedSeq = ackNumber;
@@ -287,16 +255,45 @@ void CongApp::confirmSeqNumber(const Packet* pk)
     currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
     estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
     auto seq = pk->getSeqNumber();
-    auto pk_size = pk->getByteLength();
-    if (rxBuffer.empty() && seq == 0) {
-        // ! server received the first packet
-        ASSERT(tcpState==CLOSED);
-        tcpState = OPEN;
-    }
 
-    if (seq == nextAckSeq) { // ! I get the seq I want
-        nextAckSeq += pk_size;
-        clearOldSeqInRxBuffer();
+    // ! transmit tcpState
+    if (seq == nextAckSeq) {
+        switch (tcpState) {
+            case CLOSE_WAIT: // ! case 1: duplicate FINs arrive server
+                break;
+            case LAST_ACK: // ! receive ACK to FIN
+                tcpState = CLOSED;
+                break;
+            case FIN_WAIT_1:
+                tcpState = FIN_WAIT_2;
+                break;
+            case OPEN: // keep OPEN
+            case FIN_WAIT_2: // ! case 1: unconfirmed packets' acks arrive
+            case TIME_WAIT:  // ! case 1: duplicate FINs arrive client
+            case CLOSED:
+                // ! case 1: simple flow app that doesn't want to wait 2MSL
+                break;
+            default:
+                throw cRuntimeError("Unthoughtful state case");
+        }
+    }
+    // ! there are some time between FIN_WAIT_2 and TIME_WAIT because
+    // ! last window of packets sent with the same ACK seq, but only the last packet will labeled FIN
+    if (pk->getFIN()) {// * the other side has received all my packets
+        switch (tcpState) {
+            case OPEN: // ! only server will receieve FIN when OPEN
+                tcpState = CLOSE_WAIT;
+                break;
+            case FIN_WAIT_2:
+                tcpState = TIME_WAIT;
+                break;
+
+            case CLOSE_WAIT: // server sent out FIN and received a FIN(duplicate)
+            case CLOSED:
+                break;
+            default:
+                throw cRuntimeError("unthought state case");
+        }
     }
 }
 
