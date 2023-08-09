@@ -294,18 +294,13 @@ void GlobalGroupManager::placeJobs(const char *policyName)
         auto worker_left_hosts = hostIds;
         std::transform(worker_left_hosts.cbegin(), worker_left_hosts.cend(),
                         worker_left_hosts.begin(),
-                        [this](int id){ return getAddr(id);}); // convert host index to address
+                        [this](int id){ return getAddr(id);}); // * convert host index to address
         auto ps_left_hosts = worker_left_hosts;
         auto seed1 = intrand(3245);
         auto seed2 = intrand(4148);
         auto shuffle = [](decltype(worker_left_hosts) &vec, decltype(seed1) seed) {
             std::shuffle(vec.begin(), vec.end(), std::default_random_engine(seed));
         };
-        shuffle(worker_left_hosts, seed1);
-        shuffle(ps_left_hosts, seed2);
-        // std::cout << "workers can use: " << worker_left_hosts << endl;
-        // std::cout << "ps can use: " << ps_left_hosts << endl;
-        // std::vector<int> hostIds(hostscopy.begin(), hostscopy.begin()+numUsedHosts);
 
         int numGroups = par("numGroups").intValue();
         int numWorkers = par("numWorkers").intValue();
@@ -316,12 +311,12 @@ void GlobalGroupManager::placeJobs(const char *policyName)
         }
 
         for (auto i = 0; i < numGroups; i++) {
+            shuffle(worker_left_hosts, seed1);
             std::vector<IntAddress> workers(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
             // std::cout << workers << endl;
             worker_left_hosts.erase(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
-            shuffle(worker_left_hosts, seed1);
             // std::cout << worker_left_hosts << endl;
-            // ! s1 and s2 must be sorted
+            // ! s1 and s2 must be sorted, so must use std::set here
             auto s1 = std::set<IntAddress>(ps_left_hosts.begin(), ps_left_hosts.end());
             auto s2 = std::set<IntAddress>(workers.begin(), workers.end());
             decltype(s1) res;
@@ -330,6 +325,7 @@ void GlobalGroupManager::placeJobs(const char *policyName)
 
             decltype(ps_left_hosts) tmp(res.begin(), res.end());
             // std::cout << "PS can use: " << tmp << endl;
+            shuffle(tmp, seed2); // ! tmp is sorted, must shuffle here
             std::vector<IntAddress> pses {tmp.back()}; // just pick the last element
             tmp.pop_back();
             // std::cout << "PS: "<< pses << endl;
