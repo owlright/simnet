@@ -6,13 +6,8 @@
 class ParameterServerApp : public CongApp
 {
 protected:
-    // virtual void handleMessage(cMessage *msg) override;
-    // void onNewConnectionArrived(IdNumber connId, const Packet* const packet);
-    // virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    virtual void confirmAckNumber(const Packet* pk) override;
     virtual void onReceivedData(Packet* pk) override;
     AggPacket* createAckPacket(const AggPacket* pk);
-    // virtual void finish() override;
 
 protected:
     void initialize(int stage) override;
@@ -215,6 +210,7 @@ bool ParameterServerApp::dealWithNoIncAggPacket(Connection* connection, const Ag
     }
     return false;
 }
+
 void ParameterServerApp::releaseSeq(const SeqNumber& seq)
 {
     EV_DEBUG << "Seq " << seq << " finished." << endl;
