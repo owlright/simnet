@@ -348,10 +348,10 @@ void CongApp::handleParameterChange(const char *parameterName)
 
 void CongApp::insertTxBuffer(Packet* pk)
 {
-    pk->setSeqNumber(nextSeq);
     setField(pk);
-    txBuffer[nextSeq] = TxItem(pk);
-    nextSeq += pk->getByteLength();
+    auto seq = pk->getSeqNumber();
+    ASSERT(txBuffer.find(seq) == txBuffer.end());
+    txBuffer[seq] = TxItem(pk);
 }
 
 void CongApp::insertRxBuffer(Packet* pk)
