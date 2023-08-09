@@ -274,8 +274,6 @@ void CongApp::confirmAckNumber(const Packet* pk)
             txBuffer.erase(txBuffer.begin(), itup); // ! nextAskedSeq will still be in txBuffer
         }
     }
-
-
 }
 
 void CongApp::confirmSeqNumber(const Packet* pk)
@@ -285,7 +283,6 @@ void CongApp::confirmSeqNumber(const Packet* pk)
     emit(rttSignal, sampleRTT);
     currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
     estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
-    // * clear tcpState transmit and clear rxBuffer
     auto seq = pk->getSeqNumber();
     auto pk_size = pk->getByteLength();
     if (rxBuffer.empty() && seq == 0) {
@@ -321,11 +318,6 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     if ( txBuffer.empty() && (tcpState ==  TIME_WAIT) ) {
         // char pkname[50];
         auto packet = createDataPacket(1);
-        // sprintf(pkname, "FINACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-        // localAddr, destAddr, nextSeq, ackSeq);
-        // packet->setName(pkname);
-        // packet->setFIN(true);
-        // packet->setFINACK(true);
         insertTxBuffer(packet);
     }
 

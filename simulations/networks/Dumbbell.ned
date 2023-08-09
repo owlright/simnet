@@ -28,7 +28,6 @@ network Dumbbell
             @node;
 //            @display("p=,,c,40");
             address = 10*parent.numberFlows + index;
-            app.destAddress = index;
 //            globalRouteManager = parent.globalRouteManager;
         }
         LR: Host {

@@ -68,10 +68,12 @@ protected:
     virtual void onReceivedData(Packet* pk);
     virtual void confirmSeqNumber(const Packet* pk);
     virtual void confirmAckNumber(const Packet* pk);
-
+    virtual void onConnectionClose();
     virtual Packet* createDataPacket(B packetBytes) {
         throw cRuntimeError("you must override this function");
     };
+
+protected:
     void sendPendingData();
     void resendOldestSeq();
     B inflightBytes() {return nextSentSeq - nextAskedSeq;};
@@ -83,7 +85,7 @@ protected:
 
     void resetState();
     bool bindRemote();
-    virtual void onConnectionClose();
+
 
 protected:
 
