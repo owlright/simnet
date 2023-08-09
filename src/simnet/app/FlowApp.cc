@@ -90,21 +90,20 @@ void FlowApp::prepareTxBuffer()
         if (leftData == packetSize) // last packet
             pk->setFIN(true);
         insertTxBuffer(pk);
+        incrementNextSeqBy(packetSize);
         leftData -= packetSize;
     }
 }
 
 Packet* FlowApp::createDataPacket(B packetBytes)
 {
-//    char pkname[40];
     auto pk = new Packet();
-//    sprintf(pkname, "flow%" PRId64 "-to-%" PRId64 "-seq%" PRId64, localAddr, destAddr, getNextSeq());
+    pk->setSeqNumber(getNextSeq());
     pk->setKind(DATA);
     pk->setDestAddr(destAddr);
     pk->setDestPort(destPort);
     pk->setPacketType(DATA);
     pk->setByteLength(packetBytes);
-//    pk->setName(pkname);
     return pk;
 }
 

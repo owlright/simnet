@@ -41,6 +41,7 @@ void WorkerApp::handleMessage(cMessage* msg)
 }
 
 void WorkerApp::setField(AggPacket* pk) {
+    pk->setSeqNumber(getNextSeq());
     pk->setDestAddr(destAddr);
     pk->setDestPort(destPort);
     pk->setAggSeqNumber(nextAggSeq++);
@@ -60,6 +61,7 @@ void WorkerApp::prepareTxBuffer()
         if (currentRound == numRounds && leftData == packetSize) // last packet of last round
             pk->setFIN(true);
         insertTxBuffer(pk);
+        incrementNextSeqBy(packetSize);
         leftData -= packetSize;
     }
 }
@@ -79,9 +81,6 @@ void WorkerApp::onReceivedData(Packet* pk)
 
 Packet* WorkerApp::createDataPacket(B packetBytes)
 {
-    // char pkname[40];
-    // sprintf(pkname, "NOINC-%" PRId64 "-to-%" PRId64 "-seq%" PRId64,
-    //         localAddr, destAddr, getNextSeq());
     auto pk = new AggPacket();
     pk->setByteLength(packetBytes);
     setField(pk);

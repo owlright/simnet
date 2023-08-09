@@ -86,8 +86,9 @@ protected:
 
     // std::map<SeqNumber, TxItem> getTxBufferCopy() {return txBuffer;}
     const SeqNumber& getNextSeq() const {return nextSeq;};
+    void incrementNextSeqBy(B segmentSize) const {nextSeq += segmentSize;};
     const SeqNumber& getNextSentSeq() const {return nextSentSeq;};
-    bool isInRxBuffer(SeqNumber seq) {return rxBuffer.find(seq) != rxBuffer.end();};
+    const SeqNumber& getNextAckSeq() const {return nextAckSeq;};
 //    const B& getConfirmedNormalBytes() const {return nextAskedSeq;};
 //    const B& getConfirmedResendBytes() const {return confirmedResendBytes;};
     const simtime_t& getCurrentBaseRTT() const {return currentBaseRTT;};
@@ -114,7 +115,7 @@ protected:
 
 private:
     // ! state
-    SeqNumber nextSeq{0};     // ! when a new packet insert txBuffer
+    mutable SeqNumber nextSeq{0};     // ! when a new packet insert txBuffer
     SeqNumber nextSentSeq{0}; // ! the next seq actually will be sent out
     SeqNumber nextAckSeq{0};  // ! the next seq I want
     SeqNumber nextAskedSeq{0}; // ! the next seq the other side want
