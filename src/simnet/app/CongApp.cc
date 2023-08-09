@@ -309,13 +309,21 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
     auto pk = check_and_cast<Packet*>(msg);
     EV_DEBUG << pk << endl;
     auto ackSeq = pk->getAckNumber();
-    if (localAddr == 268 && destAddr == 138 && ackSeq == 5110)
-        std::cout << pk->getName() << endl;
+    auto seq = pk->getSeqNumber();
 
+    if (nextSentSeq == 0 && ackSeq == 0) {
+        // ! server received the first packet
+        ASSERT(tcpState==CLOSED);
+        tcpState = OPEN;
+    }
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
-    onReceivedData(pk);
-    // ! we only send FINACK when txBuffer is empty
-    if ( txBuffer.empty() && (tcpState ==  TIME_WAIT) ) {
+    if (seq >= getNextAckSeq()) { // we get new seqs
+        onReceivedData(pk);
+    } else { // duplicate seqs, just see what it want us'seq
+        delete pk;
+    }
+    // ! only client need to ACK the FIN seq
+    if ( txBuffer.empty() && (tcpState == TIME_WAIT) ) {
         // char pkname[50];
         auto packet = createDataPacket(1);
         insertTxBuffer(packet);
