@@ -38,9 +38,8 @@ private:
     IntAddress groupAddr{INVALID_ADDRESS};
     std::vector<IntAddress> workers;
     std::vector<PortNumber> workerPorts;
-    // std::map<SeqNumber, TxItem> lastTxBuffer;
-    // std::unordered_set<IntAddress> last_round_finished_workers;
-    // bool isAllWorkersFinished{false};
+    B aggedBytes{0};
+    B totalAggBytes{0};
 };
 
 Define_Module(ParameterServerApp);
@@ -75,6 +74,10 @@ void ParameterServerApp::onReceivedData(Packet* pkt) {
         ASSERT(receivedNumber.empty());
         currentRound = round;
     }
+
+    if (pk->getFIN())
+        totalAggBytes = seq + pk->getByteLength();
+
     bool is_agg_finished = false;
     if (tcpState == CLOSED) {  // this packet is ACK to FIN
         // ! do nothing there is no ACK to FINACK
@@ -123,15 +126,10 @@ void ParameterServerApp::onReceivedData(Packet* pkt) {
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
 {
-    // char pkname[40];
-    // // auto seq = pk->getSeqNumber();
-    // sprintf(pkname, "MuACK-%" PRId64 "-seq%" PRId64,
-    //         localAddr, getNextSeq());
-
     auto packet = new AggPacket();
-    // packet->setSeqNumber(seq);
-    if (pk->getFIN()) {
-        packet->setFIN(true);
+    if (aggedBytes == totalAggBytes) {
+        if (pk->getFIN() || tcpState == CLOSE_WAIT)
+            packet->setFIN(true);
     }
     packet->setAggSeqNumber(pk->getAggSeqNumber());
     packet->setPacketType(MACK);
