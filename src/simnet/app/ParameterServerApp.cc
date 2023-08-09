@@ -121,6 +121,8 @@ void ParameterServerApp::onReceivedData(Packet* pkt) {
     if (is_agg_finished) {
         releaseSeq(seq);
         CongApp::onReceivedData(pkt); // ! we see a fully aggregation packet as received a packet
+    } else  {
+        delete pk;
     }
 }
 
