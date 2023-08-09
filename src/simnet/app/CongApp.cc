@@ -346,17 +346,6 @@ void CongApp::handleParameterChange(const char *parameterName)
 
 }
 
-void CongApp::clearOldSeqInRxBuffer()
-{
-    B pk_size = 0;
-    while (rxBuffer.find(nextAckSeq) != rxBuffer.end()) { // ! remove those early arrived seqs
-        pk_size = rxBuffer[nextAckSeq]->getByteLength();
-        delete rxBuffer[nextAckSeq];
-        rxBuffer.erase(nextAckSeq);
-        nextAckSeq += pk_size;
-    }
-}
-
 void CongApp::insertTxBuffer(Packet* pk)
 {
     pk->setSeqNumber(nextSeq);

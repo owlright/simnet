@@ -75,14 +75,9 @@ protected:
 
 protected:
     void sendPendingData();
-    void resendOldestSeq();
-    B inflightBytes() {return nextSentSeq - nextAskedSeq;};
-
     void setField(Packet* pk);
     void insertTxBuffer(Packet* pk);
     void insertRxBuffer(Packet* pk);
-    void clearOldSeqInRxBuffer();
-
     void resetState();
     bool bindRemote();
 
@@ -146,5 +141,7 @@ public:
 
 private:
     void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    // void transitTcpStateOnEvent(const TcpEvent_t& event);
+    void resendOldestSeq();
+    void resend(TxItem& item);
+    B inflightBytes() {return nextSentSeq - nextAskedSeq;};
 };
