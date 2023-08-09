@@ -44,12 +44,16 @@ void CongApp::setPacketBeforeSentOut(Packet* pk)
     if (pk->getFIN()) {
         sprintf(pkname, "FIN-");
         switch (tcpState) {
-        case FIN_WAIT_1:
-        case TIME_WAIT:
-        case CLOSE_WAIT:
-            break;
         case OPEN:
             tcpState = FIN_WAIT_1;
+            break;
+       case CLOSE_WAIT:
+           cancelEvent(RTOTimeout);
+            tcpState = LAST_ACK;
+            break;
+        case FIN_WAIT_1:
+        case TIME_WAIT:
+        case LAST_ACK: // ! after we send a FIN, timeout then we send another FIN
             break;
         default:
             throw cRuntimeError("Unknown state case");
@@ -206,7 +210,6 @@ void CongApp::resend(TxItem& item)
     auto pk = item.pkt->dup();
     pk->setResend(true);
     setPacketBeforeSentOut(pk);
-    std::cout << "resend " << pk->getName() << endl;
     connection->send(pk);
     item.is_resend_already = true;
     resentBytes += item.pktSize; // ! this will affect inflightBytes
