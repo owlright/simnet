@@ -358,18 +358,23 @@ void CongApp::insertRxBuffer(Packet* pk)
 {
     auto seq = pk->getSeqNumber();
     auto pk_size = pk->getByteLength();
-    if (seq == nextAckSeq && (tcpState != CLOSED)) {
-        delete pk;// ! I get the seq I want, delete the seq is OK
-        pk = nullptr;
+    if (seq == nextAckSeq) {
+        delete pk; // ! I get the seq I want, so it's OK to delete it
+        // * move nextAckSeq to the next seq I haven't received yet.
+        // * and delete those early arrived packets
+        nextAckSeq += pk_size;
+        while (rxBuffer.find(nextAckSeq) != rxBuffer.end()) {
+            pk_size = rxBuffer[nextAckSeq]->getByteLength();
+            delete rxBuffer[nextAckSeq];
+            rxBuffer.erase(nextAckSeq);
+            nextAckSeq += pk_size;
+        }
     }
-    else if (seq > nextAckSeq) {
+    else if (seq > nextAckSeq && tcpState != CLOSED) {
+        // ! when tcpState == CLOSED, if more resend packets with FIN arrive, don't store them
         ASSERT(rxBuffer.find(seq) == rxBuffer.end());
          // ! these seqs arrive too early, store them for now
         rxBuffer[seq] = pk;
-    }
-    else { // ! seq < nextAckSeq or seq == nextAckSeq but tcpState == CLOSED, which means this is a ACK to FIN
-        delete pk;
-        pk = nullptr;
     }
 }
 
