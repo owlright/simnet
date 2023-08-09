@@ -29,6 +29,7 @@ protected:
     // return if aggregation is finished
     bool dealWithIncAggPacket(const AggUseIncPacket* pk);
     bool dealWithNoIncAggPacket(Connection* connection, const AggNoIncPacket* msg); // TODO, no inc packet must ack every one through each connection
+    void releaseSeq(const SeqNumber& seq);
 
 private:
     int jobid{-1};
@@ -114,13 +115,8 @@ void ParameterServerApp::onReceivedData(Packet* pkt) {
     }
 
     if (is_agg_finished) {
-        std::cout << "Seq " << seq << " finished." << endl;
-        EV_DEBUG << "Seq " << seq << " finished." << endl;
-        emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedWorkers.size()));
-        aggedWorkers.erase(seq);
-        receivedNumber.erase(seq);
-        aggedEcns.erase(seq);
-        CongApp::onReceivedData(pk); // ! we see a fully aggregation packet as received a packet
+        releaseSeq(seq);
+        CongApp::onReceivedData(pkt); // ! we see a fully aggregation packet as received a packet
     }
 }
 
@@ -212,6 +208,15 @@ bool ParameterServerApp::dealWithNoIncAggPacket(Connection* connection, const Ag
         return true;
     }
     return false;
+}
+void ParameterServerApp::releaseSeq(const SeqNumber& seq)
+{
+    EV_DEBUG << "Seq " << seq << " finished." << endl;
+    emit(aggRatioSignal, receivedNumber.at(seq) / double(aggedWorkers.size()));
+    aggedWorkers.erase(seq);
+    receivedNumber.erase(seq);
+    aggedEcns.erase(seq);
+    ackNumber.erase(seq);
 }
 
 bool ParameterServerApp::dealWithIncAggPacket(const AggUseIncPacket* pk)
