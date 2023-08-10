@@ -107,6 +107,7 @@ protected:
     opp_component_ptr<CongAlgo> cong;
     TcpState_t tcpState{CLOSED};
     // ! signals
+    static simsignal_t cwndSignal;
     static simsignal_t fctSignal;
     static simsignal_t idealFctSignal;
     static simsignal_t flowSizeSignal;

@@ -8,6 +8,7 @@ simsignal_t CongApp::idealFctSignal = registerSignal("idealFct");
 simsignal_t CongApp::flowSizeSignal = registerSignal("flowSize");
 simsignal_t CongApp::rttSignal = registerSignal("rtt");
 simsignal_t CongApp::inflightBytesSignal = registerSignal("inflightBytes");
+simsignal_t CongApp::cwndSignal = registerSignal("cwnd");
 
 int CongApp::maxDisorderNumber = 0;
 
@@ -260,6 +261,7 @@ void CongApp::confirmSeqNumber(const Packet* pk)
 
     // ! transmit tcpState
     if (seq == nextAckSeq) {
+        emit(cwndSignal, cong->getcWnd());
         switch (tcpState) {
             case CLOSE_WAIT: // ! case 1: duplicate FINs arrive server
                 break;

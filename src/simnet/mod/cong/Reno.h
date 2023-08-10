@@ -17,7 +17,6 @@ public:
 
 protected:
     SeqNumber recover; // the same use as rightEdge, but it's only triggered when seeing congestion
-    B rttBytes {0};
     // B confirmedBytes{0};
     [[deprecated]] B sentBytes{0}; // max seq sent by now
     B cWnd{INT64_MAX};
@@ -26,11 +25,6 @@ protected:
 
     congStateType congState{OPEN};
     SeqNumber cWndCnt{0}; // ! Linear increase counter
-
-private:
-    // signals
-    static simsignal_t cwndSignal;
-    // static simsignal_t rttSignal;
 
 private:
     void increaseWindow();

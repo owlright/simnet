@@ -20,10 +20,12 @@ module CongApp extends UnicastApp {
         int maxDisorderNumber = default(3);
 
         @class(CongApp);
+        @signal[cwnd](type=int);
         @signal[rtt](type=simtime_t);
         @signal[inflightBytes](type=int);
         @statistic[rtt](title="rtt"; source=rtt; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[inflightBytes](title="inflight bytes"; source=inflightBytes; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=linear);
+        @statistic[cwnd](source=cwnd;title="Congestion Window";record=vector;interpolationmode=linear;);
 
    submodules:
         cong: <default("Reno")> like Cong;
