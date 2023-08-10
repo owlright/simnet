@@ -26,14 +26,14 @@ network FatTree
         int numPods = k;
         int numCores = int(k^2/4);
         @display("bgb=929,304");
-        
+
     types:
-    	channel C extends DatarateChannel
+        channel C extends DatarateChannel
         {
             delay = default(1us);
             datarate = default(40Gbps);
         }
-        
+
     submodules:
         pods[numPods]: Pod {
             k = parent.k;
@@ -53,11 +53,13 @@ network FatTree
         }
         metricCollector: GlobalMetricCollector {
 
+            @display("p=559.8,157.44374");
         }
         globalView: GlobalView {
 
+            @display("p=531.81,81.6375");
         }
-  	
+
     connections:
         for i=0..k-1, for j=0..halfk-1, for z=0..halfk-1 {
             pods[i].port[j+z*halfk] <--> C <--> coreSwitches[j+z*halfk].port++;
@@ -71,13 +73,13 @@ module Pod
         int hostNumber = int(k^2/4);
         int switchLevelNumber = int(k/2);
         int halfPorts = int(k/2);
-        @display("bgb=778,400");   
-        
+        @display("bgb=778,400");
+
     gates:
         inout port[halfPorts*switchLevelNumber];
-   	
+
     types:
-    	channel C extends DatarateChannel
+        channel C extends DatarateChannel
         {
             delay = default(1us);
             datarate = default(40Gbps);

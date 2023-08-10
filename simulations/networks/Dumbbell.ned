@@ -1,7 +1,9 @@
 package simnet.simulations.networks;
 
 import simnet.mod.Host;
+import simnet.mod.Switch;
 import simnet.mod.manager.GlobalRouteManager;
+import simnet.mod.manager.GlobalView;
 import ned.DatarateChannel;
 // one sender and one receiver
 // a router with different datarate
@@ -10,7 +12,8 @@ network Dumbbell
     parameters:
         string globalRouteManager = fullName()+".controller";
         int numberFlows = default(1);
-        @display("bgb=990,348");
+        @display("bgb=989.02997,487.06");
+
     types:
         channel C extends DatarateChannel
         {
@@ -21,20 +24,22 @@ network Dumbbell
     submodules:
         sink[numberFlows]: Host {
             address = index;
-            @display("p=605,150,c,50");
+            @display("p=605,50,c,60");
         }
         sender[numberFlows]: Host {
-            destAddress = index;
-            @display("p=164,150,c,50");
+            @display("p=164,50,c,60");
         }
-        LR: Host {
-            @display("p=300,150");
+        LR: Switch {
+            @display("p=300,200");
         }
-        RR: Host {
-            @display("p=440,150");
+        RR: Switch {
+            @display("p=440,200");
         }
         routeManager: GlobalRouteManager {
-            @display("p=878,50");
+            @display("p=883.4175,149.09999");
+        }
+        globalView: GlobalView {
+            @display("p=883.4175,47.215");
         }
 
     connections:
