@@ -91,10 +91,11 @@ export-$(1)-%:
 	simulations/$(1)/results/$$**.vec \
 	simulations/$(1)/results/$$**.sca
 
-# $(RM) \
-# simulations/$(1)/results/$$**.vec \
-# simulations/$(1)/results/$$**.vci \
-# simulations/$(1)/results/$$**.sca
+cleanresults-$(1)-%:
+	$(RM) \
+	simulations/$(1)/results/$$**.vec \
+	simulations/$(1)/results/$$**.vci \
+	simulations/$(1)/results/$$**.sca
 
 #	python3 simulations/$(1)/plot.py $$*
 
