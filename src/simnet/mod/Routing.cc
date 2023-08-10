@@ -9,7 +9,7 @@ void Routing::initialize(int stage)
         dropSignal = registerSignal("drop");
         outputIfSignal = registerSignal("outputIf");
         isSwitch = (getParentModule()->getProperties()->get("switch") != nullptr);
-
+        myAddress = getParentModule()->par("address");
         routeManager = findModuleFromTopLevel<GlobalRouteManager>("routeManager", this);
         if (!routeManager) // ! this module is necessary
             throw cRuntimeError("no routeManager!");
