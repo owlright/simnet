@@ -51,9 +51,11 @@ void CongApp::setPacketBeforeSentOut(Packet* pk)
            cancelEvent(RTOTimeout);
             tcpState = LAST_ACK;
             break;
+        // ! send duplicate FINs does not change state
         case FIN_WAIT_1:
+        case FIN_WAIT_2:
         case TIME_WAIT:
-        case LAST_ACK: // ! after we send a FIN, timeout then we send another FIN
+        case LAST_ACK:
             break;
         default:
             throw cRuntimeError("Unknown state case");
