@@ -10,7 +10,6 @@ import ned.DatarateChannel;
 network Dumbbell
 {
     parameters:
-        string globalRouteManager = fullName()+".controller";
         int numberFlows = default(1);
         @display("bgb=989.02997,487.06");
 
