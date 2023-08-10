@@ -8,11 +8,12 @@ import simnet.mod.manager.GlobalRouteManager;
 import simnet.mod.manager.GlobalGroupManager;
 import simnet.mod.manager.TrafficPatternManager;
 import simnet.mod.manager.GlobalMetricCollector;
-channel C extends DatarateChannel
-{
-    delay = 1us;
-    datarate = 40Gbps;
-}
+
+//channel C extends DatarateChannel
+//{
+//    delay = default(1us);
+//    datarate = default(40Gbps);
+//}
 
 // There are k pods, each containing two layers of k/2 switches.
 // Each k-port switch in the lower layer is directly connected to k/2 hosts.
@@ -25,7 +26,14 @@ network FatTree
         int numPods = k;
         int numCores = int(k^2/4);
         @display("bgb=929,304");
-
+        
+    types:
+    	channel C extends DatarateChannel
+        {
+            delay = default(1us);
+            datarate = default(40Gbps);
+        }
+        
     submodules:
         pods[numPods]: Pod {
             k = parent.k;
@@ -49,7 +57,7 @@ network FatTree
         globalView: GlobalView {
 
         }
-
+  	
     connections:
         for i=0..k-1, for j=0..halfk-1, for z=0..halfk-1 {
             pods[i].port[j+z*halfk] <--> C <--> coreSwitches[j+z*halfk].port++;
@@ -63,10 +71,17 @@ module Pod
         int hostNumber = int(k^2/4);
         int switchLevelNumber = int(k/2);
         int halfPorts = int(k/2);
-        @display("bgb=778,400");
-
+        @display("bgb=778,400");   
+        
     gates:
         inout port[halfPorts*switchLevelNumber];
+   	
+    types:
+    	channel C extends DatarateChannel
+        {
+            delay = default(1us);
+            datarate = default(40Gbps);
+        }
 
     submodules:
         level1[switchLevelNumber]: Switch {
