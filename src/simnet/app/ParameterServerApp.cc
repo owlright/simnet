@@ -62,7 +62,8 @@ void ParameterServerApp::onReceivedData(Packet* pkt) {
     auto pk = check_and_cast<AggPacket*>(pkt);
     ASSERT(pk->getJobId() == jobid);
     auto seq = pk->getSeqNumber();
-    std::cout <<"PS received: " << pk->getName() << endl;
+    //  if (localAddr == 789)
+    //      std::cout <<"PS received: " << pk->getName() << endl;
     auto round = pk->getRound();
     if (round > currentRound) {
         EV_DEBUG << "Round: " << round << endl;
