@@ -84,14 +84,11 @@ protected:
 
 
 protected:
-
-    // std::map<SeqNumber, TxItem> getTxBufferCopy() {return txBuffer;}
     const SeqNumber& getNextSeq() const {return nextSeq;};
     void incrementNextSeqBy(B segmentSize) const {nextSeq += segmentSize;};
     const SeqNumber& getNextSentSeq() const {return nextSentSeq;};
     const SeqNumber& getNextAckSeq() const {return nextAckSeq;};
-//    const B& getConfirmedNormalBytes() const {return nextAskedSeq;};
-//    const B& getConfirmedResendBytes() const {return confirmedResendBytes;};
+
     const simtime_t& getCurrentBaseRTT() const {return currentBaseRTT;};
     const double& getMaxSendingRate() const {return bandwidth;}
     void setPacketBeforeSentOut(Packet* pk);
@@ -143,7 +140,7 @@ public:
     virtual ~CongApp();
 
 private:
-    void connectionDataArrived(Connection *connection, cMessage *msg) override;
+    void connectionDataArrived(Connection *connection, Packet* pk) override;
     void resendOldestSeq();
     void resend(TxItem& item);
     B inflightBytes() {return nextSentSeq - nextAskedSeq;};

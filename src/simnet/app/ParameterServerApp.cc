@@ -109,7 +109,6 @@ void ParameterServerApp::onReceivedData(Packet* pkt) {
                 packet->setDestAddr(workers[i]);
                 packet->setDestPort(workerPorts[i]);
                 insertTxBuffer(packet);
-                // getListeningSocket()->send(packet);  // ! HACK: this connection is the listening socket
             }
         }
     }

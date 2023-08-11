@@ -283,8 +283,8 @@ void CongApp::confirmSeqNumber(const Packet* pk)
                 throw cRuntimeError("Unthoughtful state case");
         }
     }
-    // ! there are some time between FIN_WAIT_2 and TIME_WAIT because
-    // ! last window of packets sent with the same ACK seq, but only the last packet will labeled FIN
+    // // ! there are some time between FIN_WAIT_2 and TIME_WAIT because
+    // // ! last window of packets sent with the same ACK seq, but only the last packet will labeled FIN
     if (pk->getFIN()) {// * the other side has received all my packets
         switch (tcpState) {
             case OPEN: // ! only server will receieve FIN when OPEN
@@ -315,7 +315,8 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     EV_DEBUG << pk << endl;
     auto ackSeq = pk->getAckNumber();
     auto seq = pk->getSeqNumber();
-
+    // if (localAddr == 16 && seq>=159)
+    //     std::cout << pk->getName() << endl;
     if (nextSentSeq == 0 && ackSeq == 0) {
         // ! server received the first packet
         ASSERT(tcpState==CLOSED);
