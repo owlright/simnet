@@ -31,37 +31,38 @@ void EchoApp::handleMessage(cMessage *msg)
 void EchoApp::connectionDataArrived(Connection *connection, Packet* pk)
 {
     auto connId = pk->getConnectionId();
-    auto seq = pk->getSeqNumber();
-    auto nextSeq = pk->getAckNumber(); // * always give what sender wants
+    auto seqNumber = pk->getSeqNumber();
     auto srcAddr = pk->getSrcAddr();
     auto& flow = flows.at(connId);
-    ASSERT(pk->getKind()==PacketType::DATA);
+    ASSERT(pk->getKind() == PacketType::DATA);
     ASSERT(connId == connection->getConnectionId());
-    // if (localAddr == 2)
+    // if (localAddr == 1)
     //     std::cout << pk->getName() << endl;
 
-    char pkname[40];
-
     if (pk->getFIN()) {
-        flow.lastAckNumber = seq + pk->getByteLength();
-        flow.lastAskedSeq = nextSeq;
+        flow.totalBytes = seqNumber + pk->getByteLength();
     }
 
-    if (seq >= flow.nextAckNumber)
-        flow.nextAckNumber = seq + pk->getByteLength();
+    if (seqNumber >= flow.nextAckNumber) {
+        // ! ignore any disorder or resend packets
+        // ! because there are no packet loss happen
+        flow.nextAckNumber = seqNumber + pk->getByteLength();
+    }
 
     auto packet = createAckPacket(pk);
 
-    if (flow.nextAckNumber == flow.lastAckNumber) {
+    if (flow.nextAckNumber == flow.totalBytes) {
         packet->setFIN(true);
-        nextSeq = flow.lastAskedSeq + 1; // ! I don't want sender send another ACK to this FIN
     }
-
+    char pkname[40];
+    auto seq = flow.nextSeq;
+    flow.nextSeq += ackPacketSize;
+    auto ackSeq = flow.nextAckNumber;
     sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-        localAddr, srcAddr, nextSeq, flow.nextAckNumber);
+        localAddr, srcAddr, seq, ackSeq);
     packet->setName(pkname);
-    packet->setSeqNumber(nextSeq);
-    packet->setAckNumber(flow.nextAckNumber);
+    packet->setSeqNumber(seq);
+    packet->setAckNumber(ackSeq);
     connection->send(packet);
     delete pk;
 }

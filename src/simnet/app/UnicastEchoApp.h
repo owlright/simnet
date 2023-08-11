@@ -19,16 +19,14 @@ protected:
         SeqNumber remoteAddr{INVALID_ADDRESS};
         PortNumber remotePort{INVALID_PORT};
         Connection* connection{nullptr};
+        SeqNumber nextSeq{0};
         SeqNumber nextAckNumber{0};
-        SeqNumber lastAckNumber{INT64_MAX};
-        SeqNumber lastAskedSeq{INT64_MAX};
+        SeqNumber totalBytes{0};
     };
     // configuration
     std::unordered_map<IdNumber, FlowTable> flows;
-    B receivedBytes;
-
+    B ackPacketSize{1};
 protected:
-
     virtual void connectionDataArrived(Connection *connection, Packet* pk) override;
     virtual Packet* createAckPacket(const Packet* const pk);
 
