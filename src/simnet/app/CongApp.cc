@@ -315,7 +315,7 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     EV_DEBUG << pk << endl;
     auto ackSeq = pk->getAckNumber();
     auto seq = pk->getSeqNumber();
-    // if (localAddr == 16 && seq>=159)
+    // if (localAddr == 11)
     //     std::cout << pk->getName() << endl;
     if (nextSentSeq == 0 && ackSeq == 0) {
         // ! server received the first packet
