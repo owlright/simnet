@@ -1,9 +1,10 @@
 #pragma once
 #include <unordered_map>
-#include "SocketApp.h"
+
+#include "ConnectionApp.h"
 using namespace omnetpp;
 
-class EchoApp : public UnicastApp
+class EchoApp : public ConnectionApp
 {
 protected:
     // configuration

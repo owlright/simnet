@@ -6,7 +6,7 @@
 
 using namespace omnetpp;
 
-class UnicastApp : public cSimpleModule, public Connection::ICallback
+class ConnectionApp : public cSimpleModule, public Connection::ICallback
 {
 protected:
     Connection* connection{nullptr}; // this connection is just for listen incoming connections.
@@ -14,7 +14,7 @@ protected:
     PortNumber localPort{INVALID_PORT};
 
 public:
-    virtual ~UnicastApp() {delete connection; connection = nullptr;};
+    virtual ~ConnectionApp() {delete connection; connection = nullptr;};
 
 protected:
     // inherited functions

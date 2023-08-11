@@ -1,9 +1,9 @@
+#include "ConnectionApp.h"
 #include "simnet/mod/contract/MessageDispatcher.h"
-#include "SocketApp.h"
 
-Define_Module(UnicastApp);
+Define_Module(ConnectionApp);
 
-void UnicastApp::initialize(int stage)
+void ConnectionApp::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
         localPort = par("port");
@@ -21,7 +21,7 @@ void UnicastApp::initialize(int stage)
     }
 }
 
-void UnicastApp::handleMessage(cMessage *msg)
+void ConnectionApp::handleMessage(cMessage *msg)
 {
     if (msg->isPacket()) {
         connection->processMessage(msg);
@@ -29,12 +29,12 @@ void UnicastApp::handleMessage(cMessage *msg)
 
 }
 
-void UnicastApp::connectionDataArrived(Connection *connection, cMessage* msg)
+void ConnectionApp::connectionDataArrived(Connection *connection, cMessage* msg)
 {
     delete msg;
 }
 
-void UnicastApp::handleParameterChange(const char *parameterName)
+void ConnectionApp::handleParameterChange(const char *parameterName)
 {
     if (strcmp(parameterName, "address") == 0) {
         localAddr = par("address");
@@ -48,7 +48,7 @@ void UnicastApp::handleParameterChange(const char *parameterName)
     }
 }
 
-Connection* UnicastApp::createConnection(int connId)
+Connection* ConnectionApp::createConnection(int connId)
 {
     auto connectionId = connId == -1 ? cSimulation::getActiveEnvir()->getUniqueNumber() : connId;
     auto conn = new Connection(connectionId);

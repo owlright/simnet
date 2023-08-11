@@ -114,7 +114,7 @@ void CongApp::finish() {
 
 void CongApp::initialize(int stage)
 {
-    UnicastApp::initialize(stage);
+    ConnectionApp::initialize(stage);
     // ! if this moudle is created by manager in ASSIGN stage, the stages before it will not be executed
     if (stage == INITSTAGE_LOCAL) {
         maxDisorderNumber = par("maxDisorderNumber");
@@ -148,7 +148,7 @@ void CongApp::handleMessage(cMessage *msg)
         markSeq = nextSentSeq;
         scheduleAfter(2*estimatedRTT, RTOTimeout); // we have to repeadedly check, this will be canceled when appState==finished
     } else {
-        UnicastApp::handleMessage(msg);
+        ConnectionApp::handleMessage(msg);
     }
 }
 
@@ -347,7 +347,7 @@ void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
 
 void CongApp::handleParameterChange(const char *parameterName)
 {
-    UnicastApp::handleParameterChange(parameterName);
+    ConnectionApp::handleParameterChange(parameterName);
     // this can happen when node change the app destionation
     if (strcmp(parameterName, "destAddress") == 0) {
         destAddr = par("destAddress");

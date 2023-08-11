@@ -12,7 +12,7 @@ EchoApp::~EchoApp()
 
 void EchoApp::initialize(int stage)
 {
-    UnicastApp::initialize(stage);
+    ConnectionApp::initialize(stage);
 }
 
 void EchoApp::handleMessage(cMessage *msg)

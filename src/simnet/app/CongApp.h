@@ -1,7 +1,8 @@
 #pragma once
 #include <set>
+
+#include "ConnectionApp.h"
 #include "simnet/mod/cong/CongAlgo.h"
-#include "SocketApp.h"
 
 enum TcpState_t
 {
@@ -22,7 +23,7 @@ enum TcpEvent_t
     RECV_ACK
 };
 
-class CongApp : public UnicastApp
+class CongApp : public ConnectionApp
 {
 public:
     void setDestAddr(IntAddress addr) {
