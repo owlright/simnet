@@ -40,7 +40,7 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
                 ssThresh = getSsThresh();
                 cWnd = ssThresh; // half the window(most of the time)
                 EV_DEBUG << "Reduce ssThresh and cWnd to " << cWnd << endl;
-                recover = seq + cWnd; // * wait for about a RTT
+                recover = getMaxSentSeqNumber(); // * wait for about a RTT
                 EV << "ssThresh will not be updated until packet " << recover << " is received" << endl;
                 congState = CWR;
                 break;
@@ -48,6 +48,7 @@ void Reno::onRecvAck(SeqNumber seq, B segmentSize, bool congestion) {
                 if (maxAckedSeqNumber >= recover) { // only half once a RTT/window
                     cWnd = getSsThresh(); // half the window(most of the time)
                     congState = OPEN; // reset the state after a RTT
+                    recover = getMaxSentSeqNumber();
                 }
                 break;
             default:
