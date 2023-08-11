@@ -24,14 +24,14 @@ void ConnectionApp::initialize(int stage)
 void ConnectionApp::handleMessage(cMessage *msg)
 {
     if (msg->isPacket()) {
-        connection->processMessage(msg);
+        auto pk = check_and_cast<Packet*>(msg);
+        connection->processPacket(pk);
     }
-
 }
 
-void ConnectionApp::connectionDataArrived(Connection *connection, cMessage* msg)
+void ConnectionApp::connectionDataArrived(Connection *connection, Packet* pk)
 {
-    delete msg;
+    delete pk;
 }
 
 void ConnectionApp::handleParameterChange(const char *parameterName)

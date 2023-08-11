@@ -21,32 +21,30 @@ Connection::Connection(IdNumber connId)
     connectionId = connId;
 }
 
-void Connection::send(cMessage* msg)
+void Connection::setOutputGate(cGate *const toUnicast)
 {
-    auto pk = check_and_cast<Packet *>(msg);
+    gateToUnicast = toUnicast;
+    parentModule = check_and_cast<cSimpleModule*>(gateToUnicast->getOwnerModule());
+}
+
+void Connection::send(Packet* pk)
+{
     pk->setSrcAddr(localAddr);
     pk->setLocalPort(localPort);
     if (destAddr != INVALID_ADDRESS || destPort != INVALID_PORT) {
         pk->setDestAddr(destAddr);
         pk->setDestPort(destPort);
     }
-
     pk->setConnectionId(getConnectionId());
-    sendToUnicast(pk);
+    parentModule->send(pk, gateToUnicast);
 }
 
-void Connection::sendToUnicast(cMessage *msg) {
-    if (!gateToUnicast)
-        throw("Connection: setOutputGate() must be invoked before connection can be used");
-    check_and_cast<cSimpleModule *>(gateToUnicast->getOwnerModule())->send(msg, gateToUnicast);
-}
-
-void Connection::processMessage(cMessage* msg)
+void Connection::processPacket(Packet* pk)
 {
     if (cb)
-        cb->connectionDataArrived(this, msg);
+        cb->connectionDataArrived(this, pk);
     else
-        throw cRuntimeError("Connection::processMessage: must be binded before send.");
+        throw cRuntimeError("Connection::processPacket: must be binded before send.");
 }
 
 void Connection::setCallback(ICallback *callback)

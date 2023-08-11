@@ -308,9 +308,8 @@ void CongApp::onReceivedData(Packet* pk)
     insertRxBuffer(pk);
 }
 
-void CongApp::connectionDataArrived(Connection *connection, cMessage *msg)
+void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
 {
-    auto pk = check_and_cast<Packet*>(msg);
     EV_DEBUG << pk << endl;
     auto ackSeq = pk->getAckNumber();
     auto seq = pk->getSeqNumber();

@@ -23,10 +23,10 @@ void EchoApp::handleMessage(cMessage *msg)
     if (it == connections.end()) {
         onNewConnectionArrived(connectionId, pk);
     }
-    connections.at(connectionId)->processMessage(pk);
+    connections.at(connectionId)->processPacket(pk);
 }
 
-void EchoApp::onNewConnectionArrived(IdNumber connId, const Packet* const pk)
+void EchoApp::connectionDataArrived(Connection *connection, Packet* pk)
 {
     connections[connId] = createConnection(connId);
     connections[connId]->bindRemote(pk->getSrcAddr(), pk->getLocalPort());

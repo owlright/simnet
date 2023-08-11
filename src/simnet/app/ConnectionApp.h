@@ -22,7 +22,7 @@ protected:
     virtual void handleMessage(cMessage *msg) override;
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     // for callback function use
-    virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
+    virtual void connectionDataArrived(Connection *connection, Packet* pk) override;
 
     virtual Connection* createConnection(int connId=-1);
     virtual void handleParameterChange(const char *parameterName) override;
