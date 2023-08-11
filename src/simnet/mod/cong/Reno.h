@@ -12,13 +12,11 @@ class Reno : public CongAlgo {
 public:
     virtual B getcWnd() override {return cWnd;};
     virtual void onRecvAck(SeqNumber seq, B segmentSize, bool congestion) override;
-    // virtual void onRecvData(SeqNumber seq, B pkSize) override {};
     virtual void onSendData(SeqNumber seq, B segmentSize) override;
 
 protected:
-    SeqNumber recover; // the same use as rightEdge, but it's only triggered when seeing congestion
-    // B confirmedBytes{0};
-    [[deprecated]] B sentBytes{0}; // max seq sent by now
+    SeqNumber recover; // as a rtt timer triggered when congestion happen
+
     B cWnd{INT64_MAX};
     SeqNumber ssThresh{INT64_MAX};
     // int maxDisorderNumber;
