@@ -272,8 +272,10 @@ void CongApp::confirmSeqNumber(const Packet* pk)
                 tcpState = FIN_WAIT_2;
                 break;
             case OPEN: // keep OPEN
-            case FIN_WAIT_2: // ! case 1: unconfirmed packets' acks arrive
-            case TIME_WAIT:  // ! case 1: duplicate FINs arrive client
+            case FIN_WAIT_2:
+                // ! case 1: we receieved ack but not server's FIN
+            case TIME_WAIT:
+                // ! case 1: duplicate FINs arrive client
             case CLOSED:
                 // ! case 1: simple flow app that doesn't want to wait 2MSL
                 break;

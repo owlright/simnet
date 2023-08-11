@@ -4,9 +4,10 @@ Define_Module(EchoApp);
 
 EchoApp::~EchoApp()
 {
-    for (auto&it : connections) {
-        delete  it.second;
-        it.second = nullptr;
+    for (auto&it : flows) {
+        auto& conn = it.second.connection;
+        delete conn;
+        conn = nullptr;
     }
 }
 
@@ -18,64 +19,64 @@ void EchoApp::initialize(int stage)
 void EchoApp::handleMessage(cMessage *msg)
 {
     auto pk = check_and_cast<Packet*>(msg);
-    auto connectionId = pk->getConnectionId();
-    auto it = connections.find(connectionId);
-    if (it == connections.end()) {
-        onNewConnectionArrived(connectionId, pk);
+    auto connId = pk->getConnectionId();
+    auto it = flows.find(connId);
+    if (it == flows.end()) {
+        flows[connId].connection = createConnection(connId);
+        flows[connId].connection->bindRemote(pk->getSrcAddr(), pk->getLocalPort());
     }
-    connections.at(connectionId)->processPacket(pk);
+    flows.at(connId).connection->processPacket(pk);
 }
 
 void EchoApp::connectionDataArrived(Connection *connection, Packet* pk)
 {
-    connections[connId] = createConnection(connId);
-    connections[connId]->bindRemote(pk->getSrcAddr(), pk->getLocalPort());
-    maxReceivedSeq[pk->getSrcAddr()] = pk->getSeqNumber();
-}
-
-void EchoApp::connectionDataArrived(Connection *connection, cMessage *msg)
-{
-    auto pk = check_and_cast<Packet*>(msg);
+    auto connId = pk->getConnectionId();
+    auto seq = pk->getSeqNumber();
+    auto nextSeq = pk->getAckNumber(); // * always give what sender wants
+    auto srcAddr = pk->getSrcAddr();
+    auto& flow = flows.at(connId);
     ASSERT(pk->getKind()==PacketType::DATA);
-    ASSERT(pk->getConnectionId()==connection->getConnectionId());
+    ASSERT(connId == connection->getConnectionId());
+    // if (localAddr == 2)
+    //     std::cout << pk->getName() << endl;
+
+    char pkname[40];
+
+    if (pk->getFIN()) {
+        flow.lastAckNumber = seq + pk->getByteLength();
+        flow.lastAskedSeq = nextSeq;
+    }
+
+    if (seq >= flow.nextAckNumber)
+        flow.nextAckNumber = seq + pk->getByteLength();
 
     auto packet = createAckPacket(pk);
+
+    if (flow.nextAckNumber == flow.lastAckNumber) {
+        packet->setFIN(true);
+        nextSeq = flow.lastAskedSeq + 1; // ! I don't want sender send another ACK to this FIN
+    }
+
+    sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
+        localAddr, srcAddr, nextSeq, flow.nextAckNumber);
+    packet->setName(pkname);
+    packet->setSeqNumber(nextSeq);
+    packet->setAckNumber(flow.nextAckNumber);
     connection->send(packet);
     delete pk;
 }
 
 Packet *EchoApp::createAckPacket(const Packet* const pk)
 {
-    char pkname[40];
-    auto nextSeq = pk->getAckNumber();
-    auto srcAddr = pk->getSrcAddr();
-    auto ackSeq = pk->getSeqNumber() + pk->getByteLength();
-    ackSeq = ackSeq > maxReceivedSeq[srcAddr] ? ackSeq : maxReceivedSeq[srcAddr];
-    maxReceivedSeq[srcAddr] = ackSeq;
     auto packet = new Packet();
-    if (pk->getFIN()) {
-        packet->setFIN(true); // ! EchoApp doesn't have to wait
-        sprintf(pkname, "FIN-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-            localAddr, srcAddr, nextSeq, ackSeq);
-    }
-    else {
-        sprintf(pkname, "ACK-%" PRId64 "-to-%" PRId64 "-seq-%" PRId64 "-ack-%" PRId64,
-            localAddr, srcAddr, nextSeq, ackSeq);
-    }
-    packet->setName(pkname);
-    packet->setSeqNumber(nextSeq);
-    packet->setAckNumber(ackSeq);
-
+    packet->setDestAddr(pk->getSrcAddr());
+    packet->setDestPort(pk->getLocalPort());
+    packet->setECE(pk->getECN());
     packet->setKind(PacketType::ACK);
-    packet->setByteLength(64);
-    // packet->setReceivedBytes(pk->getByteLength());
+    packet->setByteLength(1);
     packet->setStartTime(pk->getStartTime());
     packet->setQueueTime(pk->getQueueTime());
     packet->setTransmitTime(pk->getTransmitTime());
-    if (pk->getECN()) {
-        packet->setECE(true);
-    }
-    // packet->setIsFlowFinished(pk->isFlowFinished());
     return packet;
 }
 

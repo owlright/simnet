@@ -1,29 +1,35 @@
 #pragma once
 #include <unordered_map>
-
 #include "ConnectionApp.h"
 using namespace omnetpp;
 
 class EchoApp : public ConnectionApp
 {
-protected:
-    // configuration
-    std::unordered_map<IdNumber, Connection*> connections;
-    std::unordered_map<IntAddress, SeqNumber> maxReceivedSeq;
-    B receivedBytes;
 
 public:
     virtual ~EchoApp();
 
 protected:
-    // inherited functions
-    void initialize(int stage) override;
+    virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;
-    // helper functions
-    virtual void onNewConnectionArrived(IdNumber connId, const Packet* const packet);
-
-    // for callback function use
-    virtual void connectionDataArrived(Connection *connection, cMessage *msg) override;
-    virtual Packet* createAckPacket(const Packet* const pk);
     virtual void refreshDisplay() const override;
+
+protected:
+    struct FlowTable {
+        SeqNumber remoteAddr{INVALID_ADDRESS};
+        PortNumber remotePort{INVALID_PORT};
+        Connection* connection{nullptr};
+        SeqNumber nextAckNumber{0};
+        SeqNumber lastAckNumber{INT64_MAX};
+        SeqNumber lastAskedSeq{INT64_MAX};
+    };
+    // configuration
+    std::unordered_map<IdNumber, FlowTable> flows;
+    B receivedBytes;
+
+protected:
+
+    virtual void connectionDataArrived(Connection *connection, Packet* pk) override;
+    virtual Packet* createAckPacket(const Packet* const pk);
+
 };
