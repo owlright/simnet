@@ -34,8 +34,6 @@ module Routing
         input localIn;
         output localOut;
 
-    // submodules:
-    //     pkh: <default("GroupPacketHandler")> like PacketHandler if this.groupManager != "";
 }
 
 

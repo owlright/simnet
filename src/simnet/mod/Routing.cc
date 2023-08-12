@@ -16,7 +16,6 @@ void Routing::initialize(int stage)
             bufferSize = par("bufferSize");
             numAggregators = getParentModule()->par("numAggregators");
             agtrSize = getParentModule()->par("agtrSize");
-            position = getParentModule()->par("position");
             aggregators.resize(numAggregators, nullptr);
             collectionPeriod = par("collectPeriod").doubleValueInUnit("s");
             aggTimeOut = new cMessage("aggTimeOut");
