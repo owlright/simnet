@@ -1,6 +1,8 @@
 #include "Routing.h"
 Define_Module(Routing);
 
+simsignal_t Routing::bufferInUseSignal = registerSignal("bufferInUse");
+
 void Routing::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
@@ -373,12 +375,12 @@ void Routing::handleMessage(cMessage *msg)
 
 void Routing::finish()
 {
-    if (isSwitch) {
-        char buf[30];
-        sprintf(buf, "switch-%" PRId64 "-compEff", myAddress);
-        // I dont want the time's unit too big, otherwise the efficiency will be too big
-        recordScalar(buf, getComputationCount() / double(getUsedTime().inUnit(SIMTIME_US))); // TODO will resource * usedTime better?
-    }
+    // if (isSwitch) {
+    //     char buf[30];
+    //     sprintf(buf, "switch-%" PRId64 "-compEff", myAddress);
+    //     // I dont want the time's unit too big, otherwise the efficiency will be too big
+    //     recordScalar(buf, getComputationCount() / double(getUsedTime().inUnit(SIMTIME_US))); // TODO will resource * usedTime better?
+    // }
     for (auto& p : aggregators) {
         if (p!=nullptr) {
             EV_WARN << "there is unreleased aggregator on router " << myAddress

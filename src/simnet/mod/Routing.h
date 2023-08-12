@@ -94,7 +94,7 @@ private:
     // ! self messages
     // cMessage* aggTimeOut{nullptr};
     cMessage* dataCollectTimer{nullptr};
-
+    static simsignal_t bufferInUseSignal;
     // ! common router functions
 
     // Ask global routeManager for the first seen destAddr

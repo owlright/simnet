@@ -24,8 +24,9 @@ module Routing
 
         @class(Routing);
         @display("i=block/switch");
-
+        @signal[bufferInUse](type=long);
         @signal[group*-usedBuffer](type=long);
+        @statistic[bufferInUse](source=bufferInUse; record=vector);
         @statisticTemplate[groupUsedBuffer](title="group used buffer on switch";record=mean,vector);
 
     gates:
