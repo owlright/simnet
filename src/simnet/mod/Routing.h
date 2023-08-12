@@ -17,18 +17,12 @@ using namespace omnetpp;
  */
 class Routing : public cSimpleModule
 {
-    // struct hashFunction
-    // {
-    //     size_t operator()(const std::pair<IntAddress , SeqNumber> &x) const{
-    //         return x.first ^ x.second;
-    //     }
-    // };
-    typedef struct MulticastID
+    struct MulticastID
     {
         IdNumber jobId;
         IntAddress PSAddr;
         IntAddress nextAddr;
-        PortNumber PSport; // TODO: is that possible two ps on the same host?
+        PortNumber PSport;
         SeqNumber seq;
         bool isAggedHere;
         MulticastID(IdNumber jobId, IntAddress PSAddr, IntAddress nextAddr, PortNumber PSport, SeqNumber seq, bool isAggedHere)
@@ -42,9 +36,14 @@ class Routing : public cSimpleModule
         }
         // `operator==` is required to compare keys in case of a hash collision
         bool operator==(const MulticastID &key) const {
-            return jobId == key.jobId && PSAddr == key.PSAddr && nextAddr == key.nextAddr && PSport == key.PSport && seq == key.seq && isAggedHere == key.isAggedHere;
+            return jobId == key.jobId
+                && PSAddr == key.PSAddr
+                && nextAddr == key.nextAddr
+                && PSport == key.PSport
+                && seq == key.seq
+                && isAggedHere == key.isAggedHere;
         }
-    } MulticastID;
+    };
 
     struct hash_fn
     {
@@ -67,7 +66,7 @@ public:
 private:
     bool isSwitch;
     IntAddress myAddress{INVALID_ADDRESS};
-    int position{-1};
+    [[deprecated]] int position{-1};
     // IntAddress myGroupAddress{INVALID_ADDRESS};
     bool ecmpFlow = false;
     double collectionPeriod;
