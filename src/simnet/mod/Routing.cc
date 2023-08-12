@@ -18,7 +18,6 @@ void Routing::initialize(int stage)
             agtrSize = getParentModule()->par("agtrSize");
             aggregators.resize(numAggregators, nullptr);
             collectionPeriod = par("collectPeriod").doubleValueInUnit("s");
-            aggTimeOut = new cMessage("aggTimeOut");
             dataCollectTimer = new cMessage("dataCollector");
         }
 
@@ -28,7 +27,7 @@ void Routing::initialize(int stage)
 Routing::~Routing()
 {
     if (isSwitch) {
-        cancelAndDelete(aggTimeOut);
+        // cancelAndDelete(aggTimeOut);
         cancelAndDelete(dataCollectTimer);
     }
 
@@ -224,7 +223,7 @@ void Routing::forwardIncoming(Packet *pk)
             auto outGateIndexes = getReversePortIndexes(srcSeqKey);
 
             pk->setSrcAddr(myAddress);
-            // incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
+
             if (incomingCount[srcSeqKey] == 0) {
                 incomingPortIndexes.erase(srcSeqKey); // ! avoid comsuming too much memory
                 incomingCount.erase(srcSeqKey);
@@ -326,38 +325,6 @@ void Routing::recordIncomingPorts(MulticastID& addrSeqKey, int port)
 
 void Routing::handleMessage(cMessage *msg)
 {
-//    if (msg == aggTimeOut)
-//    {
-//        int count = 0;
-//        for (auto& groupSeqTimeout : seqDeadline) {
-//            MulticastID mKey = groupSeqTimeout.first;
-//            auto group = mKey.PSAddr;
-//            auto seq = mKey.PSport;
-//            auto timeout = SimTime(groupSeqTimeout.second, SIMTIME_NS);
-//            if (timeout <= simTime()) {
-//                count += 1;
-//                EV_DEBUG <<"group " << group << " seq " << seq << " reaches its deadline." << endl;
-//                // make a fake packet
-//                auto pk = new Packet("dummy");
-//                pk->setKind(REMIND);
-//                pk->setDestAddr(group);
-//                pk->setSeqNumber(seq);
-//                // pk->setAggCounter(0);
-//                scheduleAt(simTime(), pk);
-//            }
-//        }
-//        if (count < seqDeadline.size())
-//        {
-//            // ! Relying solely on setting a timeout when data packets arrive is not enough.
-//            // ! Consider this scenario: when the last few seq packets of the aggregated stream arrive,
-//            // ! the timeout has been set to a relatively small value by the previous seq packets.
-//            // ! Therefore, these last few seq packets will not update the timeout to a larger value.
-//            // ! As a result, when the timeout expires and no more packets arrive, the timeout will never receive a new value.
-//            auto timeout = SimTime(1, SIMTIME_US);
-//            scheduleAfter(timeout, aggTimeOut);
-//        }
-//        return;
-//    }
     if (msg == dataCollectTimer)
     {
         for (auto const& p : groupMetricTable)

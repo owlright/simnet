@@ -82,16 +82,17 @@ private:
     B usedBuffer{0};
     int numAggregators{0};
     B agtrSize;
-    std::unordered_set<MulticastID, hash_fn> markNotAgg;
+
+    [[deprecated]] std::unordered_set<MulticastID, hash_fn> markNotAgg;
     std::unordered_map<MulticastID, std::vector<int>, hash_fn> incomingPortIndexes;
     std::unordered_map<MulticastID, int, hash_fn> incomingCount;
     std::unordered_map<IntAddress, jobMetric*> groupMetricTable;
     std::vector<Aggregator*> aggregators;
-    std::unordered_map<MulticastID, int64_t, hash_fn> seqDeadline;
+    [[deprecated]]std::unordered_map<MulticastID, int64_t, hash_fn> seqDeadline;
 
 private:
     // ! self messages
-    cMessage* aggTimeOut{nullptr};
+    // cMessage* aggTimeOut{nullptr};
     cMessage* dataCollectTimer{nullptr};
 
     // ! common router functions
