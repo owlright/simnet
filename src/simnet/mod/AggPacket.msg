@@ -2,10 +2,9 @@ import Packet;
 
 enum AggPolicy
 {
-    ATP = 0;
-    MTATP = 1;
-    INC = 2;
-    NOINC = 3;
+    NOINC = 0;
+    INC = 1;
+
 }
 
 class AggPacket extends Packet
@@ -79,22 +78,3 @@ class AggNoIncPacket extends AggPacket
 {
     aggPolicy = NOINC;
 }
-
-class ATPPacket extends AggUseIncPacket
-{
-    aggPolicy = ATP;
-    byteLength = 16 + 8; // ATP header total size is 58 Bytes
-    uint32_t bitmap0;
-    uint32_t bitmap1;
-    int fanIndegree0;
-    int fanIndegree1;
-    int switchIdentifier;
-}
-
-class MTATPPacket extends AggUseIncPacket
-{
-    aggPolicy = MTATP;
-    byteLength = 16 + 4;
-    bool flags[5];
-}
-

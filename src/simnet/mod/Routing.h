@@ -8,7 +8,6 @@
 #include "simnet/mod/manager/GlobalRouteMangager.h"
 #include "simnet/mod/manager/GlobalGroupManager.h"
 #include "simnet/mod/agroup/jobMetric.h"
-#include "simnet/mod/agroup/AggregatorEntry.h"
 #include "simnet/mod/agroup/Aggregator.h"
 using namespace omnetpp;
 

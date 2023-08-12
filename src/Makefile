@@ -48,7 +48,6 @@ OBJS = \
     $O/simnet/mod/Node.o \
     $O/simnet/mod/Routing.o \
     $O/simnet/mod/agroup/Aggregator.o \
-    $O/simnet/mod/agroup/AggregatorEntry.o \
     $O/simnet/mod/agroup/joobMetric.o \
     $O/simnet/mod/cong/Dctcp.o \
     $O/simnet/mod/cong/Reno.o \

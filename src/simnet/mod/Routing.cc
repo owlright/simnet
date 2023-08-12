@@ -19,18 +19,10 @@ void Routing::initialize(int stage)
             position = getParentModule()->par("position");
             aggregators.resize(numAggregators, nullptr);
             collectionPeriod = par("collectPeriod").doubleValueInUnit("s");
-//            aggPolicy = par("aggPolicy").stdstringValue();
-//            isTimerPolicy = (aggPolicy == "Timer");
             aggTimeOut = new cMessage("aggTimeOut");
             dataCollectTimer = new cMessage("dataCollector");
         }
 
-    }
-    if (stage == INITSTAGE_LAST) {
-        if (isSwitch) {
-            EV_TRACE << "router " << myAddress << "'s position is " << position << endl;
-            // scheduleAfter(collectionPeriod, dataCollectTimer);
-        }
     }
 }
 
@@ -298,29 +290,10 @@ Packet* Routing::aggregate(AggUseIncPacket *apk)
     auto agtrIndex = apk->getAggregatorIndex();
     if (aggregators.at(agtrIndex) == nullptr) { // lazy initialization to save memory
         ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
-
-        switch(apk->getAggPolicy())
-        {
-            case ATP:
-                if (position == 1) {
-                    groupMetricTable.at(apk->getJobId())->addUsedBuffer(agtrSize);
-                    aggregators[agtrIndex] = new ATPEntry(apk);
-                }
-                else // ! ATP only do aggregation at edge switches
-                    return apk;
-                break;
-            case MTATP:
-                aggregators[agtrIndex] = new MTATPEntry();
-                break;
-            case INC:
-                if (!apk->getResend())
-                    aggregators[agtrIndex] = new Aggregator();
-                else  // ! a resend packet mustn't get an idle aggregator
-                    return apk;
-                break;
-            default:
-                throw cRuntimeError("unknown agg policy");
-        }
+        if (!apk->getResend())
+            aggregators[agtrIndex] = new Aggregator();
+        else  // ! a resend packet mustn't get an idle aggregator
+            return apk;
     }
     auto entry = aggregators.at(agtrIndex);
     if (entry->checkAdmission(apk))

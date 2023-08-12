@@ -19,8 +19,6 @@
 class AggPacket;
 class AggUseIncPacket;
 class AggNoIncPacket;
-class ATPPacket;
-class MTATPPacket;
 #include "Packet_m.h" // import Packet
 
 /**
@@ -28,25 +26,22 @@ class MTATPPacket;
  * <pre>
  * enum AggPolicy
  * {
- *     ATP = 0;
- *     MTATP = 1;
- *     INC = 2;
- *     NOINC = 3;
+ *     NOINC = 0;
+ *     INC = 1;
+ * 
  * }
  * </pre>
  */
 enum AggPolicy {
-    ATP = 0,
-    MTATP = 1,
-    INC = 2,
-    NOINC = 3
+    NOINC = 0,
+    INC = 1
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPolicy& e) { b->pack(static_cast<int>(e)); }
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b->unpack(n); e = static_cast<AggPolicy>(n); }
 
 /**
- * Class generated from <tt>simnet/mod/AggPacket.msg:12</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/AggPacket.msg:11</tt> by opp_msgtool.
  * <pre>
  * class AggPacket extends Packet
  * {
@@ -157,7 +152,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPacket& obj) {obj.
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/AggPacket.msg:68</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/AggPacket.msg:67</tt> by opp_msgtool.
  * <pre>
  * class AggUseIncPacket extends AggPacket
  * {
@@ -215,7 +210,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggUseIncPacket& obj)
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggUseIncPacket& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>simnet/mod/AggPacket.msg:79</tt> by opp_msgtool.
+ * Class generated from <tt>simnet/mod/AggPacket.msg:78</tt> by opp_msgtool.
  * <pre>
  * class AggNoIncPacket extends AggPacket
  * {
@@ -246,111 +241,12 @@ class AggNoIncPacket : public ::AggPacket
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggNoIncPacket& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggNoIncPacket& obj) {obj.parsimUnpack(b);}
 
-/**
- * Class generated from <tt>simnet/mod/AggPacket.msg:84</tt> by opp_msgtool.
- * <pre>
- * class ATPPacket extends AggUseIncPacket
- * {
- *     aggPolicy = ATP;
- *     byteLength = 16 + 8; // ATP header total size is 58 Bytes
- *     uint32_t bitmap0;
- *     uint32_t bitmap1;
- *     int fanIndegree0;
- *     int fanIndegree1;
- *     int switchIdentifier;
- * }
- * </pre>
- */
-class ATPPacket : public ::AggUseIncPacket
-{
-  protected:
-    uint32_t bitmap0 = 0;
-    uint32_t bitmap1 = 0;
-    int fanIndegree0 = 0;
-    int fanIndegree1 = 0;
-    int switchIdentifier = 0;
-
-  private:
-    void copy(const ATPPacket& other);
-
-  protected:
-    bool operator==(const ATPPacket&) = delete;
-
-  public:
-    ATPPacket(const char *name=nullptr);
-    ATPPacket(const ATPPacket& other);
-    virtual ~ATPPacket();
-    ATPPacket& operator=(const ATPPacket& other);
-    virtual ATPPacket *dup() const override {return new ATPPacket(*this);}
-    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
-    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
-
-    virtual uint32_t getBitmap0() const;
-    virtual void setBitmap0(uint32_t bitmap0);
-
-    virtual uint32_t getBitmap1() const;
-    virtual void setBitmap1(uint32_t bitmap1);
-
-    virtual int getFanIndegree0() const;
-    virtual void setFanIndegree0(int fanIndegree0);
-
-    virtual int getFanIndegree1() const;
-    virtual void setFanIndegree1(int fanIndegree1);
-
-    virtual int getSwitchIdentifier() const;
-    virtual void setSwitchIdentifier(int switchIdentifier);
-};
-
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const ATPPacket& obj) {obj.parsimPack(b);}
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ATPPacket& obj) {obj.parsimUnpack(b);}
-
-/**
- * Class generated from <tt>simnet/mod/AggPacket.msg:95</tt> by opp_msgtool.
- * <pre>
- * class MTATPPacket extends AggUseIncPacket
- * {
- *     aggPolicy = MTATP;
- *     byteLength = 16 + 4;
- *     bool flags[5];
- * }
- * </pre>
- */
-class MTATPPacket : public ::AggUseIncPacket
-{
-  protected:
-    bool flags[5];
-
-  private:
-    void copy(const MTATPPacket& other);
-
-  protected:
-    bool operator==(const MTATPPacket&) = delete;
-
-  public:
-    MTATPPacket(const char *name=nullptr);
-    MTATPPacket(const MTATPPacket& other);
-    virtual ~MTATPPacket();
-    MTATPPacket& operator=(const MTATPPacket& other);
-    virtual MTATPPacket *dup() const override {return new MTATPPacket(*this);}
-    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
-    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
-
-    virtual size_t getFlagsArraySize() const;
-    virtual bool getFlags(size_t k) const;
-    virtual void setFlags(size_t k, bool flags);
-};
-
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const MTATPPacket& obj) {obj.parsimPack(b);}
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, MTATPPacket& obj) {obj.parsimUnpack(b);}
-
 
 namespace omnetpp {
 
 template<> inline AggPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<AggPacket*>(ptr.get<cObject>()); }
 template<> inline AggUseIncPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<AggUseIncPacket*>(ptr.get<cObject>()); }
 template<> inline AggNoIncPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<AggNoIncPacket*>(ptr.get<cObject>()); }
-template<> inline ATPPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<ATPPacket*>(ptr.get<cObject>()); }
-template<> inline MTATPPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<MTATPPacket*>(ptr.get<cObject>()); }
 
 }  // namespace omnetpp
 
