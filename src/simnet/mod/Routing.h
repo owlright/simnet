@@ -67,7 +67,7 @@ private:
     bool isSwitch;
     IntAddress myAddress{INVALID_ADDRESS};
     [[deprecated]] int position{-1};
-    // IntAddress myGroupAddress{INVALID_ADDRESS};
+
     bool ecmpFlow = false;
     double collectionPeriod;
     // TODO improve the code
@@ -78,10 +78,6 @@ private:
     RoutingTable rtable;
 
     GlobalRouteManager* routeManager{nullptr};
-    // GlobalGroupManager* groupManager{nullptr};
-    // GroupPacketHandler* gpkHandler{nullptr};
-    simsignal_t dropSignal;
-    simsignal_t outputIfSignal;
 
     B bufferSize{0};
     B usedBuffer{0};

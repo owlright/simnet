@@ -6,8 +6,6 @@ void Routing::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         myAddress = par("address");
         ecmpFlow = par("ecmpFlow").boolValue();
-        dropSignal = registerSignal("drop");
-        outputIfSignal = registerSignal("outputIf");
         isSwitch = (getParentModule()->getProperties()->get("switch") != nullptr);
         myAddress = getParentModule()->par("address");
         routeManager = findModuleFromTopLevel<GlobalRouteManager>("routeManager", this);
@@ -288,7 +286,6 @@ void Routing::forwardIncoming(Packet *pk)
     }
     if (outGateIndex == -1) {
         EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
-        emit(dropSignal, (intval_t)pk->getByteLength());
         delete pk;
         return;
     }
