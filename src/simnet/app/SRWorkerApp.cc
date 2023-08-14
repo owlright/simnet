@@ -6,8 +6,7 @@ class SRWorker : public WorkerApp
 {
 protected:
     void initialize(int stage) override;
-    Packet* createDataPacket(B packetBytes) override;
-    void setField(AggUseIncPacket* pk);
+    void setField(AggPacket* pk);
 
 private:
     std::vector<std::vector<IntAddress>> segments;
@@ -38,18 +37,7 @@ void SRWorker::initialize(int stage)
 
 }
 
-Packet* SRWorker::createDataPacket(B packetBytes)
-{
-    // char pkname[40];
-    // sprintf(pkname, "sr%" PRId64"-to-%" PRId64 "-seq%" PRId64,
-    //         localAddr, destAddr, getNextSeq());
-    auto pk = new AggUseIncPacket();
-    pk->setByteLength(packetBytes);
-    setField(pk);
-    return pk;
-}
-
-void SRWorker::setField(AggUseIncPacket* pk)
+void SRWorker::setField(AggPacket* pk)
 {
     WorkerApp::setField(pk); // ! we need the aggSeqNumber
     auto seqNumber = pk->getAggSeqNumber();

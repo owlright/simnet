@@ -11,19 +11,24 @@ class AggPacket extends Packet
 {
     packetType = AGG;
     AggPolicy aggPolicy = NOINC;
+    // must contained fields
+    unsigned long aggregatorIndex;
+    bool collision;
+    bool ecn;
+    bool overflow;
+
     int64_t jobId;
     int64_t aggSeqNumber;
     int workerNumber;
     int treeCost;
     int distance;
-    // bool resend;
-	bool isAck;
     // cheating fields
     int64_t workerRecord[] @custom @sizeGetter(getRecordLen)
                            @sizeSetter(setRecordLen)
                            @getter(getRecord)
                            @setter(setRecord);
     int receivedNumber;
+    int aggCounter;
     int64_t PSAddr;
 }
 
@@ -62,19 +67,3 @@ cplusplus(AggPacket) {{
 cplusplus(AggPacket::copy) {{
     this->workerRecord = other.workerRecord;
 }}
-
-class AggUseIncPacket extends AggPacket
-{
-    unsigned long aggregatorIndex;
-    bool collision;
-    bool ecn;
-    bool overflow;
-
-    aggPolicy = INC;
-    int aggCounter;
-}
-
-class AggNoIncPacket extends AggPacket
-{
-    aggPolicy = NOINC;
-}

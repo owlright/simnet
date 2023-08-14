@@ -23,8 +23,8 @@ protected:
     Connection* getListeningSocket() {return this->connection;};
     void dealWithAggPacket(const AggPacket* msg);
     // return if aggregation is finished
-    bool dealWithIncAggPacket(const AggUseIncPacket* pk);
-    bool dealWithNoIncAggPacket(Connection* connection, const AggNoIncPacket* msg); // TODO, no inc packet must ack every one through each connection
+    bool dealWithIncAggPacket(const AggPacket* pk);
+    bool dealWithNoIncAggPacket(Connection* connection, const AggPacket* msg); // TODO, no inc packet must ack every one through each connection
     void releaseSeq(const SeqNumber& seq);
 
 private:
@@ -83,7 +83,7 @@ void ParameterServerApp::onReceivedData(Packet* pkt) {
     }
     dealWithAggPacket(pk);
     if (pk->getAggPolicy() == INC) {
-        is_agg_finished = dealWithIncAggPacket(check_and_cast<const AggUseIncPacket*>(pk));
+        is_agg_finished = dealWithIncAggPacket(check_and_cast<const AggPacket*>(pk));
         if (is_agg_finished && tcpState != LAST_ACK) {
             aggedBytes += pk->getByteLength();
             auto mpk = createAckPacket(pk);
@@ -97,7 +97,7 @@ void ParameterServerApp::onReceivedData(Packet* pkt) {
             insertTxBuffer(mpk);
         }
     } else if (pk->getAggPolicy() == NOINC) {
-        is_agg_finished = dealWithNoIncAggPacket(connection, check_and_cast<const AggNoIncPacket*>(pk));
+        is_agg_finished = dealWithNoIncAggPacket(connection, check_and_cast<const AggPacket*>(pk));
         if (is_agg_finished && tcpState != LAST_ACK) {
             aggedBytes += pk->getByteLength();
             for (auto i = 0; i < workers.size(); i++) {
@@ -145,7 +145,7 @@ AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
     // else { // ! this is an ack to a single host
     //     packet->setECE(pk->getECN());
     // }
-    packet->setIsAck(true);
+    // packet->setIsAck(true);
     // * set these fields is for no-inc agg packets
     packet->setDestAddr(INVALID_ADDRESS);
     packet->setDestPort(INVALID_PORT);
@@ -197,7 +197,7 @@ void ParameterServerApp::dealWithAggPacket(const AggPacket *pk)
     }
 }
 
-bool ParameterServerApp::dealWithNoIncAggPacket(Connection* connection, const AggNoIncPacket *pk)
+bool ParameterServerApp::dealWithNoIncAggPacket(Connection* connection, const AggPacket *pk)
 {
     auto seq = pk->getSeqNumber();
     auto& tmpWorkersRecord = aggedWorkers.at(seq);
@@ -221,7 +221,7 @@ void ParameterServerApp::releaseSeq(const SeqNumber& seq)
     ackNumber.erase(seq);
 }
 
-bool ParameterServerApp::dealWithIncAggPacket(const AggUseIncPacket* pk)
+bool ParameterServerApp::dealWithIncAggPacket(const AggPacket* pk)
 {
     Enter_Method("ParameterServerApp::dealWithIncAggPacket");
     auto seq = pk->getSeqNumber();

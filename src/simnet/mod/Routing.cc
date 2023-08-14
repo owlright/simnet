@@ -139,7 +139,7 @@ void Routing::forwardIncoming(Packet *pk)
     if (segment == myAddress) {
         auto& fun = pk->getFuns(entryIndex);
         if (fun == "aggregation") {
-            auto apk = check_and_cast<AggUseIncPacket*>(pk);
+            auto apk = check_and_cast<AggPacket*>(pk);
             auto jobId = apk->getJobId();
             auto PSport = apk->getDestPort();
             auto seq = apk->getAggSeqNumber();
@@ -285,7 +285,7 @@ void Routing::forwardIncoming(Packet *pk)
     send(pk, "out", outGateIndex);
 }
 
-Packet* Routing::aggregate(AggUseIncPacket *apk)
+Packet* Routing::aggregate(AggPacket *apk)
 {
     auto agtrIndex = apk->getAggregatorIndex();
     if (aggregators.at(agtrIndex) == nullptr) { // lazy initialization to save memory

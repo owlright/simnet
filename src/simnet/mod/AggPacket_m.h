@@ -17,8 +17,6 @@
 #endif
 
 class AggPacket;
-class AggUseIncPacket;
-class AggNoIncPacket;
 #include "Packet_m.h" // import Packet
 
 /**
@@ -47,16 +45,21 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b-
  * {
  *     packetType = AGG;
  *     AggPolicy aggPolicy = NOINC;
+ *     // must contained fields
+ *     unsigned long aggregatorIndex;
+ *     bool collision;
+ *     bool ecn;
+ *     bool overflow;
+ * 
  *     int64_t jobId;
  *     int64_t aggSeqNumber;
  *     int workerNumber;
  *     int treeCost;
  *     int distance;
- *     // bool resend;
- *     bool isAck;
  *     // cheating fields
  *     int64_t workerRecord[] \@custom \@sizeGetter(getRecordLen) \@sizeSetter(setRecordLen) \@getter(getRecord) \@setter(setRecord);
  *     int receivedNumber;
+ *     int aggCounter;
  *     int64_t PSAddr;
  * }
  * </pre>
@@ -65,13 +68,17 @@ class AggPacket : public ::Packet
 {
   protected:
     AggPolicy aggPolicy = NOINC;
+    unsigned long aggregatorIndex = 0;
+    bool collision = false;
+    bool ecn = false;
+    bool overflow = false;
     int64_t jobId = 0;
     int64_t aggSeqNumber = 0;
     int workerNumber = 0;
     int treeCost = 0;
     int distance = 0;
-    bool isAck_ = false;
     int receivedNumber = 0;
+    int aggCounter = 0;
     int64_t PSAddr = 0;
 
   private:
@@ -92,6 +99,18 @@ class AggPacket : public ::Packet
     virtual AggPolicy getAggPolicy() const;
     virtual void setAggPolicy(AggPolicy aggPolicy);
 
+    virtual unsigned long getAggregatorIndex() const;
+    virtual void setAggregatorIndex(unsigned long aggregatorIndex);
+
+    virtual bool getCollision() const;
+    virtual void setCollision(bool collision);
+
+    virtual bool getEcn() const;
+    virtual void setEcn(bool ecn);
+
+    virtual bool getOverflow() const;
+    virtual void setOverflow(bool overflow);
+
     virtual int64_t getJobId() const;
     virtual void setJobId(int64_t jobId);
 
@@ -107,11 +126,11 @@ class AggPacket : public ::Packet
     virtual int getDistance() const;
     virtual void setDistance(int distance);
 
-    virtual bool isAck() const;
-    virtual void setIsAck(bool isAck);
-
     virtual int getReceivedNumber() const;
     virtual void setReceivedNumber(int receivedNumber);
+
+    virtual int getAggCounter() const;
+    virtual void setAggCounter(int aggCounter);
 
     virtual int64_t getPSAddr() const;
     virtual void setPSAddr(int64_t PSAddr);
@@ -151,102 +170,10 @@ class AggPacket : public ::Packet
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggPacket& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPacket& obj) {obj.parsimUnpack(b);}
 
-/**
- * Class generated from <tt>simnet/mod/AggPacket.msg:67</tt> by opp_msgtool.
- * <pre>
- * class AggUseIncPacket extends AggPacket
- * {
- *     unsigned long aggregatorIndex;
- *     bool collision;
- *     bool ecn;
- *     bool overflow;
- * 
- *     aggPolicy = INC;
- *     int aggCounter;
- * }
- * </pre>
- */
-class AggUseIncPacket : public ::AggPacket
-{
-  protected:
-    unsigned long aggregatorIndex = 0;
-    bool collision = false;
-    bool ecn = false;
-    bool overflow = false;
-    int aggCounter = 0;
-
-  private:
-    void copy(const AggUseIncPacket& other);
-
-  protected:
-    bool operator==(const AggUseIncPacket&) = delete;
-
-  public:
-    AggUseIncPacket(const char *name=nullptr);
-    AggUseIncPacket(const AggUseIncPacket& other);
-    virtual ~AggUseIncPacket();
-    AggUseIncPacket& operator=(const AggUseIncPacket& other);
-    virtual AggUseIncPacket *dup() const override {return new AggUseIncPacket(*this);}
-    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
-    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
-
-    virtual unsigned long getAggregatorIndex() const;
-    virtual void setAggregatorIndex(unsigned long aggregatorIndex);
-
-    virtual bool getCollision() const;
-    virtual void setCollision(bool collision);
-
-    virtual bool getEcn() const;
-    virtual void setEcn(bool ecn);
-
-    virtual bool getOverflow() const;
-    virtual void setOverflow(bool overflow);
-
-    virtual int getAggCounter() const;
-    virtual void setAggCounter(int aggCounter);
-};
-
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggUseIncPacket& obj) {obj.parsimPack(b);}
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggUseIncPacket& obj) {obj.parsimUnpack(b);}
-
-/**
- * Class generated from <tt>simnet/mod/AggPacket.msg:78</tt> by opp_msgtool.
- * <pre>
- * class AggNoIncPacket extends AggPacket
- * {
- *     aggPolicy = NOINC;
- * }
- * </pre>
- */
-class AggNoIncPacket : public ::AggPacket
-{
-  protected:
-
-  private:
-    void copy(const AggNoIncPacket& other);
-
-  protected:
-    bool operator==(const AggNoIncPacket&) = delete;
-
-  public:
-    AggNoIncPacket(const char *name=nullptr);
-    AggNoIncPacket(const AggNoIncPacket& other);
-    virtual ~AggNoIncPacket();
-    AggNoIncPacket& operator=(const AggNoIncPacket& other);
-    virtual AggNoIncPacket *dup() const override {return new AggNoIncPacket(*this);}
-    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
-    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
-};
-
-inline void doParsimPacking(omnetpp::cCommBuffer *b, const AggNoIncPacket& obj) {obj.parsimPack(b);}
-inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggNoIncPacket& obj) {obj.parsimUnpack(b);}
-
 
 namespace omnetpp {
 
 template<> inline AggPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<AggPacket*>(ptr.get<cObject>()); }
-template<> inline AggUseIncPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<AggUseIncPacket*>(ptr.get<cObject>()); }
-template<> inline AggNoIncPacket *fromAnyPtr(any_ptr ptr) { return check_and_cast<AggNoIncPacket*>(ptr.get<cObject>()); }
 
 }  // namespace omnetpp
 
