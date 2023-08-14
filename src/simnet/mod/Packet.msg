@@ -106,9 +106,9 @@ cplusplus(SegmentRoutingHeader) {{
 		virtual size_t getFunsArraySize() const {return funs.size();}
 		virtual size_t getArgsArraySize() const {return args.size();}
 
-		virtual int64_t getSegments(size_t k) {return segments.at(k);}
-		virtual const opp_string& getFuns(size_t k) {return funs.at(k);}
-		virtual const opp_string& getArgs(size_t k) {return args.at(k);}
+		virtual int64_t getSegments(size_t k) const {return segments.at(k);}
+		virtual const opp_string& getFuns(size_t k) const {return funs.at(k);}
+		virtual const opp_string& getArgs(size_t k) const {return args.at(k);}
 
 		virtual void setSegments(size_t k, int64_t addr) {segments.at(k) = addr;}
 		virtual void setFuns(size_t k, const char* fun) {funs.at(k) = fun;}
