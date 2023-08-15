@@ -9,13 +9,11 @@ void Aggregator::reset()
     seqNumber = 0;
     timestamp = 0;
     ecn = false;
-    isIdle = true;
 }
 
-void Aggregator::checkThenAddWorkerId(const Packet *pk)
+void Aggregator::checkThenAddWorkerId(const AggPacket *pk)
 {
-    auto pkt = check_and_cast<const AggPacket*>(pk);
-    for (auto& w:pkt->getRecord()) {
+    for (auto& w:pk->getRecord()) {
         if (std::find(workerRecord.begin(), workerRecord.end(), w) != workerRecord.end()) {
             throw cRuntimeError("worker %" PRId64 " is already aggregated.", w);
         }
@@ -23,7 +21,7 @@ void Aggregator::checkThenAddWorkerId(const Packet *pk)
     }
 }
 
-Packet *Aggregator::doAggregation(Packet *pk)
+Packet *Aggregator::doAggregation(AggPacket *pk)
 {
     auto apk = check_and_cast<AggPacket*>(pk);
     if (apk->getECN()) {
@@ -37,32 +35,29 @@ Packet *Aggregator::doAggregation(Packet *pk)
     // ! do not deal with the resend packet,
     // ! the aggregated result in this aggregator is just discarded
     if (apk->getResend()) {
-        ASSERT(!isIdle); // ! a resend packet mustn't get an idle aggregator
         ASSERT(apk==pk);
         return pk;
     }
 
     // * first packet, store infomation
     if (counter == 0) {
-        ASSERT(isIdle);
         reset();
-        jobId = apk->getJobId();
-        seqNumber = apk->getSeqNumber();
-        timestamp = apk->getArrivalTime();
-        isIdle = false;
+        jobId = pk->getJobId();
+        seqNumber = pk->getSeqNumber();
+        timestamp = pk->getArrivalTime();
     } else {// ! checkAdmission will avoid this case happen
-        ASSERT(apk->getJobId() == jobId && apk->getSeqNumber() == seqNumber);
+        ASSERT(pk->getJobId() == jobId && pk->getSeqNumber() == seqNumber);
     }
 
     // * do aggregation, no real behaviour, just update some state
     counter++;
-    checkThenAddWorkerId(apk); // ! cheating, let parameter server knows which worker lose
+    checkThenAddWorkerId(pk); // ! cheating, let parameter server knows which worker lose
     if (counter == indegree) {
         EV_DEBUG << workerRecord << endl;
-        apk->setRecord(workerRecord);
-        apk->setEcn(ecn);
+        pk->setRecord(workerRecord);
+        pk->setECN(ecn);
         ASSERT(workerRecord.empty());
-        return apk;
+        return pk;
     } else {
         delete pk;
         return nullptr;
@@ -75,14 +70,10 @@ Aggregator::~Aggregator()
     reset();
 }
 
-bool Aggregator::checkAdmission(const Packet *pk) const
+bool Aggregator::checkAdmission(const AggPacket *pk) const
 {
-    auto tmp = check_and_cast<const AggPacket*>(pk);
-    if (isIdle) {
+    if (pk->getJobId() == jobId && pk->getSeqNumber() == seqNumber)
         return true;
-    } else {
-        if (tmp->getJobId() == jobId && tmp->getSeqNumber() == seqNumber)
-            return true;
-    }
+
     return false;
 }

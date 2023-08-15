@@ -18,7 +18,6 @@ void Routing::initialize(int stage)
             bufferSize = par("bufferSize");
             numAggregators = getParentModule()->par("numAggregators");
             agtrSize = getParentModule()->par("agtrSize");
-            aggregators.resize(numAggregators, nullptr);
             collectionPeriod = par("collectPeriod").doubleValueInUnit("s");
             dataCollectTimer = new cMessage("dataCollector");
         }
@@ -110,35 +109,13 @@ void Routing::forwardIncoming(Packet *pk)
     auto destAddr = pk->getDestAddr();
     auto srcAddr = pk->getSrcAddr();
     auto nextAddr = destAddr;
-    // auto seq = pk->getSeqNumber();
-    // auto destSeqKey = std::make_pair(destAddr, seq);
+
     auto numSegments = pk->getSegmentsLeft();
     int segmentIndex = numSegments - 1;
     if ( numSegments > 0 ) {
         nextAddr = pk->getSegments(segmentIndex);
     }
-    // ! entryIndex is unsigned, do not check it == -1
-    // IntAddress segment{INVALID_ADDRESS};
-    // if (entryIndex > 0) {
-    //     entryIndex -= 1;
-    //     segment =  pk->getSegments(entryIndex);
-    // }
-    // I left this for future debuging
-    // if (myAddress == 8 && destAddr == 787 && seq == 1000 )
-    //     std::cout << myAddress << " " << pk << endl;
-    // if (pk->getPacketType() == AGG) {
-    //        auto apk = check_and_cast<const AggPacket*>(pk);
-    //        auto jobid = apk->getJobId();
-    //        auto seq = apk->getSeqNumber();
-    //        auto round = apk->getRound();
-    //        auto PSAddr = apk->getPSAddr();
-    //        std::unordered_set<decltype(myAddress)> wantstop {517,8,775,778,780};
-    //        if (wantstop.find(myAddress) != wantstop.end() && jobid == 1 && seq == 1000) {
-    //            std::cout << simTime() << " " << round << " router: "<< myAddress << " resend: " << apk->getResend() << " seq " << seq << " "<< apk->getRecord() << " PS: " << destAddr << endl;
-    //        }
-    //     }
 
-    // auto nextAddr = entryIndex == 0 ? destAddr : pk->getSegments(entryIndex - 1);
     if (nextAddr == myAddress) {
         auto apk = check_and_cast<AggPacket*>(pk);
         auto jobId = apk->getJobId();
@@ -381,7 +358,7 @@ void Routing::finish()
     //     // I dont want the time's unit too big, otherwise the efficiency will be too big
     //     recordScalar(buf, getComputationCount() / double(getUsedTime().inUnit(SIMTIME_US))); // TODO will resource * usedTime better?
     // }
-    for (auto& p : aggregators) {
+    for (auto& [index, p] : aggregators) {
         if (p!=nullptr) {
             EV_WARN << "there is unreleased aggregator on router " << myAddress
             << " belongs to job " << p->getJobId() << " seq " << p->getSeqNumber() << endl;

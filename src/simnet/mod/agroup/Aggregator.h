@@ -7,22 +7,21 @@ using namespace omnetpp;
 class Aggregator
 {
 public:
-    virtual Packet* doAggregation(Packet* pk);
+    virtual Packet* doAggregation(AggPacket* pk);
     virtual ~Aggregator();
 
     // 1. aggregator is in use and jobid, seq is the same
     // 2. aggregator is empty
     // ! when the packet is a resend packet, leave it to doAggregation
-    bool checkAdmission(const Packet* pk) const;
+    bool checkAdmission(const AggPacket* pk) const;
     const int getJobId() const {return jobId;}
     const int getSeqNumber() const {return seqNumber;}
 
 protected:
     virtual void reset();
-    void checkThenAddWorkerId(const Packet* pk);
+    void checkThenAddWorkerId(const AggPacket* pk);
 
 protected:
-    bool isIdle{true};
     int counter{0};
     int jobId{-1};
     bool ecn{false};
