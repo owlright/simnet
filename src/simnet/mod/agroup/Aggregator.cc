@@ -31,10 +31,7 @@ Packet *Aggregator::doAggregation(AggPacket *pk)
 
     // ! do not deal with the resend packet,
     // ! the aggregated result in this aggregator is just discarded
-    if (apk->getResend()) {
-        ASSERT(apk==pk);
-        return pk;
-    }
+    ASSERT (!pk->getResend());
 
     // * first packet, store infomation
     if (counter == 0) {
