@@ -109,6 +109,8 @@ void Routing::forwardIncoming(Packet *pk)
     auto destAddr = pk->getDestAddr();
     auto srcAddr = pk->getSrcAddr();
     auto nextAddr = destAddr;
+    auto outGateIndex = getForwardGateIndex(pk);
+
 
     auto numSegments = pk->getSegmentsLeft();
     int segmentIndex = numSegments - 1;
@@ -234,32 +236,38 @@ void Routing::forwardIncoming(Packet *pk)
         return;
     }
 
+   send(pk, "out", outGateIndex);
+}
+
+int Routing::getForwardGateIndex(const Packet* pk)
+{
     // route this packet which may be:
     // 1. unicast packet
-    // 2. finished aggregated packet
-    // 3. group packet not responsible for
-    // 4. group packet failed to be aggregated(hash collision, resend)
-    // 5. group packet not ask for aggregation(segmentsLeft == 0)
+    // 2. agg packet but not ask for aggregation(segment!= myAddress) or it's a resend
+    // 3. finished aggregated packet
+    // 4. agg packet failed to be aggregated(hash collision), which is also a resend packet
     int outGateIndex = -1;
+    auto srcAddr = pk->getSrcAddr();
+    auto destAddr = pk->getDestAddr();
+    auto numSegments = pk->getSegmentsLeft();
+
     if (pk->getPacketType() == AGG) {
         // ! aggPacket's srcAddr may change when resend or collision happen
         // ! we must make sure in any case the ecmp give the same outGate index
         srcAddr = myAddress + destAddr;
     }
 
-    if (pk->getPacketType() == AGG && pk->getSegmentsLeft() != 0) {
-        outGateIndex = getRouteGateIndex(srcAddr,  pk->getSegments(pk->getSegmentsLeft() - 1)); // ! route to next router, otherwise ecmp may break this
+    if (pk->getPacketType() == AGG && numSegments > 0) {
+         // ! route to next router, otherwise ecmp may break this
+        outGateIndex = getRouteGateIndex(srcAddr,  pk->getSegments(numSegments - 1));
     }
     else {
+        // 1. unicast packet
+        // 2. agg packet but not ask for aggregation(segment!= myAddress) or it's a resend
         outGateIndex = getRouteGateIndex(srcAddr, destAddr);
     }
-    if (outGateIndex == -1) {
-        EV << "address " << destAddr << " unreachable, discarding packet " << pk->getName() << endl;
-        delete pk;
-        return;
-    }
     EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-    send(pk, "out", outGateIndex);
+    return outGateIndex;
 }
 
 Packet* Routing::aggregate(AggPacket *apk)

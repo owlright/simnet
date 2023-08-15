@@ -89,6 +89,7 @@ private:
     // ! common forwarding functions
     void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
     void forwardIncoming(Packet* pk);
+    int getForwardGateIndex(const Packet* pk);
 
     // ! for data collection
     simsignal_t createBufferSignalForGroup(IntAddress group);
