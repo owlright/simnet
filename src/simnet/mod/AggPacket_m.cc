@@ -182,7 +182,6 @@ void AggPacket::copy(const AggPacket& other)
     this->aggPolicy = other.aggPolicy;
     this->aggregatorIndex = other.aggregatorIndex;
     this->collision = other.collision;
-    this->ecn = other.ecn;
     this->overflow = other.overflow;
     this->jobId = other.jobId;
     this->aggSeqNumber = other.aggSeqNumber;
@@ -203,7 +202,6 @@ void AggPacket::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->aggPolicy);
     doParsimPacking(b,this->aggregatorIndex);
     doParsimPacking(b,this->collision);
-    doParsimPacking(b,this->ecn);
     doParsimPacking(b,this->overflow);
     doParsimPacking(b,this->jobId);
     doParsimPacking(b,this->aggSeqNumber);
@@ -222,7 +220,6 @@ void AggPacket::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->aggPolicy);
     doParsimUnpacking(b,this->aggregatorIndex);
     doParsimUnpacking(b,this->collision);
-    doParsimUnpacking(b,this->ecn);
     doParsimUnpacking(b,this->overflow);
     doParsimUnpacking(b,this->jobId);
     doParsimUnpacking(b,this->aggSeqNumber);
@@ -263,16 +260,6 @@ bool AggPacket::getCollision() const
 void AggPacket::setCollision(bool collision)
 {
     this->collision = collision;
-}
-
-bool AggPacket::getEcn() const
-{
-    return this->ecn;
-}
-
-void AggPacket::setEcn(bool ecn)
-{
-    this->ecn = ecn;
 }
 
 bool AggPacket::getOverflow() const
@@ -373,7 +360,6 @@ class AggPacketDescriptor : public omnetpp::cClassDescriptor
         FIELD_aggPolicy,
         FIELD_aggregatorIndex,
         FIELD_collision,
-        FIELD_ecn,
         FIELD_overflow,
         FIELD_jobId,
         FIELD_aggSeqNumber,
@@ -450,7 +436,7 @@ const char *AggPacketDescriptor::getProperty(const char *propertyName) const
 int AggPacketDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *base = getBaseClassDescriptor();
-    return base ? 14+base->getFieldCount() : 14;
+    return base ? 13+base->getFieldCount() : 13;
 }
 
 unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
@@ -465,7 +451,6 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_aggPolicy
         FD_ISEDITABLE,    // FIELD_aggregatorIndex
         FD_ISEDITABLE,    // FIELD_collision
-        FD_ISEDITABLE,    // FIELD_ecn
         FD_ISEDITABLE,    // FIELD_overflow
         FD_ISEDITABLE,    // FIELD_jobId
         FD_ISEDITABLE,    // FIELD_aggSeqNumber
@@ -477,7 +462,7 @@ unsigned int AggPacketDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_aggCounter
         FD_ISEDITABLE,    // FIELD_PSAddr
     };
-    return (field >= 0 && field < 14) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 13) ? fieldTypeFlags[field] : 0;
 }
 
 const char *AggPacketDescriptor::getFieldName(int field) const
@@ -492,7 +477,6 @@ const char *AggPacketDescriptor::getFieldName(int field) const
         "aggPolicy",
         "aggregatorIndex",
         "collision",
-        "ecn",
         "overflow",
         "jobId",
         "aggSeqNumber",
@@ -504,7 +488,7 @@ const char *AggPacketDescriptor::getFieldName(int field) const
         "aggCounter",
         "PSAddr",
     };
-    return (field >= 0 && field < 14) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 13) ? fieldNames[field] : nullptr;
 }
 
 int AggPacketDescriptor::findField(const char *fieldName) const
@@ -514,17 +498,16 @@ int AggPacketDescriptor::findField(const char *fieldName) const
     if (strcmp(fieldName, "aggPolicy") == 0) return baseIndex + 0;
     if (strcmp(fieldName, "aggregatorIndex") == 0) return baseIndex + 1;
     if (strcmp(fieldName, "collision") == 0) return baseIndex + 2;
-    if (strcmp(fieldName, "ecn") == 0) return baseIndex + 3;
-    if (strcmp(fieldName, "overflow") == 0) return baseIndex + 4;
-    if (strcmp(fieldName, "jobId") == 0) return baseIndex + 5;
-    if (strcmp(fieldName, "aggSeqNumber") == 0) return baseIndex + 6;
-    if (strcmp(fieldName, "workerNumber") == 0) return baseIndex + 7;
-    if (strcmp(fieldName, "treeCost") == 0) return baseIndex + 8;
-    if (strcmp(fieldName, "distance") == 0) return baseIndex + 9;
-    if (strcmp(fieldName, "workerRecord") == 0) return baseIndex + 10;
-    if (strcmp(fieldName, "receivedNumber") == 0) return baseIndex + 11;
-    if (strcmp(fieldName, "aggCounter") == 0) return baseIndex + 12;
-    if (strcmp(fieldName, "PSAddr") == 0) return baseIndex + 13;
+    if (strcmp(fieldName, "overflow") == 0) return baseIndex + 3;
+    if (strcmp(fieldName, "jobId") == 0) return baseIndex + 4;
+    if (strcmp(fieldName, "aggSeqNumber") == 0) return baseIndex + 5;
+    if (strcmp(fieldName, "workerNumber") == 0) return baseIndex + 6;
+    if (strcmp(fieldName, "treeCost") == 0) return baseIndex + 7;
+    if (strcmp(fieldName, "distance") == 0) return baseIndex + 8;
+    if (strcmp(fieldName, "workerRecord") == 0) return baseIndex + 9;
+    if (strcmp(fieldName, "receivedNumber") == 0) return baseIndex + 10;
+    if (strcmp(fieldName, "aggCounter") == 0) return baseIndex + 11;
+    if (strcmp(fieldName, "PSAddr") == 0) return baseIndex + 12;
     return base ? base->findField(fieldName) : -1;
 }
 
@@ -540,7 +523,6 @@ const char *AggPacketDescriptor::getFieldTypeString(int field) const
         "AggPolicy",    // FIELD_aggPolicy
         "unsigned long",    // FIELD_aggregatorIndex
         "bool",    // FIELD_collision
-        "bool",    // FIELD_ecn
         "bool",    // FIELD_overflow
         "int64_t",    // FIELD_jobId
         "int64_t",    // FIELD_aggSeqNumber
@@ -552,7 +534,7 @@ const char *AggPacketDescriptor::getFieldTypeString(int field) const
         "int",    // FIELD_aggCounter
         "int64_t",    // FIELD_PSAddr
     };
-    return (field >= 0 && field < 14) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 13) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **AggPacketDescriptor::getFieldPropertyNames(int field) const
@@ -658,7 +640,6 @@ std::string AggPacketDescriptor::getFieldValueAsString(omnetpp::any_ptr object, 
         case FIELD_aggPolicy: return enum2string(pp->getAggPolicy(), "AggPolicy");
         case FIELD_aggregatorIndex: return ulong2string(pp->getAggregatorIndex());
         case FIELD_collision: return bool2string(pp->getCollision());
-        case FIELD_ecn: return bool2string(pp->getEcn());
         case FIELD_overflow: return bool2string(pp->getOverflow());
         case FIELD_jobId: return int642string(pp->getJobId());
         case FIELD_aggSeqNumber: return int642string(pp->getAggSeqNumber());
@@ -688,7 +669,6 @@ void AggPacketDescriptor::setFieldValueAsString(omnetpp::any_ptr object, int fie
         case FIELD_aggPolicy: pp->setAggPolicy((AggPolicy)string2enum(value, "AggPolicy")); break;
         case FIELD_aggregatorIndex: pp->setAggregatorIndex(string2ulong(value)); break;
         case FIELD_collision: pp->setCollision(string2bool(value)); break;
-        case FIELD_ecn: pp->setEcn(string2bool(value)); break;
         case FIELD_overflow: pp->setOverflow(string2bool(value)); break;
         case FIELD_jobId: pp->setJobId(string2int64(value)); break;
         case FIELD_aggSeqNumber: pp->setAggSeqNumber(string2int64(value)); break;
@@ -716,7 +696,6 @@ omnetpp::cValue AggPacketDescriptor::getFieldValue(omnetpp::any_ptr object, int 
         case FIELD_aggPolicy: return static_cast<int>(pp->getAggPolicy());
         case FIELD_aggregatorIndex: return omnetpp::checked_int_cast<omnetpp::intval_t>(pp->getAggregatorIndex());
         case FIELD_collision: return pp->getCollision();
-        case FIELD_ecn: return pp->getEcn();
         case FIELD_overflow: return pp->getOverflow();
         case FIELD_jobId: return pp->getJobId();
         case FIELD_aggSeqNumber: return pp->getAggSeqNumber();
@@ -746,7 +725,6 @@ void AggPacketDescriptor::setFieldValue(omnetpp::any_ptr object, int field, int 
         case FIELD_aggPolicy: pp->setAggPolicy(static_cast<AggPolicy>(value.intValue())); break;
         case FIELD_aggregatorIndex: pp->setAggregatorIndex(omnetpp::checked_int_cast<unsigned long>(value.intValue())); break;
         case FIELD_collision: pp->setCollision(value.boolValue()); break;
-        case FIELD_ecn: pp->setEcn(value.boolValue()); break;
         case FIELD_overflow: pp->setOverflow(value.boolValue()); break;
         case FIELD_jobId: pp->setJobId(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;
         case FIELD_aggSeqNumber: pp->setAggSeqNumber(omnetpp::checked_int_cast<int64_t>(value.intValue())); break;

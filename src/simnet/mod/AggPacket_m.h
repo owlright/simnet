@@ -48,7 +48,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AggPolicy& e) { int n; b-
  *     // must contained fields
  *     unsigned long aggregatorIndex;
  *     bool collision;
- *     bool ecn;
+ *     //    bool ecn;
  *     bool overflow;
  * 
  *     int64_t jobId;
@@ -70,7 +70,6 @@ class AggPacket : public ::Packet
     AggPolicy aggPolicy = NOINC;
     unsigned long aggregatorIndex = 0;
     bool collision = false;
-    bool ecn = false;
     bool overflow = false;
     int64_t jobId = 0;
     int64_t aggSeqNumber = 0;
@@ -104,9 +103,6 @@ class AggPacket : public ::Packet
 
     virtual bool getCollision() const;
     virtual void setCollision(bool collision);
-
-    virtual bool getEcn() const;
-    virtual void setEcn(bool ecn);
 
     virtual bool getOverflow() const;
     virtual void setOverflow(bool overflow);

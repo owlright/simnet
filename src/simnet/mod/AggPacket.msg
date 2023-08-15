@@ -14,7 +14,7 @@ class AggPacket extends Packet
     // must contained fields
     unsigned long aggregatorIndex;
     bool collision;
-    bool ecn;
+//    bool ecn;
     bool overflow;
 
     int64_t jobId;

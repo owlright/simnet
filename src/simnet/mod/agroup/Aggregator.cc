@@ -23,11 +23,8 @@ void Aggregator::checkThenAddWorkerId(const AggPacket *pk)
 
 Packet *Aggregator::doAggregation(AggPacket *pk)
 {
-    auto apk = check_and_cast<AggPacket*>(pk);
-    if (apk->getECN()) {
-        apk->setEcn(true); // copy the ECN flag
-    }
-    ecn |= apk->getEcn(); // * ecn will be set any way(normal or resend)
+    // copy the ECN flag
+    ecn |= pk->getECN(); // * ecn will be set any way(normal or resend)
     auto entryIndex = pk->getSegmentsLeft() - 1;
     auto& fanIndegree = pk->getArgs(entryIndex);
     auto indegree = atoi(fanIndegree.c_str());
