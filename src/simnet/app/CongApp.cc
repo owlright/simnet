@@ -325,7 +325,7 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
     if (seq >= getNextAckSeq()) { // we get new seqs
         onReceivedData(pk);
-    } else { // duplicate seqs, just see what it want us'seq
+    } else { // duplicate seqs, just delete it
         delete pk;
     }
     // ! only client need to ACK the FIN seq

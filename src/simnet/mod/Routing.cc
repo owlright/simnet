@@ -107,7 +107,7 @@ simsignal_t Routing::createBufferSignalForGroup(IntAddress group)
 void Routing::forwardIncoming(Packet *pk)
 {
     auto destAddr = pk->getDestAddr();
-    auto srcAddr = pk->getSrcAddr();
+    // auto srcAddr = pk->getSrcAddr();
     auto nextAddr = destAddr;
     auto outGateIndex = getForwardGateIndex(pk);
 
@@ -140,7 +140,7 @@ void Routing::forwardIncoming(Packet *pk)
                     groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
                 }
                 auto agtr = it->second;
-                pk = aggregate(apk);
+                pk = agtr->doAggregation(apk);
                 if (pk != nullptr) {
                     ASSERT(pk == apk);
                     recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
