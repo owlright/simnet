@@ -68,7 +68,6 @@ private:
 
     [[deprecated]] std::unordered_set<MulticastID, hash_fn> markNotAgg;
     std::unordered_map<MulticastID, std::vector<int>, hash_fn> incomingPortIndexes;
-    std::unordered_map<MulticastID, int, hash_fn> incomingCount;
     std::unordered_map<IntAddress, jobMetric*> groupMetricTable;
     std::map<size_t, Aggregator*> aggregators;
     [[deprecated]]std::unordered_map<MulticastID, int64_t, hash_fn> seqDeadline;
