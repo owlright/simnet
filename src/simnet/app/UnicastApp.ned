@@ -69,6 +69,6 @@ module ParameterServerApp extends CongApp {
         int numWorkers = default(0);
         string workers = default("");
         @class(ParameterServerApp);
-        @signal[aggRatio](type=double);
-        @statistic[aggRatio](title="aggegation ratio of a packet"; source=aggRatio; record=count,mean,max,min,vector; interpolationmode=linear);
+        // @signal[aggRatio](type=double);
+        // @statistic[aggRatio](title="aggegation ratio of a packet"; source=aggRatio; record=count,mean,max,min,vector; interpolationmode=linear);
 }
