@@ -2,7 +2,7 @@
 #include "simnet/common/ModuleAccess.h"
 #include "simnet/common/utils.h"
 #include <functional>
-class SRWorker : public WorkerApp
+class INCWorker : public WorkerApp
 {
 protected:
     void initialize(int stage) override;
@@ -14,13 +14,13 @@ private:
 };
 
 
-Define_Module(SRWorker);
+Define_Module(INCWorker);
 
-void SRWorker::initialize(int stage)
+void INCWorker::initialize(int stage)
 {
     WorkerApp::initialize(stage);
     if (stage == INITSTAGE_LAST) {
-        EV << "SRWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
+        EV << "INCWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
         EV << " PS(" << destAddr << ":" << destPort << ")" << endl;
         auto segmentAddrs = cStringTokenizer(par("segmentAddrs").stringValue(), " ").asVector();
         segments.resize(segmentAddrs.size());
@@ -37,7 +37,7 @@ void SRWorker::initialize(int stage)
 
 }
 
-void SRWorker::setField(AggPacket* pk)
+void INCWorker::setField(AggPacket* pk)
 {
     WorkerApp::setField(pk); // ! we need the aggSeqNumber
     auto seqNumber = pk->getAggSeqNumber();

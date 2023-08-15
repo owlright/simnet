@@ -394,7 +394,7 @@ void GlobalGroupManager::createJobApps(int jobId)
         auto appExistSize = node->getSubmoduleVectorSize("workers");
 
         node->setSubmoduleVectorSize("workers", appExistSize + 1);
-        auto appType = useInc ? "simnet.app.SRWorker" : "simnet.app.WorkerApp";
+        auto appType = useInc ? "simnet.app.INCWorker" : "simnet.app.WorkerApp";
         auto app = cModuleType::get(appType)->create("workers", node, appExistSize);
         job->workerPorts[i] = 2000 + appExistSize; // ! port number can only be decided here
         // only new apps can set these fields
