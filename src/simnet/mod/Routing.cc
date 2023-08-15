@@ -109,16 +109,20 @@ void Routing::forwardIncoming(Packet *pk)
 {
     auto destAddr = pk->getDestAddr();
     auto srcAddr = pk->getSrcAddr();
+    auto nextAddr = destAddr;
     // auto seq = pk->getSeqNumber();
     // auto destSeqKey = std::make_pair(destAddr, seq);
-
-    auto entryIndex = pk->getSegmentsLeft();
-    // ! entryIndex is unsigned, do not check it == -1
-    IntAddress segment{INVALID_ADDRESS};
-    if (entryIndex > 0) {
-        entryIndex -= 1;
-        segment =  pk->getSegments(entryIndex);
+    auto numSegments = pk->getSegmentsLeft();
+    int segmentIndex = numSegments - 1;
+    if ( numSegments > 0 ) {
+        nextAddr = pk->getSegments(segmentIndex);
     }
+    // ! entryIndex is unsigned, do not check it == -1
+    // IntAddress segment{INVALID_ADDRESS};
+    // if (entryIndex > 0) {
+    //     entryIndex -= 1;
+    //     segment =  pk->getSegments(entryIndex);
+    // }
     // I left this for future debuging
     // if (myAddress == 8 && destAddr == 787 && seq == 1000 )
     //     std::cout << myAddress << " " << pk << endl;
@@ -134,61 +138,58 @@ void Routing::forwardIncoming(Packet *pk)
     //        }
     //     }
 
-    auto nextAddr = entryIndex == 0 ? destAddr : pk->getSegments(entryIndex - 1);
+    // auto nextAddr = entryIndex == 0 ? destAddr : pk->getSegments(entryIndex - 1);
+    if (nextAddr == myAddress) {
+        auto apk = check_and_cast<AggPacket*>(pk);
+        auto jobId = apk->getJobId();
+        auto PSport = apk->getDestPort();
+        auto seq = apk->getAggSeqNumber();
+        MulticastID mKey = {jobId, destAddr, nextAddr, PSport, seq, true};
+        // MulticastID mKey = {destAddr, PSport, seq};
+        recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
+        if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
+            // the first time we see this group
+            groupMetricTable[jobId] = new jobMetric(this, jobId);
+            groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
+        }
 
-    if (segment == myAddress) {
-        auto& fun = pk->getFuns(entryIndex);
-        if (fun == "aggregation") {
-            auto apk = check_and_cast<AggPacket*>(pk);
-            auto jobId = apk->getJobId();
-            auto PSport = apk->getDestPort();
-            auto seq = apk->getAggSeqNumber();
-            MulticastID mKey = {jobId, destAddr, nextAddr, PSport, seq, true};
-            // MulticastID mKey = {destAddr, PSport, seq};
-            recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
-            if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
-                // the first time we see this group
-                groupMetricTable[jobId] = new jobMetric(this, jobId);
-                groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
+        pk = aggregate(apk);
+        if (pk == nullptr) {// ! Aggregation is not finished;
+            return;
+        } else { // TODO: do we release resource at aggpacket leave or ACK arrive?
+            ASSERT(pk == apk);
+            if (apk->getCollision())
+                EV_DEBUG << "collision happen on destAddr " << destAddr << " seq " << seq << endl;
+            if (incomingCount.find(mKey) == incomingCount.end())
+                incomingCount[mKey] = 1;
+            else {
+//                    ASSERT (apk->getCollision() || apk->getResend());
+                if (!apk->getCollision())
+                    incomingCount[mKey] += 1;
             }
 
-            pk = aggregate(apk);
-            if (pk == nullptr) {// ! Aggregation is not finished;
-                return;
-            } else { // TODO: do we release resource at aggpacket leave or ACK arrive?
-                ASSERT(pk == apk);
-                if (apk->getCollision())
-                    EV_DEBUG << "collision happen on destAddr " << destAddr << " seq " << seq << endl;
-                if (incomingCount.find(mKey) == incomingCount.end())
-                    incomingCount[mKey] = 1;
-                else {
-//                    ASSERT (apk->getCollision() || apk->getResend());
-                    if (!apk->getCollision())
-                        incomingCount[mKey] += 1;
-                }
-
-                // ! pop the segments, RFC not require this
-                apk->popSegment();
-                apk->popFun();
-                apk->popArg();
-                apk->setSegmentsLeft(apk->getSegmentsLeft() - 1);
-                apk->setLastEntry(apk->getLastEntry() - 1);
-                auto agtrIndex = apk->getAggregatorIndex();
-                auto job = apk->getJobId();
-                auto seq = apk->getSeqNumber();
-                auto agtr = aggregators.at(agtrIndex);
-                // // ! 1. agtr can be nullptr when router is not responsible for this group
-                // ! 2. collision may happen so the agtr doesn't belong to the packet
-                // ! 3. it's a resend packet arrives and there's no according agtr for it
-                if (agtr != nullptr
-                        && agtr->getJobId() == job
-                        && agtr->getSeqNumber() == seq) {
-                    delete aggregators[agtrIndex];
-                    aggregators[agtrIndex] = nullptr;
-                    groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
-                }
+            // ! pop the segments, RFC not require this
+            apk->popSegment();
+            apk->popFun();
+            apk->popArg();
+            apk->setSegmentsLeft(apk->getSegmentsLeft() - 1);
+            apk->setLastEntry(apk->getLastEntry() - 1);
+            auto agtrIndex = apk->getAggregatorIndex();
+            auto job = apk->getJobId();
+            auto seq = apk->getSeqNumber();
+            auto agtr = aggregators.at(agtrIndex);
+            // // ! 1. agtr can be nullptr when router is not responsible for this group
+            // ! 2. collision may happen so the agtr doesn't belong to the packet
+            // ! 3. it's a resend packet arrives and there's no according agtr for it
+            if (agtr != nullptr
+                    && agtr->getJobId() == job
+                    && agtr->getSeqNumber() == seq) {
+                delete aggregators[agtrIndex];
+                aggregators[agtrIndex] = nullptr;
+                groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
             }
         }
+
     }
     else if (pk->getPacketType() == AGG) {
         // ! this node don't do aggregation, but its still need to record incoming ports
@@ -198,8 +199,7 @@ void Routing::forwardIncoming(Packet *pk)
         auto jobid = apk->getJobId();
         auto PSport = pk->getDestPort();
         auto seq = apk->getAggSeqNumber();
-        auto dest = segment != -1 ? segment : destAddr; // ! note segment is next hop
-        MulticastID mKey = {jobid, destAddr, dest, PSport, seq, false};
+        MulticastID mKey = {jobid, destAddr, nextAddr, PSport, seq, false};
         recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
 
         if (incomingCount.find(mKey) == incomingCount.end())
