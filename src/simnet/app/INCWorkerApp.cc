@@ -31,6 +31,10 @@ void INCWorker::initialize(int stage)
             segments[i].insert(segments[i].end(), equal_agg_addrs.begin(), equal_agg_addrs.end());
         }
         fanIndegrees = cStringTokenizer(par("fanIndegrees").stringValue()).asIntVector();
+        // * easy debug
+        std::vector<IntAddress> tmp{destAddr};
+        segments.push_back(tmp);
+        fanIndegrees.push_back(numWorkers);
         EV << "sid: " << segments << endl;
         EV << "arg: " << fanIndegrees << endl;
     }
