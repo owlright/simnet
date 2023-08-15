@@ -13,9 +13,9 @@ parameters:
     @class(WorkerApp);
 }
 
-module SRWorker extends WorkerApp {
+module INCWorker extends WorkerApp {
 parameters:
     string segmentAddrs @mutable = default("");
     string fanIndegrees @mutable = default("");
-    @class(SRWorker);
+    @class(INCWorker);
 }

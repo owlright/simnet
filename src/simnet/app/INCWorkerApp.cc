@@ -49,8 +49,6 @@ void INCWorker::setField(AggPacket* pk)
 
     EV_DEBUG << "aggSeqNumber " << seqNumber << " jobID " << jobID << " aggregator: " << agtrIndex % MAX_AGTR_COUNT << endl;
     pk->setAggregatorIndex(agtrIndex % MAX_AGTR_COUNT);
-    pk->setWorkerNumber(numWorkers);
-    pk->setDistance(0);
     // segment routing
     pk->setSIDSize(segments.size());
     pk->setLastEntry(segments.size() - 1);

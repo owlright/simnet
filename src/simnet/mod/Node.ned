@@ -55,7 +55,7 @@ module Host extends Node
             port = 1000 + index;
             @display("p=42,125.06667,r,100");
         }
-        workers[numWorkers]: <default("SRWorker")> like IApp {
+        workers[numWorkers]: <default("INCWorker")> like IApp {
             port = 2000 + index;
             @display("p=348.13333,112,r,100");
         }

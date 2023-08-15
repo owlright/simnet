@@ -4,7 +4,7 @@ simple UnicastApp like IApp {
 	parameters:
 	    @class(UnicastApp);
         int address @mutable = default(-1);
-        int port @mutable = default(65535); // ! I only change this when SRWorker is created, whey need mutable here? why destPort don't need mutable
+        int port @mutable = default(65535); // ! I only change this when INCWorker is created, whey need mutable here? why destPort don't need mutable
     gates:
         input in;
         output out;
