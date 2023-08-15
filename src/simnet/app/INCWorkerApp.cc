@@ -6,7 +6,7 @@ class INCWorker : public WorkerApp
 {
 protected:
     void initialize(int stage) override;
-    void setField(AggPacket* pk);
+    virtual void setField(AggPacket* pk) override;
 
 private:
     std::vector<std::vector<IntAddress>> segments;

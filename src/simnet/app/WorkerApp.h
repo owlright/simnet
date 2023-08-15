@@ -18,7 +18,7 @@ protected:
     virtual void onRoundStop();
 
 protected:
-    void setField(AggPacket* pk);
+    virtual void setField(AggPacket* pk);
     void prepareTxBuffer();
 
 protected:
