@@ -50,6 +50,8 @@ void WorkerApp::setField(AggPacket* pk) {
     pk->setWorkerNumber(numWorkers);
     pk->setRecordLen(1);
     pk->addRecord(localAddr);
+    pk->setWorkerNumber(numWorkers);
+    pk->setDistance(0);
 }
 
 void WorkerApp::prepareTxBuffer()
@@ -64,11 +66,6 @@ void WorkerApp::prepareTxBuffer()
         incrementNextSeqBy(packetSize);
         leftData -= packetSize;
     }
-}
-
-void WorkerApp::confirmAckNumber(const Packet* pk)
-{
-    CongApp::confirmAckNumber(pk); // ! do not use FlowApp::confirmAckNumber
 }
 
 void WorkerApp::onReceivedData(Packet* pk)
