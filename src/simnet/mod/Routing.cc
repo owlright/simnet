@@ -67,8 +67,8 @@ void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
 std::vector<int> Routing::getReversePortIndexes(const MulticastID& mKey) const
 {
     if (incomingPortIndexes.find(mKey) == incomingPortIndexes.end())
-        throw cRuntimeError("%" PRId64" Routing::getReversePortIndexes: group: %" PRId64 ":%u seq %" PRId64 "not found!",
-                                    myAddress, mKey.PSAddr, mKey.PSport, mKey.seq);
+        throw cRuntimeError("%" PRId64" Routing::getReversePortIndexes: agtrIndex: %zu, inGate: %d not found!",
+                                    myAddress, mKey.agtrIndex, mKey.inGateIndex);
     return incomingPortIndexes.at(mKey);
 }
 
