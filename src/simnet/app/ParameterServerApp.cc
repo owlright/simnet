@@ -85,30 +85,34 @@ void ParameterServerApp::onReceivedData(Packet* pk) {
     if (agged_workers.size() == numWorkers) {
         EV_DEBUG << "Seq " << seq << " finished." << endl;
         ASSERT(workers == agged_workers);
-        aggedBytes += pk->getByteLength();
-        if (record.success) {
-            // ! send a multicast ACK
-            auto mpk = createAckPacket(apk);
-            mpk->setPacketType(MACK);
-            mpk->setDestAddr(groupAddr);
-            mpk->setECE(record.ecn);
-            insertTxBuffer(mpk);
-        }
-        else {
-            // ! send each worker one ACK
-            for (auto& w : agged_workers) {
-                auto apk_ack = createAckPacket(apk);
-                apk_ack->setPacketType(ACK);
-                apk_ack->setDestAddr(w);
-                apk_ack->setECE(record.ecn);
-                insertTxBuffer(apk_ack);
+        if (tcpState == OPEN) {
+            // ! after we send FIN, we are in state CLOSE_WAIT,
+            // ! we will receieve ACK to FIN, do not answer it.
+            aggedBytes += pk->getByteLength();
+            if (record.success) {
+                // ! send a multicast ACK
+                auto mpk = createAckPacket(apk);
+                mpk->setSeqNumber(record.seqNumber);
+                mpk->setPacketType(MACK);
+                mpk->setDestAddr(groupAddr);
+                mpk->setECE(record.ecn);
+                insertTxBuffer(mpk);
+            }
+            else {
+                // ! send each worker one ACK
+                for (auto& w : agged_workers) {
+                    auto apk_ack = createAckPacket(apk);
+                    apk_ack->setSeqNumber(record.seqNumber);
+                    apk_ack->setPacketType(ACK);
+                    apk_ack->setDestAddr(w);
+                    apk_ack->setECE(record.ecn);
+                    insertTxBuffer(apk_ack);
+                }
             }
         }
         aggRecord.erase(seq);
         CongApp::onReceivedData(pk); // ! we see a fully aggregation packet as received a packet
     }
-
-    delete pk;
 }
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
