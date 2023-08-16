@@ -115,6 +115,19 @@ void Routing::forwardIncoming(Packet *pk)
         currSegment = pk->getSegments(segmentIndex);
         nextSegment = pk->getSegments(segmentIndex - 1);
     }
+
+    // ! get the output gate index
+    int outGateIndex = -1;
+    if (currSegment == myAddress) {
+        outGateIndex = getForwardGateIndex(pk, nextSegment); // ! next segment
+    }
+    else if (pk->getPacketType() == AGG) {
+        outGateIndex = getForwardGateIndex(pk, currSegment); // ! current segment
+    }
+    else if (pk->getPacketType() != MACK){
+        outGateIndex = getForwardGateIndex(pk);
+    }
+
     if (pk->getPacketType() == AGG) {
         auto apk = check_and_cast<AggPacket*>(pk);
         auto jobId = apk->getJobId();
@@ -174,7 +187,7 @@ void Routing::forwardIncoming(Packet *pk)
     send(pk, "out", outGateIndex);
 }
 
-int Routing::getForwardGateIndex(const Packet* pk)
+int Routing::getForwardGateIndex(const Packet* pk, IntAddress nextAddr)
 {
     // route this packet which may be:
     // 1. unicast packet
@@ -184,23 +197,16 @@ int Routing::getForwardGateIndex(const Packet* pk)
     int outGateIndex = -1;
     auto srcAddr = pk->getSrcAddr();
     auto destAddr = pk->getDestAddr();
-    auto numSegments = pk->getSegmentsLeft();
-
-    if (pk->getPacketType() == AGG) {
+    if (nextAddr != -1 && pk->getPacketType() == AGG) {
         // ! aggPacket's srcAddr may change when resend or collision happen
         // ! we must make sure in any case the ecmp give the same outGate index
         srcAddr = myAddress + destAddr;
+        // ! route to next router, otherwise ecmp may break this
+        destAddr = nextAddr;
     }
-
-    if (pk->getPacketType() == AGG && numSegments > 0) {
-         // ! route to next router, otherwise ecmp may break this
-        outGateIndex = getRouteGateIndex(srcAddr,  pk->getSegments(numSegments - 1));
-    }
-    else {
-        // 1. unicast packet
-        // 2. agg packet but not ask for aggregation(segment!= myAddress) or it's a resend
-        outGateIndex = getRouteGateIndex(srcAddr, destAddr);
-    }
+    // 1. unicast packet
+    // 2. agg packet but not ask for aggregation(segment!= myAddress) or it's a resend
+    outGateIndex = getRouteGateIndex(srcAddr, destAddr);
     EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
     return outGateIndex;
 }
