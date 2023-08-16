@@ -107,16 +107,15 @@ simsignal_t Routing::createBufferSignalForGroup(IntAddress group)
 void Routing::forwardIncoming(Packet *pk)
 {
     auto destAddr = pk->getDestAddr();
-    // auto srcAddr = pk->getSrcAddr();
-    auto nextAddr = destAddr;
-    auto outGateIndex = getForwardGateIndex(pk);
-
-    if (pk->getPacketType() == AGG) {
-        auto numSegments = pk->getSegmentsLeft();
+    auto currSegment = destAddr;
+    auto nextSegment = destAddr;
+    auto numSegments = pk->getSegmentsLeft();
+    if ( numSegments > 0) {
         int segmentIndex = numSegments - 1;
-        if ( numSegments > 0 ) {
-            nextAddr = pk->getSegments(segmentIndex);
-        }
+        currSegment = pk->getSegments(segmentIndex);
+        nextSegment = pk->getSegments(segmentIndex - 1);
+    }
+    if (pk->getPacketType() == AGG) {
         auto apk = check_and_cast<AggPacket*>(pk);
         auto jobId = apk->getJobId();
         auto seq = apk->getAggSeqNumber();
@@ -132,7 +131,7 @@ void Routing::forwardIncoming(Packet *pk)
             }
             incomingPortIndexes.erase(mKey);
         }
-        else if (nextAddr == myAddress) {
+        else if (currSegment == myAddress) {
             if (it == aggregators.end() || it->second->checkAdmission(apk)) {
                 if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
                     // the first time we see this group
