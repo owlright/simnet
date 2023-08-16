@@ -44,6 +44,7 @@ void INCWorker::initialize(int stage)
 void INCWorker::setField(AggPacket* pk)
 {
     WorkerApp::setField(pk); // ! we need the aggSeqNumber
+    pk->setAggPolicy(INC);
     auto seqNumber = pk->getAggSeqNumber();
     auto jobID = pk->getJobId();
 
