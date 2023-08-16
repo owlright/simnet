@@ -118,6 +118,10 @@ protected:
     static simsignal_t rttSignal;
     static simsignal_t inflightBytesSignal; // for debug
 
+protected:
+    std::map<SeqNumber, TxItem> txBuffer;
+    std::map<SeqNumber, Packet*> rxBuffer;
+
 private:
     // ! state
     mutable SeqNumber nextSeq{0};     // ! when a new packet insert txBuffer
@@ -132,9 +136,6 @@ private:
     simtime_t estimatedRTT;
 
     SeqNumber markSeq{0};
-
-    std::map<SeqNumber, TxItem> txBuffer;
-    std::map<SeqNumber, Packet*> rxBuffer;
 
     simtime_t currentBaseRTT{0};
 
