@@ -133,12 +133,14 @@ void Routing::forwardIncoming(Packet *pk)
         }
         else if (currSegment == myAddress) {
             if (it == aggregators.end() || it->second->checkAdmission(apk)) {
+                if (aggregators.find(agtrIndex) == aggregators.end())
+                    aggregators[agtrIndex] = new Aggregator();
                 if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
                     // the first time we see this group
                     groupMetricTable[jobId] = new jobMetric(this, jobId);
                     groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
                 }
-                auto agtr = it->second;
+                auto agtr = aggregators.at(agtrIndex);
                 pk = agtr->doAggregation(apk);
                 if (pk != nullptr) {
                     ASSERT(pk == apk);
