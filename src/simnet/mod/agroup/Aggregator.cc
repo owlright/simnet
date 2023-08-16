@@ -25,8 +25,8 @@ Packet *Aggregator::doAggregation(AggPacket *pk)
 {
     // copy the ECN flag
     ecn |= pk->getECN(); // * ecn will be set any way(normal or resend)
-    auto entryIndex = pk->getSegmentsLeft() - 1;
-    auto& fanIndegree = pk->getArgs(entryIndex);
+    auto segmentIndex = pk->getSegmentsLeft() - 1;
+    auto& fanIndegree = pk->getArgs(segmentIndex);
     auto indegree = atoi(fanIndegree.c_str());
 
     // ! do not deal with the resend packet,
