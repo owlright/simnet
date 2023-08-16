@@ -158,7 +158,8 @@ void Routing::forwardIncoming(Packet *pk)
                 apk->setResend(true);
             }
         }
-        apk->setSegmentsLeft(apk->getSegmentsLeft() - 1);
+        if (currSegment == myAddress && pk != nullptr)
+            apk->setSegmentsLeft(pk->getSegmentsLeft() - 1);
     }
     else if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
         auto apk = check_and_cast<AggPacket*>(pk);
