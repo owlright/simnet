@@ -78,6 +78,11 @@ protected:
     void sendPendingData();
     void setField(Packet* pk);
     void insertTxBuffer(Packet* pk);
+    void deleteFromTxBuffer(SeqNumber seq) {
+        ASSERT(txBuffer.find(seq) != txBuffer.end());
+        delete txBuffer.at(seq).pkt;
+        txBuffer.erase(seq);
+    }
     void insertRxBuffer(Packet* pk);
     void resetState();
     bool bindRemote();
