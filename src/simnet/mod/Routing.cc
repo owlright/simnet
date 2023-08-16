@@ -121,6 +121,7 @@ void Routing::forwardIncoming(Packet *pk)
         auto seq = apk->getAggSeqNumber();
         auto agtrIndex = apk->getAggregatorIndex();
         MulticastID mKey = {agtrIndex, outGateIndex};
+        recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
         auto it = aggregators.find(agtrIndex);
         if (pk->getResend()) {
             if (it != aggregators.end()) {
@@ -144,7 +145,6 @@ void Routing::forwardIncoming(Packet *pk)
                 pk = agtr->doAggregation(apk);
                 if (pk != nullptr) {
                     ASSERT(pk == apk);
-                    recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
                     aggregators.erase(agtrIndex);
                     groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
                 }
