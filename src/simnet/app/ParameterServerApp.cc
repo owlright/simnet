@@ -5,12 +5,13 @@
 #include <functional>
 class ParameterServerApp : public CongApp
 {
-protected:
-    virtual void onReceivedData(Packet* pk) override;
-    AggPacket* createAckPacket(const AggPacket* pk);
 
 protected:
     void initialize(int stage) override;
+
+protected:
+    virtual void onReceivedData(Packet* pk) override;
+    virtual void confirmAckNumber(const Packet* pk) override;
 
 protected:
     struct AggRecord {
@@ -20,6 +21,9 @@ protected:
         bool success{true};
     };
     std::map<SeqNumber, AggRecord> aggRecord;
+
+private:
+    AggPacket* createAckPacket(const AggPacket* pk);
 
 private:
     int jobid{-1};
@@ -117,6 +121,21 @@ void ParameterServerApp::onReceivedData(Packet* pk) {
         ASSERT(pk->getResend());
         delete pk;
     }
+}
+
+void ParameterServerApp::confirmAckNumber(const Packet* pk)
+{
+    auto ackNumber = pk->getAckNumber();
+    if (ackNumber > 0 && ackNumber <= getNextAskedSeq() && txBuffer.find(ackNumber) != txBuffer.end()) {
+        auto ack = txBuffer.at(ackNumber).pkt->dup();
+        ack->setDestAddr(pk->getSrcAddr());
+        ack->setPacketType(ACK);
+        deleteFromTxBuffer(ackNumber);
+        insertTxBuffer(ack);
+        txBuffer.at(ackNumber).resend_timer = 1; // send out immediately
+        txBuffer.at(ackNumber).is_sent = true;
+    }
+    CongApp::confirmAckNumber(pk);
 }
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
