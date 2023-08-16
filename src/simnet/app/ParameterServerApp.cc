@@ -113,6 +113,10 @@ void ParameterServerApp::onReceivedData(Packet* pk) {
         aggRecord.erase(seq);
         CongApp::onReceivedData(pk); // ! we see a fully aggregation packet as received a packet
     }
+    else {
+        ASSERT(pk->getResend());
+        delete pk;
+    }
 }
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
