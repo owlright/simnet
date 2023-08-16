@@ -93,6 +93,7 @@ protected:
     void incrementNextSeqBy(B segmentSize) const {nextSeq += segmentSize;};
     const SeqNumber& getNextSentSeq() const {return nextSentSeq;};
     const SeqNumber& getNextAckSeq() const {return nextAckSeq;};
+    const SeqNumber& getNextAskedSeq() const {return nextAskedSeq;};
 
     const simtime_t& getCurrentBaseRTT() const {return currentBaseRTT;};
     const double& getMaxSendingRate() const {return bandwidth;}
