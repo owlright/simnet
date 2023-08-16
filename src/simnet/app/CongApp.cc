@@ -223,7 +223,7 @@ void CongApp::resend(TxItem& item)
 void CongApp::confirmAckNumber(const Packet* pk)
 {
     auto ackNumber = pk->getAckNumber();
-    if (ackNumber < nextAskedSeq) { // ! the other side want an old sent seq
+    if (ackNumber <= nextAskedSeq) { // ! the other side want an old sent seq
         EV_DEBUG << "old ack " << ackNumber << endl;
         // ! 1. the ackNumber is a sent but not confirmed seq(it should be the oldest)
         // ! 2. the ackNumber is too old, and the sender must have received this seq, otherwise
@@ -326,6 +326,7 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     if (seq >= getNextAckSeq()) { // we get new seqs
         onReceivedData(pk);
     } else { // duplicate seqs, just delete it
+        confirmAckNumber(pk);
         delete pk;
     }
     // ! only client need to ACK the FIN seq
