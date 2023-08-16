@@ -43,7 +43,7 @@ void CongApp::setPacketBeforeSentOut(Packet* pk)
 
     char fin_prefix[10] = {};
     if (pk->getFIN()) {
-        sprintf(pkname, "FIN-");
+        sprintf(fin_prefix, "FIN-");
         switch (tcpState) {
         case OPEN:
             tcpState = FIN_WAIT_1;
