@@ -178,9 +178,16 @@ void Routing::forwardIncoming(Packet *pk)
         auto apk = check_and_cast<AggPacket*>(pk);
         auto agtrIndex = apk->getAggregatorIndex();
         MulticastID mKey = {agtrIndex, apk->getArrivalGate()->getIndex()};
-        ASSERT(incomingPortIndexes.find(mKey) != incomingPortIndexes.end());
-        auto outGateIndexes = incomingPortIndexes.at(mKey);
-        broadcast(pk, outGateIndexes);
+        if (incomingPortIndexes.find(mKey) != incomingPortIndexes.end()) {
+            auto outGateIndexes = incomingPortIndexes.at(mKey);
+            incomingPortIndexes.erase(mKey);
+            broadcast(pk, outGateIndexes);
+        }
+        else {
+            delete pk;
+            EV_WARN << "The multicast entry doen't exist, it must be deleted by a resend packet." << endl;
+        }
+
         return;
     }
 
