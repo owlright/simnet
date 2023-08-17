@@ -70,6 +70,7 @@ void WorkerApp::prepareTxBuffer()
 
 void WorkerApp::onReceivedData(Packet* pk)
 {
+    ASSERT(pk->getRound() == currentRound);
     if (pk->getAckNumber() - roundStartSeq == flowSize) {
         onRoundStop();
     }

@@ -28,7 +28,6 @@ private:
 private:
     int jobid{-1};
     int numWorkers{0};
-    int currentRound{0};
 
     IntAddress groupAddr{INVALID_ADDRESS};
     std::set<IntAddress> workers;
