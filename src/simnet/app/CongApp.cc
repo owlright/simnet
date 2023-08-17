@@ -180,16 +180,16 @@ void CongApp::sendPendingData()
             markSeq = nextSentSeq; // ! if markSeq not change for a RTOTimeout, we resend the oldest not acked seq
             nextSentSeq = tx_item.seq + pktSize;
         }
-        auto pk = tx_item.pkt->dup();
-
-//        if (localAddr == 789)
-//            std::cout << pk->getName() << endl;
-        // ! nextAckSeq may keep changing when many ACKs arrive at the same time
-        // ! we must set it when sending out
-        setPacketBeforeSentOut(pk);
-        EV_DEBUG << pk << endl;
-        connection->send(pk);
-        cong->onSendData(tx_item.seq, pktSize);
+        if (tx_item.destAddresses.empty()) {
+            sendFirstTime(tx_item);
+        }
+        else {
+            for (auto& dst: tx_item.destAddresses) {
+                TxItem tmp(tx_item);
+                tmp.pkt->setDestAddr(dst);
+                sendFirstTime(tmp);
+            }
+        }
         tx_item_it++;
         if (tcpState == TIME_WAIT) {
             rescheduleAfter(2*estimatedRTT, RTOTimeout);
@@ -208,10 +208,23 @@ void CongApp::resendOldestSeq()
 
 void CongApp::resend(TxItem& item)
 {
-    auto pk = item.pkt->dup();
-    pk->setResend(true);
-    setPacketBeforeSentOut(pk);
-    connection->send(pk);
+    ASSERT(item.is_sent);
+    if (item.destAddresses.empty()) {
+        auto pk = item.pkt->dup();
+        pk->setResend(true);
+        setPacketBeforeSentOut(pk);
+        connection->send(pk);
+    }
+    else {
+        for (auto& dst:item.destAddresses) {
+            auto pk = item.pkt->dup();
+            pk->setDestAddr(dst);
+            pk->setResend(true);
+            setPacketBeforeSentOut(pk);
+            connection->send(pk);
+        }
+    }
+
     item.is_resend_already = true;
     resentBytes += item.pktSize; // ! this will affect inflightBytes
     auto rtt_count = cong->getcWnd() / messageLength;
