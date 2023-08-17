@@ -166,20 +166,22 @@ void CongApp::sendPendingData()
     while (tx_item_it != txBuffer.end() && cong->getcWnd() - inflightBytes() >= tx_item_it->second.pktSize) {
         auto& tx_item = tx_item_it->second;
         auto pktSize = tx_item.pktSize;
+
         if (tx_item.is_sent) {
             if (tx_item.resend_timer == 0) {
                 resend(tx_item);
             }
             else {
                 tx_item_it++;
-                continue; // * move to next seq
             }
+            continue; // * move to next seq
         }
         else {
             tx_item.is_sent = true;
             markSeq = nextSentSeq; // ! if markSeq not change for a RTOTimeout, we resend the oldest not acked seq
             nextSentSeq = tx_item.seq + pktSize;
         }
+        ASSERT(!tx_item.is_resend_already);
         if (tx_item.destAddresses.empty()) {
             sendFirstTime(tx_item);
         }
