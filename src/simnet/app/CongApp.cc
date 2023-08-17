@@ -99,7 +99,7 @@ void CongApp::resetState()
     nextAskedSeq = 0;
     nextAckSeq = 0;
     nextSeq = 0;
-    resentBytes = 0;
+    // resentBytes = 0;
     currentBaseRTT = 0;
     cong->reset();
 }
