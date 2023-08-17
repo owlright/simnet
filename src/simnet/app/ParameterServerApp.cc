@@ -103,15 +103,15 @@ void ParameterServerApp::onReceivedData(Packet* pk) {
                 insertTxBuffer(mpk);
             }
             else {
+                auto apk_ack = createAckPacket(apk);
+                apk_ack->setSeqNumber(record.seqNumber);
+                apk_ack->setPacketType(ACK);
+                apk_ack->setECE(record.ecn);
+                insertTxBuffer(apk_ack);
+                auto& item = txBuffer.at(record.seqNumber);
                 // ! send each worker one ACK
-                for (auto& w : agged_workers) {
-                    auto apk_ack = createAckPacket(apk);
-                    apk_ack->setSeqNumber(record.seqNumber);
-                    apk_ack->setPacketType(ACK);
-                    apk_ack->setDestAddr(w);
-                    apk_ack->setECE(record.ecn);
-                    insertTxBuffer(apk_ack);
-                }
+                std::vector<IntAddress> tmp(agged_workers.begin(), agged_workers.end());
+                item.destAddresses = std::move(tmp);
             }
         }
         aggRecord.erase(seq);
@@ -125,17 +125,16 @@ void ParameterServerApp::onReceivedData(Packet* pk) {
 
 void ParameterServerApp::confirmAckNumber(const Packet* pk)
 {
-    auto ackNumber = pk->getAckNumber();
-    if (ackNumber > 0 && ackNumber <= getNextAskedSeq() && txBuffer.find(ackNumber) != txBuffer.end()) {
-        auto ack = txBuffer.at(ackNumber).pkt->dup();
-        ack->setDestAddr(pk->getSrcAddr());
-        ack->setPacketType(ACK);
-        deleteFromTxBuffer(ackNumber);
-        insertTxBuffer(ack);
-        txBuffer.at(ackNumber).resend_timer = 1; // send out immediately
-        txBuffer.at(ackNumber).is_sent = true;
-    }
     CongApp::confirmAckNumber(pk);
+    auto ackNumber = pk->getAckNumber();
+    // ! if a packet is about to resend, make it to a multicast packet
+    if (txBuffer.find(ackNumber) != txBuffer.end()
+            && txBuffer.at(ackNumber).resend_timer == 0) {
+        auto& item = txBuffer.at(ackNumber);
+        item.pkt->setPacketType(ACK);
+        std::vector<IntAddress> tmp(workers.begin(), workers.end());
+        item.destAddresses = std::move(tmp);
+    }
 }
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
