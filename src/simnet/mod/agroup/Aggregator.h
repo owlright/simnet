@@ -26,6 +26,7 @@ protected:
     int jobId{-1};
     bool ecn{false};
     SeqNumber seqNumber{-1};
+    SeqNumber ackNumber{-1};
     simtime_t timestamp{0}; // arrived time
     std::vector<int64_t> workerRecord; // cheating record all worker's address
 

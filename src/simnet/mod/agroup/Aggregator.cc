@@ -34,13 +34,18 @@ Packet *Aggregator::doAggregation(AggPacket *pk)
     ASSERT (!pk->getResend());
 
     // * first packet, store infomation
+    auto arrivedAckNumber = pk->getAckNumber();
     if (counter == 0) {
         reset();
         jobId = pk->getJobId();
         seqNumber = pk->getSeqNumber();
+        ackNumber = arrivedAckNumber;
         timestamp = pk->getArrivalTime();
     } else {// ! checkAdmission will avoid this case happen
         ASSERT(pk->getJobId() == jobId && pk->getSeqNumber() == seqNumber);
+        if (arrivedAckNumber < ackNumber) {
+            ackNumber = arrivedAckNumber;
+        }
     }
 
     // * do aggregation, no real behaviour, just update some state
@@ -48,8 +53,9 @@ Packet *Aggregator::doAggregation(AggPacket *pk)
     checkThenAddWorkerId(pk); // ! cheating, let parameter server knows which worker lose
     if (counter == indegree) {
         EV_DEBUG << workerRecord << endl;
-        pk->setRecord(workerRecord);
+        pk->setRecord(workerRecord); // ! workerRecord will move into the packet
         pk->setECN(ecn);
+        pk->setAckNumber(ackNumber);
         ASSERT(workerRecord.empty());
         return pk;
     } else {

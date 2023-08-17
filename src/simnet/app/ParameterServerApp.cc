@@ -17,6 +17,7 @@ protected:
     struct AggRecord {
         std::set<IntAddress> workers;
         SeqNumber seqNumber;
+        SeqNumber askedSeqNumber;
         bool ecn;
         bool success{true};
     };
@@ -67,15 +68,24 @@ void ParameterServerApp::onReceivedData(Packet* pk) {
     if (apk->getFIN())
         totalAggBytes = seq + apk->getByteLength();
 
+    auto arrivedAckNumber = pk->getAckNumber();
     if (aggRecord.find(seq) == aggRecord.end()) {
         // ! we see this packet for the first time(it may be aggregated or the first resend packet)
         aggRecord[seq].seqNumber = getNextSeq();
+        aggRecord[seq].askedSeqNumber = arrivedAckNumber;
         incrementNextSeqBy(64);
+    }
+    else {
+        if (arrivedAckNumber < aggRecord.at(seq).askedSeqNumber) {
+            aggRecord.at(seq).askedSeqNumber = arrivedAckNumber;
+        }
     }
     auto& record = aggRecord.at(seq);
     if ((apk->getResend() && record.success == true) || apk->getAggPolicy() == NOINC) {
+        // ! we see the resend packet for the first time, clear the record
         record.success = false;
         record.workers.clear();
+        record.askedSeqNumber = arrivedAckNumber;
     }
     record.ecn |= apk->getECN();
     auto& agged_workers = record.workers;
