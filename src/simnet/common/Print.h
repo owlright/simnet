@@ -38,10 +38,25 @@ std::ostream& operator<<(std::ostream& os, const std::unordered_set<T>& array)
 {
     os << "[";
     int count = 0;
-    for (const auto i: array) {
+    for (const auto& i: array) {
         if (count != 0)
             os << ",";
-        os << array[i];
+        os << i;
+        count++;
+    }
+    os << "]";
+    return os;
+}
+
+template<class T>
+std::ostream& operator<<(std::ostream& os, const std::set<T>& array)
+{
+    os << "[";
+    int count = 0;
+    for (const auto& i: array) {
+        if (count != 0)
+            os << ",";
+        os << i;
         count++;
     }
     os << "]";
