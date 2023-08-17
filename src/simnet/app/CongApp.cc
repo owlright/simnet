@@ -89,6 +89,8 @@ void CongApp::setPacketBeforeSentOut(Packet* pk)
     strcat(pkname, src_dest_seq_ack);
 
     pk->setName(pkname);
+    // ! nextAckSeq may keep changing when many ACKs arrive at the same time
+    // ! we must set it when sending out
     pk->setAckNumber(nextAckSeq);
 }
 
@@ -189,10 +191,6 @@ void CongApp::sendPendingData()
         connection->send(pk);
         cong->onSendData(tx_item.seq, pktSize);
         tx_item_it++;
-        auto seq = pk->getSeqNumber();
-        if (seq == 0) {
-            scheduleAfter(estimatedRTT, RTOTimeout);
-        }
         if (tcpState == TIME_WAIT) {
             rescheduleAfter(2*estimatedRTT, RTOTimeout);
         }
@@ -218,6 +216,20 @@ void CongApp::resend(TxItem& item)
     resentBytes += item.pktSize; // ! this will affect inflightBytes
     auto rtt_count = cong->getcWnd() / messageLength;
     item.resend_timer = maxDisorderNumber > rtt_count ? maxDisorderNumber : rtt_count;
+}
+
+void CongApp::sendFirstTime(TxItem& item)
+{
+    ASSERT(item.destAddresses.empty());
+    auto pk = item.pkt->dup();
+    setPacketBeforeSentOut(pk);
+    EV_DEBUG << pk << endl;
+    connection->send(pk);
+    cong->onSendData(item.seq, item.pktSize);
+    auto seq = pk->getSeqNumber();
+    if (seq == 0) {
+        scheduleAfter(estimatedRTT, RTOTimeout);
+    }
 }
 
 void CongApp::confirmAckNumber(const Packet* pk)

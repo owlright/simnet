@@ -150,5 +150,6 @@ private:
     void connectionDataArrived(Connection *connection, Packet* pk) override;
     void resendOldestSeq();
     void resend(TxItem& item);
+    void sendFirstTime(TxItem& item);
     B inflightBytes() {return nextSentSeq - nextAskedSeq;};
 };
