@@ -58,8 +58,6 @@ void ParameterServerApp::onReceivedData(Packet* pk) {
     auto apk = check_and_cast<AggPacket*>(pk);
     ASSERT(apk->getJobId() == jobid);
     auto seq = apk->getSeqNumber();
-    //  if (localAddr == 789)
-    //      std::cout <<"PS received: " << pk->getName() << endl;
     auto round = apk->getRound();
     if (round > currentRound) {
         EV_DEBUG << "Round: " << round << endl;
@@ -87,7 +85,7 @@ void ParameterServerApp::onReceivedData(Packet* pk) {
         agged_workers.insert(w);
     }
     if (agged_workers.size() == numWorkers) {
-        EV_DEBUG << "Seq " << seq << " finished." << endl;
+        EV_DEBUG << "Round " << currentRound << " Seq " << seq << " finished." << endl;
         ASSERT(workers == agged_workers);
         if (tcpState == OPEN) {
             // ! after we send FIN, we are in state CLOSE_WAIT,
@@ -152,8 +150,5 @@ AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
     packet->setAggSeqNumber(pk->getAggSeqNumber());
     packet->setAggregatorIndex(pk->getAggregatorIndex());
     packet->setRound(pk->getRound());
-    packet->setStartTime(pk->getStartTime());
-    packet->setQueueTime(pk->getQueueTime());
-    packet->setTransmitTime(pk->getTransmitTime());
     return packet;
 }

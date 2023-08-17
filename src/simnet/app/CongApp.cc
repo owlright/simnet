@@ -342,8 +342,6 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     EV_DEBUG << pk << endl;
     auto ackSeq = pk->getAckNumber();
     auto seq = pk->getSeqNumber();
-    // if (localAddr == 11)
-    //     std::cout << pk->getName() << endl;
     if (nextSentSeq == 0 && ackSeq == 0) {
         // ! server received the first packet
         ASSERT(tcpState==CLOSED);
@@ -352,9 +350,9 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
     if (seq >= getNextAckSeq()) { // we get new seqs
         onReceivedData(pk);
-    } else { // duplicate seqs, just delete it
+    } else {
         confirmAckNumber(pk);
-        delete pk;
+        delete pk; // duplicate seqs, just delete it
     }
     // ! only client need to ACK the FIN seq
     if ( txBuffer.empty() && (tcpState == TIME_WAIT) ) {
