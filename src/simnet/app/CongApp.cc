@@ -412,9 +412,13 @@ void CongApp::insertRxBuffer(Packet* pk)
     }
     else if (seq > nextAckSeq && tcpState != CLOSED) {
         // ! when tcpState == CLOSED, if more resend packets with FIN arrive, don't store them
-        ASSERT(rxBuffer.find(seq) == rxBuffer.end());
-         // ! these seqs arrive too early, store them for now
-        rxBuffer[seq] = pk;
+        if (rxBuffer.find(seq) == rxBuffer.end()) {
+            // ! these seqs arrive too early, store them for now
+            rxBuffer[seq] = pk;
+        }
+        else {
+            delete pk;
+        }
     }
 }
 
