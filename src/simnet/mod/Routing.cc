@@ -111,9 +111,11 @@ void Routing::forwardIncoming(Packet *pk)
     auto numSegments = pk->getSegmentsLeft();
     int outGateIndex = -1;
 
-    if (numSegments == 1) {
-        ASSERT(pk->getSegments(0) == destAddr);
+    if (numSegments <= 1 && pk->getPacketType() != MACK) { // DATA, ACK, MACK
+        auto srcAddr = pk->getSrcAddr();
+        outGateIndex = getRouteGateIndex(srcAddr, destAddr);
     }
+
     if ( numSegments > 1 ) {
         ASSERT(pk->getPacketType() == AGG); // only INC uses segments now
         auto nextSegment = destAddr;
@@ -121,20 +123,25 @@ void Routing::forwardIncoming(Packet *pk)
         currSegment = pk->getSegments(segmentIndex);
         ASSERT(segmentIndex != 0);
         nextSegment = pk->getSegments(segmentIndex - 1);
+        // ! aggPacket's srcAddr may change when resend or collision happen
+        // ! we must make sure in any case the ecmp give the same outGate index
+        auto srcAddr = myAddress + destAddr;
         // ! get the output gate index
         if (currSegment == myAddress) {
-            outGateIndex = getForwardGateIndex(pk, nextSegment); // ! next segment
+            outGateIndex = getRouteGateIndex(srcAddr, nextSegment); // ! next segment
         }
-        else if (pk->getPacketType() == AGG) {
-            outGateIndex = getForwardGateIndex(pk, currSegment); // ! current segment
+        else {
+            outGateIndex = getRouteGateIndex(srcAddr, currSegment); // ! current segment
         }
     }
+
 
     if (pk->getPacketType() == AGG) {
         auto apk = check_and_cast<AggPacket*>(pk);
         auto jobId = apk->getJobId();
         auto seq = apk->getAggSeqNumber();
         auto agtrIndex = apk->getAggregatorIndex();
+        ASSERT(outGateIndex != -1);
         MulticastID mKey = {agtrIndex, outGateIndex};
         recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
         auto it = aggregators.find(agtrIndex);
@@ -189,15 +196,15 @@ void Routing::forwardIncoming(Packet *pk)
         }
         else {
             delete pk;
-            EV_WARN << "The multicast entry doen't exist, it must be deleted by a resend packet." << endl;
+            EV_WARN << "The multicast entry doesn't exist, it must be deleted by a resend packet." << endl;
+            if (!getEnvir()->isExpressMode()) {
+                getParentModule()->bubble("miss multicast entry!");
+            }
         }
 
         return;
     }
 
-    if ( outGateIndex == -1 ) {
-        outGateIndex = getForwardGateIndex(pk);
-    }
     ASSERT(outGateIndex != -1);
     send(pk, "out", outGateIndex);
 }
