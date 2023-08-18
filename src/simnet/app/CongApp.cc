@@ -148,7 +148,7 @@ void CongApp::handleMessage(cMessage *msg)
             resendOldestSeq();
         }
         markSeq = nextSentSeq;
-        scheduleAfter(2*estimatedRTT, RTOTimeout); // we have to repeadedly check, this will be canceled when appState==finished
+        scheduleAfter(2*estimatedRTT, RTOTimeout); // we have to repeadedly check
     } else {
         ConnectionApp::handleMessage(msg);
     }

@@ -8,8 +8,8 @@ enum TcpState_t
 {
     OPEN,
     FIN_WAIT_1, // After send out FIN
-    FIN_WAIT_2, // received FINACK but not FIN
-    TIME_WAIT,
+    FIN_WAIT_2, // received ACK to FIN but not otherside's FIN
+    TIME_WAIT, // received otherside's FIN
     CLOSE_WAIT,
     CLOSED,
     LAST_ACK
