@@ -315,6 +315,7 @@ void CongApp::confirmSeqNumber(const Packet* pk)
                 tcpState = TIME_WAIT;
                 break;
 
+            case FIN_WAIT_1:
             case CLOSE_WAIT: // server sent out FIN and received a FIN(duplicate)
             case CLOSED:
                 break;
