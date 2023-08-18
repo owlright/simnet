@@ -11,7 +11,7 @@ protected:
 
 protected:
     virtual void onReceivedData(Packet* pk) override;
-    virtual void confirmAckNumber(const Packet* pk) override;
+    virtual void resend(TxItem& item) override;
 
 protected:
     struct AggRecord {
@@ -53,8 +53,10 @@ void ParameterServerApp::initialize(int stage)
     }
 }
 
-void ParameterServerApp::onReceivedData(Packet* pk) {
-
+void ParameterServerApp::onReceivedData(Packet* pk)
+{
+    if (localAddr == 399)
+        std::cout << pk->getName() << endl;
     auto apk = check_and_cast<AggPacket*>(pk);
     ASSERT(apk->getJobId() == jobid);
     auto seq = apk->getSeqNumber();
@@ -94,7 +96,8 @@ void ParameterServerApp::onReceivedData(Packet* pk) {
         agged_workers.insert(w);
     }
     if (agged_workers.size() == numWorkers) {
-        EV_DEBUG << "Round " << currentRound << " Seq " << seq << " finished." << endl;
+        if (localAddr == 399)
+        std::cout << "Round " << currentRound << " Seq " << seq << " finished." << endl;
         ASSERT(workers == agged_workers);
         if (tcpState == OPEN) {
             // ! after we send FIN, we are in state CLOSE_WAIT,
@@ -130,18 +133,14 @@ void ParameterServerApp::onReceivedData(Packet* pk) {
     }
 }
 
-void ParameterServerApp::confirmAckNumber(const Packet* pk)
+void ParameterServerApp::resend(TxItem& item)
 {
-    CongApp::confirmAckNumber(pk);
-    auto ackNumber = pk->getAckNumber();
-    // ! if a packet is about to resend, make it to a multicast packet
-    if (txBuffer.find(ackNumber) != txBuffer.end()
-            && txBuffer.at(ackNumber).resend_timer == 0) {
-        auto& item = txBuffer.at(ackNumber);
-        item.pkt->setPacketType(ACK);
-        std::vector<IntAddress> tmp(workers.begin(), workers.end());
-        item.destAddresses = std::move(tmp);
-    }
+    if (localAddr == 399)
+        std::cout << (item.seq / 64 ) << std::endl;
+    std::vector<IntAddress> tmp(workers.begin(), workers.end());
+    item.pkt->setPacketType(ACK);
+    item.destAddresses = std::move(tmp);
+    CongApp::resend(item);
 }
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)

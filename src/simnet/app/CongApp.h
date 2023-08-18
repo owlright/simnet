@@ -82,6 +82,7 @@ protected:
     virtual Packet* createDataPacket(B packetBytes) {
         throw cRuntimeError("you must override this function");
     };
+    virtual void resend(TxItem& item);
 
 protected:
     void sendPendingData();
@@ -158,7 +159,6 @@ public:
 private:
     void connectionDataArrived(Connection *connection, Packet* pk) override;
     void resendOldestSeq();
-    void resend(TxItem& item);
     void sendFirstTime(TxItem& item);
     B inflightBytes() {return nextSentSeq - nextAskedSeq;};
 };
