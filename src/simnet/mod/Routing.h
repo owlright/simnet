@@ -1,4 +1,5 @@
 #include <map>
+#include <unordered_set>
 #include <omnetpp.h>
 #include "../mod/Packet_m.h"
 #include "simnet/mod/AggPacket_m.h"
@@ -87,6 +88,7 @@ private:
 
     // ! common forwarding functions
     void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
+    void broadcast(Packet* pk, const std::unordered_set<int>& outGateIndexes);
     void forwardIncoming(Packet* pk);
     int getForwardGateIndex(const Packet* pk, IntAddress nextAddr=-1);
 
@@ -101,7 +103,7 @@ private:
     [[deprecated]] Packet* aggregate(AggPacket* pk);
     [[deprecated]] bool addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree);
     [[deprecated]] bool tryAddSeqEntry(const Packet* pk);
-    void recordIncomingPorts(MulticastID& groupSeqKey, int port);
+    [[deprecated]] void recordIncomingPorts(MulticastID& groupSeqKey, int port);
 
 protected:
     virtual void initialize(int stage) override;

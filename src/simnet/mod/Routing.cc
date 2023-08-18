@@ -64,6 +64,16 @@ void Routing::broadcast(Packet *pk, const std::vector<int>& outGateIndexes) {
     delete pk;
 }
 
+void Routing::broadcast(Packet* pk, const std::unordered_set<int>& outGateIndexes)
+{
+    for (auto& gateIndex : outGateIndexes ) {
+        auto packet = pk->dup();
+        EV_INFO << "Forwarding broadcast packet " << pk->getName() << " on gate index " << gateIndex << endl;
+        send(packet, "out", gateIndex);
+    }
+    delete pk;
+}
+
 std::vector<int> Routing::getReversePortIndexes(const MulticastID& mKey) const
 {
     if (incomingPortIndexes.find(mKey) == incomingPortIndexes.end())
@@ -135,40 +145,40 @@ void Routing::forwardIncoming(Packet *pk)
         }
     }
 
-
     if (pk->getPacketType() == AGG) {
         auto apk = check_and_cast<AggPacket*>(pk);
         auto jobId = apk->getJobId();
         auto seq = apk->getAggSeqNumber();
         auto agtrIndex = apk->getAggregatorIndex();
-        ASSERT(outGateIndex != -1);
-        MulticastID mKey = {agtrIndex, outGateIndex};
-        recordIncomingPorts(mKey, pk->getArrivalGate()->getIndex());
-        auto it = aggregators.find(agtrIndex);
-        if (pk->getResend()) {
-            if (it != aggregators.end()) {
-                auto agtr = it->second;
-                if (agtr->checkAdmission(apk)) {
-                    aggregators.erase(agtrIndex);
+        // ASSERT(outGateIndex != -1);
+        // MulticastID mKey = {agtrIndex, outGateIndex};
+        // ! No matter what, we have to allocate an aggregator for it, becasuse at least we need
+        // ! the reverse multicast ports
+        if (!pk->getResend()) {
+            if (aggregators.find(agtrIndex) == aggregators.end()
+                || aggregators.at(agtrIndex)->checkAdmission(apk))
+            {
+                if (aggregators.find(agtrIndex) == aggregators.end()) {
+                    aggregators[agtrIndex] = new Aggregator(apk);
+                    if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
+                        // the first time we see this group
+                        groupMetricTable[jobId] = new jobMetric(this, jobId);
+                        groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
+                    }
                 }
+            } else {
+                EV_DEBUG << "collision happen on destAddr " << destAddr << " seq " << seq << endl;
+                apk->setCollision(true);
+                apk->setResend(true);
             }
-            incomingPortIndexes.erase(mKey);
-        }
-        else if (currSegment == myAddress) {
-            if (it == aggregators.end() || it->second->checkAdmission(apk)) {
-                if (aggregators.find(agtrIndex) == aggregators.end())
-                    aggregators[agtrIndex] = new Aggregator();
-                if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
-                    // the first time we see this group
-                    groupMetricTable[jobId] = new jobMetric(this, jobId);
-                    groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
-                }
-                ASSERT(aggregators.find(agtrIndex) != aggregators.end());
-                auto agtr = aggregators.at(agtrIndex);
+            ASSERT(aggregators.find(agtrIndex) != aggregators.end());
+            auto agtr = aggregators.at(agtrIndex);
+            agtr->recordIncomingPorts(apk, outGateIndex);
+            if (currSegment == myAddress && !apk->getResend()) {
                 pk = agtr->doAggregation(apk);
                 if (pk != nullptr) {
                     ASSERT(pk == apk);
-                    aggregators.erase(agtrIndex);
+                    // aggregators.erase(agtrIndex);
                     ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
                     groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
                 }
@@ -176,24 +186,42 @@ void Routing::forwardIncoming(Packet *pk)
                     return;
                 }
             }
-            else {
-                EV_DEBUG << "collision happen on destAddr " << destAddr << " seq " << seq << endl;
-                apk->setCollision(true);
-                apk->setResend(true);
+        }
+        else {
+            if (aggregators.find(agtrIndex) != aggregators.end()) {
+                auto agtr = aggregators.at(agtrIndex);
+                if ( agtr->checkAdmission(apk) ) { // ! can be false if resend multiple times
+                    // ! if aggregator[agtrIndex] belongs to me, which means the aggregator is stuck
+                    aggregators.erase(agtrIndex);
+                }
             }
         }
-        if (currSegment == myAddress && pk != nullptr)
+
+        if (currSegment == myAddress && pk != nullptr) {
+            // ! Even if it's a resend packet, do not forget to do this
             apk->setSegmentsLeft(pk->getSegmentsLeft() - 1);
+        }
     }
     else if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
         auto apk = check_and_cast<AggPacket*>(pk);
         auto agtrIndex = apk->getAggregatorIndex();
-        MulticastID mKey = {agtrIndex, apk->getArrivalGate()->getIndex()};
-        if (incomingPortIndexes.find(mKey) != incomingPortIndexes.end()) {
-            auto outGateIndexes = incomingPortIndexes.at(mKey);
-            incomingPortIndexes.erase(mKey);
-            broadcast(pk, outGateIndexes);
+        if (aggregators.find(agtrIndex) != aggregators.end()) {
+            auto agtr = aggregators.at(agtrIndex);
+            if (agtr->checkAdmission(apk)) {
+                auto outGateIndexes = agtr->getOutGateIndexes(apk->getArrivalGate()->getIndex());
+                agtr->multicastCount++;
+                broadcast(pk, outGateIndexes);
+                if (agtr->multicastCount == agtr->getMulticastEntryNumber()) {
+                    aggregators.erase(agtrIndex);
+                }
+            }
         }
+        // MulticastID mKey = {agtrIndex, apk->getArrivalGate()->getIndex())};
+        // if (incomingPortIndexes.find(mKey) != incomingPortIndexes.end()) {
+        //     auto outGateIndexes = incomingPortIndexes.at(mKey);
+        //     incomingPortIndexes.erase(mKey);
+        //     broadcast(pk, outGateIndexes);
+        // }
         else {
             delete pk;
             EV_WARN << "The multicast entry doesn't exist, it must be deleted by a resend packet." << endl;
@@ -209,69 +237,69 @@ void Routing::forwardIncoming(Packet *pk)
     send(pk, "out", outGateIndex);
 }
 
-int Routing::getForwardGateIndex(const Packet* pk, IntAddress nextAddr)
-{
-    // route this packet which may be:
-    // 1. unicast packet
-    // 2. agg packet but not ask for aggregation(segment!= myAddress) or it's a resend
-    // 3. finished aggregated packet
-    // 4. agg packet failed to be aggregated(hash collision), which is also a resend packet
-    int outGateIndex = -1;
-    auto srcAddr = pk->getSrcAddr();
-    auto destAddr = pk->getDestAddr();
-    if (nextAddr != -1 && pk->getPacketType() == AGG) {
-        // ! aggPacket's srcAddr may change when resend or collision happen
-        // ! we must make sure in any case the ecmp give the same outGate index
-        srcAddr = myAddress + destAddr;
-        // ! route to next router, otherwise ecmp may break this
-        destAddr = nextAddr;
-    }
-    // 1. unicast packet
-    // 2. agg packet but not ask for aggregation(segment!= myAddress) or it's a resend
-    outGateIndex = getRouteGateIndex(srcAddr, destAddr);
-    EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-    return outGateIndex;
-}
+// int Routing::getForwardGateIndex(const Packet* pk, IntAddress nextAddr)
+// {
+//     // route this packet which may be:
+//     // 1. unicast packet
+//     // 2. agg packet but not ask for aggregation(segment!= myAddress) or it's a resend
+//     // 3. finished aggregated packet
+//     // 4. agg packet failed to be aggregated(hash collision), which is also a resend packet
+//     int outGateIndex = -1;
+//     auto srcAddr = pk->getSrcAddr();
+//     auto destAddr = pk->getDestAddr();
+//     if (nextAddr != -1 && pk->getPacketType() == AGG) {
+//         // ! aggPacket's srcAddr may change when resend or collision happen
+//         // ! we must make sure in any case the ecmp give the same outGate index
+//         srcAddr = myAddress + destAddr;
+//         // ! route to next router, otherwise ecmp may break this
+//         destAddr = nextAddr;
+//     }
+//     // 1. unicast packet
+//     // 2. agg packet but not ask for aggregation(segment!= myAddress) or it's a resend
+//     outGateIndex = getRouteGateIndex(srcAddr, destAddr);
+//     EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
+//     return outGateIndex;
+// }
 
-Packet* Routing::aggregate(AggPacket *apk)
-{
-    auto agtrIndex = apk->getAggregatorIndex();
-    if (aggregators.at(agtrIndex) == nullptr) { // lazy initialization to save memory
-        ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
-        if (!apk->getResend())
-            aggregators[agtrIndex] = new Aggregator();
-        else  // ! a resend packet mustn't get an idle aggregator
-            return apk;
-    }
-    auto entry = aggregators.at(agtrIndex);
-    if (entry->checkAdmission(apk))
-    {
-        return entry->doAggregation(apk);
-    }
-    else {
-        // this means collision happened;
-        // set these fields before forwarding
-        apk->setCollision(true);
-        apk->setResend(true); // TODO I don't know why ATP set this, maybe prevent switch 1 do aggregation, but why not just check collision?
-        return apk;
-    }
-}
+// Packet* Routing::aggregate(AggPacket *apk)
+// {
+//     auto agtrIndex = apk->getAggregatorIndex();
+//     if (aggregators.at(agtrIndex) == nullptr) { // lazy initialization to save memory
+//         ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
+//         if (!apk->getResend())
+//             aggregators[agtrIndex] = new Aggregator();
+//         else  // ! a resend packet mustn't get an idle aggregator
+//             return apk;
+//     }
+//     auto entry = aggregators.at(agtrIndex);
+//     if (entry->checkAdmission(apk))
+//     {
+//         return entry->doAggregation(apk);
+//     }
+//     else {
+//         // this means collision happened;
+//         // set these fields before forwarding
+//         apk->setCollision(true);
+//         apk->setResend(true); // TODO I don't know why ATP set this, maybe prevent switch 1 do aggregation, but why not just check collision?
+//         return apk;
+//     }
+// }
 
-void Routing::recordIncomingPorts(MulticastID& addrSeqKey, int port)
-{
-    // TODO maybe use unordered_set?
-    bool found = false;
-    for (auto& p: incomingPortIndexes[addrSeqKey])
-    {
-        if (port == p)
-        {
-            found = true;
-            break;
-        }
-    }
-    if (!found)
-        incomingPortIndexes[addrSeqKey].push_back(port);
-}
+// void Routing::recordIncomingPorts(MulticastID& addrSeqKey, int port)
+// {
+//     // TODO maybe use unordered_set?
+//     bool found = false;
+//     for (auto& p: incomingPortIndexes[addrSeqKey])
+//     {
+//         if (port == p)
+//         {
+//             found = true;
+//             break;
+//         }
+//     }
+//     if (!found)
+//         incomingPortIndexes[addrSeqKey].push_back(port);
+// }
 
 void Routing::handleMessage(cMessage *msg)
 {

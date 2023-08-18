@@ -32,20 +32,12 @@ Packet *Aggregator::doAggregation(AggPacket *pk)
     // ! do not deal with the resend packet,
     // ! the aggregated result in this aggregator is just discarded
     ASSERT (!pk->getResend());
-
+    // ! checkAdmission will avoid this case happen
+    ASSERT(pk->getJobId() == jobId && pk->getAggSeqNumber() == seqNumber);
     // * first packet, store infomation
     auto arrivedAckNumber = pk->getAckNumber();
-    if (counter == 0) {
-        reset();
-        jobId = pk->getJobId();
-        seqNumber = pk->getSeqNumber();
+    if (arrivedAckNumber < ackNumber) {
         ackNumber = arrivedAckNumber;
-        timestamp = pk->getArrivalTime();
-    } else {// ! checkAdmission will avoid this case happen
-        ASSERT(pk->getJobId() == jobId && pk->getSeqNumber() == seqNumber);
-        if (arrivedAckNumber < ackNumber) {
-            ackNumber = arrivedAckNumber;
-        }
     }
 
     // * do aggregation, no real behaviour, just update some state
@@ -65,15 +57,25 @@ Packet *Aggregator::doAggregation(AggPacket *pk)
 
 }
 
-Aggregator::~Aggregator()
-{
-    reset();
-}
-
 bool Aggregator::checkAdmission(const AggPacket *pk) const
 {
-    if (pk->getJobId() == jobId && pk->getSeqNumber() == seqNumber)
+    if (pk->getJobId() == jobId && pk->getAggSeqNumber() == seqNumber)
         return true;
 
     return false;
+}
+
+Aggregator::Aggregator(const AggPacket *pk)
+{
+    jobId = pk->getJobId();
+    seqNumber = pk->getAggSeqNumber();
+    ackNumber = pk->getAckNumber();
+    timestamp = pk->getArrivalTime();
+    counter = 0;
+    ecn = false;
+}
+
+void Aggregator::recordIncomingPorts(const AggPacket *pk, int outputGateIndex)
+{
+    incomingPortIndexes[outputGateIndex].insert(pk->getArrivalGate()->getIndex());
 }

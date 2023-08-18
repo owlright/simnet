@@ -8,14 +8,20 @@ class Aggregator
 {
 public:
     virtual Packet* doAggregation(AggPacket* pk);
-    virtual ~Aggregator();
 
-    // 1. aggregator is in use and jobid, seq is the same
-    // 2. aggregator is empty
-    // ! when the packet is a resend packet, leave it to doAggregation
     bool checkAdmission(const AggPacket* pk) const;
-    const int getJobId() const {return jobId;}
-    const int getSeqNumber() const {return seqNumber;}
+    int getJobId() const {return jobId;}
+    int getSeqNumber() const {return seqNumber;}
+    Aggregator(const AggPacket* pk);
+    void recordIncomingPorts(const AggPacket* pk, int outputGateIndex);
+    const std::unordered_set<int>& getOutGateIndexes(int inGateIndex) {
+        ASSERT(incomingPortIndexes.find(inGateIndex) != incomingPortIndexes.end());
+        return incomingPortIndexes.at(inGateIndex);
+    }
+    size_t getMulticastEntryNumber() {
+        return incomingPortIndexes.size();
+    }
+    int multicastCount{0};
 
 protected:
     virtual void reset();
@@ -32,4 +38,5 @@ protected:
 
 private:
     simtime_t accumulatedTime;
+    std::unordered_map<int, std::unordered_set<int> > incomingPortIndexes;
 };
