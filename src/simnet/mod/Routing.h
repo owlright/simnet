@@ -98,7 +98,7 @@ private:
     // ! for aggregation
     std::vector<int> getReversePortIndexes(const MulticastID& groupSeqKey) const;
     [[deprecated]] Packet* doAggregation(Packet* pk);
-    Packet* aggregate(AggPacket* pk);
+    [[deprecated]] Packet* aggregate(AggPacket* pk);
     [[deprecated]] bool addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree);
     [[deprecated]] bool tryAddSeqEntry(const Packet* pk);
     void recordIncomingPorts(MulticastID& groupSeqKey, int port);

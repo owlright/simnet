@@ -23,6 +23,7 @@ IntAddress GlobalManager::getAddr(cTopology::Node *node) const
 
 int GlobalManager::getNodeId(IntAddress addr) const
 {
+    ASSERT(addr2NodeId.find(addr) != addr2NodeId.end());
     int nodeId = addr2NodeId.at(addr);
     return nodeId;
 }

@@ -108,24 +108,26 @@ void Routing::forwardIncoming(Packet *pk)
 {
     auto destAddr = pk->getDestAddr();
     auto currSegment = destAddr;
-    auto nextSegment = destAddr;
     auto numSegments = pk->getSegmentsLeft();
-    if ( numSegments > 0) {
+    int outGateIndex = -1;
+
+    if (numSegments == 1) {
+        ASSERT(pk->getSegments(0) == destAddr);
+    }
+    if ( numSegments > 1 ) {
+        ASSERT(pk->getPacketType() == AGG); // only INC uses segments now
+        auto nextSegment = destAddr;
         int segmentIndex = numSegments - 1;
         currSegment = pk->getSegments(segmentIndex);
+        ASSERT(segmentIndex != 0);
         nextSegment = pk->getSegments(segmentIndex - 1);
-    }
-
-    // ! get the output gate index
-    int outGateIndex = -1;
-    if (currSegment == myAddress) {
-        outGateIndex = getForwardGateIndex(pk, nextSegment); // ! next segment
-    }
-    else if (pk->getPacketType() == AGG) {
-        outGateIndex = getForwardGateIndex(pk, currSegment); // ! current segment
-    }
-    else if (pk->getPacketType() != MACK){
-        outGateIndex = getForwardGateIndex(pk);
+        // ! get the output gate index
+        if (currSegment == myAddress) {
+            outGateIndex = getForwardGateIndex(pk, nextSegment); // ! next segment
+        }
+        else if (pk->getPacketType() == AGG) {
+            outGateIndex = getForwardGateIndex(pk, currSegment); // ! current segment
+        }
     }
 
     if (pk->getPacketType() == AGG) {
@@ -154,11 +156,13 @@ void Routing::forwardIncoming(Packet *pk)
                     groupMetricTable[jobId] = new jobMetric(this, jobId);
                     groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
                 }
+                ASSERT(aggregators.find(agtrIndex) != aggregators.end());
                 auto agtr = aggregators.at(agtrIndex);
                 pk = agtr->doAggregation(apk);
                 if (pk != nullptr) {
                     ASSERT(pk == apk);
                     aggregators.erase(agtrIndex);
+                    ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
                     groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
                 }
                 else {
@@ -191,6 +195,10 @@ void Routing::forwardIncoming(Packet *pk)
         return;
     }
 
+    if ( outGateIndex == -1 ) {
+        outGateIndex = getForwardGateIndex(pk);
+    }
+    ASSERT(outGateIndex != -1);
     send(pk, "out", outGateIndex);
 }
 
