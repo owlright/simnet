@@ -279,16 +279,10 @@ void CongApp::confirmAckNumber(const Packet* pk)
 
 void CongApp::confirmSeqNumber(const Packet* pk)
 {
-    // * measure something
-    auto sampleRTT = simTime() - SimTime(pk->getStartTime());
-    emit(rttSignal, sampleRTT);
-    currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
-    estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
     auto seq = pk->getSeqNumber();
 
     // ! transmit tcpState
     if (seq == nextAckSeq) {
-        emit(cwndSignal, cong->getcWnd());
         switch (tcpState) {
             case CLOSE_WAIT: // ! case 1: duplicate FINs arrive server
                 break;
@@ -348,6 +342,16 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         tcpState = OPEN;
     }
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
+
+    // * do something every RTT
+    if (seq > 0 && seq == nextAckSeq) {
+        auto sampleRTT = simTime() - SimTime(pk->getStartTime());
+        emit(rttSignal, sampleRTT);
+        currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
+        estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
+        emit(cwndSignal, cong->getcWnd());
+    }
+
     if (seq >= getNextAckSeq()) { // we get new seqs
         onReceivedData(pk);
     } else {
