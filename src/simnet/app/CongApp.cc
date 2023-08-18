@@ -342,6 +342,8 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         ASSERT(tcpState==CLOSED);
         tcpState = OPEN;
     }
+    if (localAddr == 395 && localPort == 2000)
+        std::cout << localAddr << " " << pk->getName() << std::endl;
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     // * do something every RTT
@@ -356,7 +358,10 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     if (seq >= getNextAckSeq()) { // we get new seqs
         onReceivedData(pk);
     } else {
-        confirmAckNumber(pk);
+        if (localAddr==398 && localPort==3000) {
+            std::cout << localAddr << " duplicate seq " << pk->getName() << std::endl;
+        }
+        // confirmAckNumber(pk);
         delete pk; // duplicate seqs, just delete it
     }
     // ! only client need to ACK the FIN seq

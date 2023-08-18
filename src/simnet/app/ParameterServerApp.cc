@@ -55,12 +55,13 @@ void ParameterServerApp::initialize(int stage)
 
 void ParameterServerApp::onReceivedData(Packet* pk)
 {
-    if (localAddr == 399)
-        std::cout << pk->getName() << endl;
+
     auto apk = check_and_cast<AggPacket*>(pk);
     ASSERT(apk->getJobId() == jobid);
     auto seq = apk->getSeqNumber();
     auto round = apk->getRound();
+    if (localAddr == 398 && apk->getAckNumber() >= 20224)
+        std::cout << "now: " << simTime() <<" "<< pk->getName() << endl;
     if (round > currentRound) {
         EV_DEBUG << "Round: " << round << endl;
         ASSERT(aggRecord.empty());
@@ -87,7 +88,6 @@ void ParameterServerApp::onReceivedData(Packet* pk)
         // ! we see the resend packet for the first time, clear the record
         record.success = false;
         record.workers.clear();
-        record.askedSeqNumber = arrivedAckNumber;
     }
     record.ecn |= apk->getECN();
     auto& agged_workers = record.workers;
@@ -96,8 +96,8 @@ void ParameterServerApp::onReceivedData(Packet* pk)
         agged_workers.insert(w);
     }
     if (agged_workers.size() == numWorkers) {
-        if (localAddr == 399)
-        std::cout << "Round " << currentRound << " Seq " << seq << " finished." << endl;
+        if (localAddr == 398)
+        std::cout << "Round " << currentRound << " Seq " << seq << " finished. " << getNextAskedSeq() << endl;
         ASSERT(workers == agged_workers);
         if (tcpState == OPEN) {
             // ! after we send FIN, we are in state CLOSE_WAIT,
@@ -135,8 +135,8 @@ void ParameterServerApp::onReceivedData(Packet* pk)
 
 void ParameterServerApp::resend(TxItem& item)
 {
-    if (localAddr == 399)
-        std::cout << (item.seq / 64 ) << std::endl;
+    if (localAddr == 398)
+        std::cout << "PS resend " << item.seq << std::endl;
     std::vector<IntAddress> tmp(workers.begin(), workers.end());
     item.pkt->setPacketType(ACK);
     item.destAddresses = std::move(tmp);
