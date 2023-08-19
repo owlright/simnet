@@ -70,7 +70,9 @@ void WorkerApp::prepareTxBuffer()
 
 void WorkerApp::onReceivedNewPacket(Packet* pk)
 {
-    ASSERT(pk->getRound() == currentRound);
+    auto apk = check_and_cast<AggPacket*>(pk);
+    ASSERT(apk->getJobId() == jobId);
+    ASSERT(apk->getRound() == currentRound);
     if (pk->getAckNumber() - roundStartSeq == flowSize) {
         onRoundStop();
     }
