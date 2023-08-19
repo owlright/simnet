@@ -39,6 +39,7 @@ public:
         int resend_timer{0};
         SeqNumber seq;
         B pktSize;
+        simtime_t sendTime;
         Packet* pkt;
         std::vector<IntAddress> destAddresses{};
         TxItem() {
@@ -61,7 +62,7 @@ public:
             pkt = other.pkt;
         }
     };
-    friend std::ostream& operator<<(std::ostream& os, const TxItem item) {
+    friend std::ostream& operator<<(std::ostream& os, const TxItem& item) {
         os << item.seq << ",";
         return os;
     }
@@ -144,7 +145,7 @@ private:
 //    B confirmedRedundantBytes{0}; // bytes resend more than once
     simtime_t estimatedRTT;
 
-    SeqNumber markSeq{0};
+    // SeqNumber markSeq{0};
 
     simtime_t currentBaseRTT{0};
 
@@ -157,7 +158,7 @@ public:
 
 private:
     void connectionDataArrived(Connection *connection, Packet* pk) override;
-    void resendTimeoutSeq();
+    void resendTimeoutSeqs();
     void sendFirstTime(TxItem& item);
     void setBeforeSentOut(TxItem& item);
     B inflightBytes() {return nextSentSeq - nextAskedSeq;};

@@ -341,10 +341,14 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
 
     // * do something every RTT
     if (seq > 0 && seq == nextAckSeq) {
-        auto sampleRTT = simTime() - SimTime(pk->getStartTime());
-        emit(rttSignal, sampleRTT);
+        auto ackSeq = pk->getAckNumber();
+        auto it = txBuffer.lower_bound(ackSeq - messageLength);
+        ASSERT(it != txBuffer.end());
+        auto& item = it->second;
+        auto sampleRTT = simTime() - item.sendTime;
         currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
         estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
+        emit(rttSignal,  sampleRTT);
         emit(cwndSignal, cong->getcWnd());
     }
 
