@@ -355,7 +355,7 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         emit(cwndSignal, cong->getcWnd());
     }
 
-    if (seq >= getNextAckSeq()) { // we get new seqs
+    if (seq >= getNextAckSeq() && rxBuffer.find(seq) == rxBuffer.end()) { // we get new seqs
         onReceivedNewPacket(pk);
     } else {
         if (localAddr==398 && localPort==3000) {
@@ -422,13 +422,9 @@ void CongApp::insertRxBuffer(Packet* pk)
     }
     else if (seq > nextAckSeq && tcpState != CLOSED) {
         // ! when tcpState == CLOSED, if more resend packets with FIN arrive, don't store them
-        if (rxBuffer.find(seq) == rxBuffer.end()) {
-            // ! these seqs arrive too early, store them for now
-            rxBuffer[seq] = pk;
-        }
-        else {
-            delete pk;
-        }
+        // ! these seqs arrive too early, store them for now
+        ASSERT(rxBuffer.find(seq) == rxBuffer.end());
+        rxBuffer[seq] = pk;
     }
 }
 
