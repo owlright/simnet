@@ -144,10 +144,10 @@ void CongApp::handleMessage(cMessage *msg)
             onConnectionClose();
             return;
         }
-        else if (markSeq == nextSentSeq) {
-            resendTimeoutSeq();
+        else {
+            resendTimeoutSeqs();
         }
-        markSeq = nextSentSeq;
+        // markSeq = nextSentSeq;
         scheduleAfter(2*estimatedRTT, RTOTimeout); // we have to repeadedly check
     } else {
         ConnectionApp::handleMessage(msg);
@@ -172,7 +172,7 @@ void CongApp::sendPendingData()
         }
         else {
             tx_item.is_sent = true;
-            markSeq = nextSentSeq; // ! if markSeq not change for a RTOTimeout, we resend the oldest not acked seq
+            // markSeq = nextSentSeq; // ! if markSeq not change for a RTOTimeout, we resend the oldest not acked seq
             nextSentSeq = tx_item.seq + pktSize;
         }
         ASSERT(!tx_item.is_resend_already);
@@ -191,6 +191,7 @@ void CongApp::sendPendingData()
             rescheduleAfter(2*estimatedRTT, RTOTimeout);
         }
     }
+    rescheduleAfter(estimatedRTT, RTOTimeout);
 }
 
 void CongApp::resendTimeoutSeqs()
@@ -198,6 +199,8 @@ void CongApp::resendTimeoutSeqs()
     for (auto& [seq, item] : txBuffer) {
         if (item.is_sent && simTime() - item.sendTime > 2*estimatedRTT) {
             resend(item);
+        } else {
+            break;
         }
     }
 }
@@ -235,10 +238,6 @@ void CongApp::sendFirstTime(TxItem& item)
     EV_DEBUG << pk << endl;
     connection->send(pk->dup());
     cong->onSendData(item.seq, item.pktSize);
-    auto seq = pk->getSeqNumber();
-    if (seq == 0) {
-        scheduleAfter(estimatedRTT, RTOTimeout);
-    }
 }
 
 void CongApp::confirmAckNumber(const Packet* pk)
