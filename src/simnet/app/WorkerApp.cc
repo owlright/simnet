@@ -73,10 +73,15 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
     auto apk = check_and_cast<AggPacket*>(pk);
     ASSERT(apk->getJobId() == jobId);
     ASSERT(apk->getRound() == currentRound);
-    if (pk->getAckNumber() - roundStartSeq == flowSize) {
+    CongApp::onReceivedNewPacket(pk);
+    // ! pk is deleted here
+    if (getNextAskedSeq() - roundStartSeq == flowSize && rxBuffer.empty()) {
+        std::set<IntAddress> watchAddrs {136,270,139,657,526,140,525,658,652};
+        if (watchAddrs.find(localAddr)!=watchAddrs.end()) {
+            std::cout << localAddr << " round " << currentRound << " finished." << std::endl;
+        }
         onRoundStop();
     }
-    CongApp::onReceivedNewPacket(pk);
 }
 
 Packet* WorkerApp::createDataPacket(B packetBytes)
