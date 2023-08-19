@@ -166,25 +166,25 @@ void Routing::forwardIncoming(Packet *pk)
                         groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
                     }
                 }
+                ASSERT(aggregators.find(agtrIndex) != aggregators.end());
+                auto agtr = aggregators.at(agtrIndex);
+                agtr->recordIncomingPorts(apk, outGateIndex);
+                if (currSegment == myAddress) {
+                    pk = agtr->doAggregation(apk);
+                    if (pk != nullptr) {
+                        ASSERT(pk == apk);
+                        // aggregators.erase(agtrIndex);
+                        ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
+                        groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
+                    }
+                    else {
+                        return;
+                    }
+                }
             } else {
                 EV_DEBUG << "collision happen on destAddr " << destAddr << " seq " << seq << endl;
                 apk->setCollision(true);
                 apk->setResend(true);
-            }
-            ASSERT(aggregators.find(agtrIndex) != aggregators.end());
-            auto agtr = aggregators.at(agtrIndex);
-            agtr->recordIncomingPorts(apk, outGateIndex);
-            if (currSegment == myAddress && !apk->getResend()) {
-                pk = agtr->doAggregation(apk);
-                if (pk != nullptr) {
-                    ASSERT(pk == apk);
-                    // aggregators.erase(agtrIndex);
-                    ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
-                    groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
-                }
-                else {
-                    return;
-                }
             }
         }
         else {
