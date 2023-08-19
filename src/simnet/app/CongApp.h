@@ -107,7 +107,6 @@ protected:
 
     const simtime_t& getCurrentBaseRTT() const {return currentBaseRTT;};
     const double& getMaxSendingRate() const {return bandwidth;}
-    void setPacketBeforeSentOut(Packet* pk);
 
 protected:
     std::vector<IntAddress> destAddresses;
@@ -158,7 +157,8 @@ public:
 
 private:
     void connectionDataArrived(Connection *connection, Packet* pk) override;
-    void resendOldestSeq();
+    void resendTimeoutSeq();
     void sendFirstTime(TxItem& item);
+    void setBeforeSentOut(TxItem& item);
     B inflightBytes() {return nextSentSeq - nextAskedSeq;};
 };

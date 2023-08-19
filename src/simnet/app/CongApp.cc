@@ -32,7 +32,7 @@ void CongApp::onConnectionClose()
     resetState();
 }
 
-void CongApp::setPacketBeforeSentOut(Packet* pk)
+void CongApp::setBeforeSentOut(TxItem& item)
 {
     auto dest_addr = pk->getDestAddr();
     auto seq = pk->getSeqNumber();
@@ -145,7 +145,7 @@ void CongApp::handleMessage(cMessage *msg)
             return;
         }
         else if (markSeq == nextSentSeq) {
-            resendOldestSeq();
+            resendTimeoutSeq();
         }
         markSeq = nextSentSeq;
         scheduleAfter(2*estimatedRTT, RTOTimeout); // we have to repeadedly check
@@ -156,13 +156,7 @@ void CongApp::handleMessage(cMessage *msg)
 
 void CongApp::sendPendingData()
 {
-    // if (last_oldestNotAckedSeq == oldestNotAckedSeq)
-    //     resendOldestSeq();
-
-    // ASSERT(!txBuffer.empty());
     auto tx_item_it = txBuffer.begin();
-    // auto pkt = tx_item.pkt->dup();
-    // auto pktSize = pkt->getByteLength();
     while (tx_item_it != txBuffer.end() && cong->getcWnd() - inflightBytes() >= tx_item_it->second.pktSize) {
         auto& tx_item = tx_item_it->second;
         auto pktSize = tx_item.pktSize;
@@ -199,12 +193,12 @@ void CongApp::sendPendingData()
     }
 }
 
-void CongApp::resendOldestSeq()
+void CongApp::resendTimeoutSeqs()
 {
-    if (!txBuffer.empty()) {
-        auto item = txBuffer.begin()->second;
-        ASSERT(item.is_sent);
-        resend(item);
+    for (auto& [seq, item] : txBuffer) {
+        if (item.is_sent && simTime() - item.sendTime > 2*estimatedRTT) {
+            resend(item);
+        }
     }
 }
 
@@ -212,18 +206,18 @@ void CongApp::resend(TxItem& item)
 {
     ASSERT(item.is_sent);
     if (item.destAddresses.empty()) {
-        auto pk = item.pkt->dup();
+        auto pk = item.pkt;
         pk->setResend(true);
-        setPacketBeforeSentOut(pk);
-        connection->send(pk);
+        setBeforeSentOut(item);
+        connection->send(pk->dup());
     }
     else {
         for (auto& dst:item.destAddresses) {
-            auto pk = item.pkt->dup();
+            auto pk = item.pkt;
             pk->setDestAddr(dst);
             pk->setResend(true);
-            setPacketBeforeSentOut(pk);
-            connection->send(pk);
+            setBeforeSentOut(item);
+            connection->send(pk->dup());
         }
     }
 
@@ -236,10 +230,10 @@ void CongApp::resend(TxItem& item)
 void CongApp::sendFirstTime(TxItem& item)
 {
     ASSERT(item.destAddresses.empty());
-    auto pk = item.pkt->dup();
-    setPacketBeforeSentOut(pk);
+    auto pk = item.pkt;
+    setBeforeSentOut(item);
     EV_DEBUG << pk << endl;
-    connection->send(pk);
+    connection->send(pk->dup());
     cong->onSendData(item.seq, item.pktSize);
     auto seq = pk->getSeqNumber();
     if (seq == 0) {
