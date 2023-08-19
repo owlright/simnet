@@ -76,7 +76,7 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
         // ! we see this packet for the first time(it may be aggregated or the first resend packet)
         aggRecord[seq].seqNumber = getNextSeq();
         aggRecord[seq].askedSeqNumber = arrivedAckNumber;
-        incrementNextSeqBy(64);
+        incrementNextSeqBy(messageLength);
     }
     else {
         if (arrivedAckNumber < aggRecord.at(seq).askedSeqNumber) {
@@ -151,7 +151,7 @@ AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
             packet->setFIN(true);
     }
 
-    packet->setByteLength(64);
+    packet->setByteLength(messageLength);
     packet->setDestPort(2000);
     // copy pk's fields
     packet->setJobId(pk->getJobId());
