@@ -60,8 +60,8 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     ASSERT(apk->getJobId() == jobid);
     auto seq = apk->getSeqNumber();
     auto round = apk->getRound();
-    if (localAddr == 398 && apk->getAckNumber() >= 20224)
-        std::cout << "now: " << simTime() <<" "<< pk->getName() << endl;
+//    if (localAddr == 523)
+//        std::cout << simTime() << " " << localAddr << " " << pk->getName() << " " << pk->getRound() << endl;
     if (round > currentRound) {
         EV_DEBUG << "Round: " << round << endl;
         ASSERT(aggRecord.empty());
@@ -96,7 +96,7 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
         agged_workers.insert(w);
     }
     if (agged_workers.size() == numWorkers) {
-        if (localAddr == 398)
+        if (localAddr == 523)
         std::cout << "Round " << currentRound << " Seq " << seq << " finished. " << getNextAskedSeq() << endl;
         ASSERT(workers == agged_workers);
         if (tcpState == OPEN) {
@@ -135,8 +135,8 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
 
 void ParameterServerApp::resend(TxItem& item)
 {
-    if (localAddr == 398)
-        std::cout << "PS resend " << item.seq << std::endl;
+    if (localAddr == 523)
+        std::cout << simTime() << " PS resend " << item.seq << std::endl;
     std::vector<IntAddress> tmp(workers.begin(), workers.end());
     item.pkt->setPacketType(ACK);
     item.destAddresses = std::move(tmp);

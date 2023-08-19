@@ -34,6 +34,11 @@ void CongApp::onConnectionClose()
 
 void CongApp::setBeforeSentOut(TxItem& item)
 {
+
+    auto pk = item.pkt;
+    if (!pk->getResend() && localAddr==523 && localPort==3000) {
+        std::cout << simTime() << " PS send " << item.seq << std::endl;
+    }
     item.sendTime = simTime();
     auto dest_addr = pk->getDestAddr();
     auto seq = pk->getSeqNumber();
@@ -336,12 +341,18 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         ASSERT(tcpState==CLOSED);
         tcpState = OPEN;
     }
-    if (localAddr == 395 && localPort == 2000)
-        std::cout << localAddr << " " << pk->getName() << std::endl;
+//    std::set<IntAddress> watchAddrs {136,270,139,657,526,140,525,658,652};
+    std::set<IntAddress> watchAddrs {525};
+    if (watchAddrs.find(localAddr)!=watchAddrs.end() && localPort == 2000) {
+        std::cout << simTime() << " " << localAddr << " receives " << pk->getName() << " wants " << nextAckSeq << std::endl;
+    }
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     // * do something every RTT
     if (seq > 0 && seq == nextAckSeq) {
+        if (localAddr==523 && localPort==3000) {
+            std::cout << simTime() << " " << pk->getName() << endl;
+        }
         auto ackSeq = pk->getAckNumber();
         auto it = txBuffer.lower_bound(ackSeq - messageLength);
         ASSERT(it != txBuffer.end());
@@ -432,7 +443,7 @@ void CongApp::setField(Packet* pk)
     pk->setRound(currentRound);
     // pk->setKind(DATA);
     pk->setECN(false);
-    pk->setStartTime(simTime().dbl());
+    // pk->setSendTime(simTime().dbl());
     pk->setTransmitTime(0);
     pk->setQueueTime(0);
 }
