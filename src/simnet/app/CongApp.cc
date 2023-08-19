@@ -34,6 +34,7 @@ void CongApp::onConnectionClose()
 
 void CongApp::setBeforeSentOut(TxItem& item)
 {
+    item.sendTime = simTime();
     auto dest_addr = pk->getDestAddr();
     auto seq = pk->getSeqNumber();
     // ! prepare the packet name
