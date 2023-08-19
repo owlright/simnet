@@ -83,7 +83,6 @@ class Packet extends SegmentRoutingHeader
     // cheating fields
     PacketType packetType;
     int64_t connectionId;
-    double startTime;
     double transmitTime;
     double queueTime;
     //bool isFlowFinished;

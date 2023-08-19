@@ -368,7 +368,6 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, SegmentRoutingHeader& obj
  *     // cheating fields
  *     PacketType packetType;
  *     int64_t connectionId;
- *     double startTime;
  *     double transmitTime;
  *     double queueTime;
  *     //bool isFlowFinished;
@@ -389,7 +388,6 @@ class Packet : public ::SegmentRoutingHeader
     bool ECE = false;
     PacketType packetType = static_cast<PacketType>(-1);
     int64_t connectionId = 0;
-    double startTime = 0;
     double transmitTime = 0;
     double queueTime = 0;
     bool resend = false;
@@ -436,9 +434,6 @@ class Packet : public ::SegmentRoutingHeader
 
     virtual int64_t getConnectionId() const;
     virtual void setConnectionId(int64_t connectionId);
-
-    virtual double getStartTime() const;
-    virtual void setStartTime(double startTime);
 
     virtual double getTransmitTime() const;
     virtual void setTransmitTime(double transmitTime);

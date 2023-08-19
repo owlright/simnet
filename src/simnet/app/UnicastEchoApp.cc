@@ -75,7 +75,7 @@ Packet *EchoApp::createAckPacket(const Packet* const pk)
     packet->setECE(pk->getECN());
     packet->setKind(PacketType::ACK);
     packet->setByteLength(1);
-    packet->setStartTime(pk->getStartTime());
+    // packet->setSendTime(pk->getSendTime());
     packet->setQueueTime(pk->getQueueTime());
     packet->setTransmitTime(pk->getTransmitTime());
     return packet;
