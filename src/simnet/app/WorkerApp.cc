@@ -68,13 +68,13 @@ void WorkerApp::prepareTxBuffer()
     }
 }
 
-void WorkerApp::onReceivedData(Packet* pk)
+void WorkerApp::onReceivedNewPacket(Packet* pk)
 {
     ASSERT(pk->getRound() == currentRound);
     if (pk->getAckNumber() - roundStartSeq == flowSize) {
         onRoundStop();
     }
-    CongApp::onReceivedData(pk);
+    CongApp::onReceivedNewPacket(pk);
 }
 
 Packet* WorkerApp::createDataPacket(B packetBytes)

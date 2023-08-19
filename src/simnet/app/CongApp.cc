@@ -325,7 +325,7 @@ void CongApp::confirmSeqNumber(const Packet* pk)
     }
 }
 
-void CongApp::onReceivedData(Packet* pk)
+void CongApp::onReceivedNewPacket(Packet* pk)
 {
     confirmSeqNumber(pk);
     confirmAckNumber(pk);
@@ -356,7 +356,7 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     }
 
     if (seq >= getNextAckSeq()) { // we get new seqs
-        onReceivedData(pk);
+        onReceivedNewPacket(pk);
     } else {
         if (localAddr==398 && localPort==3000) {
             std::cout << localAddr << " duplicate seq " << pk->getName() << std::endl;

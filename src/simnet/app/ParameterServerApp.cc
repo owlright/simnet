@@ -10,7 +10,7 @@ protected:
     void initialize(int stage) override;
 
 protected:
-    virtual void onReceivedData(Packet* pk) override;
+    virtual void onReceivedNewPacket(Packet* pk) override;
     virtual void resend(TxItem& item) override;
 
 protected:
@@ -53,7 +53,7 @@ void ParameterServerApp::initialize(int stage)
     }
 }
 
-void ParameterServerApp::onReceivedData(Packet* pk)
+void ParameterServerApp::onReceivedNewPacket(Packet* pk)
 {
 
     auto apk = check_and_cast<AggPacket*>(pk);
@@ -125,7 +125,7 @@ void ParameterServerApp::onReceivedData(Packet* pk)
             }
         }
         aggRecord.erase(seq);
-        CongApp::onReceivedData(pk); // ! we see a fully aggregation packet as received a packet
+        CongApp::onReceivedNewPacket(pk); // ! we see a fully aggregation packet as received a packet
     }
     else {
         ASSERT(pk->getResend());

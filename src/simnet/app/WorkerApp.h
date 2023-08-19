@@ -10,7 +10,7 @@ protected:
     virtual void finish() override;
 
 protected:
-    virtual void onReceivedData(Packet* pk) override;
+    virtual void onReceivedNewPacket(Packet* pk) override;
     virtual Packet* createDataPacket(B packetBytes) override; // ! ACK to PS's FIN will use this
 
 protected:

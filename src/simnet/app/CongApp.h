@@ -75,7 +75,7 @@ protected:
     virtual void handleParameterChange(const char *parameterName) override;
 
 protected:
-    virtual void onReceivedData(Packet* pk);
+    virtual void onReceivedNewPacket(Packet* pk);
     virtual void confirmSeqNumber(const Packet* pk);
     virtual void confirmAckNumber(const Packet* pk);
     virtual void onConnectionClose();
