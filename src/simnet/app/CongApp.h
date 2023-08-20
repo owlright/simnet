@@ -42,25 +42,25 @@ public:
         simtime_t sendTime;
         Packet* pkt;
         std::vector<IntAddress> destAddresses{};
-        TxItem() {
+        explicit TxItem() {
             seq = -1;
             pktSize = 0;
             pkt = nullptr;
         }
-        TxItem(Packet* pk) {
+        explicit TxItem(Packet* pk) {
             seq = pk->getSeqNumber();
             pktSize = pk->getByteLength();
             pkt = pk;
             resend_timer = maxDisorderNumber;
         }
-        TxItem(const TxItem& other) {
-            seq = other.seq;
-            pktSize = other.pktSize;
-            is_sent = other.is_sent;
-            is_resend_already = other.is_resend_already;
-            resend_timer = other.resend_timer;
-            pkt = other.pkt;
-        }
+       explicit TxItem(const TxItem& other) {
+           seq = other.seq;
+           pktSize = other.pktSize;
+           is_sent = other.is_sent;
+           is_resend_already = other.is_resend_already;
+           resend_timer = other.resend_timer;
+           pkt = other.pkt;
+       }
     };
     friend std::ostream& operator<<(std::ostream& os, const TxItem& item) {
         os << item.seq << ",";

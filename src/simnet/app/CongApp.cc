@@ -141,7 +141,7 @@ void CongApp::handleMessage(cMessage *msg)
         if (tcpState == TIME_WAIT) {
             tcpState = CLOSED;
             ASSERT(txBuffer.size() == 1);
-            auto item = txBuffer.begin()->second;
+            auto& item = txBuffer.begin()->second;
             delete item.pkt;
             txBuffer.erase(item.seq);
             onConnectionClose();
