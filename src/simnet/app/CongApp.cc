@@ -36,9 +36,6 @@ void CongApp::setBeforeSentOut(TxItem& item)
 {
 
     auto pk = item.pkt;
-    if (!pk->getResend() && localAddr==523 && localPort==3000) {
-        std::cout << simTime() << " PS send " << item.seq << std::endl;
-    }
     item.sendTime = simTime();
     auto dest_addr = pk->getDestAddr();
     auto seq = pk->getSeqNumber();
@@ -341,11 +338,7 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         ASSERT(tcpState==CLOSED);
         tcpState = OPEN;
     }
-//    std::set<IntAddress> watchAddrs {136,270,139,657,526,140,525,658,652};
     std::set<IntAddress> watchAddrs {525};
-    if (watchAddrs.find(localAddr)!=watchAddrs.end() && localPort == 2000) {
-        std::cout << simTime() << " " << localAddr << " receives " << pk->getName() << " wants " << nextAckSeq << std::endl;
-    }
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     // * do something every RTT
@@ -367,9 +360,6 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     if (seq >= getNextAckSeq() && rxBuffer.find(seq) == rxBuffer.end()) { // we get new seqs
         onReceivedNewPacket(pk);
     } else {
-        if (localAddr==398 && localPort==3000) {
-            std::cout << localAddr << " duplicate seq " << pk->getName() << std::endl;
-        }
         // confirmAckNumber(pk);
         delete pk; // duplicate seqs, just delete it
     }

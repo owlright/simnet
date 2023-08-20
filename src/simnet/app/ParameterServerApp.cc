@@ -60,8 +60,6 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     ASSERT(apk->getJobId() == jobid);
     auto seq = apk->getSeqNumber();
     auto round = apk->getRound();
-//    if (localAddr == 523)
-//        std::cout << simTime() << " " << localAddr << " " << pk->getName() << " " << pk->getRound() << endl;
     if (round > currentRound) {
         EV_DEBUG << "Round: " << round << endl;
         ASSERT(aggRecord.empty());
@@ -96,8 +94,7 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
         agged_workers.insert(w);
     }
     if (agged_workers.size() == numWorkers) {
-        if (localAddr == 523)
-        std::cout << "Round " << currentRound << " Seq " << seq << " finished. " << getNextAskedSeq() << endl;
+        EV_DEBUG << GREEN << "Round " << currentRound << " Seq " << seq <<"-" << record.seqNumber << " finished. " << getNextAskedSeq() << ENDC;
         ASSERT(workers == agged_workers);
         if (tcpState == OPEN) {
             // ! after we send FIN, we are in state CLOSE_WAIT,
