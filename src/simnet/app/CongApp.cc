@@ -341,15 +341,9 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     std::set<IntAddress> watchAddrs {525};
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
-    // * do something every RTT
-    if (seq > 0 && seq == nextAckSeq) {
-        if (localAddr==523 && localPort==3000) {
-            std::cout << simTime() << " " << pk->getName() << endl;
-        }
-        auto ackSeq = pk->getAckNumber();
-        auto it = txBuffer.lower_bound(ackSeq - messageLength);
-        ASSERT(it != txBuffer.end());
-        auto& item = it->second;
+    // * do something every RTT only once
+    if (seq > 0 && seq == nextAckSeq && txBuffer.find(ackSeq - messageLength) != txBuffer.end() ) {
+        auto& item = txBuffer.at(ackSeq - messageLength);
         auto sampleRTT = simTime() - item.sendTime;
         currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
         estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
