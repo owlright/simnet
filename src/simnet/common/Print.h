@@ -106,33 +106,14 @@ enum {
 };
 }
 
-
-namespace fgb {
-enum {
-    black   = 90,
-    red     = 91,
-    green   = 92,
-    yellow  = 93,
-    blue    = 94,
-    magenta = 95,
-    cyan    = 96,
-    gray    = 97
-};
-}
-namespace bgB {
-enum {
-    black   = 100,
-    red     = 101,
-    green   = 102,
-    yellow  = 103,
-    blue    = 104,
-    magenta = 105,
-    cyan    = 106,
-    gray    = 107
-};
-}
-
+/**
+ * Using examples:
+ * 1. EV << GREEN << pk->getName() << ENDC;
+ * 2. std::cout << BLUE <<pk->getSeqNumber() << ENDC;
+*/
 #define ESC "\033["
-#define ENDC ESC "0m"
+#define ENDC "\033[0m" << endl
 #define COLOR(name) ESC << std::to_string(name) << "m"
-#define END ENDC << endl
+#define GREEN ESC << std::to_string(fg::green) << "m"
+#define YELLOW ESC << std::to_string(fg::yellow) << "m"
+#define BLUE ESC << std::to_string(fg::blue) << "m"
