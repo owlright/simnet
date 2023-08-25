@@ -6,15 +6,18 @@ This project aims to implement different congestion algorithms.
 
 ## Notice
 
-- No packet loss
-- No handling of package disorder
-- Socket only supports Simplex Communication
+- ~~No packet loss~~
+- ~~No handling of package disorder~~
+- ~~Socket only supports Simplex Communication~~
 
-## Why not use INET?
+## Why not use NS3/INET?
 
-If we just need to test the congestion control algorithms, most INET codes are useless to us.
+Too complicated for testing congestion control algorithms.
+As a simulation, the code doesn't need to be implemented exactly like that in the linux kernel,
+and a faithful representation of the network layers is also unnecessary.
 
-For example, We don't need ip or mac addresses. Things should be kept as simple as possible as simulations.
+We don't even need ip or mac addresses.
+Things should be kept as simple as possible.
 
 ## Roadmap
 
@@ -26,4 +29,6 @@ For example, We don't need ip or mac addresses. Things should be kept as simple 
 - [x] Aggregate packets for more levels
 - [x] aggregatorIndex hash collision, then resend packets
 - [x] FatTree(k), k means pod number
-- [ ] job deployment policy
+- [x] job deployment policy
+- [x] resend policy when diorders happen
+
