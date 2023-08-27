@@ -328,10 +328,15 @@ void CongApp::onReceivedNewPacket(Packet* pk)
     insertRxBuffer(pk);
 }
 
+void CongApp::onReceivedDuplicatedPacket(Packet* pk)
+{
+    confirmAckNumber(pk); // ! old seq but may carry new ackNumber
+}
+
 void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
 {
     EV_DEBUG << pk << endl;
-    auto ackSeq = pk->getAckNumber();
+    auto ackSeq = pk->getAckNumber(); // * other side want us's seq
     auto seq = pk->getSeqNumber();
     if (nextSentSeq == 0 && ackSeq == 0) {
         // ! server received the first packet
@@ -354,7 +359,8 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     if (seq >= getNextAckSeq() && rxBuffer.find(seq) == rxBuffer.end()) { // we get new seqs
         onReceivedNewPacket(pk);
     } else {
-        // confirmAckNumber(pk);
+        onReceivedDuplicatedPacket(pk);
+
         delete pk; // duplicate seqs, just delete it
     }
     // ! only client need to ACK the FIN seq

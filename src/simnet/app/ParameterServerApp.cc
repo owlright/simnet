@@ -12,6 +12,7 @@ protected:
 protected:
     virtual void onReceivedNewPacket(Packet* pk) override;
     virtual void resend(TxItem& item) override;
+    virtual void onReceivedDuplicatedPacket(Packet* pk) override;
 
 protected:
     struct AggRecord {
@@ -138,6 +139,15 @@ void ParameterServerApp::resend(TxItem& item)
     item.pkt->setPacketType(ACK);
     item.destAddresses = std::move(tmp);
     CongApp::resend(item);
+}
+
+void ParameterServerApp::onReceivedDuplicatedPacket(Packet* pk)
+{
+    if (pk->getAckNumber() > getNextAskedSeq()) {
+       // ! old seq but carry new ackNumber, do nothing
+    } else {
+        confirmAckNumber(pk); // ! let this trigger the resend process
+    }
 }
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)

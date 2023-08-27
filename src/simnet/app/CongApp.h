@@ -77,6 +77,7 @@ protected:
 
 protected:
     virtual void onReceivedNewPacket(Packet* pk);
+    virtual void onReceivedDuplicatedPacket(Packet* pk);
     virtual void confirmSeqNumber(const Packet* pk);
     virtual void confirmAckNumber(const Packet* pk);
     virtual void onConnectionClose();
