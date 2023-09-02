@@ -113,7 +113,10 @@ enum {
 */
 #define ESC "\033["
 #define ENDC "\033[0m" << endl
-#define COLOR(name) ESC << std::to_string(name) << "m"
+// #define COLOR(name) ESC << std::to_string(name) << "m"
 #define GREEN ESC << std::to_string(fg::green) << "m"
 #define YELLOW ESC << std::to_string(fg::yellow) << "m"
 #define BLUE ESC << std::to_string(fg::blue) << "m"
+#define RED ESC << std::to_string(fg::red) << "m"
+#define GRAY ESC << std::to_string(fg::gray) << "m"
+#define CYAN ESC << std::to_string(fg::cyan) << "m"
