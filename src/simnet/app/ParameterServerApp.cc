@@ -36,6 +36,7 @@ private:
 
     B aggedBytes{0};
     B totalAggBytes{0};
+    std::map<SeqNumber, std::set<IntAddress>> oldPktWithNewAckSeq;
 };
 
 Define_Module(ParameterServerApp);
@@ -143,8 +144,14 @@ void ParameterServerApp::resend(TxItem& item)
 
 void ParameterServerApp::onReceivedDuplicatedPacket(Packet* pk)
 {
-    if (pk->getAckNumber() > getNextAskedSeq()) {
-       // ! old seq but carry new ackNumber, do nothing
+    auto ack = pk->getAckNumber();
+    if (ack > getNextAskedSeq()) {
+       // ! old seq but carry new ackNumber
+        oldPktWithNewAckSeq[ack].insert(pk->getSrcAddr());
+        if (oldPktWithNewAckSeq[ack] == workers) {
+            confirmAckNumber(pk);
+            oldPktWithNewAckSeq.erase(ack);
+        }
     } else {
         confirmAckNumber(pk); // ! let this trigger the resend process
     }
