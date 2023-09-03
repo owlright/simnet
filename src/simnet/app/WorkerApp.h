@@ -4,6 +4,9 @@
 #include "simnet/mod/manager/GlobalMetricCollector.h"
 class WorkerApp : public CongApp
 {
+public:
+    ~WorkerApp();
+
 protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *msg) override;

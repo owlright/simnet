@@ -14,6 +14,12 @@ int CongApp::maxDisorderNumber = 0;
 
 CongApp::~CongApp() {
     cancelAndDelete(RTOTimeout);
+    for (auto& [seq, item] : txBuffer) {
+        cancelAndDelete(item.pkt);
+    }
+    for (auto& [seq, pk] : rxBuffer) {
+        cancelAndDelete(pk);
+    }
 }
 
 bool CongApp::bindRemote()

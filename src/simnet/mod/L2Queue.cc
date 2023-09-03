@@ -154,6 +154,7 @@ void L2Queue::handleMessage(cMessage *msg)
             }
             // We are currently busy, so just queue up the packet.
             if (capacity && getQueueBytes() >= capacity) {
+                delete msg;
                 throw cRuntimeError("Not ready for dealing with packet loss.");
                 EV_TRACE << "Received " << msg << " but transmitter busy and queue full: discarding\n";
                 // emit(dropSignal, (intval_t)check_and_cast<cPacket *>(msg)->getByteLength());

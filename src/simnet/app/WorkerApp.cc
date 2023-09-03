@@ -4,8 +4,12 @@
 
 Define_Module(WorkerApp);
 
-void WorkerApp::initialize(int stage)
+WorkerApp::~WorkerApp()
 {
+    cancelAndDelete(roundStartTimer);
+}
+
+void WorkerApp::initialize(int stage) {
     CongApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         flowSize = par("flowSize");
