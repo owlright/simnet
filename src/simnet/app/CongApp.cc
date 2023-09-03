@@ -175,7 +175,7 @@ void CongApp::sendPendingData()
         }
         else {
             tx_item.is_sent = true;
-            // markSeq = nextSentSeq; // ! if markSeq not change for a RTOTimeout, we resend the oldest not acked seq
+            //// markSeq = nextSentSeq; // ! if markSeq not change for a RTOTimeout, we resend the oldest not acked seq
             nextSentSeq = tx_item.seq + pktSize;
         }
         ASSERT(!tx_item.is_resend_already);
@@ -183,6 +183,7 @@ void CongApp::sendPendingData()
             sendFirstTime(tx_item);
         }
         else {
+            // * send copy of packets to different destAddresses
             for (auto& dst: tx_item.destAddresses) {
                 TxItem tmp(tx_item);
                 tmp.pkt->setDestAddr(dst);
@@ -343,7 +344,7 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         ASSERT(tcpState==CLOSED);
         tcpState = OPEN;
     }
-    std::set<IntAddress> watchAddrs {525};
+    
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     // * do something every RTT only once

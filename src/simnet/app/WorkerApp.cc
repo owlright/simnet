@@ -76,10 +76,10 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
     CongApp::onReceivedNewPacket(pk);
     // ! pk is deleted here
     if (getNextAskedSeq() - roundStartSeq == flowSize && rxBuffer.empty()) {
-        std::set<IntAddress> watchAddrs {136,270,139,657,526,140,525,658,652};
-        if (watchAddrs.find(localAddr)!=watchAddrs.end()) {
-            std::cout << localAddr << " round " << currentRound << " finished." << std::endl;
-        }
+        // std::set<IntAddress> watchAddrs {531,402,141,269,400,656,398,265,523};
+        // if (watchAddrs.find(localAddr)!=watchAddrs.end()) {
+        //     std::cout << localAddr << " round " << currentRound << " finished." << std::endl;
+        // }
         onRoundStop();
     }
 }
@@ -108,7 +108,7 @@ void WorkerApp::onRoundStop()
     cong->reset(); // ! reuse connection but cong must be reset.
     if (currentRound < numRounds) {// note it's '<' here
         scheduleAfter(roundInterval, roundStartTimer);
-        nextAggSeq = 0; // TODO is this necessary ?
+        // nextAggSeq = 0; // TODO is this necessary ?
     }
     if (jobMetricCollector)
         jobMetricCollector->reportFlowStop(jobId, numWorkers, workerId, simTime());

@@ -134,8 +134,8 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
 
 void ParameterServerApp::resend(TxItem& item)
 {
-    if (localAddr == 523)
-        std::cout << simTime() << " PS resend " << item.seq << std::endl;
+    // if (localAddr == 660)
+    //     std::cout << simTime() << " PS resend " << item.seq << std::endl;
     std::vector<IntAddress> tmp(workers.begin(), workers.end());
     item.pkt->setPacketType(ACK);
     item.destAddresses = std::move(tmp);
