@@ -160,10 +160,16 @@ void Routing::forwardIncoming(Packet *pk)
             {
                 if (aggregators.find(agtrIndex) == aggregators.end()) {
                     aggregators[agtrIndex] = new Aggregator(apk);
-                    if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
-                        // the first time we see this group
-                        groupMetricTable[jobId] = new jobMetric(this, jobId);
-                        groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
+                    // if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
+                    //     // the first time we see this group
+                    //     groupMetricTable[jobId] = new jobMetric(this, jobId);
+                    //     groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
+                    // }
+                    if (currSegment == myAddress) {
+                        usedBuffer += pk->getByteLength();
+                        emit(bufferInUseSignal, usedBuffer);
+                        aggregators[agtrIndex]->forAggregation = true;
+                        aggregators[agtrIndex]->usedBuffer = pk->getByteLength();
                     }
                 }
                 ASSERT(aggregators.find(agtrIndex) != aggregators.end());
@@ -174,8 +180,8 @@ void Routing::forwardIncoming(Packet *pk)
                     if (pk != nullptr) {
                         ASSERT(pk == apk);
                         // aggregators.erase(agtrIndex);
-                        ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
-                        groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
+                        // ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
+                        // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
                     }
                     else {
                         return;
@@ -193,6 +199,8 @@ void Routing::forwardIncoming(Packet *pk)
                 if ( agtr->checkAdmission(apk) ) { // ! can be false if resend multiple times
                     // ! if aggregator[agtrIndex] belongs to me, which means the aggregator is stuck
                     aggregators.erase(agtrIndex);
+                    usedBuffer -= apk->getByteLength();
+                    emit(bufferInUseSignal, usedBuffer);
                 }
             }
         }
@@ -211,6 +219,10 @@ void Routing::forwardIncoming(Packet *pk)
                 auto outGateIndexes = agtr->getOutGateIndexes(apk->getArrivalGate()->getIndex());
                 agtr->multicastCount++;
                 broadcast(pk, outGateIndexes);
+                if (agtr->forAggregation) {
+                    usedBuffer -= agtr->usedBuffer;
+                    emit(bufferInUseSignal, usedBuffer);
+                }
                 if (agtr->multicastCount == agtr->getMulticastEntryNumber()) {
                     aggregators.erase(agtrIndex);
                 }

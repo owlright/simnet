@@ -36,7 +36,7 @@ Packet *Aggregator::doAggregation(AggPacket *pk)
     ASSERT(pk->getJobId() == jobId && pk->getAggSeqNumber() == seqNumber);
     // * first packet, store infomation
     auto arrivedAckNumber = pk->getAckNumber();
-    if (arrivedAckNumber < ackNumber) {
+    if (arrivedAckNumber < ackNumber) { // ! always keep the smallest ackNumber
         ackNumber = arrivedAckNumber;
     }
 

@@ -7,7 +7,7 @@ using namespace omnetpp;
 class Aggregator
 {
 public:
-    virtual Packet* doAggregation(AggPacket* pk);
+    Packet* doAggregation(AggPacket* pk);
 
     bool checkAdmission(const AggPacket* pk) const;
     int getJobId() const {return jobId;}
@@ -23,8 +23,12 @@ public:
     }
     int multicastCount{0};
 
+public:
+    bool forAggregation{false};
+    B usedBuffer{0};
+
 protected:
-    virtual void reset();
+    void reset();
     void checkThenAddWorkerId(const AggPacket* pk);
 
 protected:
