@@ -67,6 +67,7 @@ bool Aggregator::checkAdmission(const AggPacket *pk) const
 
 Aggregator::Aggregator(const AggPacket *pk)
 {
+    jobRound = pk->getRound();
     jobId = pk->getJobId();
     seqNumber = pk->getAggSeqNumber();
     ackNumber = pk->getAckNumber();

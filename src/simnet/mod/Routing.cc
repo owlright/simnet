@@ -372,7 +372,7 @@ void Routing::finish()
     for (auto& [index, p] : aggregators) {
         if (p!=nullptr) {
             EV_WARN << "there is unreleased aggregator on router " << myAddress
-            << " belongs to job " << p->getJobId() << " seq " << p->getSeqNumber() << endl;
+            << " belongs to job " << p->getJobId() << " round " << p->getRound() << " seq " << p->getSeqNumber() << endl;
         }
     }
 }

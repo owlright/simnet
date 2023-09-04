@@ -11,7 +11,8 @@ public:
 
     bool checkAdmission(const AggPacket* pk) const;
     int getJobId() const {return jobId;}
-    int getSeqNumber() const {return seqNumber;}
+    int getRound() const {return jobRound;}
+    SeqNumber getSeqNumber() const {return seqNumber;}
     Aggregator(const AggPacket* pk);
     void recordIncomingPorts(const AggPacket* pk, int outputGateIndex);
     const std::unordered_set<int>& getOutGateIndexes(int inGateIndex) {
@@ -32,6 +33,7 @@ protected:
     void checkThenAddWorkerId(const AggPacket* pk);
 
 protected:
+    int jobRound{0};
     int counter{0};
     int jobId{-1};
     bool ecn{false};
