@@ -17,32 +17,52 @@ using namespace omnetpp;
  */
 class Routing : public cSimpleModule
 {
-    struct MulticastID
-    {
-        size_t agtrIndex;
-        int inGateIndex;
-        MulticastID(size_t agtrIndex, int inGateIndex)
-        {
-            this->agtrIndex = agtrIndex;
-            this->inGateIndex = inGateIndex;
+    // struct MulticastID
+    // {
+    //     size_t agtrIndex;
+    //     int inGateIndex;
+    //     MulticastID(size_t agtrIndex, int inGateIndex)
+    //     {
+    //         this->agtrIndex = agtrIndex;
+    //         this->inGateIndex = inGateIndex;
 
+    //     }
+    //     // `operator==` is required to compare keys in case of a hash collision
+    //     bool operator==(const MulticastID &key) const {
+    //         return agtrIndex == key.agtrIndex
+    //             && inGateIndex == key.inGateIndex;
+    //     }
+    // };
+
+    // struct hash_fn
+    // {
+    //     std::size_t operator() (const MulticastID& key) const
+    //     {
+    //         auto hashfn = std::hash<size_t>();
+    //         return key.agtrIndex ^ hashfn(key.inGateIndex);
+    //     }
+    // };
+    struct AddrGate {
+        IntAddress addr;
+        SeqNumber seq;
+        int inGateIndex; // ! the future packet will arrive
+        AddrGate(IntAddress addr, SeqNumber seq, int inGateIndex) {
+            this->addr = addr;
+            this->seq = seq;
+            this->inGateIndex = inGateIndex;
         }
-        // `operator==` is required to compare keys in case of a hash collision
-        bool operator==(const MulticastID &key) const {
-            return agtrIndex == key.agtrIndex
-                && inGateIndex == key.inGateIndex;
+        bool operator==(const AddrGate& key) const {
+            return addr == key.addr && inGateIndex == key.inGateIndex && seq == key.seq;
         }
     };
-
     struct hash_fn
     {
-        std::size_t operator() (const MulticastID& key) const
+        std::size_t operator() (const AddrGate& key) const
         {
             auto hashfn = std::hash<size_t>();
-            return key.agtrIndex ^ hashfn(key.inGateIndex);
+            return hashfn(key.addr) ^ hashfn(key.seq) ^ hashfn(key.inGateIndex);
         }
     };
-
 public:
     virtual ~Routing();
 
@@ -59,7 +79,7 @@ private:
 
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
-
+    std::unordered_map<AddrGate, int, hash_fn> groupUnicastTable;
     GlobalRouteManager* routeManager{nullptr};
 
     B bufferSize{0};
@@ -67,11 +87,11 @@ private:
     int numAggregators{0};
     B agtrSize;
 
-    [[deprecated]] std::unordered_set<MulticastID, hash_fn> markNotAgg;
-    std::unordered_map<MulticastID, std::vector<int>, hash_fn> incomingPortIndexes;
+    // [[deprecated]] std::unordered_set<MulticastID, hash_fn> markNotAgg;
+    // std::unordered_map<MulticastID, std::vector<int>, hash_fn> incomingPortIndexes;
     std::unordered_map<IntAddress, jobMetric*> groupMetricTable;
     std::map<size_t, Aggregator*> aggregators;
-    [[deprecated]]std::unordered_map<MulticastID, int64_t, hash_fn> seqDeadline;
+    // [[deprecated]]std::unordered_map<MulticastID, int64_t, hash_fn> seqDeadline;
 
 private:
     // ! self messages
@@ -98,12 +118,12 @@ private:
     simtime_t getUsedTime() const;
 
     // ! for aggregation
-    std::vector<int> getReversePortIndexes(const MulticastID& groupSeqKey) const;
+    // std::vector<int> getReversePortIndexes(const MulticastID& groupSeqKey) const;
     [[deprecated]] Packet* doAggregation(Packet* pk);
     [[deprecated]] Packet* aggregate(AggPacket* pk);
     [[deprecated]] bool addGroupEntry(IntAddress group, B bufferCanUsed, B firstDataSize, int indegree);
     [[deprecated]] bool tryAddSeqEntry(const Packet* pk);
-    [[deprecated]] void recordIncomingPorts(MulticastID& groupSeqKey, int port);
+    // [[deprecated]] void recordIncomingPorts(MulticastID& groupSeqKey, int port);
 
 protected:
     virtual void initialize(int stage) override;

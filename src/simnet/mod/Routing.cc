@@ -74,13 +74,13 @@ void Routing::broadcast(Packet* pk, const std::unordered_set<int>& outGateIndexe
     delete pk;
 }
 
-std::vector<int> Routing::getReversePortIndexes(const MulticastID& mKey) const
-{
-    if (incomingPortIndexes.find(mKey) == incomingPortIndexes.end())
-        throw cRuntimeError("%" PRId64" Routing::getReversePortIndexes: agtrIndex: %zu, inGate: %d not found!",
-                                    myAddress, mKey.agtrIndex, mKey.inGateIndex);
-    return incomingPortIndexes.at(mKey);
-}
+// std::vector<int> Routing::getReversePortIndexes(const MulticastID& mKey) const
+// {
+//     if (incomingPortIndexes.find(mKey) == incomingPortIndexes.end())
+//         throw cRuntimeError("%" PRId64" Routing::getReversePortIndexes: agtrIndex: %zu, inGate: %d not found!",
+//                                     myAddress, mKey.agtrIndex, mKey.inGateIndex);
+//     return incomingPortIndexes.at(mKey);
+// }
 
 int Routing::getComputationCount() const
 {
@@ -121,7 +121,7 @@ void Routing::forwardIncoming(Packet *pk)
     auto numSegments = pk->getSegmentsLeft();
     int outGateIndex = -1;
 
-    if (numSegments <= 1 && pk->getPacketType() != MACK) { // DATA, ACK, MACK
+    if (numSegments <= 1 && pk->getPacketType() != MACK) { // DATA, ACK
         auto srcAddr = pk->getSrcAddr();
         outGateIndex = getRouteGateIndex(srcAddr, destAddr);
     }
@@ -152,30 +152,33 @@ void Routing::forwardIncoming(Packet *pk)
         auto agtrIndex = apk->getAggregatorIndex();
         // ASSERT(outGateIndex != -1);
         // MulticastID mKey = {agtrIndex, outGateIndex};
-        // ! No matter what, we have to allocate an aggregator for it, becasuse at least we need
-        // ! the reverse multicast ports
-        if (!pk->getResend()) {
-            if (aggregators.find(agtrIndex) == aggregators.end()
-                || aggregators.at(agtrIndex)->checkAdmission(apk))
-            {
-                if (aggregators.find(agtrIndex) == aggregators.end()) {
-                    aggregators[agtrIndex] = new Aggregator(apk);
-                    // if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
-                    //     // the first time we see this group
-                    //     groupMetricTable[jobId] = new jobMetric(this, jobId);
-                    //     groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
-                    // }
-                    if (currSegment == myAddress) {
-                        usedBuffer += pk->getByteLength();
-                        emit(bufferInUseSignal, usedBuffer);
-                        aggregators[agtrIndex]->forAggregation = true;
-                        aggregators[agtrIndex]->usedBuffer = pk->getByteLength();
+        if (currSegment != myAddress && !pk->getResend()) { // ! store a special unicast entry
+            auto key = AddrGate(destAddr, seq, outGateIndex);
+            ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
+            groupUnicastTable[key] = pk->getArrivalGate()->getIndex();
+        }
+        if (currSegment == myAddress) { // ! I'm responsible for aggregation
+            if (!pk->getResend()) {
+                if (aggregators.find(agtrIndex) == aggregators.end() || aggregators.at(agtrIndex)->checkAdmission(apk))
+                {
+                    if (aggregators.find(agtrIndex) == aggregators.end()) {
+                        aggregators[agtrIndex] = new Aggregator(apk);
+                        // if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
+                        //     // the first time we see this group
+                        //     groupMetricTable[jobId] = new jobMetric(this, jobId);
+                        //     groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
+                        // }
+                        if (currSegment == myAddress) {
+                            usedBuffer += pk->getByteLength();
+                            emit(bufferInUseSignal, usedBuffer);
+                            aggregators[agtrIndex]->forAggregation = true;
+                            aggregators[agtrIndex]->usedBuffer = pk->getByteLength();
+                        }
                     }
-                }
-                ASSERT(aggregators.find(agtrIndex) != aggregators.end());
-                auto agtr = aggregators.at(agtrIndex);
-                agtr->recordIncomingPorts(apk, outGateIndex);
-                if (currSegment == myAddress) {
+                    ASSERT(aggregators.find(agtrIndex) != aggregators.end());
+                    auto agtr = aggregators.at(agtrIndex);
+                    agtr->recordIncomingPorts(apk, outGateIndex);
+
                     pk = agtr->doAggregation(apk);
                     if (pk != nullptr) {
                         ASSERT(pk == apk);
@@ -186,21 +189,21 @@ void Routing::forwardIncoming(Packet *pk)
                     else {
                         return;
                     }
+                } else {
+                    EV_DEBUG << "collision happen on destAddr " << destAddr << " seq " << seq << endl;
+                    apk->setCollision(true);
+                    apk->setResend(true);
                 }
-            } else {
-                EV_DEBUG << "collision happen on destAddr " << destAddr << " seq " << seq << endl;
-                apk->setCollision(true);
-                apk->setResend(true);
             }
-        }
-        else {
-            if (aggregators.find(agtrIndex) != aggregators.end()) {
-                auto agtr = aggregators.at(agtrIndex);
-                if ( agtr->checkAdmission(apk) ) { // ! can be false if resend multiple times
-                    // ! if aggregator[agtrIndex] belongs to me, which means the aggregator is stuck
-                    aggregators.erase(agtrIndex);
-                    usedBuffer -= apk->getByteLength();
-                    emit(bufferInUseSignal, usedBuffer);
+            else {
+                if (aggregators.find(agtrIndex) != aggregators.end()) {
+                    auto agtr = aggregators.at(agtrIndex);
+                    if ( agtr->checkAdmission(apk) ) { // ! can be false if resend multiple times
+                        // ! if aggregator[agtrIndex] belongs to me, which means the aggregator is stuck
+                        aggregators.erase(agtrIndex);
+                        usedBuffer -= apk->getByteLength();
+                        emit(bufferInUseSignal, usedBuffer);
+                    }
                 }
             }
         }
@@ -213,34 +216,50 @@ void Routing::forwardIncoming(Packet *pk)
     else if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
         auto apk = check_and_cast<AggPacket*>(pk);
         auto agtrIndex = apk->getAggregatorIndex();
+        auto srcAddr = apk->getSrcAddr();
+        auto seq = apk->getAggSeqNumber();
+        auto key = AddrGate(srcAddr, seq, apk->getArrivalGate()->getIndex());
+        bool foundEntry = false;
         if (aggregators.find(agtrIndex) != aggregators.end()) {
             auto agtr = aggregators.at(agtrIndex);
             if (agtr->checkAdmission(apk)) {
+                ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
                 auto outGateIndexes = agtr->getOutGateIndexes(apk->getArrivalGate()->getIndex());
-                agtr->multicastCount++;
+                // agtr->multicastCount++;
                 broadcast(pk, outGateIndexes);
-                if (agtr->forAggregation) {
+                // if (agtr->forAggregation) {
                     usedBuffer -= agtr->usedBuffer;
                     emit(bufferInUseSignal, usedBuffer);
-                }
-                if (agtr->multicastCount == agtr->getMulticastEntryNumber()) {
+                // }
+                // if (agtr->multicastCount == agtr->getMulticastEntryNumber()) {
                     aggregators.erase(agtrIndex);
-                }
+                // }
+                foundEntry = true;
             }
         }
+        if (!foundEntry) {
+            if (groupUnicastTable.find(key) == groupUnicastTable.end()) {
+                throw cRuntimeError("The multicast entry doesn't exist, it must be deleted by a resend packet. Check RTOTimeout");
+            }
+            foundEntry = true;
+            send(pk, "out", groupUnicastTable.at(key));
+        }
+        ASSERT(foundEntry);
+
+
         // MulticastID mKey = {agtrIndex, apk->getArrivalGate()->getIndex())};
         // if (incomingPortIndexes.find(mKey) != incomingPortIndexes.end()) {
         //     auto outGateIndexes = incomingPortIndexes.at(mKey);
         //     incomingPortIndexes.erase(mKey);
         //     broadcast(pk, outGateIndexes);
         // }
-        else {
-            delete pk;
-            EV_WARN << "The multicast entry doesn't exist, it must be deleted by a resend packet." << endl;
-            if (!getEnvir()->isExpressMode()) {
-                getParentModule()->bubble("miss multicast entry!");
-            }
-        }
+        // else {
+        //     delete pk;
+        //     EV_WARN << "The multicast entry doesn't exist, it must be deleted by a resend packet." << endl;
+        //     if (!getEnvir()->isExpressMode()) {
+        //         getParentModule()->bubble("miss multicast entry!");
+        //     }
+        // }
 
         return;
     }
