@@ -64,6 +64,7 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     auto round = apk->getRound();
     if (round > currentRound) {
         EV_DEBUG << "Round: " << round << endl;
+        ASSERT(txBuffer.empty());
         ASSERT(aggRecord.empty());
         currentRound = round;
     }
@@ -98,30 +99,28 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     if (agged_workers.size() == numWorkers) {
         EV_DEBUG << GREEN << "Round " << currentRound << " Seq " << seq <<"-" << record.seqNumber << " finished. " << getNextAskedSeq() << ENDC;
         ASSERT(workers == agged_workers);
-        if (tcpState == OPEN) {
-            // ! after we send FIN, we are in state CLOSE_WAIT,
-            // ! we will receieve ACK to FIN, do not answer it.
-            aggedBytes += pk->getByteLength();
-            if (record.success) {
-                // ! send a multicast ACK
-                auto mpk = createAckPacket(apk);
-                mpk->setSeqNumber(record.seqNumber);
-                mpk->setPacketType(MACK);
-                mpk->setDestAddr(groupAddr);
-                mpk->setECE(record.ecn);
-                insertTxBuffer(mpk);
-            }
-            else {
-                auto apk_ack = createAckPacket(apk);
-                apk_ack->setSeqNumber(record.seqNumber);
-                apk_ack->setPacketType(ACK);
-                apk_ack->setECE(record.ecn);
-                insertTxBuffer(apk_ack);
-                auto& item = txBuffer.at(record.seqNumber);
-                // ! send each worker one ACK
-                std::vector<IntAddress> tmp(agged_workers.begin(), agged_workers.end());
-                item.destAddresses = std::move(tmp);
-            }
+        // ! after we send FIN, we are in state CLOSE_WAIT,
+        // ! we will receieve ACK to FIN, do not answer it.
+        aggedBytes += pk->getByteLength();
+        if (record.success) {
+            // ! send a multicast ACK
+            auto mpk = createAckPacket(apk);
+            mpk->setSeqNumber(record.seqNumber);
+            mpk->setPacketType(MACK);
+            mpk->setDestAddr(groupAddr);
+            mpk->setECE(record.ecn);
+            insertTxBuffer(mpk);
+        }
+        else {
+            auto apk_ack = createAckPacket(apk);
+            apk_ack->setSeqNumber(record.seqNumber);
+            apk_ack->setPacketType(ACK);
+            apk_ack->setECE(record.ecn);
+            insertTxBuffer(apk_ack);
+            auto& item = txBuffer.at(record.seqNumber);
+            // ! send each worker one ACK
+            std::vector<IntAddress> tmp(agged_workers.begin(), agged_workers.end());
+            item.destAddresses = std::move(tmp);
         }
         aggRecord.erase(seq);
         CongApp::onReceivedNewPacket(pk); // ! we see a fully aggregation packet as received a packet

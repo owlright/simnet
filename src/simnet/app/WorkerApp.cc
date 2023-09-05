@@ -77,14 +77,24 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
     auto apk = check_and_cast<AggPacket*>(pk);
     ASSERT(apk->getJobId() == jobId);
     ASSERT(apk->getRound() == currentRound);
-    CongApp::onReceivedNewPacket(pk);
-    // ! pk is deleted here
-    if (getNextAskedSeq() - roundStartSeq == flowSize && rxBuffer.empty()) {
-        // std::set<IntAddress> watchAddrs {531,402,141,269,400,656,398,265,523};
-        // if (watchAddrs.find(localAddr)!=watchAddrs.end()) {
-        //     std::cout << localAddr << " round " << currentRound << " finished." << std::endl;
-        // }
-        onRoundStop();
+    CongApp::onReceivedNewPacket(pk); // ! pk is deleted here
+    if (getNextAskedSeq() - roundStartSeq == flowSize) {
+        ASSERT(txBuffer.empty());
+        if (rxBuffer.empty()) {
+            // ! Between round and round, this will happen:
+            // ! after worker received PS's last window of data, txBuffer is empty, so no more acks can send
+            // ! we must make pure acks to let PS clear their last window, otherwise they will repeatedly retrans the unacked data
+            // ! Except for the last round, CongApp will do this
+            if (maxSentAckNumber != getNextAckSeq() && currentRound < numRounds ) {
+                auto fakeOldSeq = getNextSentSeq() - 1; // * make it old
+                echoACK(fakeOldSeq);
+            }
+            onRoundStop();
+        }
+        else {
+            throw cRuntimeError("It's impossible that txBuffer are all confirmed but rxBuffer still have packets");
+
+        }
     }
 }
 
@@ -122,9 +132,9 @@ void WorkerApp::finish()
 {
     CongApp::finish();
     if (currentRound != numRounds) {
-        EV_WARN << getClassAndFullPath() << "job " << jobId << " "
+        EV_WARN << RED << getClassAndFullPath() << "job " << jobId << " "
                                         "address " << localAddr
-                                        << " round " << currentRound << " not finish." << endl;
+                                        << " round " << currentRound << " not finish." << ENDC;
 
     }
 }

@@ -38,6 +38,24 @@ void CongApp::onConnectionClose()
     resetState();
 }
 
+void CongApp::echoACK(SeqNumber seq)
+{
+    auto packet = new Packet();
+    packet->setDestAddr(destAddr);
+    packet->setDestPort(destPort);
+    packet->setByteLength(64);
+    packet->setPacketType(ACK);
+    packet->setSeqNumber(seq);
+    packet->setAckNumber(getNextAckSeq());  // * let other side clear its txBuffer
+    insertTxBuffer(packet);
+    auto& item = txBuffer.at(seq);
+    sendFirstTime(item);
+    // ! we think ACK will can't be lost
+    delete item.pkt;
+    txBuffer.erase(seq);
+}
+
+
 void CongApp::setBeforeSentOut(TxItem& item)
 {
 
@@ -101,6 +119,9 @@ void CongApp::setBeforeSentOut(TxItem& item)
     // ! nextAckSeq may keep changing when many ACKs arrive at the same time
     // ! we must set it when sending out
     pk->setAckNumber(nextAckSeq);
+    if (nextAckSeq > maxSentAckNumber) {
+        maxSentAckNumber = nextAckSeq;
+    }
 }
 
 void CongApp::resetState()
@@ -364,7 +385,15 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     }
 
     if (seq >= getNextAckSeq() && rxBuffer.find(seq) == rxBuffer.end()) { // we get new seqs
-        onReceivedNewPacket(pk);
+        if (pk->getPacketType() == ACK && tcpState==LAST_ACK) {
+            // this is a ACK to FIN;
+            confirmSeqNumber(pk); // just confirm it, don't insert rxBuffer
+            confirmAckNumber(pk);
+            delete pk;
+        }
+        else {
+            onReceivedNewPacket(pk);
+        }
     } else {
         onReceivedDuplicatedPacket(pk);
 
@@ -372,9 +401,7 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     }
     // ! only client need to ACK the FIN seq
     if ( txBuffer.empty() && (tcpState == TIME_WAIT) ) {
-        // char pkname[50];
-        auto packet = createDataPacket(1);
-        insertTxBuffer(packet);
+        echoACK(getNextSentSeq());
     }
 
     if (tcpState == CLOSED) {

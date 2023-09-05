@@ -81,9 +81,7 @@ protected:
     virtual void confirmSeqNumber(const Packet* pk);
     virtual void confirmAckNumber(const Packet* pk);
     virtual void onConnectionClose();
-    virtual Packet* createDataPacket(B packetBytes) {
-        throw cRuntimeError("you must override this function");
-    };
+    virtual void echoACK(SeqNumber seq);
     virtual void resend(TxItem& item);
 
 protected:
@@ -128,6 +126,7 @@ protected:
     static simsignal_t flowSizeSignal;
     static simsignal_t rttSignal;
     static simsignal_t inflightBytesSignal; // for debug
+    SeqNumber maxSentAckNumber{0};
 
 protected:
     std::map<SeqNumber, TxItem> txBuffer;
