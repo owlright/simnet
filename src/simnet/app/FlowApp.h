@@ -29,7 +29,7 @@ protected:
     virtual void onFlowStart();
     virtual void onFlowStop();
     virtual void prepareTxBuffer();
-    virtual Packet* createDataPacket(B packetBytes) override;
+    Packet* createDataPacket(B packetBytes);
 
 
 protected:

@@ -14,7 +14,7 @@ protected:
 
 protected:
     virtual void onReceivedNewPacket(Packet* pk) override;
-    virtual Packet* createDataPacket(B packetBytes) override; // ! ACK to PS's FIN will use this
+    Packet* createDataPacket(B packetBytes);
 
 protected:
     virtual void onRoundStart();

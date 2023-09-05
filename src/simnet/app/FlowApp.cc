@@ -98,14 +98,12 @@ Packet* FlowApp::createDataPacket(B packetBytes)
 {
     auto pk = new Packet();
     pk->setSeqNumber(getNextSeq());
-    pk->setKind(DATA);
     pk->setDestAddr(destAddr);
     pk->setDestPort(destPort);
     pk->setPacketType(DATA);
     pk->setByteLength(packetBytes);
     return pk;
 }
-
 
 void FlowApp::scheduleNextFlowAt(simtime_t_cref time)
 {
