@@ -57,7 +57,6 @@ void ParameterServerApp::initialize(int stage)
 
 void ParameterServerApp::onReceivedNewPacket(Packet* pk)
 {
-
     auto apk = check_and_cast<AggPacket*>(pk);
     ASSERT(apk->getJobId() == jobid);
     auto seq = apk->getSeqNumber();
@@ -144,16 +143,31 @@ void ParameterServerApp::resend(TxItem& item)
 void ParameterServerApp::onReceivedDuplicatedPacket(Packet* pk)
 {
     auto ack = pk->getAckNumber();
-    if (ack > getNextAskedSeq()) {
-       // ! old seq but carry new ackNumber
-        oldPktWithNewAckSeq[ack].insert(pk->getSrcAddr());
-        if (oldPktWithNewAckSeq[ack] == workers) {
-            confirmAckNumber(pk);
-            oldPktWithNewAckSeq.erase(ack);
-        }
-    } else {
-        confirmAckNumber(pk); // ! let this trigger the resend process
+    oldPktWithNewAckSeq[ack].insert(pk->getSrcAddr());
+    if (oldPktWithNewAckSeq[ack] == workers) {
+        confirmAckNumber(pk);
+        oldPktWithNewAckSeq.erase(ack);
     }
+    // ! In real world, PS's ACK packet maybe lost
+    // if (ack > getNextAskedSeq()) {
+    //     // ! I left this code for 2 purpose:
+    //     // ! Case 1: If you want to allow multicast entry deleted by resend packets
+    //     // * old seq but carry new ackNumber,
+    //     // * do not answer this ack until all workers ask for the seq
+    //     // * Consider this case: A, B(close) send to C, sent 1000,2000,3000,4000,5000,6000,7000,...
+    //     // * seq 2000 and 5000 are both stuck in the network, 2000 will resend first(by broadcasting)
+    //     // * if 2000ack is received by a close worker, and its askFor5000 arrived immediately(carried by bigger seqs)
+    //     // * and you also sent 5000ack, and its askFor(xxxx big seq) arrived, you will clear 5000
+    //     // * then when A's askFor5000 arrive, PS won't send 5000ack anymore, because PS think all workers received this
+    //     // ! Case 2: between round and round, PS will receicevd a fake old seq help it clear it's txBuffer
+    //     oldPktWithNewAckSeq[ack].insert(pk->getSrcAddr());
+    //     if (oldPktWithNewAckSeq[ack] == workers) {
+    //         confirmAckNumber(pk);
+    //         oldPktWithNewAckSeq.erase(ack);
+    //     }
+    // } else {
+    //     confirmAckNumber(pk); // ! let this trigger the resend process
+    // }
 }
 
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
