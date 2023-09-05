@@ -228,7 +228,7 @@ void CongApp::sendPendingData()
 void CongApp::resendTimeoutSeqs()
 {
     for (auto& [seq, item] : txBuffer) {
-        if (item.is_sent && simTime() - item.sendTime > 2*estimatedRTT) {
+        if (item.is_sent && simTime() - item.sendTime > 20*estimatedRTT) {
             resend(item);
         } else {
             break;
