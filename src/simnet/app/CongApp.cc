@@ -166,13 +166,13 @@ void CongApp::handleMessage(cMessage *msg)
 {
     if (msg == RTOTimeout) {
         if (tcpState == TIME_WAIT) {
-            tcpState = CLOSED;
-            ASSERT(txBuffer.size() == 1);
-            auto& item = txBuffer.begin()->second;
-            delete item.pkt;
-            txBuffer.erase(item.seq);
-            onConnectionClose();
-            return;
+//            tcpState = CLOSED;
+//            ASSERT(txBuffer.size() == 1);
+//            auto& item = txBuffer.begin()->second;
+//            delete item.pkt;
+//            txBuffer.erase(item.seq);
+//            onConnectionClose();
+//            return;
         }
         else {
             resendTimeoutSeqs();
@@ -218,9 +218,9 @@ void CongApp::sendPendingData()
             }
         }
         tx_item_it++;
-        if (tcpState == TIME_WAIT) {
-            rescheduleAfter(2*estimatedRTT, RTOTimeout);
-        }
+//        if (tcpState == TIME_WAIT) {
+//            rescheduleAfter(2*estimatedRTT, RTOTimeout);
+//        }
     }
     rescheduleAfter(estimatedRTT, RTOTimeout);
 }
@@ -413,6 +413,7 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     // ! only client need to ACK the FIN seq
     if ( txBuffer.empty() && (tcpState == TIME_WAIT) ) {
         echoACK(getNextSentSeq());
+        tcpState = CLOSED; // ! we assume ack will never be lost
     }
 
     if (tcpState == CLOSED) {
