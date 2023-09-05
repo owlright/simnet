@@ -371,7 +371,12 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         ASSERT(tcpState==CLOSED);
         tcpState = OPEN;
     }
-    
+    if (tcpState == CLOSED) {
+        // ! in a many to one connection, there may be many last ACK to FIN
+        // ! only deal with the first one arrived at tcpState==LAST_ACK, ignore the others
+        delete pk;
+        return;
+    }
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     // * do something every RTT only once
