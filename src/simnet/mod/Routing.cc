@@ -171,7 +171,6 @@ void Routing::forwardIncoming(Packet *pk)
                         if (currSegment == myAddress) {
                             usedBuffer += pk->getByteLength();
                             emit(bufferInUseSignal, usedBuffer);
-                            aggregators[agtrIndex]->forAggregation = true;
                             aggregators[agtrIndex]->usedBuffer = pk->getByteLength();
                         }
                     }
@@ -182,6 +181,7 @@ void Routing::forwardIncoming(Packet *pk)
                     pk = agtr->doAggregation(apk);
                     if (pk != nullptr) {
                         ASSERT(pk == apk);
+                        agtr->fullAggregation = true; //useless flag, just for debugging
                         // aggregators.erase(agtrIndex);
                         // ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
                         // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
@@ -198,8 +198,11 @@ void Routing::forwardIncoming(Packet *pk)
             else {
                 if (aggregators.find(agtrIndex) != aggregators.end()) {
                     auto agtr = aggregators.at(agtrIndex);
-                    if ( agtr->checkAdmission(apk) ) { // ! can be false if resend multiple times
+
+                    if ( agtr->checkAdmission(apk) ) {
+                        // ! can be false if resend multiple times
                         // ! if aggregator[agtrIndex] belongs to me, which means the aggregator is stuck
+                        // ! even if it's not stuck here(full aggregation here), you don't know if it's stuck downstream
                         aggregators.erase(agtrIndex);
                         usedBuffer -= apk->getByteLength();
                         emit(bufferInUseSignal, usedBuffer);

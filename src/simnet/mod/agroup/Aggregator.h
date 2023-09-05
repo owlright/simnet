@@ -25,7 +25,7 @@ public:
     int multicastCount{0};
 
 public:
-    bool forAggregation{false};
+    bool fullAggregation{false};
     B usedBuffer{0};
 
 protected:
