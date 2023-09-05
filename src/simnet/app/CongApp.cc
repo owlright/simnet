@@ -379,14 +379,20 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
     }
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
-    // * do something every RTT only once
-    if (seq > 0 && seq == nextAckSeq && txBuffer.find(ackSeq - messageLength) != txBuffer.end() ) {
-        auto& item = txBuffer.at(ackSeq - messageLength);
-        auto sampleRTT = simTime() - item.sendTime;
-        currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
-        estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
-        emit(rttSignal,  sampleRTT);
-        emit(cwndSignal, cong->getcWnd());
+    // * do something every RTT only once on successful packet
+    auto guessAckMySeq = ackSeq - messageLength;
+    if (seq > 0 && seq == nextAckSeq && !pk->getResend()  && txBuffer.find(guessAckMySeq) != txBuffer.end()) {
+        auto& item = txBuffer.at(guessAckMySeq);
+        ASSERT(item.is_sent);
+        if (!item.is_resend_already) {
+            // ! we don't know if this ack is for the first packet or the resent packet
+            // ! resent packet maybe just sent out
+            auto sampleRTT = simTime() - item.sendTime;
+            currentBaseRTT = sampleRTT - pk->getQueueTime() - pk->getTransmitTime();
+            estimatedRTT = (1 - 0.125) * estimatedRTT + 0.125 * sampleRTT;
+            emit(rttSignal,  sampleRTT);
+            emit(cwndSignal, cong->getcWnd());
+        }
     }
 
     if (seq >= getNextAckSeq() && rxBuffer.find(seq) == rxBuffer.end()) { // we get new seqs
