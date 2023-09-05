@@ -77,6 +77,13 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
     auto apk = check_and_cast<AggPacket*>(pk);
     ASSERT(apk->getJobId() == jobId);
     ASSERT(apk->getRound() == currentRound);
+    auto aggSeq = apk->getAggSeqNumber();
+    SeqNumber seq = aggSeq*messageLength;
+    if (txBuffer.find(seq) != txBuffer.end()) { // ! here we can delete many disorder but not lost packets
+        auto& item = txBuffer.at(seq);
+        delete item.pkt;
+        txBuffer.erase(seq);
+    }
     CongApp::onReceivedNewPacket(pk); // ! pk is deleted here
     if (getNextAskedSeq() - roundStartSeq == flowSize) {
         ASSERT(txBuffer.empty());
