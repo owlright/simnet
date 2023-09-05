@@ -377,6 +377,12 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         delete pk;
         return;
     }
+    // if ((localAddr == 397) && localPort == 2000 && seq >= 16000) {
+    //      std::cout << simTime() << CYAN << " " << localAddr << " " << pk->getName() << " " << estimatedRTT.inUnit(SIMTIME_US)<< " " << nextAckSeq << ENDC;
+    //  }
+//    if ((localAddr == 524)&& localPort == 2000 && seq >= 181824) {
+//         std::cout << simTime() << CYAN << " " << localAddr << " " << pk->getName() << " " << nextAckSeq << ENDC;
+//     }
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     // * do something every RTT only once on successful packet
@@ -445,6 +451,7 @@ void CongApp::insertTxBuffer(Packet* pk)
 {
     setField(pk);
     auto seq = pk->getSeqNumber();
+//    ASSERT(pk->getDestAddr() != INVALID_ADDRESS); // cannot check this because of Parameter Server's broadcast behaviour
     ASSERT(txBuffer.find(seq) == txBuffer.end());
     txBuffer[seq] = TxItem(pk);
 }
