@@ -131,6 +131,7 @@ protected:
 protected:
     std::map<SeqNumber, TxItem> txBuffer;
     std::map<SeqNumber, Packet*> rxBuffer;
+    B resentBytes{0};
 
 private:
     // ! state
@@ -138,7 +139,7 @@ private:
     SeqNumber nextSentSeq{0}; // ! the next seq actually will be sent out
     SeqNumber nextAckSeq{0};  // ! the next seq I want
     SeqNumber nextAskedSeq{0}; // ! the next seq the other side want
-    B resentBytes{0};
+
     // B sentBytes{0};
 
 //    B confirmedResendBytes{0}; // bytes that are acked by resending packets

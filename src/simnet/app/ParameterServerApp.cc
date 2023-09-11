@@ -5,6 +5,8 @@
 #include <functional>
 class ParameterServerApp : public CongApp
 {
+protected:
+    virtual void finish() override;
 
 protected:
     void initialize(int stage) override;
@@ -41,8 +43,14 @@ private:
 
 Define_Module(ParameterServerApp);
 
-void ParameterServerApp::initialize(int stage)
+void ParameterServerApp::finish()
 {
+    CongApp::finish();
+    std::cout << jobid << " PS " << destAddr << " retransmit "<< resentBytes << endl;
+}
+
+
+void ParameterServerApp::initialize(int stage) {
     CongApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         jobid = par("jobId");
