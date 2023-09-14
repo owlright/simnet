@@ -96,7 +96,8 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
                 auto fakeOldSeq = getNextSentSeq() - 1; // * make it old
                 echoACK(fakeOldSeq);
             }
-            onRoundStop();
+            if (!roundStartTimer->isScheduled()) // TODO WHY?
+                onRoundStop();
         }
         else {
             throw cRuntimeError("It's impossible that txBuffer are all confirmed but rxBuffer still have packets");
@@ -138,6 +139,7 @@ void WorkerApp::onRoundStop()
 void WorkerApp::finish()
 {
     CongApp::finish();
+    std::cout << jobId << " " << localAddr << " " << destAddr << " retransmit "<< resentBytes << endl;
     if (currentRound != numRounds) {
         EV_WARN << RED << getClassAndFullPath() << "job " << jobId << " "
                                         "address " << localAddr
