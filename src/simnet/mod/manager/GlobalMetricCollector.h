@@ -12,6 +12,7 @@ public:
 
 private:
     simsignal_t createSignalForGroup(int jobuid);
+    static simsignal_t jobRCT;
 
 private:
     struct JobRoundMetric {

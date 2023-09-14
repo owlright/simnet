@@ -1,6 +1,7 @@
 #include "GlobalMetricCollector.h"
 
 Define_Module(GlobalMetricCollector);
+simsignal_t GlobalMetricCollector::jobRCT = registerSignal("jobRCT");
 
 void GlobalMetricCollector::reportFlowStart(int jobid, int numWorkers, int workerId, simtime_t roundStartTime)
 {
@@ -31,6 +32,7 @@ void GlobalMetricCollector::reportFlowStop(int jobid, int numWorkers, int worker
     // * wait for all workers to finish its round
     if (roundMeter->counter == jobRoundMetric[jobid]->numWorkers) {
         emit(roundMeter->roundFctSignal, simTime() - roundMeter->startTime);
+        emit(jobRCT, simTime() - roundMeter->startTime);
         roundMeter->reset();
     }
 }

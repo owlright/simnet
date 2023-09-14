@@ -29,6 +29,7 @@ network FatTree
         @statistic[fct](title="flow complete time"; source=fct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[flowSize](title="flow total bytes"; source=flowSize; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[jobRCT](record=vector; source=jobRCT; interpolationmode=none);
 
     types:
         channel C extends DatarateChannel
