@@ -302,7 +302,9 @@ void CongApp::sendFirstTime(TxItem& item)
 void CongApp::confirmAckNumber(const Packet* pk)
 {
     auto ackNumber = pk->getAckNumber();
-    if (ackNumber <= nextAskedSeq) { // ! the other side want an old sent seq
+    // ! we ignore ackNumber==0 here, because if initWindow is >= maxDisorderNumber
+    // ! then seq==0 will always be resent, but since we sent is pure ack, this may not be a big deal
+    if (ackNumber != 0 && ackNumber <= nextAskedSeq) { // ! the other side want an old sent seq
         EV_DEBUG << "old ack " << ackNumber << endl;
         // ! 1. the ackNumber is a sent but not confirmed seq(it should be the oldest)
         // ! 2. the ackNumber is too old, and the sender must have received this seq, otherwise
@@ -415,11 +417,11 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         delete pk;
         return;
     }
-    // if ((localAddr == 397) && localPort == 2000 && seq >= 16000) {
+    // if (localAddr==138 && localPort == 2000) {
     //      std::cout << simTime() << CYAN << " " << localAddr << " " << pk->getName() << " " << estimatedRTT.inUnit(SIMTIME_US)<< " " << nextAckSeq << ENDC;
     //  }
-//    if ((localAddr == 524)&& localPort == 2000 && seq >= 181824) {
-//         std::cout << simTime() << CYAN << " " << localAddr << " " << pk->getName() << " " << nextAckSeq << ENDC;
+//    if ( localPort == 3000) {
+//         std::cout << simTime() << BLUE << " " << localAddr << " " << pk->getName() << " " << estimatedRTT.inUnit(SIMTIME_US)<< " " << nextAckSeq << ENDC;
 //     }
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
