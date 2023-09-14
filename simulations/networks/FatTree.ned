@@ -26,6 +26,9 @@ network FatTree
         int numPods = k;
         int numCores = int(k^2/4);
         @display("bgb=929,304");
+        @statistic[fct](title="flow complete time"; source=fct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[flowSize](title="flow total bytes"; source=flowSize; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
 
     types:
         channel C extends DatarateChannel
