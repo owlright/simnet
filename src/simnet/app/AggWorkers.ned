@@ -9,7 +9,7 @@ parameters:
     int jobId           = default(-1);
     int workerId        = default(-1);
     int numWorkers      = default(0);
-    double roundInterval @unit(us) = default(1us);
+    double roundInterval @unit(us) = default(80us);
     @class(WorkerApp);
 }
 
