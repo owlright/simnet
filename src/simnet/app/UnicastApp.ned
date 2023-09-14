@@ -33,7 +33,7 @@ module CongApp extends UnicastApp {
 
 module FlowApp extends CongApp {
     parameters:
-        int flowSize @unit(B) = default(8kB); // in bytes
+        volatile int flowSize @unit(B) = default(8kB); // in bytes
         double flowStartTime @unit(s) = default(0.0s);
         bool useJitter = default(false); // ! set this to true before using jitter
         volatile double jitterBeforeSending @unit(s) = default(0s);

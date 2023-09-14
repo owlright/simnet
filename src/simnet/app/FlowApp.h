@@ -35,7 +35,8 @@ protected:
 protected:
     // ! ned parameters
     AppState_t appState{Idle};
-    B flowSize{0};
+    cPar* flowSize;
+    B currFlowSize{0};
     double flowStartTime;
     bool useJitter{false};
     cPar* jitterBeforeSending = nullptr;

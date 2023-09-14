@@ -13,7 +13,7 @@ void FlowApp::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         appState = Idle;
         useJitter = par("useJitter");
-        flowSize = par("flowSize");
+        flowSize = &par("flowSize");
         flowStartTime = par("flowStartTime");
         flowStartTimer = new cMessage("flowStart");
         if (useJitter)
@@ -67,21 +67,22 @@ void FlowApp::onFlowStart()
     if (connection == nullptr) {
         throw cRuntimeError("conneciton is nullptr!");
     }
-    EV_INFO << " flowSize: " << flowSize << endl;
+    currFlowSize = flowSize->intValue();
+    EV_INFO << " flowSize: " << currFlowSize << endl;
     prepareTxBuffer();
-    emit(flowSizeSignal, flowSize);
 }
 
 void FlowApp::onFlowStop()
 {
     appState = Finished;
+    emit(flowSizeSignal, currFlowSize);
     emit(fctSignal, (simTime() - flowStartTime));
-    emit(idealFctSignal, getCurrentBaseRTT() + SimTime((flowSize*8) / getMaxSendingRate()));
+    emit(idealFctSignal, getCurrentBaseRTT() + SimTime((currFlowSize*8) / getMaxSendingRate()));
 }
 
 void FlowApp::prepareTxBuffer()
 {
-    auto leftData = flowSize;
+    auto leftData = currFlowSize;
 
     while (leftData > 0) {
         auto packetSize = messageLength < leftData ? messageLength : leftData;
