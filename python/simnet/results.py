@@ -5,27 +5,30 @@ import networkx as nx
 
 
 def print_slowdown(sheet):
-
     def _get_slowdown(x):
-        fct = x[(x['type'] == 'vector')
-                & (x['name'] == 'fct:vector')]['vecvalue'].iloc[0]
-        idealfct = x[(x['type'] == 'vector')
-                     & (x['name'] == 'idealFct:vector')]['vecvalue'].iloc[0]
-        return np.mean(fct / idealfct)
+        try:
+            fct = x[(x['type'] == 'vector')
+                    & (x['name'] == 'fct:vector')]['vecvalue'].iloc[0]
+            idealfct = x[(x['type'] == 'vector')
+                        & (x['name'] == 'idealFct:vector')]['vecvalue'].iloc[0]
+            return np.mean(fct / idealfct)
+        except:
+            return 0
+
 
     # sheet = read_csv("simulations", "test", "RandomCreateApp")
     # iterRunID = get_runID_by_itervar('load')
-    runIds = get_runID(sheet)
-    loads = [i / 10 for i in range(1, 10)]
-    print(loads)
-    for load in loads:
-        rep_runids = runIds[tuple([load])]
+    itvarnames, runIds = get_runIDs(sheet)
+
+    # loads = [i / 10 for i in range(1, 10)]
+    # print(loads)
+    for load, rep_runids in runIds.items():
         accumlated_fct = 0
-        for run in rep_runids.values():
-            df = sheet[sheet['runID'] == run].groupby('module').apply(
-                _get_slowdown)
+        for run in rep_runids:
+            df = sheet[sheet['runID'] == run].groupby('module').apply(_get_slowdown)
             accumlated_fct += df.mean()
-        print(accumlated_fct / len(rep_runids))
+
+        print(load[0], accumlated_fct / len(rep_runids))
 
 
 # def get_avg_vector(vec_name, config_dir, config_name, itvar_name="") -> dict:
