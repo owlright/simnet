@@ -192,12 +192,13 @@ void CongApp::sendPendingData()
         auto pktSize = tx_item.pktSize;
 
         if (tx_item.is_sent) {
-            if (tx_item.resend_timer == 0) {
-                resend(tx_item);
-            }
-            else {
-                tx_item_it++;
-            }
+            // if (tx_item.resend_timer <= 0) {
+            //     resend(tx_item);
+            // }
+            // else {
+            //     tx_item_it++;
+            // }
+            tx_item_it++;
             continue; // * move to next seq
         }
         else {
@@ -216,6 +217,7 @@ void CongApp::sendPendingData()
                 tmp.pkt->setDestAddr(dst);
                 sendFirstTime(tmp);
             }
+            tx_item.sendTime = simTime(); // ! note multicast send is tmp, not tx_item!
         }
         tx_item_it++;
 //        if (tcpState == TIME_WAIT) {
@@ -228,7 +230,13 @@ void CongApp::sendPendingData()
 void CongApp::resendTimeoutSeqs()
 {
     for (auto& [seq, item] : txBuffer) {
-        if (item.is_sent && simTime() - item.sendTime > 20*estimatedRTT) {
+        if (item.is_sent && simTime() - item.sendTime > 10*estimatedRTT) {
+            /**
+             * ! this function should never be triggerred,
+             * ! becasuse I fix the interval between the sequence numbers of the two lost packets is smaller than maxDisorderNumber
+             * */
+            throw cRuntimeError("Timeout happended, check the maxDisorderNumber first!");
+            ASSERT(item.sendTime > 0);
             resend(item);
         } else {
             break;
@@ -238,7 +246,12 @@ void CongApp::resendTimeoutSeqs()
 
 void CongApp::resend(TxItem& item)
 {
-    ASSERT(item.is_sent);
+    // if ((localAddr==272 || localAddr==399||localAddr==527||localAddr==143||localAddr==394||localAddr==401||localAddr==271||localAddr==786||localAddr==659) && item.seq == 7980000) {
+    //     std::cout << simTime() << " resend " << localAddr << " " << item.seq << endl;
+    // }
+    if (!item.is_sent) {
+        throw cRuntimeError("You can't resend a not sent packet.");
+    }
     if (item.destAddresses.empty()) {
         auto pk = item.pkt;
         pk->setResend(true);
@@ -279,8 +292,18 @@ void CongApp::confirmAckNumber(const Packet* pk)
         // ! 1. the ackNumber is a sent but not confirmed seq(it should be the oldest)
         // ! 2. the ackNumber is too old, and the sender must have received this seq, otherwise
         // !    our nextAskedSeq cannot move to next, so do nothing about this ack
-        if (txBuffer.find(ackNumber) != txBuffer.end()) {
-            txBuffer.at(ackNumber).resend_timer--;
+        auto it = txBuffer.find(ackNumber);
+        if (it != txBuffer.end()) {
+            auto& reitem = txBuffer.at(ackNumber);
+
+            reitem.resend_timer--;
+            if (reitem.resend_timer <= 0) {
+//                if (localAddr == 525 && localPort==2000)
+                // std::cout << simTime() << " " << localAddr << " " << it->second.sendTime << " " << reitem.seq <<endl;
+                ASSERT(ackNumber==reitem.seq);
+                auto reitemFirstSendTime = reitem.sendTime;
+                resend(reitem); // ! sendTime will be updated here
+            }
         }
     }
     else {

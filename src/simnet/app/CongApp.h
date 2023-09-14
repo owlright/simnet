@@ -137,6 +137,7 @@ private:
     // ! state
     mutable SeqNumber nextSeq{0};     // ! when a new packet insert txBuffer
     SeqNumber nextSentSeq{0}; // ! the next seq actually will be sent out
+    SeqNumber lastSentSeqMark{0};
     SeqNumber nextAckSeq{0};  // ! the next seq I want
     SeqNumber nextAskedSeq{0}; // ! the next seq the other side want
 
