@@ -71,7 +71,9 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     auto round = apk->getRound();
     if (round > currentRound) {
         EV_DEBUG << "Round: " << round << endl;
-        ASSERT(txBuffer.empty());
+        if (!txBuffer.empty()) {
+            throw cRuntimeError("PS %d txBuffer not cleared yet.", round);
+        }
         ASSERT(aggRecord.empty());
         currentRound = round;
     }
@@ -82,11 +84,12 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     auto arrivedAckNumber = pk->getAckNumber();
     if (aggRecord.find(seq) == aggRecord.end()) {
         // ! we see this packet for the first time(it may be aggregated or the first resend packet)
-        aggRecord[seq].seqNumber = getNextSeq();
+        aggRecord[seq].seqNumber = messageLength * apk->getAggSeqNumber(); // * we actually doesn't need to store this
         aggRecord[seq].askedSeqNumber = arrivedAckNumber;
-        incrementNextSeqBy(messageLength);
+        // incrementNextSeqBy(messageLength);
     }
     else {
+        // ! this is for resend packets aggregation, store the smallest ackNumber
         if (arrivedAckNumber < aggRecord.at(seq).askedSeqNumber) {
             aggRecord.at(seq).askedSeqNumber = arrivedAckNumber;
         }
@@ -98,6 +101,12 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
         record.workers.clear();
     }
     record.ecn |= apk->getECN();
+
+    if (apk->getCollision()) {
+        record.askedSeqNumber = INT64_MAX;
+        delete apk;
+        return;
+    }
     auto& agged_workers = record.workers;
     auto incoming_workers = apk->getRecord();
     for (auto& w : incoming_workers) {
@@ -130,6 +139,7 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
             item.destAddresses = std::move(tmp);
         }
         aggRecord.erase(seq);
+        pk->setAckNumber(record.askedSeqNumber);
         CongApp::onReceivedNewPacket(pk); // ! we see a fully aggregation packet as received a packet
     }
     else {
@@ -140,8 +150,6 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
 
 void ParameterServerApp::resend(TxItem& item)
 {
-    // if (localAddr == 660)
-    //     std::cout << simTime() << " PS resend " << item.seq << std::endl;
     std::vector<IntAddress> tmp(workers.begin(), workers.end());
     item.pkt->setPacketType(ACK);
     item.destAddresses = std::move(tmp);
