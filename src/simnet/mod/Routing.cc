@@ -154,8 +154,8 @@ void Routing::forwardIncoming(Packet *pk)
         // MulticastID mKey = {agtrIndex, outGateIndex};
         if (currSegment != myAddress && !pk->getResend()) { // ! store a special unicast entry
             auto key = AddrGate(destAddr, seq, outGateIndex);
-            ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
-            groupUnicastTable[key] = pk->getArrivalGate()->getIndex();
+            // ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
+            groupUnicastTable[key].insert(pk->getArrivalGate()->getIndex());
         }
         if (currSegment == myAddress) { // ! I'm responsible for aggregation
             if (!pk->getResend()) {
@@ -242,10 +242,14 @@ void Routing::forwardIncoming(Packet *pk)
         }
         if (!foundEntry) {
             if (groupUnicastTable.find(key) == groupUnicastTable.end()) {
-                throw cRuntimeError("The multicast entry doesn't exist, it must be deleted by a resend packet. Check RTOTimeout");
+                std::cout << simTime() << " " << pk->getName() << endl;
+                EV_WARN << "multicast entry deleted too early." << endl;
+                delete pk;
+                throw cRuntimeError("The multicast entry doesn't exist, it must be deleted by a resend packet. Check allowed resend interval.");
+            } else {
+                foundEntry = true;
+                broadcast(pk, groupUnicastTable.at(key));
             }
-            foundEntry = true;
-            send(pk, "out", groupUnicastTable.at(key));
         }
         ASSERT(foundEntry);
 

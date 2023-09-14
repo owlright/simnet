@@ -79,7 +79,7 @@ private:
 
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
-    std::unordered_map<AddrGate, int, hash_fn> groupUnicastTable;
+    std::unordered_map<AddrGate, std::unordered_set<int>, hash_fn> groupUnicastTable;
     GlobalRouteManager* routeManager{nullptr};
 
     B bufferSize{0};
