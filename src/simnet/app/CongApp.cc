@@ -425,7 +425,8 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
 
     // * do something every RTT only once on successful packet
     auto guessAckMySeq = ackSeq - messageLength;
-    if (seq > 0 && seq == nextAckSeq && !pk->getResend()  && txBuffer.find(guessAckMySeq) != txBuffer.end()) {
+
+    if (ackSeq > 0 && seq == nextAckSeq && !pk->getResend()  && txBuffer.find(guessAckMySeq) != txBuffer.end()) {
         auto& item = txBuffer.at(guessAckMySeq);
         ASSERT(item.is_sent);
         if (!item.is_resend_already) {
