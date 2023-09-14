@@ -82,7 +82,7 @@ OPP_RUN_DBG_OPTIONS := -m \
 define SIM_template
 $(eval SIM_INI_FILE := simulations/$(1)/omnetpp.ini)
 
-$(1)-%: $(PROJECT_TARGET)
+$(1)-%: $(PROJECT_TARGET) cleanresults-$(1)-%
 	opp_runall -j $(CPU_COUNT) \
 	opp_run $(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_OPTIONS)
 
