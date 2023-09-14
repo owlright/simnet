@@ -177,7 +177,22 @@ void CongApp::handleMessage(cMessage *msg)
         else {
             resendTimeoutSeqs();
         }
-        // markSeq = nextSentSeq;
+        if (nextSentSeq == lastSentSeqMark) {
+            // ! resend the oldest packet immediately
+            if (!txBuffer.empty()) {
+                auto& item = txBuffer.begin()->second;
+                if (!item.is_sent) {
+                    throw cRuntimeError("Why not sent any packet in a rtt?");
+                }
+                if ((simTime() - item.sendTime) > 5*estimatedRTT && !item.is_resend_already) {
+                    // TODO is this always right?
+                    // ! we believe resend packets will always be accepted
+                    resend(item);
+                }
+            }
+
+        }
+        lastSentSeqMark = nextSentSeq;
         scheduleAfter(estimatedRTT, RTOTimeout); // we have to repeadedly check
     } else {
         ConnectionApp::handleMessage(msg);
