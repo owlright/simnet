@@ -246,11 +246,6 @@ void CongApp::resendTimeoutSeqs()
 {
     for (auto& [seq, item] : txBuffer) {
         if (item.is_sent && simTime() - item.sendTime > 10*estimatedRTT) {
-            /**
-             * ! this function should never be triggerred,
-             * ! becasuse I fix the interval between the sequence numbers of the two lost packets is smaller than maxDisorderNumber
-             * */
-            throw cRuntimeError("Timeout happended, check the maxDisorderNumber first!");
             ASSERT(item.sendTime > 0);
             resend(item);
         } else {
