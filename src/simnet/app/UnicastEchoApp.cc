@@ -25,6 +25,12 @@ void EchoApp::handleMessage(cMessage *msg)
         flows[connId].connection = createConnection(connId);
         flows[connId].connection->bindRemote(pk->getSrcAddr(), pk->getLocalPort());
     }
+    auto& flow = flows.at(connId);
+    if (!flow.isOpen) { // the same src Addr again
+        if (pk->getSrcAddr() != flow.connection->getDestAddr())
+            throw cRuntimeError("connection not match");
+        flow.resetState();
+    }
     flows.at(connId).connection->processPacket(pk);
 }
 
@@ -34,7 +40,7 @@ void EchoApp::connectionDataArrived(Connection *connection, Packet* pk)
     auto seqNumber = pk->getSeqNumber();
     auto srcAddr = pk->getSrcAddr();
     auto& flow = flows.at(connId);
-    ASSERT(pk->getKind() == PacketType::DATA);
+    ASSERT(pk->getPacketType() == PacketType::DATA);
     ASSERT(connId == connection->getConnectionId());
     // if (localAddr == 1)
     //     std::cout << pk->getName() << endl;
@@ -53,6 +59,7 @@ void EchoApp::connectionDataArrived(Connection *connection, Packet* pk)
 
     if (flow.nextAckNumber == flow.totalBytes) {
         packet->setFIN(true);
+        flow.isOpen = false;
     }
     char pkname[40];
     auto seq = flow.nextSeq;
@@ -74,7 +81,7 @@ Packet *EchoApp::createAckPacket(const Packet* const pk)
     packet->setDestPort(pk->getLocalPort());
     packet->setECE(pk->getECN());
     packet->setKind(PacketType::ACK);
-    packet->setByteLength(1);
+    packet->setByteLength(ackPacketSize);
     // packet->setSendTime(pk->getSendTime());
     packet->setQueueTime(pk->getQueueTime());
     packet->setTransmitTime(pk->getTransmitTime());

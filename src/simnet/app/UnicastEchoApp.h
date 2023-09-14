@@ -22,10 +22,18 @@ protected:
         SeqNumber nextSeq{0};
         SeqNumber nextAckNumber{0};
         SeqNumber totalBytes{0};
+        bool isOpen{true};
+    public:
+        void resetState() {
+            nextSeq = 0;
+            nextAckNumber = 0;
+            totalBytes = 0;
+            isOpen = true;
+        }
     };
     // configuration
     std::unordered_map<IdNumber, FlowTable> flows;
-    B ackPacketSize{1};
+    B ackPacketSize{64};
 protected:
     virtual void connectionDataArrived(Connection *connection, Packet* pk) override;
     virtual Packet* createAckPacket(const Packet* const pk);
