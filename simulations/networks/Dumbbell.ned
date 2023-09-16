@@ -4,6 +4,7 @@ import simnet.mod.Host;
 import simnet.mod.Switch;
 import simnet.mod.manager.GlobalRouteManager;
 import simnet.mod.manager.GlobalView;
+import simnet.mod.manager.TrafficPatternManager;
 import ned.DatarateChannel;
 // one sender and one receiver
 // a router with different datarate
@@ -39,6 +40,9 @@ network Dumbbell
         }
         globalView: GlobalView {
             @display("p=883.4175,47.215");
+        }
+        tpManager: TrafficPatternManager {
+            @display("p=428.01373,237.915");
         }
 
     connections:
