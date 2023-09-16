@@ -18,9 +18,6 @@ IntAddress TrafficPatternManager::getDestAddr(IntAddress srcAddr) const
         }
         while(dst == srcAddr);
     }
-    else if (trafficPattern == "") {
-        EV_WARN << "Empty trafficPattern!" << endl;
-    }
     else {
         throw cRuntimeError("unknown trafficPattern.");
     }
