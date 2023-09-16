@@ -105,6 +105,8 @@ void HostNode::finish()
     //     auto app = getSubmodule("pses", i);
     //     app->deleteModule();
     // }
+    EV_DEBUG << address << " generate " << getSubmoduleVectorSize("apps") << " FlowApps." << endl;
+    EV_DEBUG << address << " generate " << flowCount << " flows." << endl;
 }
 
 FlowApp* HostNode::createCongApp()
