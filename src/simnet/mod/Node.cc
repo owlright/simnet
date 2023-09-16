@@ -85,7 +85,7 @@ void HostNode::handleMessage(cMessage* msg)
     if (msg == newFlowTimer) {
         flowCount++;
         startNewFlow();
-        if (flowCount < numFlows)
+        if (flowCount != numFlows)
             scheduleAfter(exponential(flowInterval), newFlowTimer);
     }
 }
