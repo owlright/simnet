@@ -249,6 +249,7 @@ void Routing::forwardIncoming(Packet *pk)
             } else {
                 foundEntry = true;
                 broadcast(pk, groupUnicastTable.at(key));
+                groupUnicastTable.erase(key);
             }
         }
         ASSERT(foundEntry);
