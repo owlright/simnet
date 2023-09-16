@@ -182,7 +182,7 @@ void CongApp::handleMessage(cMessage *msg)
             if (!txBuffer.empty()) {
                 auto& item = txBuffer.begin()->second;
                 if (!item.is_sent) {
-                    throw cRuntimeError("Why not sent any packet in a rtt?");
+                    throw cRuntimeError("Why not sent any packet in last rtt?");
                 }
                 if ((simTime() - item.sendTime) > 5*estimatedRTT && !item.is_resend_already) {
                     // TODO is this always right?
