@@ -79,6 +79,12 @@ void FlowApp::onFlowStart()
 
 void FlowApp::onFlowStop()
 {
+    if (!txBuffer.empty()) {
+        throw cRuntimeError("txBuffer not empty");
+    }
+    if (!rxBuffer.empty()) {
+        throw cRuntimeError("rxBuffer not empty");
+    }
     appState = Finished;
     emit(flowSizeSignal, currFlowSize);
     emit(fctSignal, (simTime() - flowStartTime));
