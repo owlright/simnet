@@ -52,6 +52,11 @@ void FlowApp::onConnectionClose() {
     }
 }
 
+void FlowApp::resend(TxItem& item)
+{
+    // * do nothing
+}
+
 void FlowApp::onFlowStart()
 {
     if (!bindRemote()) {

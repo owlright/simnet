@@ -24,6 +24,7 @@ protected:
 protected:
     virtual void confirmAckNumber(const Packet* pk) override;
     virtual void onConnectionClose() override;
+    virtual void resend(TxItem& item) override;
 
 protected:
     virtual void onFlowStart();
