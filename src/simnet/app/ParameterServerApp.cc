@@ -15,12 +15,13 @@ protected:
     virtual void onReceivedNewPacket(Packet* pk) override;
     virtual void resend(TxItem& item) override;
     virtual void onReceivedDuplicatedPacket(Packet* pk) override;
+    virtual Packet* createDataPacket() override;
 
 protected:
     struct AggRecord {
         std::set<IntAddress> workers;
-        SeqNumber seqNumber;
         SeqNumber askedSeqNumber;
+        Packet* pk;
         bool ecn;
         bool success{true};
     };
@@ -38,6 +39,7 @@ private:
 
     B aggedBytes{0};
     B totalAggBytes{0};
+    SeqNumber currSeq{-1}; // ! current seqNumber for aggregation
     std::map<SeqNumber, std::set<IntAddress>> oldPktWithNewAckSeq;
 };
 
@@ -84,9 +86,7 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     auto arrivedAckNumber = pk->getAckNumber();
     if (aggRecord.find(seq) == aggRecord.end()) {
         // ! we see this packet for the first time(it may be aggregated or the first resend packet)
-        aggRecord[seq].seqNumber = messageLength * apk->getAggSeqNumber(); // * we actually doesn't need to store this
         aggRecord[seq].askedSeqNumber = arrivedAckNumber;
-        // incrementNextSeqBy(messageLength);
     }
     else {
         // ! this is for resend packets aggregation, store the smallest ackNumber
@@ -109,41 +109,29 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     }
     auto& agged_workers = record.workers;
     auto incoming_workers = apk->getRecord();
-    for (auto& w : incoming_workers) {
-        agged_workers.insert(w);
-    }
+    agged_workers.insert(incoming_workers.begin(), incoming_workers.end());
     if (agged_workers.size() == numWorkers) {
-        EV_DEBUG << GREEN << "Round " << currentRound << " Seq " << seq <<"-" << record.seqNumber << " finished. " << getNextAskedSeq() << ENDC;
+        EV_DEBUG << GREEN << "Round " << currentRound << " Seq " << seq  << " finished. " << getNextAskedSeq() << ENDC;
         ASSERT(workers == agged_workers);
-        // ! after we send FIN, we are in state CLOSE_WAIT,
-        // ! we will receieve ACK to FIN, do not answer it.
         aggedBytes += pk->getByteLength();
+        currSeq = pk->getSeqNumber();
+        auto mpk = createAckPacket(apk);
+        mpk->setECE(record.ecn);
         if (record.success) {
             // ! send a multicast ACK
-            auto mpk = createAckPacket(apk);
-            mpk->setSeqNumber(record.seqNumber);
             mpk->setPacketType(MACK);
             mpk->setDestAddr(groupAddr);
-            mpk->setECE(record.ecn);
-            insertTxBuffer(mpk);
         }
         else {
-            auto apk_ack = createAckPacket(apk);
-            apk_ack->setSeqNumber(record.seqNumber);
-            apk_ack->setPacketType(ACK);
-            apk_ack->setECE(record.ecn);
-            insertTxBuffer(apk_ack);
-            auto& item = txBuffer.at(record.seqNumber);
-            // ! send each worker one ACK
-            std::vector<IntAddress> tmp(agged_workers.begin(), agged_workers.end());
-            item.destAddresses = std::move(tmp);
+            mpk->setPacketType(ACK);
         }
-        aggRecord.erase(seq);
-        pk->setAckNumber(record.askedSeqNumber);
+        mpk->setAckNumber(record.askedSeqNumber);
+        record.pk = mpk;
         CongApp::onReceivedNewPacket(pk); // ! we see a fully aggregation packet as received a packet
     }
     else {
         ASSERT(pk->getResend());
+        currSeq = -1;
         delete pk;
     }
 }
@@ -186,6 +174,21 @@ void ParameterServerApp::onReceivedDuplicatedPacket(Packet* pk)
     // }
 }
 
+Packet* ParameterServerApp::createDataPacket()
+{
+    if (currSeq != -1) {
+        ASSERT( aggRecord.find(currSeq) != aggRecord.end() );
+        auto& record = aggRecord.at(currSeq);
+        auto pk = record.pk;
+        if (!record.success)
+            pk->assignDestAddresses(record.workers);
+        aggRecord.erase(currSeq);
+        currSeq = -1;
+        return pk;
+    }
+    return nullptr;
+}
+
 AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
 {
     auto packet = new AggPacket();
@@ -193,7 +196,6 @@ AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
         if (pk->getFIN() || tcpState == CLOSE_WAIT)
             packet->setFIN(true);
     }
-
     packet->setByteLength(messageLength);
     packet->setDestPort(2000);
     // copy pk's fields
