@@ -1,5 +1,7 @@
 cplusplus {{
 #include <vector>
+#include <set>
+#include <algorithm>
 using omnetpp::opp_string;
 }}
 
@@ -52,8 +54,27 @@ class IPv6Header extends EthernetMacHeader
 //    uint8_t TTL; // 1B
     int64_t srcAddr = -1; // 16B
     int64_t destAddr = -1; // 16B
+    int64_t destAddresses[] @custom @sizeGetter(getNumDestAddrs)
+                                    @sizeSetter(setNumDestAddrs)
+                                    @getter(getDestAddresses)
+                                    @setter(setDestAddresses);
 }
 
+cplusplus(IPv6Header) {{
+    protected:
+        std::vector<int64_t> destAddresses;
+    public:
+        void setNumDestAddrs(size_t size) {destAddresses.resize(size);}
+        size_t getNumDestAddrs() const {return destAddresses.size();}
+        int64_t getDestAddresses(size_t k) const {return destAddresses.at(k);}
+        const std::vector<int64_t>& getAllDestAddresses() const {return destAddresses;}
+        void setDestAddresses(size_t k, int64_t addr) {
+            destAddresses.at(k) = addr;
+        }
+        void assignDestAddresses(std::set<int64_t>& addrs) {
+            destAddresses.assign(addrs.begin(), addrs.end());
+        }
+}}
 class SegmentRoutingHeader extends IPv6Header
 {
 //    uint8_t nextHeader; // 1B
