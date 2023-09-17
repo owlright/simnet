@@ -313,7 +313,6 @@ void CongApp::confirmAckNumber(const Packet* pk)
 //                if (localAddr == 525 && localPort==2000)
                 // std::cout << simTime() << " " << localAddr << " " << it->second.sendTime << " " << reitem.seq <<endl;
                 ASSERT(ackNumber==reitem.seq);
-                auto reitemFirstSendTime = reitem.sendTime;
                 resend(reitem); // ! sendTime will be updated here
             }
         }
