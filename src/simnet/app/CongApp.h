@@ -83,6 +83,9 @@ protected:
     virtual void onConnectionClose();
     virtual void echoACK(SeqNumber seq);
     virtual void resend(TxItem& item);
+    virtual Packet* createDataPacket() {
+        throw cRuntimeError("CongApp can't use directly.");
+    };
 
 protected:
     void sendPendingData();
@@ -100,7 +103,6 @@ protected:
 
 protected:
     const SeqNumber& getNextSeq() const {return nextSeq;};
-    void incrementNextSeqBy(B segmentSize) const {nextSeq += segmentSize;};
     const SeqNumber& getNextSentSeq() const {return nextSentSeq;};
     const SeqNumber& getNextAckSeq() const {return nextAckSeq;};
     const SeqNumber& getNextAskedSeq() const {return nextAskedSeq;};

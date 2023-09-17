@@ -165,18 +165,7 @@ void CongApp::initialize(int stage)
 void CongApp::handleMessage(cMessage *msg)
 {
     if (msg == RTOTimeout) {
-        if (tcpState == TIME_WAIT) {
-//            tcpState = CLOSED;
-//            ASSERT(txBuffer.size() == 1);
-//            auto& item = txBuffer.begin()->second;
-//            delete item.pkt;
-//            txBuffer.erase(item.seq);
-//            onConnectionClose();
-//            return;
-        }
-        else {
-            resendTimeoutSeqs();
-        }
+        resendTimeoutSeqs();
         if (nextSentSeq == lastSentSeqMark) {
             // ! resend the oldest packet immediately
             if (!txBuffer.empty()) {
@@ -190,7 +179,6 @@ void CongApp::handleMessage(cMessage *msg)
                     resend(item);
                 }
             }
-
         }
         lastSentSeqMark = nextSentSeq;
         scheduleAfter(estimatedRTT, RTOTimeout); // we have to repeadedly check
@@ -201,43 +189,29 @@ void CongApp::handleMessage(cMessage *msg)
 
 void CongApp::sendPendingData()
 {
-    auto tx_item_it = txBuffer.begin();
-    while (tx_item_it != txBuffer.end() && cong->getcWnd() - inflightBytes() >= tx_item_it->second.pktSize) {
-        auto& tx_item = tx_item_it->second;
-        auto pktSize = tx_item.pktSize;
-
-        if (tx_item.is_sent) {
-            // if (tx_item.resend_timer <= 0) {
-            //     resend(tx_item);
-            // }
-            // else {
-            //     tx_item_it++;
-            // }
-            tx_item_it++;
-            continue; // * move to next seq
-        }
-        else {
-            tx_item.is_sent = true;
-            //// markSeq = nextSentSeq; // ! if markSeq not change for a RTOTimeout, we resend the oldest not acked seq
-            nextSentSeq = tx_item.seq + pktSize;
-        }
-        ASSERT(!tx_item.is_resend_already);
-        if (tx_item.destAddresses.empty()) {
-            sendFirstTime(tx_item);
-        }
-        else {
-            // * send copy of packets to different destAddresses
-            for (auto& dst: tx_item.destAddresses) {
-                TxItem tmp(tx_item);
-                tmp.pkt->setDestAddr(dst);
-                sendFirstTime(tmp);
+    while (cong->getcWnd() - inflightBytes() >= messageLength) {
+        auto pk = createDataPacket();    // * when there is room, ask the app for more data
+        if (pk != nullptr) {
+            insertTxBuffer(pk);
+            auto seq = pk->getSeqNumber();
+            auto& item = txBuffer.at(seq);
+            nextSentSeq = seq + item.pktSize; // ! affect inflightBytes
+            item.is_sent = true;
+            auto& destAddresses = pk->getAllDestAddresses();
+            if (destAddresses.empty()) {
+                sendFirstTime(item);
+            } else {
+                // * send copy of packets to different destAddresses
+                for (auto& dst : destAddresses) {
+                    TxItem tmp(item);
+                    tmp.pkt->setDestAddr(dst);
+                    sendFirstTime(tmp);
+                }
+                item.sendTime = simTime();  // ! note multicast send is tmp, not tx_item!
             }
-            tx_item.sendTime = simTime(); // ! note multicast send is tmp, not tx_item!
+        } else {
+            break;
         }
-        tx_item_it++;
-//        if (tcpState == TIME_WAIT) {
-//            rescheduleAfter(2*estimatedRTT, RTOTimeout);
-//        }
     }
     rescheduleAfter(estimatedRTT, RTOTimeout);
 }
@@ -486,10 +460,10 @@ void CongApp::handleParameterChange(const char *parameterName)
 void CongApp::insertTxBuffer(Packet* pk)
 {
     setField(pk);
-    auto seq = pk->getSeqNumber();
+    pk->setSeqNumber(nextSeq);
+    txBuffer[nextSeq] = TxItem(pk);
+    nextSeq += messageLength;
 //    ASSERT(pk->getDestAddr() != INVALID_ADDRESS); // cannot check this because of Parameter Server's broadcast behaviour
-    ASSERT(txBuffer.find(seq) == txBuffer.end());
-    txBuffer[seq] = TxItem(pk);
 }
 
 void CongApp::insertRxBuffer(Packet* pk)
