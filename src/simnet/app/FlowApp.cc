@@ -74,7 +74,7 @@ void FlowApp::onFlowStart()
     }
     currFlowSize = flowSize->intValue();
     EV_INFO << " flowSize: " << currFlowSize << endl;
-    prepareTxBuffer();
+    leftData = currFlowSize;
 }
 
 void FlowApp::onFlowStop()
@@ -91,30 +91,24 @@ void FlowApp::onFlowStop()
     emit(idealFctSignal, getCurrentBaseRTT() + SimTime((currFlowSize*8) / getMaxSendingRate()));
 }
 
-void FlowApp::prepareTxBuffer()
+Packet* FlowApp::createDataPacket()
 {
-    auto leftData = currFlowSize;
-
-    while (leftData > 0) {
+    if (leftData > 0) {
         auto packetSize = messageLength < leftData ? messageLength : leftData;
-        auto pk = createDataPacket(packetSize);
+        auto pk = new Packet();
+        pk->setSeqNumber(getNextSeq());
+        pk->setDestAddr(destAddr);
+        pk->setDestPort(destPort);
+        pk->setPacketType(DATA);
+        pk->setByteLength(packetSize);
         if (leftData == packetSize) // last packet
             pk->setFIN(true);
-        insertTxBuffer(pk);
-        incrementNextSeqBy(packetSize);
         leftData -= packetSize;
+        return pk;
     }
-}
-
-Packet* FlowApp::createDataPacket(B packetBytes)
-{
-    auto pk = new Packet();
-    pk->setSeqNumber(getNextSeq());
-    pk->setDestAddr(destAddr);
-    pk->setDestPort(destPort);
-    pk->setPacketType(DATA);
-    pk->setByteLength(packetBytes);
-    return pk;
+    else {
+        return nullptr;
+    }
 }
 
 void FlowApp::scheduleNextFlowAt(simtime_t_cref time)

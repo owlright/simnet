@@ -14,7 +14,7 @@ protected:
 
 protected:
     virtual void onReceivedNewPacket(Packet* pk) override;
-    Packet* createDataPacket(B packetBytes);
+    virtual Packet* createDataPacket() override;
 
 protected:
     virtual void onRoundStart();
@@ -22,7 +22,6 @@ protected:
 
 protected:
     virtual void setField(AggPacket* pk);
-    void prepareTxBuffer();
 
 protected:
     cMessage *roundStartTimer = nullptr;
@@ -34,6 +33,6 @@ protected:
     int numRounds;
     double roundInterval;
     B flowSize{0};
-
+    B leftData{0};
     opp_component_ptr<GlobalMetricCollector> jobMetricCollector;
 };

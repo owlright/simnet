@@ -29,8 +29,7 @@ protected:
 protected:
     virtual void onFlowStart();
     virtual void onFlowStop();
-    virtual void prepareTxBuffer();
-    Packet* createDataPacket(B packetBytes);
+    virtual Packet* createDataPacket() override;
 
 
 protected:
@@ -38,6 +37,7 @@ protected:
     AppState_t appState{Idle};
     cPar* flowSize;
     B currFlowSize{0};
+    B leftData{0};
     double flowStartTime;
     bool useJitter{false};
     cPar* jitterBeforeSending = nullptr;

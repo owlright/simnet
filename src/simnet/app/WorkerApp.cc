@@ -58,17 +58,20 @@ void WorkerApp::setField(AggPacket* pk) {
     pk->setDistance(0);
 }
 
-void WorkerApp::prepareTxBuffer()
+Packet* WorkerApp::createDataPacket()
 {
-    auto leftData = flowSize;
-    while (leftData > 0) {
+    if (leftData > 0) {
         auto packetSize = messageLength < leftData ? messageLength : leftData;
-        auto pk = createDataPacket(packetSize);
+        auto pk = new AggPacket();
+        pk->setByteLength(packetSize);
+        setField(pk);
         if (currentRound == numRounds && leftData == packetSize) // last packet of last round
             pk->setFIN(true);
-        insertTxBuffer(pk);
-        incrementNextSeqBy(packetSize);
         leftData -= packetSize;
+        return pk;
+    }
+    else {
+        return nullptr;
     }
 }
 
@@ -106,21 +109,13 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
     }
 }
 
-Packet* WorkerApp::createDataPacket(B packetBytes)
-{
-    auto pk = new AggPacket();
-    pk->setByteLength(packetBytes);
-    setField(pk);
-    return pk;
-}
-
 void WorkerApp::onRoundStart()
 {
     currentRound += 1;
     roundStartSeq = getNextSentSeq();
     ASSERT(tcpState == OPEN);
     EV_INFO << "current round:" << currentRound << " flowSize:" << flowSize << endl;
-    prepareTxBuffer();
+    leftData = flowSize;
     if (jobMetricCollector)
         jobMetricCollector->reportFlowStart(jobId, numWorkers, workerId, simTime());
 }
