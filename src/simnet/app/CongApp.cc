@@ -285,7 +285,9 @@ void CongApp::confirmAckNumber(const Packet* pk)
 //                if (localAddr == 525 && localPort==2000)
                 // std::cout << simTime() << " " << localAddr << " " << it->second.sendTime << " " << reitem.seq <<endl;
                 ASSERT(ackNumber==reitem.seq);
-                resend(reitem); // ! sendTime will be updated here
+                // ! if initWin is bigger than maxDisorderNumber, the first window of data will be triggered to resend
+                if ((simTime() - reitem.sendTime) > 1.5*estimatedRTT)
+                    resend(reitem); // ! sendTime will be updated here
             }
         }
     }
