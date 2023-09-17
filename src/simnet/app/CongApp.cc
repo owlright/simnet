@@ -47,12 +47,10 @@ void CongApp::echoACK(SeqNumber seq)
     packet->setPacketType(ACK);
     packet->setSeqNumber(seq);
     packet->setAckNumber(getNextAckSeq());  // * let other side clear its txBuffer
-    insertTxBuffer(packet);
-    auto& item = txBuffer.at(seq);
+    auto item = TxItem(packet);
     sendFirstTime(item);
     // ! we think ACK will can't be lost
     delete item.pkt;
-    txBuffer.erase(seq);
 }
 
 
