@@ -7,7 +7,7 @@ using namespace omnetpp;
 class Aggregator
 {
 public:
-    Packet* doAggregation(AggPacket* pk);
+    AggPacket* doAggregation(AggPacket* pk);
 
     bool checkAdmission(const AggPacket* pk) const;
     int getJobId() const {return jobId;}

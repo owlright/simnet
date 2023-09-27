@@ -21,7 +21,7 @@ void Aggregator::checkThenAddWorkerId(const AggPacket *pk)
     }
 }
 
-Packet *Aggregator::doAggregation(AggPacket *pk)
+AggPacket *Aggregator::doAggregation(AggPacket *pk)
 {
     // copy the ECN flag
     ecn |= pk->getECN(); // * ecn will be set any way(normal or resend)
@@ -49,6 +49,7 @@ Packet *Aggregator::doAggregation(AggPacket *pk)
         pk->setECN(ecn);
         pk->setAckNumber(ackNumber);
         ASSERT(workerRecord.empty());
+        fullAggregation = true; //useless flag, just for debugging
         return pk;
     } else {
         delete pk;
