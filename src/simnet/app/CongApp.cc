@@ -174,6 +174,7 @@ void CongApp::handleMessage(cMessage *msg)
                 if ((simTime() - item.sendTime) > 5*estimatedRTT && !item.is_resend_already) {
                     // TODO is this always right?
                     // ! we believe resend packets will always be accepted
+                    // throw cRuntimeError("debugging: not sent for a RTT since %" PRId64, item.seq);
                     resend(item);
                 }
             }
@@ -219,6 +220,7 @@ void CongApp::resendTimeoutSeqs()
     for (auto& [seq, item] : txBuffer) {
         if (item.is_sent && simTime() - item.sendTime > 10*estimatedRTT) {
             ASSERT(item.sendTime > 0);
+            throw cRuntimeError("Timeout happended, check the maxDisorderNumber first!");
             resend(item);
         } else {
             break;
@@ -385,12 +387,12 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         delete pk;
         return;
     }
-    // if (localAddr==138 && localPort == 2000) {
+    // if (localAddr==653 && localPort == 2000) {
     //      std::cout << simTime() << CYAN << " " << localAddr << " " << pk->getName() << " " << estimatedRTT.inUnit(SIMTIME_US)<< " " << nextAckSeq << ENDC;
     //  }
-//    if ( localPort == 3000) {
-//         std::cout << simTime() << BLUE << " " << localAddr << " " << pk->getName() << " " << estimatedRTT.inUnit(SIMTIME_US)<< " " << nextAckSeq << ENDC;
-//     }
+    // if ( localAddr==398 && localPort == 3000) {
+    //     std::cout << simTime() << BLUE << " " << localAddr << " " << pk->getName() << " " << estimatedRTT.inUnit(SIMTIME_US)<< " " << nextAckSeq << ENDC;
+    // }
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     // * do something every RTT only once on successful packet

@@ -7,8 +7,10 @@ class INCWorker : public WorkerApp
 protected:
     void initialize(int stage) override;
     virtual void setField(AggPacket* pk) override;
+    virtual void onReceivedNewPacket(Packet* pk) override;
 
 private:
+    std::unordered_set<std::size_t> usedAgtrIndex;
     std::vector<std::vector<IntAddress>> segments;
     std::vector<int> fanIndegrees;
 };
@@ -51,9 +53,13 @@ void INCWorker::setField(AggPacket* pk)
     std::size_t agtrIndex = seqNumber ^ jobID;
     hash_combine(agtrIndex, jobID);
     hash_combine(agtrIndex, seqNumber);
-
+    agtrIndex = agtrIndex % MAX_AGTR_COUNT;
+    while (usedAgtrIndex.find(agtrIndex) != usedAgtrIndex.end()) {
+        agtrIndex = (agtrIndex + 1) % MAX_AGTR_COUNT; // ! WARN may endless
+    }
+    usedAgtrIndex.insert(agtrIndex);
     EV_DEBUG << "aggSeqNumber " << seqNumber << " jobID " << jobID << " aggregator: " << agtrIndex % MAX_AGTR_COUNT << endl;
-    pk->setAggregatorIndex(agtrIndex % MAX_AGTR_COUNT);
+    pk->setAggregatorIndex(agtrIndex);
     // segment routing
     pk->setSIDSize(segments.size());
     pk->setLastEntry(segments.size() - 1);
@@ -68,4 +74,12 @@ void INCWorker::setField(AggPacket* pk)
         auto indegree = std::to_string(*fit++);
         pk->setArgs(i, indegree.c_str());
     }
+}
+
+void INCWorker::onReceivedNewPacket(Packet* pk)
+{
+    auto apk = check_and_cast<AggPacket*>(pk);
+    auto agtrIndex = apk->getAggregatorIndex();
+    usedAgtrIndex.erase(agtrIndex); // save memory
+    WorkerApp::onReceivedNewPacket(pk);
 }
