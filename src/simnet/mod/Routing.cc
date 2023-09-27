@@ -123,103 +123,8 @@ void Routing::forwardIncoming(Packet *pk)
     auto currSegment = destAddr;
     auto numSegments = pk->getSegmentsLeft();
     int outGateIndex = -1;
-
-    if (numSegments <= 1 && pk->getPacketType() != MACK) { // DATA, ACK
-        auto srcAddr = pk->getSrcAddr();
-        outGateIndex = getRouteGateIndex(srcAddr, destAddr);
-    }
-
-    if ( numSegments > 1 ) {
-        ASSERT(pk->getPacketType() == AGG); // only INC uses segments now
-        auto nextSegment = destAddr;
-        int segmentIndex = numSegments - 1;
-        currSegment = pk->getSegments(segmentIndex);
-        ASSERT(segmentIndex != 0);
-        nextSegment = pk->getSegments(segmentIndex - 1);
-        // ! aggPacket's srcAddr may change when resend or collision happen
-        // ! we must make sure in any case the ecmp give the same outGate index
-        auto srcAddr = myAddress + destAddr;
-        // ! get the output gate index
-        if (currSegment == myAddress) {
-            outGateIndex = getRouteGateIndex(srcAddr, nextSegment); // ! next segment
-        }
-        else {
-            outGateIndex = getRouteGateIndex(srcAddr, currSegment); // ! current segment
-        }
-    }
-
-    if (pk->getPacketType() == AGG) {
-        auto apk = check_and_cast<AggPacket*>(pk);
-        // auto jobId = apk->getJobId();
-        auto seq = apk->getAggSeqNumber();
-        auto agtrIndex = apk->getAggregatorIndex();
-        // ASSERT(outGateIndex != -1);
-        // MulticastID mKey = {agtrIndex, outGateIndex};
-        if (currSegment != myAddress && !pk->getResend()) { // ! store a special unicast entry
-            auto key = AddrGate(destAddr, seq, outGateIndex);
-            // ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
-            groupUnicastTable[key].insert(pk->getArrivalGate()->getIndex());
-        }
-        if (currSegment == myAddress) { // ! I'm responsible for aggregation
-            if (!pk->getResend()) {
-                if (aggregators.find(agtrIndex) == aggregators.end() || aggregators.at(agtrIndex)->checkAdmission(apk))
-                {
-                    if (aggregators.find(agtrIndex) == aggregators.end()) {
-                        aggregators[agtrIndex] = new Aggregator(apk);
-                        // if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
-                        //     // the first time we see this group
-                        //     groupMetricTable[jobId] = new jobMetric(this, jobId);
-                        //     groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
-                        // }
-                        if (currSegment == myAddress) {
-                            usedBuffer += pk->getByteLength();
-                            emit(bufferInUseSignal, usedBuffer);
-                            aggregators[agtrIndex]->usedBuffer = pk->getByteLength();
-                        }
-                    }
-                    ASSERT(aggregators.find(agtrIndex) != aggregators.end());
-                    auto agtr = aggregators.at(agtrIndex);
-                    agtr->recordIncomingPorts(apk);
-
-                    pk = agtr->doAggregation(apk);
-                    if (pk != nullptr) {
-                        ASSERT(pk == apk);
-                        agtr->fullAggregation = true; //useless flag, just for debugging
-                        // aggregators.erase(agtrIndex);
-                        // ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
-                        // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
-                    }
-                    else {
-                        return;
-                    }
-                } else {
-                    EV_DEBUG << "collision happen on destAddr " << destAddr << " seq " << seq << endl;
-                    apk->setCollision(true);
-                    apk->setResend(true);
-                }
-            }
-            else {
-                if (aggregators.find(agtrIndex) != aggregators.end()) {
-                    auto agtr = aggregators.at(agtrIndex);
-
-                    if ( agtr->checkAdmission(apk) ) {
-                        // ! can be false if resend multiple times
-                        // ! if aggregator[agtrIndex] belongs to me, which means the aggregator is stuck
-                        // ! even if it's not stuck here(full aggregation here), you don't know if it's stuck downstream
-                        aggregators.erase(agtrIndex);
-                        usedBuffer -= apk->getByteLength();
-                        emit(bufferInUseSignal, usedBuffer);
-                    }
-                }
-            }
-        }
-
-        if (currSegment == myAddress && pk != nullptr) {
-            // ! Even if it's a resend packet, do not forget to do this
-            apk->setSegmentsLeft(pk->getSegmentsLeft() - 1);
-        }
-    }
-    else if (pk->getPacketType() == MACK) { // TODO very strange, groupAddr is totally useless here
+    if (pk->getPacketType() == MACK) {
+        // * Step 1. broadcast this packet
         auto apk = check_and_cast<AggPacket*>(pk);
         auto agtrIndex = apk->getAggregatorIndex();
         auto srcAddr = apk->getSrcAddr();
@@ -230,7 +135,7 @@ void Routing::forwardIncoming(Packet *pk)
             auto agtr = aggregators.at(agtrIndex);
             if (agtr->checkAdmission(apk)) {
                 ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
-                auto outGateIndexes = agtr->getOutGateIndexes(apk->getArrivalGate()->getIndex());
+                auto outGateIndexes = agtr->getOutGateIndexes();
                 // agtr->multicastCount++;
                 broadcast(pk, outGateIndexes);
                 // if (agtr->forAggregation) {
@@ -274,9 +179,113 @@ void Routing::forwardIncoming(Packet *pk)
 
         return;
     }
+    // * Step 2. Unicast
+    if (numSegments <= 1) {
+        // unicast DATA, ACK etc. packets
+        auto srcAddr = pk->getSrcAddr();
+        outGateIndex = getRouteGateIndex(srcAddr, destAddr);
+    }
+    else {
+        // * Step 3. AggPacket
+        ASSERT(pk->getPacketType() == AGG); // only INC uses segments now
+        auto nextSegment = destAddr;
+        int segmentIndex = numSegments - 1;
+        currSegment = pk->getSegments(segmentIndex);
+        ASSERT(segmentIndex != 0);
+        nextSegment = pk->getSegments(segmentIndex - 1);
+        // ! aggPacket's srcAddr may change when resend or collision happen
+        // ! we must make sure in any case the ecmp give the same outGate index
+        auto srcAddr = myAddress + destAddr;
+        // ! get the output gate index
+        if (currSegment == myAddress) {
+            outGateIndex = getRouteGateIndex(srcAddr, nextSegment); // ! next segment
+        }
+        else {
+            outGateIndex = getRouteGateIndex(srcAddr, currSegment); // ! current segment
+        }
+    }
+
+    if (pk->getPacketType() == AGG) {
+        auto apk = check_and_cast<AggPacket*>(pk);
+        // auto jobId = apk->getJobId();
+        auto seq = apk->getAggSeqNumber();
+
+        // ASSERT(outGateIndex != -1);
+        // MulticastID mKey = {agtrIndex, outGateIndex};
+        // ! must store a special unicast entry for reverse ack, unless this is a resent packet, because PS will send each worker an ack instead of MACK
+        if (currSegment != myAddress && !apk->getResend()) {
+            auto key = AddrGate(destAddr, seq, outGateIndex);
+            // ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
+            groupUnicastTable[key].insert(apk->getArrivalGate()->getIndex());
+        }
+
+        if (currSegment == myAddress) { // ! I'm responsible for aggregation
+            if (useAgtrIndex)
+                processAggPacketWithIndex(apk);
+            else
+                processAggPacket(apk);
+            if (apk == nullptr)
+                return;
+        }
+
+        if (currSegment == myAddress && apk != nullptr) {
+            // ! Even if it's a resend packet, do not forget to do this
+            apk->setSegmentsLeft(apk->getSegmentsLeft() - 1);
+        }
+    }
 
     ASSERT(outGateIndex != -1);
     send(pk, "out", outGateIndex);
+}
+
+void Routing::processAggPacketWithIndex(AggPacket*& apk)
+{
+    auto agtrIndex = apk->getAggregatorIndex();
+    if (!apk->getResend()) {
+        if (aggregators.find(agtrIndex) == aggregators.end() || aggregators.at(agtrIndex)->checkAdmission(apk))
+        {
+            if (aggregators.find(agtrIndex) == aggregators.end()) {
+                aggregators[agtrIndex] = new Aggregator(apk);
+                // if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
+                //     // the first time we see this group
+                //     groupMetricTable[jobId] = new jobMetric(this, jobId);
+                //     groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
+                // }
+                usedBuffer += agtrSize;
+                emit(bufferInUseSignal, usedBuffer);
+                aggregators[agtrIndex]->usedBuffer = agtrSize;
+            }
+            ASSERT(aggregators.find(agtrIndex) != aggregators.end());
+            auto agtr = aggregators.at(agtrIndex);
+            agtr->recordIncomingPorts(apk);
+
+            apk = agtr->doAggregation(apk);
+            if (apk != nullptr) {
+                // aggregators.erase(agtrIndex);
+                // ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
+                // groupMetricTable.at(apk->getJobId())->releaseUsedBuffer(agtrSize);
+            }
+
+        } else {
+            EV_DEBUG << "collision happen on destAddr " << apk->getDestAddr() << " seq " << apk->getAggSeqNumber() << endl;
+            apk->setCollision(true);
+            apk->setResend(true);
+        }
+    }
+    else {
+        if (aggregators.find(agtrIndex) != aggregators.end()) {
+            auto agtr = aggregators.at(agtrIndex);
+
+            if ( agtr->checkAdmission(apk) ) {
+                // ! can be false if resend multiple times
+                // ! if aggregator[agtrIndex] belongs to me, which means the aggregator is stuck
+                // ! even if it's not stuck here(full aggregation here), you don't know if it's stuck downstream
+                usedBuffer -= agtrSize;
+                aggregators.erase(agtrIndex);
+                emit(bufferInUseSignal, usedBuffer);
+            }
+        }
+    }
 }
 
 void Routing::handleMessage(cMessage *msg)

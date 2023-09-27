@@ -111,6 +111,8 @@ private:
     void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
     void broadcast(Packet* pk, const std::unordered_set<int>& outGateIndexes);
     void forwardIncoming(Packet* pk);
+    void processAggPacketWithIndex(AggPacket*& pk);
+    void processAggPacket(Packet* pk) {};
     int getForwardGateIndex(const Packet* pk, IntAddress nextAddr=-1);
 
     // ! for data collection
