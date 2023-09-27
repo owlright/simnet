@@ -15,9 +15,12 @@ void Routing::initialize(int stage)
             throw cRuntimeError("no routeManager!");
 
         if (isSwitch) {
-            bufferSize = par("bufferSize");
-            numAggregators = getParentModule()->par("numAggregators");
-            agtrSize = getParentModule()->par("agtrSize");
+            agtrSize = par("agtrSize");
+            agtrCount = par("maxAgtrNum");
+            bufferSize = agtrCount * agtrSize;
+            if (bufferSize > 0) {
+                useAgtrIndex = true;
+            }
             collectionPeriod = par("collectPeriod").doubleValueInUnit("s");
             dataCollectTimer = new cMessage("dataCollector");
         }
@@ -147,7 +150,7 @@ void Routing::forwardIncoming(Packet *pk)
 
     if (pk->getPacketType() == AGG) {
         auto apk = check_and_cast<AggPacket*>(pk);
-        auto jobId = apk->getJobId();
+        // auto jobId = apk->getJobId();
         auto seq = apk->getAggSeqNumber();
         auto agtrIndex = apk->getAggregatorIndex();
         // ASSERT(outGateIndex != -1);
@@ -275,70 +278,6 @@ void Routing::forwardIncoming(Packet *pk)
     ASSERT(outGateIndex != -1);
     send(pk, "out", outGateIndex);
 }
-
-// int Routing::getForwardGateIndex(const Packet* pk, IntAddress nextAddr)
-// {
-//     // route this packet which may be:
-//     // 1. unicast packet
-//     // 2. agg packet but not ask for aggregation(segment!= myAddress) or it's a resend
-//     // 3. finished aggregated packet
-//     // 4. agg packet failed to be aggregated(hash collision), which is also a resend packet
-//     int outGateIndex = -1;
-//     auto srcAddr = pk->getSrcAddr();
-//     auto destAddr = pk->getDestAddr();
-//     if (nextAddr != -1 && pk->getPacketType() == AGG) {
-//         // ! aggPacket's srcAddr may change when resend or collision happen
-//         // ! we must make sure in any case the ecmp give the same outGate index
-//         srcAddr = myAddress + destAddr;
-//         // ! route to next router, otherwise ecmp may break this
-//         destAddr = nextAddr;
-//     }
-//     // 1. unicast packet
-//     // 2. agg packet but not ask for aggregation(segment!= myAddress) or it's a resend
-//     outGateIndex = getRouteGateIndex(srcAddr, destAddr);
-//     EV << "Forwarding packet " << pk->getName() << " on gate index " << outGateIndex << endl;
-//     return outGateIndex;
-// }
-
-// Packet* Routing::aggregate(AggPacket *apk)
-// {
-//     auto agtrIndex = apk->getAggregatorIndex();
-//     if (aggregators.at(agtrIndex) == nullptr) { // lazy initialization to save memory
-//         ASSERT(groupMetricTable.find(apk->getJobId()) != groupMetricTable.end());
-//         if (!apk->getResend())
-//             aggregators[agtrIndex] = new Aggregator();
-//         else  // ! a resend packet mustn't get an idle aggregator
-//             return apk;
-//     }
-//     auto entry = aggregators.at(agtrIndex);
-//     if (entry->checkAdmission(apk))
-//     {
-//         return entry->doAggregation(apk);
-//     }
-//     else {
-//         // this means collision happened;
-//         // set these fields before forwarding
-//         apk->setCollision(true);
-//         apk->setResend(true); // TODO I don't know why ATP set this, maybe prevent switch 1 do aggregation, but why not just check collision?
-//         return apk;
-//     }
-// }
-
-// void Routing::recordIncomingPorts(MulticastID& addrSeqKey, int port)
-// {
-//     // TODO maybe use unordered_set?
-//     bool found = false;
-//     for (auto& p: incomingPortIndexes[addrSeqKey])
-//     {
-//         if (port == p)
-//         {
-//             found = true;
-//             break;
-//         }
-//     }
-//     if (!found)
-//         incomingPortIndexes[addrSeqKey].push_back(port);
-// }
 
 void Routing::handleMessage(cMessage *msg)
 {

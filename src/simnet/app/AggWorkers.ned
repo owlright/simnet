@@ -17,5 +17,6 @@ module INCWorker extends WorkerApp {
 parameters:
     string segmentAddrs @mutable = default("");
     string fanIndegrees @mutable = default("");
+    int maxAgtrNum      = default(40000);
     @class(INCWorker);
 }

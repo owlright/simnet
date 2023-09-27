@@ -13,6 +13,7 @@ private:
     std::unordered_set<std::size_t> usedAgtrIndex;
     std::vector<std::vector<IntAddress>> segments;
     std::vector<int> fanIndegrees;
+    int maxAgtrCount{0};
 };
 
 
@@ -22,6 +23,7 @@ void INCWorker::initialize(int stage)
 {
     WorkerApp::initialize(stage);
     if (stage == INITSTAGE_LAST) {
+        maxAgtrCount = par("maxAgtrNum");
         EV << "INCWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
         EV << " PS(" << destAddr << ":" << destPort << ")" << endl;
         auto segmentAddrs = cStringTokenizer(par("segmentAddrs").stringValue(), " ").asVector();
@@ -53,12 +55,12 @@ void INCWorker::setField(AggPacket* pk)
     std::size_t agtrIndex = seqNumber ^ jobID;
     hash_combine(agtrIndex, jobID);
     hash_combine(agtrIndex, seqNumber);
-    agtrIndex = agtrIndex % MAX_AGTR_COUNT;
+    agtrIndex = agtrIndex % maxAgtrCount;
     while (usedAgtrIndex.find(agtrIndex) != usedAgtrIndex.end()) {
-        agtrIndex = (agtrIndex + 1) % MAX_AGTR_COUNT; // ! WARN may endless
+        agtrIndex = (agtrIndex + 1) % maxAgtrCount; // ! WARN may endless
     }
     usedAgtrIndex.insert(agtrIndex);
-    EV_DEBUG << "aggSeqNumber " << seqNumber << " jobID " << jobID << " aggregator: " << agtrIndex % MAX_AGTR_COUNT << endl;
+    EV_DEBUG << "aggSeqNumber " << seqNumber << " jobID " << jobID << " aggregator: " << agtrIndex << endl;
     pk->setAggregatorIndex(agtrIndex);
     // segment routing
     pk->setSIDSize(segments.size());
@@ -68,6 +70,7 @@ void INCWorker::setField(AggPacket* pk)
     auto fit = fanIndegrees.rbegin();
     for (auto i = 0; i < segments.size(); i++)
     {
+        // TODO: agg trees balance the computation nodes, but may cause disorder
         pk->setSegments(i, (*sit)[agtrIndex % sit->size()]); // TODO: maybe a hash function with probability is better
         sit++;
         pk->setFuns(i, "aggregation");

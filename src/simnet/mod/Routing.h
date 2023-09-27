@@ -83,9 +83,10 @@ private:
     GlobalRouteManager* routeManager{nullptr};
 
     B bufferSize{0};
+    int agtrCount{0};
     B usedBuffer{0};
-    int numAggregators{0};
     B agtrSize;
+    bool useAgtrIndex{false};
 
     // [[deprecated]] std::unordered_set<MulticastID, hash_fn> markNotAgg;
     // std::unordered_map<MulticastID, std::vector<int>, hash_fn> incomingPortIndexes;

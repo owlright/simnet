@@ -19,8 +19,9 @@ module Routing
         int address @mutable = default(-1);
         bool ecmpFlow = default(false);
         string aggPolicy = default("Count");
-        int bufferSize @unit(B) = default(10MB);
-        double collectPeriod @unit(s)= default(10us);
+        int agtrSize @unit(B) = default(1kB);
+        int maxAgtrNum = default(0);
+        double collectPeriod @unit(s) = default(10us);
 
         @class(Routing);
         @display("i=block/switch");

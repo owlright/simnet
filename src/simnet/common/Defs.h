@@ -13,7 +13,6 @@ typedef uint16_t PortNumber;
 #define GROUPADDR_END 20000
 
 #define CRCPOLY_LE 0xedb88320
-#define MAX_AGTR_COUNT 40000
 inline omnetpp::cEnvir *getActiveSimulationOrEnvir() { return omnetpp::cSimulation::getActiveEnvir(); }
 
 enum Stage
@@ -27,5 +26,5 @@ enum Stage
     NUM_INIT_STAGES
 };
 
-uint32_t crc32_le(uint32_t crc, unsigned char const* p, size_t len);
-uint16_t hashAggrIndex(uint16_t appID, uint16_t index);
+[[deprecated]] uint32_t crc32_le(uint32_t crc, unsigned char const* p, size_t len);
+[[deprecated]] uint16_t hashAggrIndex(uint16_t appID, uint16_t index);

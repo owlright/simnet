@@ -92,8 +92,8 @@ module Switch extends Node
 {
     parameters:
         int position = default(0); // the switch's level
-        int numAggregators = default(40000);
-        int agtrSize @unit(B) = default(264B);
+        //int numAggregators = default(40000);
+        //int agtrSize @unit(B) = default(264B);
         @switch;
         @class(SwitchNode);
         @display("i=abstract/switch_s");
