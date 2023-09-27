@@ -76,7 +76,7 @@ Aggregator::Aggregator(const AggPacket *pk)
     ecn = false;
 }
 
-void Aggregator::recordIncomingPorts(const AggPacket *pk, int outputGateIndex)
+void Aggregator::recordIncomingPorts(const AggPacket *pk)
 {
-    incomingPortIndexes[outputGateIndex].insert(pk->getArrivalGate()->getIndex());
+    incomingPortIndexes.insert(pk->getArrivalGate()->getIndex());
 }

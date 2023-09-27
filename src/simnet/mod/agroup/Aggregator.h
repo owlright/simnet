@@ -14,13 +14,9 @@ public:
     int getRound() const {return jobRound;}
     SeqNumber getSeqNumber() const {return seqNumber;}
     Aggregator(const AggPacket* pk);
-    void recordIncomingPorts(const AggPacket* pk, int outputGateIndex);
-    const std::unordered_set<int>& getOutGateIndexes(int inGateIndex) {
-        ASSERT(incomingPortIndexes.find(inGateIndex) != incomingPortIndexes.end());
-        return incomingPortIndexes.at(inGateIndex);
-    }
-    size_t getMulticastEntryNumber() {
-        return incomingPortIndexes.size();
+    void recordIncomingPorts(const AggPacket* pk);
+    const std::unordered_set<int>& getOutGateIndexes() {
+        return incomingPortIndexes;
     }
     int multicastCount{0};
 
@@ -44,5 +40,5 @@ protected:
 
 private:
     simtime_t accumulatedTime;
-    std::unordered_map<int, std::unordered_set<int> > incomingPortIndexes;
+    std::unordered_set<int> incomingPortIndexes;
 };

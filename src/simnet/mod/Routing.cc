@@ -179,7 +179,7 @@ void Routing::forwardIncoming(Packet *pk)
                     }
                     ASSERT(aggregators.find(agtrIndex) != aggregators.end());
                     auto agtr = aggregators.at(agtrIndex);
-                    agtr->recordIncomingPorts(apk, outGateIndex);
+                    agtr->recordIncomingPorts(apk);
 
                     pk = agtr->doAggregation(apk);
                     if (pk != nullptr) {
