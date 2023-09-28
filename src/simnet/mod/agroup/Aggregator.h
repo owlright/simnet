@@ -32,6 +32,7 @@ protected:
     int jobRound{0};
     int counter{0};
     int jobId{-1};
+    int psAddr{-1};
     bool ecn{false};
     SeqNumber seqNumber{-1};
     SeqNumber ackNumber{-1};

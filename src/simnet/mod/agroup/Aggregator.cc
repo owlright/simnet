@@ -70,6 +70,7 @@ Aggregator::Aggregator(const AggPacket *pk)
 {
     jobRound = pk->getRound();
     jobId = pk->getJobId();
+    psAddr = pk->getDestAddr();
     seqNumber = pk->getAggSeqNumber();
     ackNumber = pk->getAckNumber();
     timestamp = pk->getArrivalTime();
