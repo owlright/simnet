@@ -164,23 +164,7 @@ void CongApp::initialize(int stage)
 void CongApp::handleMessage(cMessage *msg)
 {
     if (msg == RTOTimeout) {
-        resendTimeoutSeqs();
-        if (nextSentSeq == lastSentSeqMark) {
-            // ! resend the oldest packet immediately
-            if (!txBuffer.empty()) {
-                auto& item = txBuffer.begin()->second;
-                if (!item.is_sent) {
-                    throw cRuntimeError("Why not sent any packet in last rtt?");
-                }
-                if ((simTime() - item.sendTime) > 10*estimatedRTT && !item.is_resend_already) {
-                    // TODO is this always right?
-                    // ! we believe resend packets will always be accepted
-                    throw cRuntimeError("debugging: not sent for a RTT since %" PRId64, item.seq);
-                    resend(item);
-                }
-            }
-        }
-        lastSentSeqMark = nextSentSeq;
+        resendOldSeqs();
         scheduleAfter(estimatedRTT, RTOTimeout); // we have to repeadedly check
     } else {
         ConnectionApp::handleMessage(msg);
@@ -216,13 +200,32 @@ void CongApp::sendPendingData()
     rescheduleAfter(estimatedRTT, RTOTimeout);
 }
 
-void CongApp::resendTimeoutSeqs()
+void CongApp::resendOldSeqs()
 {
+    if (nextSentSeq == lastSentSeqMark && !txBuffer.empty()) {
+        // * I forget when this will be triggered
+        auto& item = txBuffer.begin()->second;
+        if (!item.is_sent) {
+            throw cRuntimeError("It's impossible that no new packet is sent in last rtt?");
+        }
+    }
+    lastSentSeqMark = nextSentSeq;
+    // int maxNumCanSent = (cong->getcWnd() - inflightBytes()) / messageLength;
+    // maxNumCanSent = maxNumCanSent > 0 ? maxNumCanSent : 1; // ! At least sent one packet
+    int maxNumCanSent = 1;
+    int count = 0;
     for (auto& [seq, item] : txBuffer) {
-        if (item.is_sent && simTime() - item.sendTime > 10*estimatedRTT) {
+        if (count > maxNumCanSent) {
+            break;
+        }
+        if (item.is_sent && simTime() - item.sendTime > 5*estimatedRTT) {
             ASSERT(item.sendTime > 0);
+            // std::cout << simTime() << " "
+            //           << localAddr << "->" << destAddr << " seq:" << item.seq << " "
+            //           << simTime() - item.sendTime << " " << estimatedRTT << endl;
             throw cRuntimeError("Timeout happended, check the maxDisorderNumber first!");
             resend(item);
+            count++;
         } else {
             break;
         }

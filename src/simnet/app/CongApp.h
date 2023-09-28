@@ -162,7 +162,7 @@ public:
 
 private:
     void connectionDataArrived(Connection *connection, Packet* pk) override;
-    void resendTimeoutSeqs();
+    void resendOldSeqs();
     void sendFirstTime(TxItem& item);
     void setBeforeSentOut(TxItem& item);
     B inflightBytes() {return nextSentSeq - nextAskedSeq;};
