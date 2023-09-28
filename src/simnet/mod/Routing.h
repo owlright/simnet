@@ -17,31 +17,8 @@ using namespace omnetpp;
  */
 class Routing : public cSimpleModule
 {
-    // struct MulticastID
-    // {
-    //     size_t agtrIndex;
-    //     int inGateIndex;
-    //     MulticastID(size_t agtrIndex, int inGateIndex)
-    //     {
-    //         this->agtrIndex = agtrIndex;
-    //         this->inGateIndex = inGateIndex;
 
-    //     }
-    //     // `operator==` is required to compare keys in case of a hash collision
-    //     bool operator==(const MulticastID &key) const {
-    //         return agtrIndex == key.agtrIndex
-    //             && inGateIndex == key.inGateIndex;
-    //     }
-    // };
-
-    // struct hash_fn
-    // {
-    //     std::size_t operator() (const MulticastID& key) const
-    //     {
-    //         auto hashfn = std::hash<size_t>();
-    //         return key.agtrIndex ^ hashfn(key.inGateIndex);
-    //     }
-    // };
+    // * a key for lookup reverse MACK
     struct AddrGate {
         IntAddress addr;
         SeqNumber seq;
@@ -54,15 +31,16 @@ class Routing : public cSimpleModule
         bool operator==(const AddrGate& key) const {
             return addr == key.addr && inGateIndex == key.inGateIndex && seq == key.seq;
         }
-    };
-    struct hash_fn
-    {
-        std::size_t operator() (const AddrGate& key) const
+        struct hash_fn
         {
-            auto hashfn = std::hash<size_t>();
-            return hashfn(key.addr) ^ hashfn(key.seq) ^ hashfn(key.inGateIndex);
-        }
+            std::size_t operator() (const AddrGate& key) const
+            {
+                auto hashfn = std::hash<size_t>();
+                return hashfn(key.addr) ^ hashfn(key.seq) ^ hashfn(key.inGateIndex);
+            }
+        };
     };
+
 public:
     virtual ~Routing();
 
@@ -79,7 +57,7 @@ private:
 
     typedef std::map<int, std::vector<int>> RoutingTable;  // destaddr -> gateindex
     RoutingTable rtable;
-    std::unordered_map<AddrGate, std::unordered_set<int>, hash_fn> groupUnicastTable;
+    std::unordered_map<AddrGate, std::unordered_set<int>, AddrGate::hash_fn> groupUnicastTable;
     GlobalRouteManager* routeManager{nullptr};
 
     B bufferSize{0};
