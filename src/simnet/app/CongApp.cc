@@ -174,7 +174,7 @@ void CongApp::handleMessage(cMessage *msg)
                 if ((simTime() - item.sendTime) > 5*estimatedRTT && !item.is_resend_already) {
                     // TODO is this always right?
                     // ! we believe resend packets will always be accepted
-                    // throw cRuntimeError("debugging: not sent for a RTT since %" PRId64, item.seq);
+                    throw cRuntimeError("debugging: not sent for a RTT since %" PRId64, item.seq);
                     resend(item);
                 }
             }
