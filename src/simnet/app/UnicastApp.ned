@@ -16,7 +16,7 @@ module CongApp extends UnicastApp {
         int destAddress @mutable = default(-1);
         int destPort = default(1000);
         int messageLength @unit(B) = default(1kB);
-        double initRTO @unit(s) = default(10us);
+        double initRTO @unit(s) = default(60us);
         int maxDisorderNumber = default(5);
 
         @class(CongApp);

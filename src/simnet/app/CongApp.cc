@@ -131,6 +131,7 @@ void CongApp::resetState()
     nextSeq = 0;
     // resentBytes = 0;
     currentBaseRTT = 0;
+    estimatedRTT = par("initRTO");
     cong->reset();
 }
 
