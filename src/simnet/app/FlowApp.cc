@@ -73,6 +73,9 @@ void FlowApp::onFlowStart()
         throw cRuntimeError("conneciton is nullptr!");
     }
     currFlowSize = flowSize->intValue();
+    // if (localAddr == 136) {
+    //     std::cout << simTime() << " "<< currentRound << " " << this->getFullPath() << " " << destAddr << " " << currFlowSize << endl;
+    // }
     EV_INFO << " flowSize: " << currFlowSize << endl;
     leftData = currFlowSize;
 }
