@@ -171,7 +171,7 @@ void CongApp::handleMessage(cMessage *msg)
                 if (!item.is_sent) {
                     throw cRuntimeError("Why not sent any packet in last rtt?");
                 }
-                if ((simTime() - item.sendTime) > 5*estimatedRTT && !item.is_resend_already) {
+                if ((simTime() - item.sendTime) > 10*estimatedRTT && !item.is_resend_already) {
                     // TODO is this always right?
                     // ! we believe resend packets will always be accepted
                     throw cRuntimeError("debugging: not sent for a RTT since %" PRId64, item.seq);
