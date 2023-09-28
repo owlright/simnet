@@ -37,8 +37,101 @@ Routing::~Routing()
 
 }
 
-int Routing::getRouteGateIndex(int srcAddr, int destAddr)
+Aggregator* Routing::tryGetAgtr(const AggPacket* apk)
 {
+    if (useAgtrIndex) {
+        auto agtrIndex = apk->getAggregatorIndex();
+        if ( aggregators.find(agtrIndex) == aggregators.end() ) {
+            if (apk->getPacketType() == MACK) { // ! only allocate for a agg data packet
+                return nullptr;
+            }
+            aggregators[agtrIndex] = new Aggregator(apk);
+            // if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
+            //     // the first time we see this group
+            //     groupMetricTable[jobId] = new jobMetric(this, jobId);
+            //     groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
+            // }
+            usedBuffer += agtrSize;
+            aggregators[agtrIndex]->usedBuffer = agtrSize;
+            emit(bufferInUseSignal, usedBuffer);
+            return aggregators.at(agtrIndex);
+        }
+        else if ( aggregators.at(agtrIndex)->checkAdmission(apk) ) {
+            return aggregators.at(agtrIndex);
+        }
+        else {
+            return nullptr;
+        }
+    }
+    else {
+        int jobId = apk->getJobId();
+        auto seq = apk->getAggSeqNumber();
+        auto psAddr = apk->getDestAddr();
+        AgtrID key{psAddr, seq, jobId};
+        if ( agtrIndexes.find(key) == agtrIndexes.end() ) {
+            if (apk->getPacketType() == MACK)
+                return nullptr;
+            std::size_t agtrIndex = 0;
+            if (!aggregators.empty())
+                agtrIndex = aggregators.rbegin()->first + 1;
+
+            aggregators[agtrIndex] = new Aggregator(apk);
+            usedBuffer += agtrSize;
+            aggregators[agtrIndex]->usedBuffer = agtrSize;
+            emit(bufferInUseSignal, usedBuffer);
+            return aggregators.at(agtrIndex);
+        }
+        else {
+
+            auto agtrIndex = agtrIndexes.at(key);
+            if ( !aggregators.at(agtrIndex)->checkAdmission(apk) ) {
+                throw cRuntimeError("(get) In useAgtrIndex disabled mode, there shouldn't be collision.");
+            }
+            return aggregators.at(agtrIndex);
+        }
+    }
+}
+
+void Routing::tryReleaseAgtr(const AggPacket* apk)
+{
+    if (!apk->getResend() && !(apk->getPacketType() == MACK)) {
+        throw cRuntimeError("release agtr should only triggered by resend and mack packets.");
+    }
+    if (useAgtrIndex) {
+        auto agtrIndex = apk->getAggregatorIndex();
+        if (aggregators.find(agtrIndex) != aggregators.end()) {
+            auto agtr = aggregators.at(agtrIndex);
+
+            if ( agtr->checkAdmission(apk) ) {
+                // ! can be false if resend multiple times
+                // ! if aggregator[agtrIndex] belongs to me, which means the aggregator is stuck
+                // ! even if it's not stuck here(full aggregation here), you don't know if it's stuck downstream
+                usedBuffer -= agtrSize;
+                aggregators.erase(agtrIndex);
+                emit(bufferInUseSignal, usedBuffer);
+            }
+        }
+    }
+    else {
+        int jobId = apk->getJobId();
+        auto seq = apk->getAggSeqNumber();
+        auto psAddr = apk->getDestAddr();
+        AgtrID key{psAddr, seq, jobId};
+        auto agtrIndex = agtrIndexes.at(key);
+        if (aggregators.find(agtrIndex) != aggregators.end()) {
+            auto agtr = aggregators.at(agtrIndex);
+            if ( !agtr->checkAdmission(apk) ) {
+                throw cRuntimeError("(release) In useAgtrIndex disabled mode, there shouldn't be collision.");
+            }
+            usedBuffer -= agtrSize;
+            aggregators.erase(agtrIndex);
+            emit(bufferInUseSignal, usedBuffer);
+        }
+    }
+
+}
+
+int Routing::getRouteGateIndex(int srcAddr, int destAddr) {
     // srcAddr is only used for ecmp the flow
     RoutingTable::iterator it = rtable.find(destAddr);
     if (it != rtable.end()) {
@@ -126,28 +219,22 @@ void Routing::forwardIncoming(Packet *pk)
     if (pk->getPacketType() == MACK) {
         // * Step 1. broadcast this packet
         auto apk = check_and_cast<AggPacket*>(pk);
-        auto agtrIndex = apk->getAggregatorIndex();
+
+        // auto agtrIndex = apk->getAggregatorIndex();
         auto srcAddr = apk->getSrcAddr();
         auto seq = apk->getAggSeqNumber();
         auto key = AddrGate(srcAddr, seq, apk->getArrivalGate()->getIndex());
         bool foundEntry = false;
-        if (aggregators.find(agtrIndex) != aggregators.end()) {
-            auto agtr = aggregators.at(agtrIndex);
-            if (agtr->checkAdmission(apk)) {
-                ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
-                auto outGateIndexes = agtr->getOutGateIndexes();
-                // agtr->multicastCount++;
-                broadcast(pk, outGateIndexes);
-                // if (agtr->forAggregation) {
-                    usedBuffer -= agtr->usedBuffer;
-                    emit(bufferInUseSignal, usedBuffer);
-                // }
-                // if (agtr->multicastCount == agtr->getMulticastEntryNumber()) {
-                    aggregators.erase(agtrIndex);
-                // }
-                foundEntry = true;
-            }
+
+        auto agtr = tryGetAgtr(apk);
+        if (agtr != nullptr) {
+            ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
+            auto outGateIndexes = agtr->getOutGateIndexes();
+            tryReleaseAgtr(apk);
+            broadcast(apk, outGateIndexes);
+            foundEntry = true;
         }
+        
         if (!foundEntry) {
             if (groupUnicastTable.find(key) == groupUnicastTable.end()) {
                 std::cout << simTime() << " " << pk->getName() << endl;
@@ -220,10 +307,7 @@ void Routing::forwardIncoming(Packet *pk)
         }
 
         if (currSegment == myAddress) { // ! I'm responsible for aggregation
-            if (useAgtrIndex)
-                processAggPacketWithIndex(apk);
-            else
-                processAggPacket(apk);
+            processAggPacket(apk);
             if (apk == nullptr)
                 return;
         }
@@ -238,27 +322,13 @@ void Routing::forwardIncoming(Packet *pk)
     send(pk, "out", outGateIndex);
 }
 
-void Routing::processAggPacketWithIndex(AggPacket*& apk)
+void Routing::processAggPacket(AggPacket*& apk)
 {
-    auto agtrIndex = apk->getAggregatorIndex();
     if (!apk->getResend()) {
-        if (aggregators.find(agtrIndex) == aggregators.end() || aggregators.at(agtrIndex)->checkAdmission(apk))
+        auto agtr = tryGetAgtr(apk);
+        if (agtr != nullptr)
         {
-            if (aggregators.find(agtrIndex) == aggregators.end()) {
-                aggregators[agtrIndex] = new Aggregator(apk);
-                // if (groupMetricTable.find(jobId) == groupMetricTable.end()) {
-                //     // the first time we see this group
-                //     groupMetricTable[jobId] = new jobMetric(this, jobId);
-                //     groupMetricTable[jobId]->createBufferSignalForGroup(jobId);
-                // }
-                usedBuffer += agtrSize;
-                emit(bufferInUseSignal, usedBuffer);
-                aggregators[agtrIndex]->usedBuffer = agtrSize;
-            }
-            ASSERT(aggregators.find(agtrIndex) != aggregators.end());
-            auto agtr = aggregators.at(agtrIndex);
             agtr->recordIncomingPorts(apk);
-
             apk = agtr->doAggregation(apk);
             if (apk != nullptr) {
                 // aggregators.erase(agtrIndex);
@@ -273,18 +343,7 @@ void Routing::processAggPacketWithIndex(AggPacket*& apk)
         }
     }
     else {
-        if (aggregators.find(agtrIndex) != aggregators.end()) {
-            auto agtr = aggregators.at(agtrIndex);
-
-            if ( agtr->checkAdmission(apk) ) {
-                // ! can be false if resend multiple times
-                // ! if aggregator[agtrIndex] belongs to me, which means the aggregator is stuck
-                // ! even if it's not stuck here(full aggregation here), you don't know if it's stuck downstream
-                usedBuffer -= agtrSize;
-                aggregators.erase(agtrIndex);
-                emit(bufferInUseSignal, usedBuffer);
-            }
-        }
+        tryReleaseAgtr(apk);
     }
 }
 

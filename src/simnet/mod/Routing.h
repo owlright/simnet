@@ -17,6 +17,28 @@ using namespace omnetpp;
  */
 class Routing : public cSimpleModule
 {
+    // * a key for lookup reverse MACK
+    struct AgtrID {
+        IntAddress addr;
+        SeqNumber seq;
+        int jobId; // ! the future packet will arrive
+        AgtrID(IntAddress addr, SeqNumber seq, int jobId) {
+            this->addr = addr;
+            this->seq = seq;
+            this->jobId = jobId;
+        }
+        bool operator==(const AgtrID& key) const {
+            return addr == key.addr && jobId == key.jobId && seq == key.seq;
+        }
+        struct hash_fn
+        {
+            std::size_t operator() (const AgtrID& key) const
+            {
+                auto hashfn = std::hash<size_t>();
+                return hashfn(key.addr) ^ hashfn(key.seq) ^ hashfn(key.jobId);
+            }
+        };
+    };
 
     // * a key for lookup reverse MACK
     struct AddrGate {
@@ -70,7 +92,12 @@ private:
     // std::unordered_map<MulticastID, std::vector<int>, hash_fn> incomingPortIndexes;
     std::unordered_map<IntAddress, jobMetric*> groupMetricTable;
     std::map<size_t, Aggregator*> aggregators;
+    std::unordered_map<AgtrID, size_t, AgtrID::hash_fn> agtrIndexes;
     // [[deprecated]]std::unordered_map<MulticastID, int64_t, hash_fn> seqDeadline;
+
+private:
+    Aggregator* tryGetAgtr(const AggPacket* apk);
+    void tryReleaseAgtr(const AggPacket* apk);
 
 private:
     // ! self messages
@@ -89,8 +116,7 @@ private:
     void broadcast(Packet* pk, const std::vector<int>& outGateIndexes);
     void broadcast(Packet* pk, const std::unordered_set<int>& outGateIndexes);
     void forwardIncoming(Packet* pk);
-    void processAggPacketWithIndex(AggPacket*& pk);
-    void processAggPacket(Packet* pk) {};
+    void processAggPacket(AggPacket*& pk);
     int getForwardGateIndex(const Packet* pk, IntAddress nextAddr=-1);
 
     // ! for data collection
