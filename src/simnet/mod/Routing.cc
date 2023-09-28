@@ -66,7 +66,7 @@ Aggregator* Routing::tryGetAgtr(const AggPacket* apk)
     else {
         int jobId = apk->getJobId();
         auto seq = apk->getAggSeqNumber();
-        auto psAddr = apk->getDestAddr();
+        auto psAddr = (apk->getPacketType()==MACK) ? apk->getSrcAddr() : apk->getDestAddr();
         AgtrID key{psAddr, seq, jobId};
         if ( agtrIndexes.find(key) == agtrIndexes.end() ) {
             if (apk->getPacketType() == MACK)
@@ -74,7 +74,7 @@ Aggregator* Routing::tryGetAgtr(const AggPacket* apk)
             std::size_t agtrIndex = 0;
             if (!aggregators.empty())
                 agtrIndex = aggregators.rbegin()->first + 1;
-
+            agtrIndexes[key] = agtrIndex;
             aggregators[agtrIndex] = new Aggregator(apk);
             usedBuffer += agtrSize;
             aggregators[agtrIndex]->usedBuffer = agtrSize;
@@ -115,8 +115,9 @@ void Routing::tryReleaseAgtr(const AggPacket* apk)
     else {
         int jobId = apk->getJobId();
         auto seq = apk->getAggSeqNumber();
-        auto psAddr = apk->getDestAddr();
+        auto psAddr = (apk->getPacketType()==MACK) ? apk->getSrcAddr() : apk->getDestAddr();
         AgtrID key{psAddr, seq, jobId};
+        ASSERT(agtrIndexes.find(key)!=agtrIndexes.end());
         auto agtrIndex = agtrIndexes.at(key);
         if (aggregators.find(agtrIndex) != aggregators.end()) {
             auto agtr = aggregators.at(agtrIndex);
@@ -124,6 +125,7 @@ void Routing::tryReleaseAgtr(const AggPacket* apk)
                 throw cRuntimeError("(release) In useAgtrIndex disabled mode, there shouldn't be collision.");
             }
             usedBuffer -= agtrSize;
+            agtrIndexes.erase(key);
             aggregators.erase(agtrIndex);
             emit(bufferInUseSignal, usedBuffer);
         }
@@ -234,7 +236,7 @@ void Routing::forwardIncoming(Packet *pk)
             broadcast(apk, outGateIndexes);
             foundEntry = true;
         }
-        
+
         if (!foundEntry) {
             if (groupUnicastTable.find(key) == groupUnicastTable.end()) {
                 std::cout << simTime() << " " << pk->getName() << endl;
