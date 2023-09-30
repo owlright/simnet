@@ -107,6 +107,7 @@ void Routing::tryReleaseAgtr(const AggPacket* apk)
                 // ! if aggregator[agtrIndex] belongs to me, which means the aggregator is stuck
                 // ! even if it's not stuck here(full aggregation here), you don't know if it's stuck downstream
                 usedBuffer -= agtrSize;
+                delete aggregators.at(agtrIndex);
                 aggregators.erase(agtrIndex);
                 emit(bufferInUseSignal, usedBuffer);
             }
@@ -126,6 +127,7 @@ void Routing::tryReleaseAgtr(const AggPacket* apk)
             }
             usedBuffer -= agtrSize;
             agtrIndexes.erase(key);
+            delete aggregators.at(agtrIndex);
             aggregators.erase(agtrIndex);
             emit(bufferInUseSignal, usedBuffer);
         }

@@ -1,5 +1,5 @@
 #pragma once
-
+#include <memory>
 #include <omnetpp.h>
 #include <unordered_map>
 #include "simnet/common/Defs.h"
@@ -8,6 +8,8 @@
 
 using namespace omnetpp;
 using std::vector;
+using std::shared_ptr;
+using std::make_shared;
 struct JobHostInfo
 {
     uint16_t jobId;
@@ -53,11 +55,11 @@ private:
 private:
     int jobId{0};
     int groupAddress{GROUPADDR_START};
-    std::map<int, JobHostInfo*> jobInfodb;
+    std::map<int, shared_ptr<JobHostInfo> > jobInfodb;
     std::unordered_map<int,
                        std::unordered_map<
                            IntAddress,
-                           std::unordered_map<IntAddress, JobSegmentsRoute *>>>
+                           std::unordered_map<IntAddress, shared_ptr<JobSegmentsRoute> >>>
         segmentInfodb;
     const char* placementPolicy;
     const char* aggTreeType;

@@ -474,7 +474,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
                 }
 
                 EV_TRACE << indegrees << endl;
-                segmentInfodb[jobid][addr][ps] = new JobSegmentsRoute();
+                segmentInfodb[jobid][addr][ps] = make_shared<JobSegmentsRoute>();
                 segmentInfodb[jobid][addr][ps]->segmentAddrs = segment_addrs;
                 segmentInfodb[jobid][addr][ps]->fanIndegrees = indegrees;
                 for (auto i = 0; i < m->getSubmoduleVectorSize("workers"); i++) {
@@ -579,7 +579,7 @@ void GlobalGroupManager::insertJobInfodb(const std::vector<IntAddress>& workers,
     for (auto i = 0; i < pses.size(); i++) {
         multicastAddrs.push_back(getNextGroupAddr());
     }
-    auto entry(new JobHostInfo());
+    auto entry = make_shared<JobHostInfo>();
     entry->jobId = getNextJobId();
     entry->workers = workers;
     entry->PSes = pses;
