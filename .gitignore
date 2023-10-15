@@ -17,3 +17,7 @@ results/
 tests/work/**
 *_m.h
 *_m.cc
+/restats
+/*.py
+/*.png
+/*.csv
