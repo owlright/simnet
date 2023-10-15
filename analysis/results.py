@@ -9,6 +9,13 @@ from .util.parse_csv import *
 
 
 _PACKET_HEADER_SIZE = .02 # 20B
+def humanize(number):
+    if number < 1000:
+        return str(round(number))
+    elif number < 1e6:
+        return f"{round(number / 1e3):.0f}K"
+    elif number < 1e9:
+        return f"{round(number / 1e6):.0f}M"
 
 def print_avg_slowdown(config_name=''):
     sheet = read_csv('simulations', 'exp', config_name)
@@ -25,48 +32,41 @@ def print_avg_slowdown(config_name=''):
 
     df = pd.DataFrame(columns=['load', 'policy', 'flowsize', 'slowdown'])
     runs = get_runIDs(sheet, by='iterationvars')
+    policys = []
+    loads = []
     for policy, load in map(_extract_policy_load, runs):
-        # print(load, policy)
+        print(load, policy)
+        policys.append(policy)
+        loads.append(load)
         repetition_ids = runs[f'$load={load}, $aggPolicy="{policy}"'] # pyright: ignore reportGeneralTypeIssues
         extract_policy_load = flows.loc[repetition_ids] # * multiple repetition experiments
         flowsize = np.concatenate( extract_policy_load['flowSize:vector'].values )
         fsd = np.concatenate( extract_policy_load['slowdown'].values )
         df.loc[len(df.index)] = [load, policy, flowsize, fsd]  # pyright: ignore reportGeneralTypeIssues
-
     df.sort_values(by=['load', 'policy'], inplace=True)
-    _tmp = df[(df.load==0.1) & (df.policy=='sptree')]
-    _FLOWSIZE_COLUMN = 'flowsize(KB)'
-    _FLOWSLOWDOWN = 'slowdown'
-    sptree_fsd01 = pd.DataFrame({_FLOWSIZE_COLUMN: _tmp['flowsize'].values[0]*1e-3,
-                                 _FLOWSLOWDOWN : _tmp.slowdown.values[0]
-                                 }).sort_values(by=[_FLOWSIZE_COLUMN]).reset_index(drop=True)
-    flsz = sptree_fsd01[_FLOWSIZE_COLUMN].values
-    flsd = sptree_fsd01[_FLOWSLOWDOWN].values
-    flsz_x100 = [ round(i * len(flsz)) for i in [.1, .2, .3, .4, .5, .6, .7, .8, .9, 1.] ]
-    _prefix0_fisz_x100 = [0] + flsz_x100
-    flsz_x99 = [ round(i + (j-i)*.99) for i, j in itertools.pairwise(_prefix0_fisz_x100) ]
-    flsz_x95 = [ round(i + (j-i)*.95) for i, j in itertools.pairwise(_prefix0_fisz_x100) ]
-    flsz_x50 = [ round(i + (j-i)*.50) for i, j in itertools.pairwise(_prefix0_fisz_x100) ]
-
-    flsd95 = [ flsd[l:r].mean() for l, r in zip(flsz_x95, flsz_x100) ]
-    flsd99 = [ flsd[l:r].mean() for l, r in zip(flsz_x99, flsz_x100) ]
-    flsd50 = [ flsd[l:r].mean() for l, r in zip(flsz_x50, flsz_x100) ]
-
-    percentiles = np.arange(10, 110, 10) # * 10%, 20%,...100%
-    flsz_x = np.percentile(flsz, percentiles).tolist() # pyright: ignore reportGeneralTypeIssues
-    fig, ax = plt.subplots()
-    print(flsz_x)
-    print(flsd50)
-    ax.plot(flsd50, 'b-', lw=2,  label='mid-sptree')
-    ax.plot(flsd95, 'b-', lw=2,  label='mid-sptree')
-    ax.plot(flsd99, 'b-', lw=2,  label='mid-sptree')
-    ax.set_xticks(np.arange(0, 11), [
-    "0", "324", "400", "500", "600", "700", "1K", "7K", "46K", "120K", "10M"])
-    # ax.set_xlabel('Flow size (Bytes)', fontsize=15)
-    # ax.set_ylabel('FCT slow down', fontsize=15)
-    # ax.legend(ncol=1, fontsize=10)
-    plt.savefig('sl.png')
-
-
-    # for fs_intv_left, fs_intv_right in itertools.pairwise(flsz_x):
-    #     print(fs_intv_left, fs_intv_right)
+    policys = list(set(policys))
+    loads = list(set(loads))
+    fig, ax = plt.subplots(1, len(loads), figsize=(50/2.54, 10/2.54))
+    _pos = np.arange(1, 11) * (len(policys) +1)
+    for col_index, load in enumerate(loads):
+        _tmp = df[(df['load']==load)]
+        flsz = _tmp.iloc[0, :]['flowsize']
+        flsz.sort()
+        percentiles = np.arange(10, 110, 10) # * 10%, 20%,...100%
+        flsz_x = np.percentile(flsz, percentiles).tolist() # pyright: ignore reportGeneralTypeIssues
+        flsz_x100 = [ round(i * len(flsz)) for i in [.1, .2, .3, .4, .5, .6, .7, .8, .9, 1.] ] # * 10 intervals
+        _prefix0_flsz_x100 = [0] + flsz_x100
+        colors = ['pink', 'lightblue', 'lightgreen']
+        bps = []
+        for step, policy in enumerate(policys):
+            flsd = _tmp[_tmp['policy']==policy]['slowdown'].values[0]
+            flsd_intv = [flsd[l:r] for l, r in itertools.pairwise(_prefix0_flsz_x100)]
+            bp = ax[col_index].boxplot(flsd_intv, False, '', widths=.4, patch_artist=True, positions=_pos - step, boxprops=dict(facecolor=colors[step]))
+            bps.append(bp)
+        ax[col_index].set_xticks(_pos, [humanize(x) for x in flsz_x]) # * xticks set only once each ax
+        ax[col_index].legend([x['boxes'][0] for x in bps], policys)
+        ax[col_index].set_xlabel(f'Flow size (Bytes) when load={load}')
+    ax[0].set_ylabel('FCT slow down')
+    fig.subplots_adjust(left=0.05, bottom=.15, right=0.95, top=.95)
+    fig.subplots_adjust(wspace=.1)
+    fig.savefig('slb.png')
