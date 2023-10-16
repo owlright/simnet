@@ -25,7 +25,7 @@ network FatTree
         int halfk = int(k/2);
         int numPods = k;
         int numCores = int(k^2/4);
-        @display("bgb=929,304");
+        @display("bgb=1069.4512,303.225");
         @statistic[fct](title="flow complete time"; source=fct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[flowSize](title="flow total bytes"; source=flowSize; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
@@ -47,21 +47,19 @@ network FatTree
             @display("p=166,32,r,50");
         }
         routeManager: GlobalRouteManager {
-            @display("p=428.01373,157.44374");
+            @display("p=803.5462,96.798744");
         }
         groupManager: GlobalGroupManager {
-            @display("p=428.01373,81.6375");
+            @display("p=919.00494,96.798744");
         }
         tpManager: TrafficPatternManager {
-            @display("p=428.01373,237.915");
+            @display("p=803.5462,191.265");
         }
         metricCollector: GlobalMetricCollector {
-
-            @display("p=559.8,157.44374");
+            @display("p=919.00494,191.265");
         }
         globalView: GlobalView {
-
-            @display("p=531.81,81.6375");
+            @display("p=699.75,96.798744");
         }
 
     connections:
