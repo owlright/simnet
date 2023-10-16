@@ -45,7 +45,7 @@ void INCWorker::initialize(int stage)
         segments.push_back(tmp);
         fanIndegrees.push_back(numWorkers);
         EV << "sid: " << segments << endl;
-        EV << "arg: " << fanIndegrees << endl;
+        EV << "indegree: " << fanIndegrees << endl;
     }
 
 }
@@ -57,7 +57,7 @@ void INCWorker::setField(AggPacket* pk)
     if (useAgtrIndex)
         insertAgtrIndex(pk);
     auto seqNumber = pk->getAggSeqNumber();
-    auto jobID = pk->getJobId();
+    // auto jobID = pk->getJobId(); // unused-variable
     // segment routing
     pk->setSIDSize(segments.size());
     pk->setLastEntry(segments.size() - 1);

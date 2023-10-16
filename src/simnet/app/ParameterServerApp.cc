@@ -48,7 +48,8 @@ Define_Module(ParameterServerApp);
 void ParameterServerApp::finish()
 {
     CongApp::finish();
-    std::cout << jobid << " PS " << destAddr << " retransmit "<< resentBytes << endl;
+    if (resentBytes > 0)
+        std::cout << jobid << " PS " << destAddr << " retransmit "<< resentBytes << endl;
 }
 
 

@@ -134,7 +134,8 @@ void WorkerApp::onRoundStop()
 void WorkerApp::finish()
 {
     CongApp::finish();
-    std::cout << jobId << " " << localAddr << " " << destAddr << " retransmit "<< resentBytes << endl;
+    if (resentBytes > 0)
+        std::cout << jobId << " " << localAddr << " " << destAddr << " retransmit "<< resentBytes << endl;
     if (currentRound != numRounds) {
         EV_WARN << RED << getClassAndFullPath() << "job " << jobId << " "
                                         "address " << localAddr
