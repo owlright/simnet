@@ -14,6 +14,11 @@ EchoApp::~EchoApp()
 void EchoApp::initialize(int stage)
 {
     ConnectionApp::initialize(stage);
+    if (stage==INITSTAGE_LOCAL) {
+        flowMetricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
+        if (flowMetricCollector == nullptr)
+            throw cRuntimeError("metricCollector not found");
+    }
 }
 
 void EchoApp::handleMessage(cMessage *msg)
@@ -40,7 +45,12 @@ void EchoApp::connectionDataArrived(Connection *connection, Packet* pk)
     auto seqNumber = pk->getSeqNumber();
     auto srcAddr = pk->getSrcAddr();
     auto& flow = flows.at(connId);
-    ASSERT(pk->getPacketType() == PacketType::DATA);
+    if (pk->getPacketType() == ACK) {
+        flowMetricCollector->reportFlowStop(localAddr, simTime());
+        delete pk;
+        return;
+    }
+    ASSERT(pk->getPacketType() == DATA);
     ASSERT(connId == connection->getConnectionId());
     // if (localAddr == 1)
     //     std::cout << pk->getName() << endl;

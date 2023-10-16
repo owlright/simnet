@@ -25,7 +25,9 @@ void GlobalMetricCollector::reportFlowStop(int jobid, int numWorkers, int worker
     if (it == jobRoundMetric.end()) {
         throw cRuntimeError("This group hasn't registered its signal");
     }
-
+    if (roundStopTime > allJobsFinishedTime) {
+        allJobsFinishedTime = roundStopTime;
+    }
     auto roundMeter = it->second;
     roundMeter->counter++;
 
@@ -35,6 +37,20 @@ void GlobalMetricCollector::reportFlowStop(int jobid, int numWorkers, int worker
         emit(jobRCT, simTime() - roundMeter->startTime);
         roundMeter->reset();
     }
+}
+
+void GlobalMetricCollector::reportFlowStop(int nodeId, simtime_t finishTime)
+{
+    if (finishTime > allFlowsFinishedTime) {
+        allFlowsFinishedTime = finishTime;
+    }
+}
+
+void GlobalMetricCollector::finish()
+{
+    // * help to set the sim-time-limit value so that progress percentile can be displayed correctly
+    std::cout << GREEN << "All flows stop at " << allFlowsFinishedTime << ENDC;
+    std::cout << GREEN << "All jobs  stop at " << allJobsFinishedTime << ENDC;
 }
 
 simsignal_t GlobalMetricCollector::createSignalForGroup(int jobid)
