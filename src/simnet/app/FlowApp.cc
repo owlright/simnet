@@ -37,14 +37,6 @@ void FlowApp::handleMessage(cMessage *msg)
     }
 }
 
-void FlowApp::confirmAckNumber(const Packet* pk)
-{
-    if (tcpState == TIME_WAIT) {
-        tcpState = CLOSED; // ! for simple flow app, we don't want to wait for 2MSL
-    }
-    CongApp::confirmAckNumber(pk);
-}
-
 void FlowApp::onConnectionClose() {
     if (!flowStartTimer->isScheduled()) {// ! avoid duplicate fin_ack schedule timer multiple times
         onFlowStop();
@@ -73,6 +65,9 @@ void FlowApp::onFlowStart()
         throw cRuntimeError("conneciton is nullptr!");
     }
     currFlowSize = flowSize->intValue();
+    while (currFlowSize <= 0) { // ! make sure flowsize is > 0
+        currFlowSize = flowSize->intValue();
+    }
     // if (localAddr == 136) {
     //     std::cout << simTime() << " "<< currentRound << " " << this->getFullPath() << " " << destAddr << " " << currFlowSize << endl;
     // }
