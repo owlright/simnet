@@ -217,9 +217,8 @@ GlobalGroupManager::buildSteinerTree(const std::vector<IntAddress>& leaves, cons
 std::unordered_map<IntAddress, vector<IntAddress>>
 GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddress> &aggNodes, double costThreshold)
 {
-
     std::unordered_map<IntAddress, vector<IntAddress>> equal_cost_aggs;
-    if (costThreshold < 0) // * save the time
+    if (costThreshold < 0) // * save the time, just return an empty set
         return equal_cost_aggs;
     std::vector<IntAddress> children;
     IntAddress parent;
@@ -332,6 +331,7 @@ void GlobalGroupManager::placeJobs(const char *policyName)
             ps_left_hosts.resize(ps_left_hosts.size() - pses.size());
             std::merge(tmp.begin(), tmp.end(), workers.begin(), workers.end(), ps_left_hosts.begin());
             shuffle(ps_left_hosts, seed2);
+            std::sort(workers.begin(), workers.end());
             insertJobInfodb(workers, pses);
             createJobApps(getCurrentJobId());
         }
