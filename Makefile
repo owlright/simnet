@@ -68,7 +68,7 @@ space:= $() $()
 
 OPP_RUN_OPTIONS := -m \
 --cmdenv-redirect-output=false \
---cmdenv-log-level=warn \
+--cmdenv-log-level=error \
 -n simulations \
 -n $(PROJECT_SRC) -l $(PROJECT_TARGET)
 
