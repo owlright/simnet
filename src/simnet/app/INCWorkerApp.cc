@@ -34,9 +34,7 @@ void INCWorker::initialize(int stage)
         auto segmentAddrs = cStringTokenizer(par("segmentAddrs").stringValue(), " ").asVector();
         segments.resize(segmentAddrs.size());
         for (auto i = 0; i < segmentAddrs.size(); i++) {
-            auto tmp = cStringTokenizer(segmentAddrs[i].c_str(), "[,]").asIntVector();
-            std::vector<IntAddress> equal_agg_addrs;
-            for_each(tmp.begin(), tmp.end(), [&equal_agg_addrs](int& n){equal_agg_addrs.push_back(n);});
+            auto equal_agg_addrs = cStringTokenizer(segmentAddrs[i].c_str(), "[,]").asIntVector();
             segments[i].insert(segments[i].end(), equal_agg_addrs.begin(), equal_agg_addrs.end());
         }
         fanIndegrees = cStringTokenizer(par("fanIndegrees").stringValue()).asIntVector();
