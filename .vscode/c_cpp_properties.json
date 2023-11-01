@@ -33,7 +33,9 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/home/aten/omnetpp-6.0.1/include",
-                "/home/aten/omnetpp-6.0.1/**"
+                "/home/aten/omnetpp-6.0.1/**",
+                "/home/sjh/omnetpp-6.0.1/include",
+                "/home/sjh/omnetpp-6.0.1/**",
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",
