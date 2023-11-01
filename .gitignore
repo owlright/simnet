@@ -21,3 +21,4 @@ tests/work/**
 /*.py
 /*.png
 /*.csv
+src/Makefile
