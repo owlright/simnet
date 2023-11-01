@@ -267,7 +267,7 @@ void CongApp::sendFirstTime(TxItem& item)
     ASSERT(item.destAddresses.empty());
     auto pk = item.pkt;
     setBeforeSentOut(item);
-    EV_DEBUG << pk << endl;
+    EV_TRACE << pk << endl;
     connection->send(pk->dup());
     cong->onSendData(item.seq, item.pktSize);
 }
@@ -377,7 +377,7 @@ void CongApp::onReceivedDuplicatedPacket(Packet* pk)
 
 void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
 {
-    EV_DEBUG << pk << endl;
+    EV_TRACE << pk << endl;
     auto ackSeq = pk->getAckNumber(); // * other side want us's seq
     auto seq = pk->getSeqNumber();
     if (nextSentSeq == 0 && ackSeq == 0) {
@@ -391,12 +391,19 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         delete pk;
         return;
     }
-    // if (localAddr==653 && localPort == 2000) {
-    //      std::cout << simTime() << CYAN << " " << localAddr << " " << pk->getName() << " " << estimatedRTT.inUnit(SIMTIME_US)<< " " << nextAckSeq << ENDC;
-    //  }
+    /* ---------------------------- for runtime debug --------------------------- */
+    // if (localAddr == 783 && localPort == 2000 && nextAckSeq >= 1023100) {
+    //     std::cout << simTime() << CYAN << " "
+    //                            << localAddr << " "
+    //                            << pk->getName() << " "
+    //                            << estimatedRTT.inUnit(SIMTIME_US) << " "
+    //                            << nextAckSeq
+    //                            << ENDC;
+    // }
     // if ( localAddr==398 && localPort == 3000) {
     //     std::cout << simTime() << BLUE << " " << localAddr << " " << pk->getName() << " " << estimatedRTT.inUnit(SIMTIME_US)<< " " << nextAckSeq << ENDC;
     // }
+    /* -------------------------------------------------------------------------- */
     cong->onRecvAck(ackSeq, messageLength, pk->getECE()); // let cong algo update cWnd
 
     // * do something every RTT only once on successful packet

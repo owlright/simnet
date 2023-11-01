@@ -241,8 +241,8 @@ void Routing::forwardIncoming(Packet *pk)
 
         if (!foundEntry) {
             if (groupUnicastTable.find(key) == groupUnicastTable.end()) {
-                std::cout << simTime() << " " << pk->getName() << endl;
-                EV_WARN << "multicast entry deleted too early." << endl;
+                EV_ERROR << RED << simTime() << " " << pk->getName() << ENDC;
+                EV_ERROR << RED <<"multicast entry deleted too early." << ENDC;
                 delete pk;
                 throw cRuntimeError("The multicast entry doesn't exist, it must be deleted by a resend packet. Check allowed resend interval.");
             } else {
@@ -347,6 +347,11 @@ void Routing::processAggPacket(AggPacket*& apk)
         }
     }
     else {
+        if (!useAgtrIndex) {
+            std::cout << RED << apk << ENDC;
+            throw cRuntimeError("there shouldn't be any resend packets when useAgtrIndex disabled.");
+        }
+
         tryReleaseAgtr(apk);
     }
 }
