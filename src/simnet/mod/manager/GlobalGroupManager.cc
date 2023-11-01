@@ -235,7 +235,7 @@ GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddre
                 local_cost += inedge->getWeight();
                 u = inedge->getRemoteNode();
             }
-            children.push_back(getAddr(u));
+            children.push_back(getAddr(u)); // * children of this agg node
         }
         ASSERT(agg_node->getNumOutLinks() == 1); // rember that root cannot be a aggregation node
         auto outedge = agg_node->getLinkOut(0);
@@ -246,10 +246,10 @@ GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddre
             local_cost += outedge->getWeight();
             u = outedge->getRemoteNode();
         }
-        parent = getAddr(u);
+        parent = getAddr(u); // * parent of this agg node
 
         std::unordered_set<int> excludes;
-        std::for_each(hostIds.cbegin(), hostIds.cend(), [&excludes](int nodeId){excludes.insert(nodeId);});
+        std::for_each(hostIds.cbegin(), hostIds.cend(), [&excludes](int nodeId){excludes.insert(nodeId);}); // ! only switches can be aggregation nodes
         std::for_each(children.cbegin(), children.cend(), [this, &excludes](IntAddress n){excludes.insert(getNodeId(n));});
         excludes.insert(getNodeId(parent));
         excludes.insert(getNodeId(agg));
