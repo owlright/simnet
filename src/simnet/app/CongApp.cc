@@ -223,7 +223,7 @@ void CongApp::resendOldSeqs()
             // std::cout << simTime() << " "
             //           << localAddr << "->" << destAddr << " seq:" << item.seq << " "
             //           << simTime() - item.sendTime << " " << estimatedRTT << endl;
-            throw cRuntimeError("Timeout happended, check the maxDisorderNumber first!");
+            // throw cRuntimeError("Timeout happended, check the maxDisorderNumber first!");
             resend(item);
             count++;
         } else {
@@ -237,6 +237,7 @@ void CongApp::resend(TxItem& item)
     // if ((localAddr==272 || localAddr==399||localAddr==527||localAddr==143||localAddr==394||localAddr==401||localAddr==271||localAddr==786||localAddr==659) && item.seq == 7980000) {
     //     std::cout << simTime() << " resend " << localAddr << " " << item.seq << endl;
     // }
+    return;
     if (!item.is_sent) {
         throw cRuntimeError("You can't resend a not sent packet.");
     }
