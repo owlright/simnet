@@ -22,3 +22,4 @@ tests/work/**
 /*.png
 /*.csv
 src/Makefile
+py11/
