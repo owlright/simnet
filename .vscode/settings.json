@@ -2,6 +2,9 @@
     "terminal.integrated.env.osx": {
 		"PATH": "/Users/aten/omnetpp-6.0.1/bin:/Users/aten/omnetpp-6.0.1/tools/macos.x86_64/bin:${env:PATH}",
 	},
+    "terminal.integrated.env.linux": {
+		"PATH": "/home/sjh/omnetpp-6.0.1/bin:/home/aten/omnetpp-6.0.1/bin::${env:PATH}",
+	},
     "cSpell.words": [
         "aggpk",
         "attrname",
