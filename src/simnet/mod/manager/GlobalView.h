@@ -10,13 +10,13 @@ template <typename T>
 using Mat = std::vector<std::vector<T>>;
 
 using namespace omnetpp;
-class GlobalView : public cModule
+class GlobalView final: public cModule
 {
 public:
     cTopology* getGlobalTopo() const {return topo;}
-    const std::vector<int> gethostIds() const {return hostNodes;}
-    std::unordered_map<int, IntAddress> getNodeIdAddrMap() const {return nodeId2Addr;}
-    std::unordered_map<IntAddress, int> getAddrNodeIdMap() const {return addr2NodeId;}
+    const std::vector<int>& gethostIds() const {return hostNodes;}
+    const std::unordered_map<int, IntAddress>& getNodeIdAddrMap() const {return nodeId2Addr;}
+    const std::unordered_map<IntAddress, int>& getAddrNodeIdMap() const {return addr2NodeId;}
     // Mat<double> getDistMat() const {return topoDist;}
     // Mat<double> getCostAdj() const {return costAdj;}
     ~GlobalView() { delete topo; topo=nullptr;}
