@@ -31,8 +31,12 @@ private:
     simtime_t allJobsFinishedTime {0};
 
     opp_component_ptr<GlobalView> globalView;
+
+    int numFlows{0};
     int64_t totalFlowsNumber{0};
     int64_t flow_counter{0};
+    double timeRatio;
+    simtime_t last_simtime{0};
     std::time_t last_time{0};
 
 private:
@@ -47,6 +51,10 @@ private:
             counter = 0;
         }
     };
+    struct FlowMetric {
+        int currentRound{0};
+    };
     std::unordered_map<int, JobRoundMetric*> jobRoundMetric;
+    std::unordered_map<int, FlowMetric*> flowMetric;
     cMessage* stopWatch{nullptr};
 };
