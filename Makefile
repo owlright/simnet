@@ -68,7 +68,7 @@ space:= $() $()
 
 OPP_RUN_OPTIONS := -m \
 --cmdenv-redirect-output=false \
---cmdenv-log-level=error \
+--cmdenv-log-level=off \
 --cmdenv-performance-display=false \
 --cmdenv-event-banners=false \
 -n simulations \
@@ -97,7 +97,8 @@ cleanresults-$(1)-%:
 	$(RM) \
 	simulations/$(1)/results/$$**.vec \
 	simulations/$(1)/results/$$**.vci \
-	simulations/$(1)/results/$$**.sca
+	simulations/$(1)/results/$$**.sca \
+	simulations/$(1)/results/$$**.pkl \
 
 #	python3 simulations/$(1)/plot.py $$*
 
