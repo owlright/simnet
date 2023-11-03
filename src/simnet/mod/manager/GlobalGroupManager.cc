@@ -289,52 +289,72 @@ void GlobalGroupManager::placeJobs(const char *policyName)
         readHostConfig(par("groupHostFile").stringValue());
     }
     else if (strcmp(policyName, "random") == 0) {
-        int numUsedHosts = hostIds.size();
-        auto worker_left_hosts = hostIds;
-        std::transform(worker_left_hosts.cbegin(), worker_left_hosts.cend(),
-                        worker_left_hosts.begin(),
-                        [this](int id){ return getAddr(id);}); // * convert host index to address
-        auto ps_left_hosts = worker_left_hosts;
-        auto seed1 = intrand(3245);
-        auto seed2 = intrand(4148);
-        auto shuffle = [](decltype(worker_left_hosts) &vec, decltype(seed1) seed) {
-            std::shuffle(vec.begin(), vec.end(), std::default_random_engine(seed));
-        };
-
         int numGroups = par("numGroups").intValue();
         int numWorkers = par("numWorkers").intValue();
         int numPSes = par("numPSes").intValue();
-
-        if (numGroups*numWorkers > numUsedHosts || numGroups*numPSes > numUsedHosts) {
-            throw cRuntimeError("used too many hosts, only %d can use.", numUsedHosts);
+        int numHosts = hostIds.size();
+        auto left_hosts = hostIds;
+        std::transform(left_hosts.cbegin(), left_hosts.cend(),
+                        left_hosts.begin(),
+                        [this](int id){ return getAddr(id);}); // * convert host index to address
+        auto seed = intrand(3245);
+        auto shuffle = [](decltype(left_hosts) &vec, decltype(seed) seed) {
+            std::shuffle(vec.begin(), vec.end(), std::default_random_engine(seed));
+        };
+        if (numGroups*(numWorkers+numPSes) > numHosts) {
+            throw cRuntimeError("used too many hosts, only %d can use.", numHosts);
         }
-
         for (auto i = 0; i < numGroups; i++) {
-            shuffle(worker_left_hosts, seed1);
-            std::vector<IntAddress> workers(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
-            // std::cout << workers << endl;
-            worker_left_hosts.erase(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
-            // std::cout << worker_left_hosts << endl;
-            // ! s1 and s2 must be sorted, so must use std::set here
-            auto s1 = std::set<IntAddress>(ps_left_hosts.begin(), ps_left_hosts.end());
-            auto s2 = std::set<IntAddress>(workers.begin(), workers.end());
-            decltype(s1) res;
-            std::set_difference(s1.begin(), s1.end(),
-                                s2.begin(), s2.end(), std::inserter(res, res.end()));
-
-            decltype(ps_left_hosts) tmp(res.begin(), res.end());
-            // std::cout << "PS can use: " << tmp << endl;
-            shuffle(tmp, seed2); // ! tmp is sorted, must shuffle here
-            std::vector<IntAddress> pses {tmp.back()}; // just pick the last element
-            tmp.pop_back();
-            // std::cout << "PS: "<< pses << endl;
-            ps_left_hosts.resize(ps_left_hosts.size() - pses.size());
-            std::merge(tmp.begin(), tmp.end(), workers.begin(), workers.end(), ps_left_hosts.begin());
-            shuffle(ps_left_hosts, seed2);
-            std::sort(workers.begin(), workers.end());
-            insertJobInfodb(workers, pses);
+            shuffle(left_hosts, seed);
+            std::vector<IntAddress> workers(left_hosts.begin(), left_hosts.begin() + numWorkers + 1);
+            auto ps = std::vector<IntAddress>{workers.back()};
+            workers.pop_back();
+            left_hosts.erase(left_hosts.begin(), left_hosts.begin() + numWorkers + 1);
+            std::sort(workers.begin(), workers.end()); // easy debug
+            insertJobInfodb(workers, ps);
             createJobApps(getCurrentJobId());
         }
+        unicastHosts.insert(unicastHosts.begin(), left_hosts.begin(), left_hosts.end());
+        std::sort(unicastHosts.begin(), unicastHosts.end()); // easy debug
+        /* -------- one job's PS can overlap other's worker, too complicated -------- */
+        // auto ps_left_hosts = worker_left_hosts;
+        // auto seed1 = intrand(3245);
+        // auto seed2 = intrand(4148);
+        // auto shuffle = [](decltype(worker_left_hosts) &vec, decltype(seed1) seed) {
+        //     std::shuffle(vec.begin(), vec.end(), std::default_random_engine(seed));
+        // };
+
+        // if (numGroups*numWorkers > numUsedHosts || numGroups*numPSes > numUsedHosts) {
+        //     throw cRuntimeError("used too many hosts, only %d can use.", numUsedHosts);
+        // }
+
+        // for (auto i = 0; i < numGroups; i++) {
+        //     shuffle(worker_left_hosts, seed1);
+        //     std::vector<IntAddress> workers(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
+        //     // std::cout << workers << endl;
+        //     worker_left_hosts.erase(worker_left_hosts.begin(), worker_left_hosts.begin() + numWorkers);
+        //     // std::cout << worker_left_hosts << endl;
+        //     // ! s1 and s2 must be sorted, so must use std::set here
+        //     auto s1 = std::set<IntAddress>(ps_left_hosts.begin(), ps_left_hosts.end());
+        //     auto s2 = std::set<IntAddress>(workers.begin(), workers.end());
+        //     decltype(s1) res;
+        //     std::set_difference(s1.begin(), s1.end(),
+        //                         s2.begin(), s2.end(), std::inserter(res, res.end()));
+
+        //     decltype(ps_left_hosts) tmp(res.begin(), res.end());
+        //     // std::cout << "PS can use: " << tmp << endl;
+        //     shuffle(tmp, seed2); // ! tmp is sorted, must shuffle here
+        //     std::vector<IntAddress> pses {tmp.back()}; // just pick the last element
+        //     tmp.pop_back();
+        //     // std::cout << "PS: "<< pses << endl;
+        //     ps_left_hosts.resize(ps_left_hosts.size() - pses.size());
+        //     std::merge(tmp.begin(), tmp.end(), workers.begin(), workers.end(), ps_left_hosts.begin());
+        //     shuffle(ps_left_hosts, seed2);
+        //     std::sort(workers.begin(), workers.end());
+        //     insertJobInfodb(workers, pses);
+        //     createJobApps(getCurrentJobId());
+        // }
+        /* -------------------------------------------------------------------------- */
         // TODO multiple parameter servers
     }
     else if (strcmp(policyName, "") == 0) {

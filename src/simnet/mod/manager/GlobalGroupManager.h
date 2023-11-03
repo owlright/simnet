@@ -41,6 +41,9 @@ struct JobSegmentsRoute // ! for segment routing aggregation
 
 class GlobalGroupManager : public GlobalManager
 {
+public:
+    const std::vector<IntAddress>& getUnicastHosts() const {return unicastHosts;}
+    
 protected:
     virtual void initialize(int stage) override;
 
@@ -53,6 +56,7 @@ private:
     int getNextGroupAddr() {return ++groupAddress;}
 
 private:
+    std::vector<IntAddress> unicastHosts;
     int jobId{0};
     int groupAddress{GROUPADDR_START};
     std::map<int, shared_ptr<JobHostInfo> > jobInfodb;

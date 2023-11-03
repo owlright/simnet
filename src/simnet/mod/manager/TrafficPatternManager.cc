@@ -32,9 +32,8 @@ std::vector<IntAddress> TrafficPatternManager::getDestAddrs(IntAddress srcAddr, 
         if (trafficPattern == "uniform")
         {
             do { // ! avoid send to itself
-                auto randNum = this->intrand(hostIds.size());
-                auto nodeIndex = hostIds.at(randNum);
-                tmpdest = getAddr(nodeIndex);
+                auto randNum = this->intrand(idleHosts.size());
+                tmpdest = idleHosts[randNum];
             } while(tmpdest == srcAddr);
             dests.push_back(tmpdest);
         }
@@ -45,7 +44,18 @@ std::vector<IntAddress> TrafficPatternManager::getDestAddrs(IntAddress srcAddr, 
 void TrafficPatternManager::initialize(int stage)
 {
     GlobalManager::initialize(stage);
-    if (stage == INITSTAGE_LOCAL) {
+    if (stage == INITSTAGE_ACCEPT) {
         trafficPattern = par("trafficPattern").stdstringValue();
+        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
+        if (groupManager==nullptr) {
+            idleHosts.resize(hostIds.size());
+            std::transform(hostIds.cbegin(), hostIds.cend(),
+                        idleHosts.begin(),
+                        [this](int id){ return getAddr(id);}); // * convert host index to address
+        }
+        else {
+            idleHosts = groupManager->getUnicastHosts();
+        }
+        EV_INFO << idleHosts.size() << " hosts for unicast flows." << endl;
     }
 }
