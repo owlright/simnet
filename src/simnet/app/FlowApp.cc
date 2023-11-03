@@ -18,6 +18,10 @@ void FlowApp::initialize(int stage)
         flowStartTimer = new cMessage("flowStart");
         if (useJitter)
             jitterBeforeSending = &par("jitterBeforeSending");
+            
+        flowMetricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
+        if (flowMetricCollector == nullptr)
+            throw cRuntimeError("metricCollector not found");
     }
     else if (stage == INITSTAGE_LAST) {
         scheduleNextFlowAt(flowStartTime);
@@ -84,6 +88,7 @@ void FlowApp::onFlowStop()
         throw cRuntimeError("rxBuffer not empty");
     }
     appState = Finished;
+    flowMetricCollector->reportFlowStop(localAddr, simTime());
     emit(flowSizeSignal, currFlowSize);
     emit(fctSignal, (simTime() - flowStartTime));
     emit(idealFctSignal, getCurrentBaseRTT() + SimTime((currFlowSize*8) / getMaxSendingRate()));

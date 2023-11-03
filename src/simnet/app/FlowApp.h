@@ -1,6 +1,6 @@
 #pragma once
 #include "CongApp.h"
-
+#include "simnet/mod/manager/GlobalMetricCollector.h"
 enum AppState_t
 {
     Idle,
@@ -30,6 +30,8 @@ protected:
     virtual void onFlowStop();
     virtual Packet* createDataPacket() override;
 
+private:
+    opp_component_ptr<GlobalMetricCollector> flowMetricCollector;
 
 protected:
     // ! ned parameters

@@ -1,6 +1,5 @@
 #pragma once
 #include <unordered_map>
-#include "simnet/mod/manager/GlobalMetricCollector.h"
 #include "simnet/common/ModuleAccess.h"
 #include "ConnectionApp.h"
 using namespace omnetpp;
@@ -40,8 +39,5 @@ protected:
 protected:
     virtual void connectionDataArrived(Connection *connection, Packet* pk) override;
     virtual Packet* createAckPacket(const Packet* const pk);
-
-private:
-    opp_component_ptr<GlobalMetricCollector> flowMetricCollector;
 
 };

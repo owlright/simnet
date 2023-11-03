@@ -15,9 +15,7 @@ void EchoApp::initialize(int stage)
 {
     ConnectionApp::initialize(stage);
     if (stage==INITSTAGE_LOCAL) {
-        flowMetricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
-        if (flowMetricCollector == nullptr)
-            throw cRuntimeError("metricCollector not found");
+
     }
 }
 
@@ -46,7 +44,6 @@ void EchoApp::connectionDataArrived(Connection *connection, Packet* pk)
     auto srcAddr = pk->getSrcAddr();
     auto& flow = flows.at(connId);
     if (pk->getPacketType() == ACK) {
-        flowMetricCollector->reportFlowStop(localAddr, simTime());
         delete pk;
         return;
     }
