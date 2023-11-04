@@ -5,16 +5,13 @@ simsignal_t GlobalMetricCollector::jobRCT = registerSignal("jobRCT");
 
 inline void printNiceTime(time_t& now)
 {
-     // 使用 localtime 函数将时间转换为本地时间结构
     std::tm* localTime = std::localtime(&now);
-
-    // 提取小时、分钟和秒
     int hours = localTime->tm_hour;
     int minutes = localTime->tm_min;
     int seconds = localTime->tm_sec;
-
-    // 打印时间
-    std::cout << CYAN << hours << ":" << minutes << ":" << seconds << ENDC;
+    char buffer[20];
+    sprintf(buffer, "[%d:%d:%d]", hours, minutes, seconds);
+    std::cout << GRAY << std::left << std::setw(11) << buffer << ESC;
 }
 
 void GlobalMetricCollector::reportFlowStart(int jobid, int numWorkers, int workerId, simtime_t roundStartTime)
@@ -103,12 +100,24 @@ void GlobalMetricCollector::handleMessage(cMessage *msg)
         timeRatio = .2*timeRatio + .8*timeRatio_;
         last_simtime = simTime();
         last_time = now;
+
         printNiceTime(now);
-        std::cout << CYAN << flow_counter << "/" << totalFlowsNumber <<" flows completed." << ENDC;
+
+        char flow_info[50];
+        sprintf(flow_info, "flows: %ld/%ld", flow_counter, totalFlowsNumber);
+        std::cout << CYAN << std::left << std::setw(20) << flow_info;
+
+        char group_info[20*jobRoundMetric.size()];
+        memset(group_info, 0, sizeof(group_info));
+        strcat(group_info, "groups: ");
+        char _tmp[20];
         for (auto& [jobid, met]:jobRoundMetric) {
-            std::cout << CYAN << jobid << ": " << met->currentRound << ", ";
+            sprintf(_tmp, "%d:%d, ", jobid, met->currentRound);
+            strcat(group_info, _tmp);
         }
-        std::cout << ENDC;
+        std::cout << CYAN << std::left << std::setw(50) << group_info << ENDC;
+
+
         scheduleAfter(10*timeRatio, stopWatch);
     }
 }

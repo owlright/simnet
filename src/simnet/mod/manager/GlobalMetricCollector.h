@@ -54,7 +54,7 @@ private:
     struct FlowMetric {
         int currentRound{0};
     };
-    std::unordered_map<int, JobRoundMetric*> jobRoundMetric;
-    std::unordered_map<int, FlowMetric*> flowMetric;
+    std::map<int, JobRoundMetric*> jobRoundMetric;
+    std::map<int, FlowMetric*> flowMetric;
     cMessage* stopWatch{nullptr};
 };
