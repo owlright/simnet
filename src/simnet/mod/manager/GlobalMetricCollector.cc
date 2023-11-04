@@ -3,7 +3,7 @@
 Define_Module(GlobalMetricCollector);
 simsignal_t GlobalMetricCollector::jobRCT = registerSignal("jobRCT");
 
-void printNiceTime(time_t& now)
+inline void printNiceTime(time_t& now)
 {
      // 使用 localtime 函数将时间转换为本地时间结构
     std::tm* localTime = std::localtime(&now);
@@ -92,19 +92,25 @@ void GlobalMetricCollector::handleMessage(cMessage *msg)
 {
     // * display progress every 10 seconds.
     ASSERT(msg == stopWatch);
-    auto now = std::time(nullptr);
-    auto duration = now - last_time > 1 ? now - last_time : 1;
-    double timeRatio_ = (simTime() - last_simtime).dbl() / (duration);
-    timeRatio = .2*timeRatio + .8*timeRatio_;
-    last_simtime = simTime();
-    last_time = now;
-    printNiceTime(now);
-    std::cout << CYAN << flow_counter << "/" << totalFlowsNumber <<" flows completed." << ENDC;
-    for (auto& [jobid, met]:jobRoundMetric) {
-        std::cout << CYAN << jobid << ": " << met->currentRound << ", ";
+    auto config = getEnvir()->getConfig();
+    auto ctx = getSimulation()->getContext();
+    auto x = config->getPerObjectConfigValue("**", "runTimeDebug");
+    auto runTimeDebug = cConfiguration::parseBool(x, nullptr, false);
+    if (runTimeDebug) {
+        auto now = std::time(nullptr);
+        auto duration = now - last_time > 1 ? now - last_time : 1;
+        double timeRatio_ = (simTime() - last_simtime).dbl() / (duration);
+        timeRatio = .2*timeRatio + .8*timeRatio_;
+        last_simtime = simTime();
+        last_time = now;
+        printNiceTime(now);
+        std::cout << CYAN << flow_counter << "/" << totalFlowsNumber <<" flows completed." << ENDC;
+        for (auto& [jobid, met]:jobRoundMetric) {
+            std::cout << CYAN << jobid << ": " << met->currentRound << ", ";
+        }
+        std::cout << ENDC;
+        scheduleAfter(10*timeRatio, stopWatch);
     }
-    std::cout << ENDC;
-    scheduleAfter(10*timeRatio, stopWatch);
 }
 
 void GlobalMetricCollector::finish() {
