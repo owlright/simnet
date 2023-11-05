@@ -90,7 +90,6 @@ void GlobalMetricCollector::handleMessage(cMessage *msg)
     // * display progress every 10 seconds.
     ASSERT(msg == stopWatch);
     auto config = getEnvir()->getConfig();
-    auto ctx = getSimulation()->getContext();
     auto x = config->getPerObjectConfigValue("**", "runTimeDebug");
     auto runTimeDebug = cConfiguration::parseBool(x, nullptr, false);
     if (runTimeDebug) {

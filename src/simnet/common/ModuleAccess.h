@@ -39,3 +39,5 @@ T *findModuleFromTopLevel(const char* topModuleName, const cModule *from)
         throw cRuntimeError("Module can not cast to '%s' from '%s'", opp_typename(typeid(T)), path.c_str());
     return m;
 }
+
+cModule* getRemoteModule(const cModule* from, const char* gatename, int index=-1);

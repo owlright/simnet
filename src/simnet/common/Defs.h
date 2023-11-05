@@ -13,7 +13,7 @@ typedef uint16_t PortNumber;
 #define GROUPADDR_END 20000
 
 #define CRCPOLY_LE 0xedb88320
-inline omnetpp::cEnvir *getActiveSimulationOrEnvir() { return omnetpp::cSimulation::getActiveEnvir(); }
+using namespace omnetpp;
 
 enum Stage
 {
