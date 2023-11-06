@@ -103,9 +103,9 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
                 onRoundStop();
         }
         else {
-            // ! it could happen when new ackNumber carry old seq
-            // std::cout << RED << getEnvir()->getConfigEx()->getVariable("iterationvars") << ENDC;
-            // throw cRuntimeError("It's impossible that txBuffer are all confirmed but rxBuffer still have packets");
+            // ! it could happen when new ackNumber carry old seq, for example, disorder
+            //// std::cout << RED << getEnvir()->getConfigEx()->getVariable("iterationvars") << ENDC;
+            //// throw cRuntimeError("It's impossible that txBuffer are all confirmed but rxBuffer still have packets");
         }
     }
 }

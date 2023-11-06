@@ -441,7 +441,7 @@ void CongApp::connectionDataArrived(Connection *connection, Packet* pk)
         delete pk; // duplicate seqs, just delete it
     }
     // ! only client need to ACK the FIN seq
-    if ( txBuffer.empty() && (tcpState == TIME_WAIT) ) {
+    if ( txBuffer.empty() && rxBuffer.empty() && (tcpState == TIME_WAIT) ) {
         echoACK(getNextSentSeq());
         tcpState = CLOSED; // ! we assume ack will never be lost
     }
