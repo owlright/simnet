@@ -90,9 +90,9 @@ void GlobalMetricCollector::handleMessage(cMessage *msg)
     // * display progress every 10 seconds.
     ASSERT(msg == stopWatch);
     auto config = getEnvir()->getConfig();
-    auto x = config->getPerObjectConfigValue("**", "runTimeDebug");
-    auto runTimeDebug = cConfiguration::parseBool(x, nullptr, false);
-    if (runTimeDebug) {
+    auto x = config->getPerObjectConfigValue("**", "myProgressInfo");
+    auto myProgressInfo = cConfiguration::parseBool(x, nullptr, false);
+    if (myProgressInfo) {
         auto now = std::time(nullptr);
         auto duration = now - last_time > 1 ? now - last_time : 1;
         double timeRatio_ = (simTime() - last_simtime).dbl() / (duration);
