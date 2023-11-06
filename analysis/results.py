@@ -178,7 +178,7 @@ def boxplot_loadbalance_slowdown(config_name: str="", percentile_interval:int=95
 def plot_loadbalance_slowdown(config_name: str="", percentile_interval:int=0):
     assert 0 <= percentile_interval and percentile_interval <= 100
     percentile_lowerbound = percentile_interval / 100.0
-    sheet = read_csv("simulations", "exp", config_name, True)
+    sheet = read_csv("simulations", "exp", config_name, False)
     flows = get_vectors(
         sheet,
         names=["flowSize:vector", "fct:vector", "idealFct:vector"],
@@ -195,7 +195,7 @@ def plot_loadbalance_slowdown(config_name: str="", percentile_interval:int=0):
         assert policy is not None
         assert load is not None
         assert epsion is not None
-        return (policy.group(1), float(load.group(1)), float(epsion.group(1)))
+        return (policy.group(1), load.group(1), epsion.group(1))
 
     df = pd.DataFrame(columns=["load", "policy", "epsion", "flowsize", "slowdown"])
     runs = get_runIDs(sheet, by="iterationvars")
@@ -207,10 +207,8 @@ def plot_loadbalance_slowdown(config_name: str="", percentile_interval:int=0):
         policys.append(policy)
         loads.append(load)
         epsions.append(epsion)
-
-        repetition_ids = runs[
-            f'$load={load}, $aggPolicy="{policy}", $epsion={epsion}'
-        ]  # pyright: ignore reportGeneralTypeIssues
+        key = f'$load={load}, $aggPolicy="{policy}", $epsion={epsion}, $0=12'
+        repetition_ids = runs[key]  # pyright: ignore reportGeneralTypeIssues
         # * multiple repetition experiments
         extract_policy_load = flows.loc[repetition_ids]
         flowsize = np.concatenate(extract_policy_load["flowSize:vector"].values)
@@ -222,12 +220,41 @@ def plot_loadbalance_slowdown(config_name: str="", percentile_interval:int=0):
     loads = sorted(list(set(loads)))
     fig, ax = plt.subplots(1, len(loads), figsize=(50 / 2.54, 10 / 2.54))
     _pos = np.arange(1, 11) * (len(epsions) + 1)
-    for col_index, load in enumerate(loads):
-        _tmp = df[(df["load"] == load)]
+    if len(loads) > 1:
+        for col_index, load in enumerate(loads):
+            _tmp = df[(df["load"] == load)]
+            flsz = _tmp.iloc[0, :]["flowsize"]
+            flsz.sort()
+            percentiles = np.arange(10, 110, 10)  # * 10%, 20%,...100%
+
+            flsz_x = np.percentile(flsz, percentiles).tolist()
+            # * 10 intervals
+            flsz_x100 = [round(i * len(flsz)) for i in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]]
+            _prefix0_flsz_x100 = [0] + flsz_x100
+            bps = []
+            for step, epsion in enumerate(epsions):
+                flsd:np.ndarray = _tmp[_tmp["epsion"] == epsion]["slowdown"].values[0]
+                flsd_intv = []
+                for l, r in itertools.pairwise(_prefix0_flsz_x100):
+                    perlb = round(l + (r-l) * percentile_lowerbound)
+                    flsd_intv.append(flsd[perlb:r].mean())
+                bp = ax[col_index].plot(_pos, flsd_intv, color = _COLORS[step], marker=_MARKERS[step])
+                bps.append(bp)
+            # * xticks set only once each ax
+            ax[col_index].set_xticks(_pos, [humanize(x) for x in flsz_x])
+            ax[col_index].legend([b[0] for b in bps], epsions)
+            ax[col_index].set_xlabel(f"Flow size (Bytes) when load={load}")
+        ax[0].set_ylabel("FCT slow down")
+    else:
+        _tmp = df[(df["load"] == loads[0])]
         flsz = _tmp.iloc[0, :]["flowsize"]
         flsz.sort()
         percentiles = np.arange(10, 110, 10)  # * 10%, 20%,...100%
 
+        flsz_x = np.percentile(flsz, percentiles).tolist()
+        # * 10 intervals
+        flsz_x100 = [round(i * len(flsz)) for i in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]]
+        _prefix0_flsz_x100 = [0] + flsz_x100
         flsz_x = np.percentile(flsz, percentiles).tolist()
         # * 10 intervals
         flsz_x100 = [round(i * len(flsz)) for i in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]]
@@ -239,13 +266,13 @@ def plot_loadbalance_slowdown(config_name: str="", percentile_interval:int=0):
             for l, r in itertools.pairwise(_prefix0_flsz_x100):
                 perlb = round(l + (r-l) * percentile_lowerbound)
                 flsd_intv.append(flsd[perlb:r].mean())
-            bp = ax[col_index].plot(_pos, flsd_intv, color = _COLORS[step], marker=_MARKERS[step])
+            bp = ax.plot(_pos, flsd_intv, color = _COLORS[step], marker=_MARKERS[step])
             bps.append(bp)
         # * xticks set only once each ax
-        ax[col_index].set_xticks(_pos, [humanize(x) for x in flsz_x])
-        ax[col_index].legend([b[0] for b in bps], epsions)
-        ax[col_index].set_xlabel(f"Flow size (Bytes) when load={load}")
-    ax[0].set_ylabel("FCT slow down")
+        ax.set_xticks(_pos, [humanize(x) for x in flsz_x])
+        ax.legend([b[0] for b in bps], epsions)
+        ax.set_xlabel(f"Flow size (Bytes) when load={loads[0]}")
+
     fig.subplots_adjust(left=0.05, bottom=0.15, right=0.95, top=0.95)
     fig.subplots_adjust(wspace=0.1)
     fig.savefig("pls.png")
