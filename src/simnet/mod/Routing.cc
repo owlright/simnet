@@ -234,6 +234,13 @@ void Routing::forwardIncoming(Packet *pk)
         if (agtr != nullptr) {
             ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
             auto outGateIndexes = agtr->getOutGateIndexes();
+            // if (myAddress==134 && apk->getSrcAddr() == 396 && apk->getSeqNumber() == 192) {
+            //     for (auto& n : outGateIndexes) {
+            //         auto mod = getRemoteModule(this, "port$o", n);
+            //         std::cout << mod->par("address") << std::endl;
+            //     }
+            //     std::cout << myAddress << " "<<" "<< outGateIndexes << endl;
+            // }
             tryReleaseAgtr(apk);
             broadcast(apk, outGateIndexes);
             foundEntry = true;
@@ -300,7 +307,9 @@ void Routing::forwardIncoming(Packet *pk)
         auto apk = check_and_cast<AggPacket*>(pk);
         // auto jobId = apk->getJobId();
         auto seq = apk->getAggSeqNumber();
-
+        // if (myAddress==134 && apk->getDestAddr() == 396 && apk->getSeqNumber() == 5000) {
+        //     std::cout << seq <<" " << apk->getArrivalGate()->getIndex() << " " << apk->getSrcAddr() << " " << currSegment << endl;
+        // }
         // ASSERT(outGateIndex != -1);
         // MulticastID mKey = {agtrIndex, outGateIndex};
         // ! must store a special unicast entry for reverse ack, unless this is a resent packet, because PS will send each worker an ack instead of MACK
