@@ -248,8 +248,7 @@ GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddre
         }
         parent = getAddr(u); // * parent of this agg node
 
-        std::unordered_set<int> excludes;
-        std::for_each(hostIds.cbegin(), hostIds.cend(), [&excludes](int nodeId){excludes.insert(nodeId);}); // ! only switches can be aggregation nodes
+        std::unordered_set<int> excludes(hostIds.cbegin(), hostIds.cend()); // ! only switches can be aggregation nodes
         std::for_each(children.cbegin(), children.cend(), [this, &excludes](IntAddress n){excludes.insert(getNodeId(n));});
         excludes.insert(getNodeId(parent));
         excludes.insert(getNodeId(agg));
