@@ -139,7 +139,7 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr) {
     // srcAddr is only used for ecmp the flow
     RoutingTable::iterator it = rtable.find(destAddr);
     if (it != rtable.end()) {
-        auto outGateIndexes = (*it).second;
+        auto outGateIndexes = it->second;
         if (ecmpFlow) {
             auto N = srcAddr + destAddr + myAddress; // HACK a too simple hash function
             return outGateIndexes.at(N % outGateIndexes.size());
@@ -220,46 +220,42 @@ void Routing::forwardIncoming(Packet *pk)
     auto currSegment = destAddr;
     auto numSegments = pk->getSegmentsLeft();
     int outGateIndex = -1;
+    // * Step 1. broadcast this packet
     if (pk->getPacketType() == MACK) {
-        // * Step 1. broadcast this packet
         auto apk = check_and_cast<AggPacket*>(pk);
 
         // auto agtrIndex = apk->getAggregatorIndex();
         auto srcAddr = apk->getSrcAddr();
         auto seq = apk->getAggSeqNumber();
         auto key = AddrGate(srcAddr, seq, apk->getArrivalGate()->getIndex());
-        bool foundEntry = false;
-
-        auto agtr = tryGetAgtr(apk);
-        if (agtr != nullptr) {
-            ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
-            auto outGateIndexes = agtr->getOutGateIndexes();
-            // if (myAddress==134 && apk->getSrcAddr() == 396 && apk->getSeqNumber() == 192) {
-            //     for (auto& n : outGateIndexes) {
-            //         auto mod = getRemoteModule(this, "port$o", n);
-            //         std::cout << mod->par("address") << std::endl;
-            //     }
-            //     std::cout << myAddress << " "<<" "<< outGateIndexes << endl;
-            // }
-            tryReleaseAgtr(apk);
-            broadcast(apk, outGateIndexes);
-            foundEntry = true;
-        }
-
-        if (!foundEntry) {
-            if (groupUnicastTable.find(key) == groupUnicastTable.end()) {
+        // bool foundEntry = false;
+        if ( groupUnicastTable.find(key) != groupUnicastTable.end() ) {
+            // foundEntry = true;
+            broadcast(pk, groupUnicastTable.at(key));
+            groupUnicastTable.erase(key);
+        } else {
+            auto agtr = tryGetAgtr(apk);
+            if (agtr != nullptr) {
+                // ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
+                auto outGateIndexes = agtr->getOutGateIndexes();
+                // if (myAddress==134 && apk->getSrcAddr() == 396 && apk->getSeqNumber() == 192) {
+                //     for (auto& n : outGateIndexes) {
+                //         auto mod = getRemoteModule(this, "port$o", n);
+                //         std::cout << mod->par("address") << std::endl;
+                //     }
+                //     std::cout << myAddress << " "<<" "<< outGateIndexes << endl;
+                // }
+                tryReleaseAgtr(apk);
+                broadcast(apk, outGateIndexes);
+            }
+            else {
                 EV_ERROR << RED << simTime() << " " << pk->getName() << ENDC;
                 EV_ERROR << RED <<"multicast entry deleted too early." << ENDC;
                 delete pk;
                 throw cRuntimeError("The multicast entry doesn't exist, it must be deleted by a resend packet. Check allowed resend interval.");
-            } else {
-                foundEntry = true;
-                broadcast(pk, groupUnicastTable.at(key));
-                groupUnicastTable.erase(key);
             }
-        }
-        ASSERT(foundEntry);
 
+        }
 
         // MulticastID mKey = {agtrIndex, apk->getArrivalGate()->getIndex())};
         // if (incomingPortIndexes.find(mKey) != incomingPortIndexes.end()) {
@@ -283,8 +279,8 @@ void Routing::forwardIncoming(Packet *pk)
         auto srcAddr = pk->getSrcAddr();
         outGateIndex = getRouteGateIndex(srcAddr, destAddr);
     }
+    // * Step 3. AggPacket
     else {
-        // * Step 3. AggPacket
         ASSERT(pk->getPacketType() == AGG); // only INC uses segments now
         auto nextSegment = destAddr;
         int segmentIndex = numSegments - 1;
@@ -312,7 +308,7 @@ void Routing::forwardIncoming(Packet *pk)
         // }
         // ASSERT(outGateIndex != -1);
         // MulticastID mKey = {agtrIndex, outGateIndex};
-        // ! must store a special unicast entry for reverse ack, unless this is a resent packet, because PS will send each worker an ack instead of MACK
+        // ! must store a special unicast entry for reverse ack, unless this is a resent packet(in which case PS will send each worker an ack instead of MACK
         if (currSegment != myAddress && !apk->getResend()) {
             auto key = AddrGate(destAddr, seq, outGateIndex);
             // ASSERT(groupUnicastTable.find(key) == groupUnicastTable.end());
