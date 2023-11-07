@@ -13,6 +13,8 @@ matplotlib.use("Agg")
 _PACKET_HEADER_SIZE = 0.02  # 20B
 _COLORS = ["gray", "blue", "green", "red"]
 _MARKERS = [".", "s", "*", "+"]
+
+
 def humanize(number):
     if number < 1000:
         return str(round(number))
@@ -21,6 +23,10 @@ def humanize(number):
     elif number < 1e9:
         return f"{round(number / 1e6):.0f}M"
 
+def get_sim_duration(sheet: pd.DataFrame, vec_name:str):
+    fcts = sheet[(sheet.type == "vector") & (sheet.name == vec_name)]
+    fctimes = np.array(fcts["vectime"].values.tolist())
+    return fctimes.max()
 
 def plot_policies_slowdown(config_name=""):
     sheet = read_csv("simulations", "exp", config_name)
@@ -91,7 +97,8 @@ def plot_policies_slowdown(config_name=""):
     fig.subplots_adjust(wspace=0.1)
     fig.savefig("slb.png")
 
-def boxplot_loadbalance_slowdown(config_name: str="", percentile_interval:int=95):
+
+def boxplot_loadbalance_slowdown(config_name: str = "", percentile_interval: int = 95):
     assert 0 <= percentile_interval and percentile_interval <= 100
     percentile_lowerbound = percentile_interval / 100.0
     sheet = read_csv("simulations", "exp", config_name, True)
@@ -150,10 +157,10 @@ def boxplot_loadbalance_slowdown(config_name: str="", percentile_interval:int=95
         _prefix0_flsz_x100 = [0] + flsz_x100
         bps = []
         for step, epsion in enumerate(epsions):
-            flsd:np.ndarray = _tmp[_tmp["epsion"] == epsion]["slowdown"].values[0]
+            flsd: np.ndarray = _tmp[_tmp["epsion"] == epsion]["slowdown"].values[0]
             flsd_intv = []
             for l, r in itertools.pairwise(_prefix0_flsz_x100):
-                perlb = round(l + (r-l) * percentile_lowerbound)
+                perlb = round(l + (r - l) * percentile_lowerbound)
                 flsd_intv.append(flsd[perlb:r])
             bp = ax[col_index].boxplot(
                 flsd_intv,
@@ -175,10 +182,15 @@ def boxplot_loadbalance_slowdown(config_name: str="", percentile_interval:int=95
     fig.savefig("bpls.png")
 
 
-def plot_loadbalance_slowdown(config_name: str="", percentile_interval:int=0):
+def plot_loadbalance_slowdown(
+    config_name: str = "",
+    percentile_interval: int = 0,
+    output_name: str = "pls.png",
+    use_cached: bool = False,
+):
     assert 0 <= percentile_interval and percentile_interval <= 100
     percentile_lowerbound = percentile_interval / 100.0
-    sheet = read_csv("simulations", "exp", config_name, False)
+    sheet = read_csv("simulations", "exp", config_name, use_cached)
     flows = get_vectors(
         sheet,
         names=["flowSize:vector", "fct:vector", "idealFct:vector"],
