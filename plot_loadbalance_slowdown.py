@@ -1,7 +1,10 @@
-from analysis.util import *
-from analysis.results import _COLORS, _MARKERS, get_sim_duration
+import numpy as np
+import itertools
+import re
 import pandas as pd
 import bisect
+import matplotlib.pyplot as plt
+from analysis import *
 
 output_name = "lb_sd.png"
 percentile_lowerbound = 0.95
@@ -80,7 +83,7 @@ if len(loads) > 1:
             for l, r in itertools.pairwise(_prefix0_flsz_x100):
                 perlb = round(l + (r - l) * percentile_lowerbound)
                 flsd_intv.append(flsd[perlb:r].mean())
-            bp = ax[col_index].plot(_pos, flsd_intv, color=_COLORS[step], marker=_MARKERS[step])
+            bp = ax[col_index].plot(_pos, flsd_intv, color=COLORS[step], marker=MARKERS[step])
             bps.append(bp)
         # * xticks set only once each ax
         ax[col_index].set_xticks(_pos, [humanize(x) for x in flsz_x])
@@ -108,7 +111,7 @@ else:
         for l, r in itertools.pairwise(_prefix0_flsz_x100):
             perlb = round(l + (r - l) * percentile_lowerbound)
             flsd_intv.append(flsd[perlb:r].mean())
-        bp = ax.plot(_pos, flsd_intv, color=_COLORS[step], marker=_MARKERS[step])
+        bp = ax.plot(_pos, flsd_intv, color=COLORS[step], marker=MARKERS[step])
         bps.append(bp)
     # * xticks set only once each ax
     ax.set_xticks(_pos, [humanize(x) for x in flsz_x])
