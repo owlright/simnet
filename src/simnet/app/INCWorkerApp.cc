@@ -29,8 +29,8 @@ void INCWorker::initialize(int stage)
     if (stage == INITSTAGE_LAST) {
         maxAgtrCount = par("maxAgtrNum");
         useAgtrIndex = maxAgtrCount > 0;
-        EV << "INCWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
-        EV << " PS(" << destAddr << ":" << destPort << ")" << endl;
+        EV_TRACE << "INCWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
+        EV_TRACE << " PS(" << destAddr << ":" << destPort << ")" << endl;
         auto segmentAddrs = cStringTokenizer(par("segmentAddrs").stringValue(), " ").asVector();
         segments.resize(segmentAddrs.size());
         for (auto i = 0; i < segmentAddrs.size(); i++) {
@@ -42,8 +42,8 @@ void INCWorker::initialize(int stage)
         std::vector<IntAddress> tmp{destAddr};
         segments.push_back(tmp);
         fanIndegrees.push_back(numWorkers);
-        EV << "sid: " << segments << endl;
-        EV << "indegree: " << fanIndegrees << endl;
+        EV_TRACE << "sid: " << segments << endl;
+        EV_TRACE << "indegree: " << fanIndegrees << endl;
     }
 
 }

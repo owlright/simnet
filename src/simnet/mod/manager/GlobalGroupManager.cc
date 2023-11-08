@@ -459,6 +459,7 @@ void GlobalGroupManager::calcAggTree(const char *policyName)
             auto tree = buildSteinerTree(senders, ps, aggNodes); //  TODO multiple PSes
             auto threshold = par("costThreshold").doubleValue();
             auto equal_cost_aggnodes = findEqualCostAggNodes(tree, aggNodes, threshold);
+            EV_DEBUG << "agg_nodes: " << aggNodes << endl;
             EV_DEBUG << "equal_cost_agg_nodes: " << equal_cost_aggnodes << endl;
             // ! update graph edge's cost
             // TODO: how to decide the added cost
