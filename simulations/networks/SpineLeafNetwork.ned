@@ -10,82 +10,59 @@ import simnet.mod.manager.GlobalGroupManager;
 network SpineLeafNetwork
 {
     parameters:
-        @display("bgb=1141,347");
+        @display("bgb=1152.1562,432.23752");
         int spineNumber;
-        int podNumber;
+        int leafNumber;
         int hostNumber;
-        double bandwidth @unit(bps);
-        double linkDelay @unit(s);
-
-//        @statistic[flowCompleteTime](title="flow complete time"; source=flowCompleteTime; record=count,mean,max,min,vector; interpolationmode=none);
+        double fabricLinkBW @unit(bps) = default(40Gbps);
+        double fabricLinkDealy @unit(s) = default(1us);
+        double edgeLinkBW @unit(bps) = default(10Gbps);
+        double edgeLinkDelay @unit(s) = default(1us);
+        @statistic[fct](title="flow complete time"; source=fct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[flowSize](title="flow total bytes"; source=flowSize; unit=B; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
+        @statistic[jobRCT](record=vector; source=jobRCT; interpolationmode=none);
 
     types:
-        channel C extends DatarateChannel
+        channel FabricChannel extends DatarateChannel
         {
-            datarate = parent.bandwidth;
-            delay = parent.linkDelay;
+            datarate = parent.fabricLinkBW;
+            delay = parent.edgeLinkDelay;
+        }
+        channel EdgeChannel extends DatarateChannel
+        {
+            datarate = parent.edgeLinkBW;
+            delay = parent.edgeLinkDelay;
         }
 
     submodules:
-        pods[podNumber]: SpineLeafPod {
-            @display("p=203,250,r,100");
-            hostNumber = parent.hostNumber;
-            podNumber = parent.podNumber;
+        hosts[leafNumber*hostNumber]: Host {
+            @display("p=200,350,r,50");
         }
-        coreSwitches[spineNumber]: Switch {
-            @display("p=203,180,r,100");
+        leafSwitches[leafNumber]: Switch {
+            @display("p=200,200,r,100");
+        }
+        spineSwitches[spineNumber]: Switch {
+            @display("p=200,100,r,150");
         }
         routeManager: GlobalRouteManager {
-            @display("p=998,38");
+            @display("p=957.5063,37.2125");
         }
         tpManager: TrafficPatternManager {
             @display("p=1078,38");
         }
         globalView: GlobalView {
-            @display("p=998,107");
+            @display("p=957.5063,143.125");
         }
         groupManager: GlobalGroupManager {
-
-            @display("p=1078,107");
+            @display("p=1077.7313,143.125");
         }
     connections:
-        for i=0..podNumber-1, for j=0..spineNumber-1 {
-            pods[i].port++ <--> C <--> coreSwitches[j].port++;
+        for i=0..leafNumber-1, for j=0..spineNumber-1 {
+            leafSwitches[i].port++ <--> FabricChannel <--> spineSwitches[j].port++;
+        }
+        for i=0..hostNumber-1, for j=0..leafNumber-1 {
+            hosts[i + j*hostNumber].port++ <--> EdgeChannel <--> leafSwitches[j].port++;
         }
 }
 
-module SpineLeafPod
-{
-    parameters:
-        @display("bgb=459,257");
-        int hostNumber;
-        int podNumber;
-        double bandwidth @unit(bps);
-        double linkDelay @unit(s);
-
-    gates:
-        inout port[0];
-
-    types:
-        channel C extends DatarateChannel
-        {
-            datarate = parent.bandwidth;
-            delay = parent.linkDelay;
-        }
-
-    submodules:
-        hosts[hostNumber]: Host {
-            @display("p=50,150,r,50");
-        }
-        edgeSwitch: Switch {
-            @display("p=50,80");
-        }
-
-    connections:
-        for i=0..hostNumber-1 {
-            hosts[i].port++ <--> C <--> edgeSwitch.port++;
-        }
-        for i=0..sizeof(port)-1 {
-            port[i] <--> edgeSwitch.port++;
-        }
-}
