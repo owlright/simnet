@@ -6,6 +6,7 @@ import simnet.mod.manager.GlobalRouteManager;
 import simnet.mod.manager.TrafficPatternManager;
 import simnet.mod.manager.GlobalView;
 import simnet.mod.manager.GlobalGroupManager;
+import simnet.mod.manager.GlobalMetricCollector;
 
 network SpineLeafNetwork
 {
@@ -56,6 +57,9 @@ network SpineLeafNetwork
         }
         groupManager: GlobalGroupManager {
             @display("p=1077.7313,143.125");
+        }
+        metricCollector: GlobalMetricCollector {
+            @display("p=919.00494,191.265");
         }
     connections:
         for i=0..leafNumber-1, for j=0..spineNumber-1 {
