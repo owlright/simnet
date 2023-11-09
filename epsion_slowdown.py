@@ -1,7 +1,7 @@
 import bisect
 from analysis import *
 
-output_name = "lb_sd.png"
+output_name = "epsion_sd.png"
 percentile_lowerbound = 0.95
 
 sheet = read_csv("simulations", "exp", "fatTree", True)
@@ -22,7 +22,7 @@ _truncated_index = bisect.bisect_left(_pick_row, _truncated_duration)
 df = get_flows_slowdown(flows, runs, _truncated_index)
 df.sort_values(by=["load", "epsion"], inplace=True)
 
-policies = sorted(list(set([extract_float(x, 'policy') for x in runs.keys()])))
+policies = sorted(list(set([extract_str(x, 'aggPolicy') for x in runs.keys()])))
 epsions = sorted(list(set([extract_float(x, 'epsion') for x in runs.keys()])))
 loads = sorted(list(set([extract_float(x, 'load') for x in runs.keys()])))
 fig, ax = plt.subplots(1, len(loads), figsize=(50 / 2.54, 10 / 2.54))
