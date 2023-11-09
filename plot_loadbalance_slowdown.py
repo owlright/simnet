@@ -1,9 +1,4 @@
-import numpy as np
-import itertools
-import re
-import pandas as pd
 import bisect
-import matplotlib.pyplot as plt
 from analysis import *
 
 output_name = "lb_sd.png"
