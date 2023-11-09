@@ -55,14 +55,7 @@ def extract_iterationvar(iterationvar: str):
     return policy, load, epsion
 
 
-def get_flows_slowdown(flows: pd.DataFrame, runs: dict, truncated_index: int = -1):
-    # * align the flows and jobs duration, as we dont know which one lasts longer
-    # _truncated_duration = get_min_endtime(sheet, "fct:vector", "jobRCT:vector")
-    # _pick_row = flows.iloc[0]["vectime"]
-    # _truncated_index = bisect.bisect_left(_pick_row, _truncated_duration)
-    # * truncate the vectors
-    flows["vecvalue"] = flows.apply(lambda x: x["vecvalue"][:truncated_index], axis=1)
-
+def get_flows_slowdown(flows: pd.DataFrame, runs: dict):
     # * a little hack to transpose the columns
     flows_vec = flows.set_index(["runID", "name"], drop=True)["vecvalue"].unstack()  # pivot the name column
     flows_vec["slowdown"] = flows_vec.apply(lambda x: x["fct:vector"] / x["idealFct:vector"], axis=1)  # rowwise

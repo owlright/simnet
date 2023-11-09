@@ -18,9 +18,9 @@ assert isinstance(runs, dict)
 _truncated_duration = get_min_endtime(sheet, "fct:vector", "jobRCT:vector")
 _pick_row = flows.iloc[0]["vectime"]
 _truncated_index = bisect.bisect_left(_pick_row, _truncated_duration)
-
-df = get_flows_slowdown(flows, runs, _truncated_index)
-df.sort_values(by=["load", "epsion"], inplace=True)
+flows["vecvalue"] = flows.apply(lambda x: x["vecvalue"][:_truncated_index], axis=1)
+df = get_flows_slowdown(flows, runs)
+df.sort_values(by=["policy", "load"], inplace=True)
 
 policies = sorted(list(set([extract_str(x, "aggPolicy") for x in runs.keys()])))
 epsions = sorted(list(set([extract_float(x, "epsion") for x in runs.keys()])))
