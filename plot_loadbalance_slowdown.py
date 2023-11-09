@@ -11,13 +11,10 @@ flows = get_vectors(
     names=_kept_rows,
     module="FatTree",
 )
-# * align the flows and jobs duration
-flow_duration = get_sim_duration(sheet, "fct:vector")
-job_duration = get_sim_duration(sheet, "jobRCT:vector")
-_truncated_duration = min(flow_duration, job_duration) # dont know which one lasts longer
+# * align the flows and jobs duration, as we dont know which one lasts longer
+_truncated_duration = get_min_endtime(sheet, "fct:vector", "jobRCT:vector")
 _pick_row = flows.iloc[0]["vectime"]
 _truncated_index = bisect.bisect_left(_pick_row, _truncated_duration)
-
 # * truncate the vectors
 flows["vecvalue"] = flows.apply(lambda x: x["vecvalue"][:_truncated_index], axis=1)
 
@@ -25,30 +22,18 @@ flows["vecvalue"] = flows.apply(lambda x: x["vecvalue"][:_truncated_index], axis
 flows_vec = flows.set_index(["runID", "name"], drop=True)["vecvalue"].unstack()  # pivot the name column
 flows_vec["slowdown"] = flows_vec.apply(lambda x: x["fct:vector"] / x["idealFct:vector"], axis=1)  # rowwise
 
-
-def _extract(iterationvar: str):
-    _float_number_regex = r"[+-]?(\d*\.)?\d+"
-    policy = re.search(r'\$aggPolicy="([^"]+)"', iterationvar)
-    load = re.search(r"\$load=(" + _float_number_regex + ")", iterationvar)
-    epsion = re.search(r"\$epsion=(" + _float_number_regex + ")", iterationvar)
-    assert policy is not None
-    assert load is not None
-    assert epsion is not None
-    return (policy.group(1), load.group(1), epsion.group(1))
-
-
 df = pd.DataFrame(columns=["load", "policy", "epsion", "flowsize", "slowdown"])
 runs = get_runIDs(sheet, by="iterationvars")
 policys = []
 loads = []
 epsions = []
-for policy, load, epsion in map(_extract, runs):
+assert isinstance(runs, dict)
+for itervars, repetition_ids in runs.items():
+    load, policy, epsion = extract_itervars(itervars)
     print(load, policy, epsion)
     policys.append(policy)
     loads.append(load)
     epsions.append(epsion)
-    key = f'$load={load}, $aggPolicy="{policy}", $epsion={epsion}'
-    repetition_ids = runs[key]  # pyright: ignore reportGeneralTypeIssues
     # * multiple repetition experiments
     extract_policy_load = flows_vec.loc[repetition_ids]
     flowsize = np.concatenate(extract_policy_load["flowSize:vector"].values)

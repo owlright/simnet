@@ -87,9 +87,6 @@ def get_vectors(sheet: pd.DataFrame, module=None, names=None):
     return result
 
 def get_runIDs(sheet: pd.DataFrame, by: str = "") -> dict[str, str] | str:
-    """get all combinations of itervars and their repetition ids
-    Return dict {(itvar1, itvar2,...) : runID}
-    """
     if by == "":  # * no iterationvars
         return sheet.iloc[0]["runID"]
     else:
