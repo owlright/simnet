@@ -11,40 +11,23 @@ flows = get_vectors(
     names=_kept_rows,
     module="FatTree",
 )
+runs = get_runIDs(sheet, by="iterationvars")
+assert isinstance(runs, dict)
+
 # * align the flows and jobs duration, as we dont know which one lasts longer
 _truncated_duration = get_min_endtime(sheet, "fct:vector", "jobRCT:vector")
 _pick_row = flows.iloc[0]["vectime"]
 _truncated_index = bisect.bisect_left(_pick_row, _truncated_duration)
-# * truncate the vectors
-flows["vecvalue"] = flows.apply(lambda x: x["vecvalue"][:_truncated_index], axis=1)
 
-# * a little hack to transpose the columns
-flows_vec = flows.set_index(["runID", "name"], drop=True)["vecvalue"].unstack()  # pivot the name column
-flows_vec["slowdown"] = flows_vec.apply(lambda x: x["fct:vector"] / x["idealFct:vector"], axis=1)  # rowwise
-
-df = pd.DataFrame(columns=["load", "policy", "epsion", "flowsize", "slowdown"])
-runs = get_runIDs(sheet, by="iterationvars")
-policys = []
-loads = []
-epsions = []
-assert isinstance(runs, dict)
-for itervars, repetition_ids in runs.items():
-    load, policy, epsion = extract_itervars(itervars)
-    print(load, policy, epsion)
-    policys.append(policy)
-    loads.append(load)
-    epsions.append(epsion)
-    # * multiple repetition experiments
-    extract_policy_load = flows_vec.loc[repetition_ids]
-    flowsize = np.concatenate(extract_policy_load["flowSize:vector"].values)
-    fsd = np.concatenate(extract_policy_load["slowdown"].values)
-    df.loc[len(df.index)] = [load, policy, epsion, flowsize, fsd]  # pyright: ignore reportGeneralTypeIssues
-
+df = get_flows_slowdown(flows, runs, _truncated_index)
 df.sort_values(by=["load", "epsion"], inplace=True)
-epsions = sorted(list(set(epsions)))
-loads = sorted(list(set(loads)))
+
+policies = sorted(list(set([extract_float(x, 'policy') for x in runs.keys()])))
+epsions = sorted(list(set([extract_float(x, 'epsion') for x in runs.keys()])))
+loads = sorted(list(set([extract_float(x, 'load') for x in runs.keys()])))
 fig, ax = plt.subplots(1, len(loads), figsize=(50 / 2.54, 10 / 2.54))
 _pos = np.arange(1, 11) * (len(epsions) + 1)
+
 if len(loads) > 1:
     for col_index, load in enumerate(loads):
         _tmp = df[(df["load"] == load)]

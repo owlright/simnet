@@ -23,24 +23,68 @@ def humanize(number):
     elif number < 1e9:
         return f"{round(number / 1e6):.0f}M"
 
-def get_sim_duration(sheet: pd.DataFrame, vec_name:str) -> float:
+
+def get_sim_duration(sheet: pd.DataFrame, vec_name: str) -> float:
     fcts = sheet[(sheet.type == "vector") & (sheet.name == vec_name)]
     fctimes = np.array(fcts["vectime"].values.tolist())
     return fctimes.max()
 
-def get_min_endtime(sheet:pd.DataFrame, *vecnames:str):
-    durations = [ get_sim_duration(sheet, vecname) for vecname in vecnames]
+
+def get_min_endtime(sheet: pd.DataFrame, *vecnames: str):
+    durations = [get_sim_duration(sheet, vecname) for vecname in vecnames]
     return min(durations)
 
-def extract_itervars(iterationvar: str):
+
+def extract_str(iterationvars: str, name: str) -> str:
+    value = re.search(r"\$" + name + '="([^"]+)"', iterationvars)
+    assert value is not None
+    return value.group(1)
+
+
+def extract_float(iterationvars: str, name: str) -> float:
+    value = re.search(r"\$" + name + r"=([+-]?(\d*\.)?\d+)", iterationvars)
+    assert value is not None
+    return float(value.group(1))
+
+
+def extract_iterationvar(iterationvar: str):
     _float_number_regex = r"[+-]?(\d*\.)?\d+"
-    policy = re.search(r'\$aggPolicy="([^"]+)"', iterationvar)
-    load = re.search(r"\$load=(" + _float_number_regex + ")", iterationvar)
-    epsion = re.search(r"\$epsion=(" + _float_number_regex + ")", iterationvar)
-    assert policy is not None
-    assert load is not None
-    assert epsion is not None
-    return (policy.group(1), float(load.group(1)), float(epsion.group(1)))
+    policy = extract_str(iterationvar, "aggPolicy")
+    load = extract_float(iterationvar, "load")
+    epsion = extract_float(iterationvar, "epsion")
+    return policy, load, epsion
+
+
+def get_flows_slowdown(flows: pd.DataFrame, runs: dict, truncated_index: int = -1):
+    # * align the flows and jobs duration, as we dont know which one lasts longer
+    # _truncated_duration = get_min_endtime(sheet, "fct:vector", "jobRCT:vector")
+    # _pick_row = flows.iloc[0]["vectime"]
+    # _truncated_index = bisect.bisect_left(_pick_row, _truncated_duration)
+    # * truncate the vectors
+    flows["vecvalue"] = flows.apply(lambda x: x["vecvalue"][:truncated_index], axis=1)
+
+    # * a little hack to transpose the columns
+    flows_vec = flows.set_index(["runID", "name"], drop=True)["vecvalue"].unstack()  # pivot the name column
+    flows_vec["slowdown"] = flows_vec.apply(lambda x: x["fct:vector"] / x["idealFct:vector"], axis=1)  # rowwise
+
+    df = pd.DataFrame(columns=["load", "policy", "epsion", "flowsize", "slowdown"])
+    policys = []
+    loads = []
+    epsions = []
+    assert isinstance(runs, dict)
+    for itervar, repetition_ids in runs.items():
+        policy, load, epsion = extract_iterationvar(itervar)
+        print(load, policy, epsion)
+        policys.append(policy)
+        loads.append(load)
+        epsions.append(epsion)
+        # * multiple repetition experiments
+        extract_policy_load = flows_vec.loc[repetition_ids]
+        flowsize = np.concatenate(extract_policy_load["flowSize:vector"].values)
+        fsd = np.concatenate(extract_policy_load["slowdown"].values)
+        df.loc[len(df.index)] = [load, policy, epsion, flowsize, fsd]  # pyright: ignore reportGeneralTypeIssues
+    return df
+
 
 def boxplot_loadbalance_slowdown(config_name: str = "", percentile_interval: int = 95):
     assert 0 <= percentile_interval and percentile_interval <= 100
@@ -124,4 +168,3 @@ def boxplot_loadbalance_slowdown(config_name: str = "", percentile_interval: int
     fig.subplots_adjust(left=0.05, bottom=0.15, right=0.95, top=0.95)
     fig.subplots_adjust(wspace=0.1)
     fig.savefig("bpls.png")
-
