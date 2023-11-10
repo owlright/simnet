@@ -30,8 +30,8 @@ _pos = np.arange(1, 11) * (len(epsions) + 1)
 
 
 for col_index, load in enumerate(loads):
-    _tmp = df[(df["load"] == load)]
-    flsz = _tmp.iloc[0, :]["flowsize"]
+    current_load = df[(df["load"] == load)]
+    flsz = current_load.iloc[0, :]["flowsize"]
     flsz.sort()
     percentiles = np.arange(10, 110, 10)  # * 10%, 20%,...100%
 
@@ -41,7 +41,7 @@ for col_index, load in enumerate(loads):
     _prefix0_flsz_x100 = [0] + flsz_x100
     bps = []
     for step, policy in enumerate(policies):
-        flsd: np.ndarray = _tmp[_tmp['policy'] == policy]["slowdown"].values[0]
+        flsd: np.ndarray = current_load[current_load['policy'] == policy]["slowdown"].values[0]
         flsd_intv = []
         for l, r in itertools.pairwise(_prefix0_flsz_x100):
             perlb = round(l + (r - l) * percentile_lowerbound)
