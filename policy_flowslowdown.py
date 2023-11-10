@@ -5,7 +5,7 @@ output_name = "policy_fsd.png"
 percentile_lowerbound = 0.99
 
 sheet = read_csv("simulations", "exp", "spineleaf", True)
-_kept_rows = ["flowSize:vector", "fct:vector", "idealFct:vector"]
+_kept_rows = ["flowSize:vector", "fct:vector", "idealFct:vector", "jobRCT:vector"]
 flows = get_vectors(
     sheet,
     names=_kept_rows,
@@ -14,13 +14,15 @@ flows = get_vectors(
 runs = get_runIDs(sheet, by="iterationvars")
 assert isinstance(runs, dict)
 
+truncate_vectime(flows, runs)
+
 # * align the flows and jobs duration, as we dont know which one lasts longer
-_truncated_duration = get_min_endtime(sheet, "fct:vector", "jobRCT:vector")
-_pick_row = flows.iloc[0]["vectime"]
-_truncated_index = bisect.bisect_left(_pick_row, _truncated_duration)
-flows["vecvalue"] = flows.apply(lambda x: x["vecvalue"][:_truncated_index], axis=1)
+# _truncated_duration = get_min_endtime(sheet, "fct:vector", "jobRCT:vector")
+# _pick_row = flows.iloc[0]["vectime"]
+# _truncated_index = bisect.bisect_left(_pick_row, _truncated_duration)
+# flows["vecvalue"] = flows.apply(lambda x: x["vecvalue"][:_truncated_index], axis=1)
 df = get_flows_slowdown(flows, runs)
-df.sort_values(by=["policy", "load"], inplace=True)
+# df.sort_values(by=["policy", "load"], inplace=True)
 
 policies = sorted(list(set([extract_str(x, 'aggPolicy') for x in runs.keys()])))
 epsions = sorted(list(set([extract_float(x, 'epsion') for x in runs.keys()])))

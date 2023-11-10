@@ -4,7 +4,7 @@ import re
 import itertools
 import matplotlib.pyplot as plt
 import matplotlib
-
+import bisect
 # ! if on windows's wsl, do not use plt.show() just savefig is much faster
 matplotlib.use("Agg")
 # matplotlib.use('QtAgg') # ! this GUI is faster then others
@@ -54,6 +54,19 @@ def extract_iterationvar(iterationvar: str):
     epsion = extract_float(iterationvar, "epsion")
     return policy, load, epsion
 
+def truncate_vectime(flows:pd.DataFrame, runs: dict):
+    def _get_min_time(x:pd.DataFrame):
+        flow_time = x.loc[x['name'] == 'fct:vector', 'vectime'].values[0]
+        job_time =  x.loc[x['name'] == 'jobRCT:vector', 'vectime'].values[0]
+        min_time = min(flow_time[-1], job_time[-1])
+        return bisect.bisect_left(flow_time, min_time)
+    truncated_index = flows.groupby('runID').apply(_get_min_time)
+    original_index = flows.groupby('runID').apply(lambda x: len(x['vecvalue'].values[0]))
+    flows['endIndex'] = flows['runID'].map(truncated_index)
+    flows['originalIndex'] = flows['runID'].map(original_index)
+    print(flows)
+    flows['vecvalue'] = flows.apply(lambda x: x['vecvalue'][:x['endIndex']], axis=1)
+    flows.drop('endIndex', axis=1, inplace=True)
 
 def get_flows_slowdown(flows: pd.DataFrame, runs: dict):
     # * a little hack to transpose the columns
