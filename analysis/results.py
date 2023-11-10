@@ -64,7 +64,6 @@ def truncate_vectime(flows:pd.DataFrame, runs: dict):
     original_index = flows.groupby('runID').apply(lambda x: len(x['vecvalue'].values[0]))
     flows['endIndex'] = flows['runID'].map(truncated_index)
     flows['originalIndex'] = flows['runID'].map(original_index)
-    print(flows)
     flows['vecvalue'] = flows.apply(lambda x: x['vecvalue'][:x['endIndex']], axis=1)
     flows.drop('endIndex', axis=1, inplace=True)
 
