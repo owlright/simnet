@@ -17,13 +17,15 @@ public:
 protected:
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
-
+    const std::vector<int>& getHostIds() const {return hostIds;}
 protected:
     opp_component_ptr<GlobalView> globalView;
     // Mat<double> distAdj;
     // Mat<double> costAdj;
     cTopology* topo{nullptr};
-    std::vector<int> hostIds;
     std::unordered_map<int, IntAddress> nodeId2Addr;
     std::unordered_map<IntAddress, int> addr2NodeId;
+
+private:
+    std::vector<int> hostIds;
 };

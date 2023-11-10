@@ -247,7 +247,7 @@ GlobalGroupManager::findEqualCostAggNodes(const cTopology *tree, vector<IntAddre
             u = outedge->getRemoteNode();
         }
         parent = getAddr(u); // * parent of this agg node
-
+        auto hostIds = getHostIds();
         std::unordered_set<int> excludes(hostIds.cbegin(), hostIds.cend()); // ! only switches can be aggregation nodes
         std::for_each(children.cbegin(), children.cend(), [this, &excludes](IntAddress n){excludes.insert(getNodeId(n));});
         excludes.insert(getNodeId(parent));
@@ -291,8 +291,8 @@ void GlobalGroupManager::placeJobs(const char *policyName)
         int numGroups = par("numGroups").intValue();
         int numWorkers = par("numWorkers").intValue();
         int numPSes = par("numPSes").intValue();
-        int numHosts = hostIds.size();
-        auto left_hosts = hostIds;
+        int numHosts = getHostIds().size();
+        std::vector<int> left_hosts = getHostIds();
         std::transform(left_hosts.cbegin(), left_hosts.cend(),
                         left_hosts.begin(),
                         [this](int id){ return getAddr(id);}); // * convert host index to address
