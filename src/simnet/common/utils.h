@@ -2,7 +2,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
+#include <stdint.h>
 template <typename T> std::string vectorToString(const std::vector<T>& vec)
 {
     std::stringstream tmp;
