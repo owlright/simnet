@@ -17,12 +17,15 @@ IntAddress TrafficPatternManager::getDestAddr(IntAddress srcAddr) const
         auto srcIndex = host2odIndex.at(srcAddr);
         auto destIndexes = odMatrix.at(srcIndex);
         for (auto i = 0; i < destIndexes.size(); i++) {
-            dst = idleHosts.at(i);
-            break;
+            if (destIndexes.at(i) > 0) {
+                dst = idleHosts.at(i);
+                break;
+            }
         }
     } else {
         throw cRuntimeError("unknown trafficPattern.");
     }
+    ASSERT(dst != INVALID_ADDRESS);
     return dst;
 }
 
