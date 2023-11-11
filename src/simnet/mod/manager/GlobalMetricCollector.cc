@@ -9,7 +9,8 @@ inline void printNiceTime(time_t& now)
     int hours = localTime->tm_hour;
     int minutes = localTime->tm_min;
     int seconds = localTime->tm_sec;
-    char buffer[20];
+    char buffer[10];
+    memset(buffer, 0, sizeof(buffer));
     sprintf(buffer, "[%d:%d:%d]", hours, minutes, seconds);
     std::cout << GRAY << std::left << std::setw(11) << buffer << ESC;
 }
@@ -21,11 +22,10 @@ void GlobalMetricCollector::reportFlowStart(int jobid, int numWorkers, int worke
         jobRoundMetric[jobid] = new JobRoundMetric();
         jobRoundMetric[jobid]->numWorkers = numWorkers;
         jobRoundMetric[jobid]->roundFctSignal = createSignalForGroup(jobid);
-    }
-    else {
+    } else {
         ASSERT(jobRoundMetric[jobid]->numWorkers = numWorkers);
     }
-    if (roundStartTime  < jobRoundMetric[jobid]->startTime) {
+    if (roundStartTime < jobRoundMetric[jobid]->startTime) {
         jobRoundMetric[jobid]->startTime = roundStartTime;
     }
 }
@@ -51,7 +51,8 @@ void GlobalMetricCollector::reportFlowStop(int jobid, int numWorkers, int worker
     }
 }
 
-void GlobalMetricCollector::reportFlowStop(int nodeId, simtime_t finishTime) {
+void GlobalMetricCollector::reportFlowStop(int nodeId, simtime_t finishTime)
+{
     flow_counter += 1;
     if (finishTime > allFlowsFinishedTime) {
         allFlowsFinishedTime = finishTime;
@@ -60,73 +61,77 @@ void GlobalMetricCollector::reportFlowStop(int nodeId, simtime_t finishTime) {
         flowMetric[nodeId] = new FlowMetric();
         flowMetric[nodeId]->currentRound += 1;
         totalFlowsNumber += numFlows;
-    }
-    else {
+    } else {
         flowMetric[nodeId]->currentRound += 1;
     }
 }
 
 void GlobalMetricCollector::initialize(int stage)
 {
-    if (stage == INITSTAGE_COLLECT) {
+    if (stage == INITSTAGE_LOCAL) {
+        showProgressInfo = par("showProgressInfo").boolValue();
+        progressInterval = par("progressInterval").doubleValue();
+    } else if (stage == INITSTAGE_COLLECT) {
         globalView = findModuleFromTopLevel<GlobalView>("globalView", this);
         if (globalView != nullptr) {
-            // auto n = globalView->gethostIds().size();
+            // ! HACK: get the flows number every host will send
             auto globalConfig = getEnvir()->getConfigEx();
-            auto numFlows_cfg = globalConfig->getPerObjectConfigValue("**","numFlows");
+            auto numFlows_cfg = globalConfig->getPerObjectConfigValue("**", "numFlows");
             numFlows = cStringTokenizer(numFlows_cfg).asIntVector().at(0);
-            last_simtime = simTime();
-            last_time = std::time(nullptr);
+            // ! prepare for progress display
+            lastSimTime = simTime();
+            lastRealTime = std::time(nullptr);
             stopWatch = new cMessage("stopWatch");
-            scheduleAfter(0.001, stopWatch);
-        }
-        else
+            scheduleAfter(0.001, stopWatch); // the first time is choosed at random
+        } else
             throw cRuntimeError("Fail to get globalView");
     }
 }
 
-void GlobalMetricCollector::handleMessage(cMessage *msg)
+void GlobalMetricCollector::handleMessage(cMessage* msg)
 {
     // * display progress every 10 seconds.
     ASSERT(msg == stopWatch);
-    auto config = getEnvir()->getConfig();
-    auto x = config->getPerObjectConfigValue("**", "myProgressInfo");
-    auto myProgressInfo = cConfiguration::parseBool(x, nullptr, false);
-    if (myProgressInfo) {
+    if (showProgressInfo) {
         auto now = std::time(nullptr);
-        auto duration = now - last_time > 1 ? now - last_time : 1;
-        double timeRatio_ = (simTime() - last_simtime).dbl() / (duration);
-        timeRatio = .2*timeRatio + .8*timeRatio_;
-        last_simtime = simTime();
-        last_time = now;
-
+        auto duration = now - lastRealTime > 1 ? now - lastRealTime : 1;
+        durationInRealTime = .2 * duration + .8 * duration;
+        simsecPerSecond = (simTime() - lastSimTime).dbl() / durationInRealTime;
+        lastSimTime = simTime();
+        lastRealTime = now;
         printNiceTime(now);
-
         char flow_info[50];
+        memset(flow_info, 0, sizeof(flow_info));
         sprintf(flow_info, "flows: %ld/%ld", flow_counter, totalFlowsNumber);
         std::cout << CYAN << std::left << std::setw(20) << flow_info;
-
-        char group_info[20*jobRoundMetric.size()];
+        auto group_num = jobRoundMetric.size() > 0 ? jobRoundMetric.size() : 1;
+        char group_info[20 * group_num];
         memset(group_info, 0, sizeof(group_info));
         strcat(group_info, "groups: ");
         char _tmp[20];
-        for (auto& [jobid, met]:jobRoundMetric) {
+        for (auto& [jobid, met] : jobRoundMetric) {
             sprintf(_tmp, "%d:%d, ", jobid, met->currentRound);
             strcat(group_info, _tmp);
         }
-        std::cout << CYAN << std::left << std::setw(50) << group_info << ENDC;
-
-
-        scheduleAfter(10*timeRatio, stopWatch);
+        std::cout << CYAN << std::left << std::setw(50) << group_info;
+        auto leftFlows = totalFlowsNumber - flow_counter;
+        auto esplasedFlows = flow_counter - last_flow_counter;
+        double estimatedLeftTime = 0;
+        if (leftFlows > 0 && esplasedFlows > 0)
+            estimatedLeftTime = (leftFlows / esplasedFlows) * durationInRealTime;
+        last_flow_counter = flow_counter;
+        std::cout << "ETA: " << estimatedLeftTime << ENDC;
+        scheduleAfter(progressInterval * simsecPerSecond, stopWatch);
     }
 }
 
-void GlobalMetricCollector::finish() {
+void GlobalMetricCollector::finish()
+{
     // * help to set the sim-time-limit value so that progress percentile can be displayed correctly
     if (flow_counter != totalFlowsNumber) {
-        std::cout << RED << flow_counter << "/" << totalFlowsNumber <<" flows completed." << ENDC;
+        std::cout << RED << flow_counter << "/" << totalFlowsNumber << " flows completed." << ENDC;
     } else {
-        std::cout << GREEN <<  totalFlowsNumber << " flows stop at " << allFlowsFinishedTime << ENDC;
+        std::cout << GREEN << totalFlowsNumber << " flows stop at " << allFlowsFinishedTime << ENDC;
     }
     std::cout << GREEN << "All jobs  stop at " << allJobsFinishedTime << ENDC;
 }
@@ -139,8 +144,7 @@ simsignal_t GlobalMetricCollector::createSignalForGroup(int jobid)
 
     char statisticName[32];
     sprintf(statisticName, "job-%d-RoundFinishTime", jobid);
-    cProperty *statisticTemplate =
-        getProperties()->get("statisticTemplate", "jobRoundCompleteTime");
+    cProperty* statisticTemplate = getProperties()->get("statisticTemplate", "jobRoundCompleteTime");
     getEnvir()->addResultRecorders(this, signal, statisticName, statisticTemplate);
     return signal;
 }
