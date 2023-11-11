@@ -120,7 +120,7 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
         if (leftFlows > 0 && esplasedFlows > 0)
             estimatedLeftTime = (leftFlows / esplasedFlows) * durationInRealTime;
         last_flow_counter = flow_counter;
-        std::cout << "ETA: " << estimatedLeftTime << ENDC;
+        std::cout << "ETA(min): " << estimatedLeftTime / 60.0 << ENDC;
         scheduleAfter(progressInterval * simsecPerSecond, stopWatch);
     }
 }
