@@ -25,6 +25,8 @@ network FatTree
         int halfk = int(k/2);
         int numPods = k;
         int numCores = int(k^2/4);
+        double linkBW @unit(bps) = default(10Gbps);
+        double linkDelay @unit(s) default(1s);
         @display("bgb=1069.4512,303.225");
         @statistic[fct](title="flow complete time"; source=fct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
         @statistic[idealFct](title="ideal flow complete time"; source=idealFct; unit=s; record=count,mean,max,min,vector,timeavg; interpolationmode=none);
@@ -34,8 +36,8 @@ network FatTree
     types:
         channel C extends DatarateChannel
         {
-            delay = default(1us);
-            datarate = default(40Gbps);
+            delay = parent.linkDelay;
+            datarate = parent.linkBW;
         }
 
     submodules:
