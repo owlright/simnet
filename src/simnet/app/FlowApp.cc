@@ -18,17 +18,16 @@ void FlowApp::initialize(int stage)
         flowStartTimer = new cMessage("flowStart");
         if (useJitter)
             jitterBeforeSending = &par("jitterBeforeSending");
-            
+
         flowMetricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
         if (flowMetricCollector == nullptr)
             throw cRuntimeError("metricCollector not found");
-    }
-    else if (stage == INITSTAGE_LAST) {
+    } else if (stage == INITSTAGE_LAST) {
         scheduleNextFlowAt(flowStartTime);
     }
 }
 
-void FlowApp::handleMessage(cMessage *msg)
+void FlowApp::handleMessage(cMessage* msg)
 {
     CongApp::handleMessage(msg);
     if (msg == flowStartTimer) { // new flow
@@ -41,8 +40,9 @@ void FlowApp::handleMessage(cMessage *msg)
     }
 }
 
-void FlowApp::onConnectionClose() {
-    if (!flowStartTimer->isScheduled()) {// ! avoid duplicate fin_ack schedule timer multiple times
+void FlowApp::onConnectionClose()
+{
+    if (!flowStartTimer->isScheduled()) { // ! avoid duplicate fin_ack schedule timer multiple times
         onFlowStop();
         CongApp::resetState();
     }
@@ -73,7 +73,8 @@ void FlowApp::onFlowStart()
         currFlowSize = flowSize->intValue();
     }
     // if (localAddr == 136) {
-    //     std::cout << simTime() << " "<< currentRound << " " << this->getFullPath() << " " << destAddr << " " << currFlowSize << endl;
+    //     std::cout << simTime() << " "<< currentRound << " " << this->getFullPath() << " " << destAddr << " " <<
+    //     currFlowSize << endl;
     // }
     EV_INFO << " flowSize: " << currFlowSize << endl;
     leftData = currFlowSize;
@@ -91,7 +92,7 @@ void FlowApp::onFlowStop()
     flowMetricCollector->reportFlowStop(localAddr, simTime());
     emit(flowSizeSignal, currFlowSize);
     emit(fctSignal, (simTime() - flowStartTime));
-    emit(idealFctSignal, getCurrentBaseRTT() + SimTime((currFlowSize*8) / getMaxSendingRate()));
+    emit(idealFctSignal, getCurrentBaseRTT() + SimTime((currFlowSize * 8) / getMaxSendingRate()));
 }
 
 Packet* FlowApp::createDataPacket()
@@ -108,8 +109,7 @@ Packet* FlowApp::createDataPacket()
             pk->setFIN(true);
         leftData -= packetSize;
         return pk;
-    }
-    else {
+    } else {
         return nullptr;
     }
 }

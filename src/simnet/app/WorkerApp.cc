@@ -4,12 +4,10 @@
 
 Define_Module(WorkerApp);
 
-WorkerApp::~WorkerApp()
-{
-    cancelAndDelete(roundStartTimer);
-}
+WorkerApp::~WorkerApp() { cancelAndDelete(roundStartTimer); }
 
-void WorkerApp::initialize(int stage) {
+void WorkerApp::initialize(int stage)
+{
     CongApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         flowSize = par("flowSize");
@@ -25,6 +23,9 @@ void WorkerApp::initialize(int stage) {
         jobMetricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
         if (jobMetricCollector == nullptr)
             EV_WARN << "No job metrics will be collected." << endl;
+        else {
+            jobMetricCollector->registerGroupMetric(jobId, numWorkers, numRounds);
+        }
     }
 }
 
@@ -38,13 +39,13 @@ void WorkerApp::handleMessage(cMessage* msg)
             sprintf(mesg, "Round %d", currentRound);
             getParentModule()->bubble(mesg);
         }
-    }
-    else {
+    } else {
         CongApp::handleMessage(msg);
     }
 }
 
-void WorkerApp::setField(AggPacket* pk) {
+void WorkerApp::setField(AggPacket* pk)
+{
     pk->setSeqNumber(getNextSeq());
     pk->setDestAddr(destAddr);
     pk->setDestPort(destPort);
@@ -69,8 +70,7 @@ Packet* WorkerApp::createDataPacket()
             pk->setFIN(true);
         leftData -= packetSize;
         return pk;
-    }
-    else {
+    } else {
         return nullptr;
     }
 }
@@ -81,7 +81,7 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
     ASSERT(apk->getJobId() == jobId);
     ASSERT(apk->getRound() == currentRound);
     auto aggSeq = apk->getAggSeqNumber();
-    SeqNumber seq = aggSeq*messageLength;
+    SeqNumber seq = aggSeq * messageLength;
     if (txBuffer.find(seq) != txBuffer.end()) { // ! here we can delete many disorder but not lost packets
         auto& item = txBuffer.at(seq);
         delete item.pkt;
@@ -93,16 +93,15 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
         if (rxBuffer.empty()) {
             // ! Between round and round, this will happen:
             // ! after worker received PS's last window of data, txBuffer is empty, so no more acks can send
-            // ! we must make pure acks to let PS clear their last window, otherwise they will repeatedly retrans the unacked data
-            // ! Except for the last round, CongApp will do this
-            if (maxSentAckNumber != getNextAckSeq() && currentRound < numRounds ) {
+            // ! we must make pure acks to let PS clear their last window, otherwise they will repeatedly retrans the
+            // unacked data ! Except for the last round, CongApp will do this
+            if (maxSentAckNumber != getNextAckSeq() && currentRound < numRounds) {
                 auto fakeOldSeq = getNextSentSeq() - 1; // * make it old
                 echoACK(fakeOldSeq);
             }
             if (!roundStartTimer->isScheduled()) // TODO WHY?
                 onRoundStop();
-        }
-        else {
+        } else {
             // ! it could happen when new ackNumber carry old seq, for example, disorder
             //// std::cout << RED << getEnvir()->getConfigEx()->getVariable("iterationvars") << ENDC;
             //// throw cRuntimeError("It's impossible that txBuffer are all confirmed but rxBuffer still have packets");
@@ -118,29 +117,29 @@ void WorkerApp::onRoundStart()
     EV_INFO << "current round:" << currentRound << " flowSize:" << flowSize << endl;
     leftData = flowSize;
     if (jobMetricCollector)
-        jobMetricCollector->reportFlowStart(jobId, numWorkers, workerId, simTime());
+        jobMetricCollector->reportFlowStart(jobId, workerId, simTime());
 }
 
 void WorkerApp::onRoundStop()
 {
     cong->reset(); // ! reuse connection but cong must be reset.
-    if (currentRound < numRounds) {// note it's '<' here
+    if (currentRound < numRounds) { // note it's '<' here
         scheduleAfter(roundInterval, roundStartTimer);
         // nextAggSeq = 0; // TODO is this necessary ?
     }
     if (jobMetricCollector)
-        jobMetricCollector->reportFlowStop(jobId, numWorkers, workerId, simTime());
+        jobMetricCollector->reportFlowStop(jobId, workerId, simTime());
 }
 
 void WorkerApp::finish()
 {
     CongApp::finish();
     if (resentBytes > 0)
-        std::cout << jobId << " " << localAddr << " " << destAddr << " retransmit "<< resentBytes << endl;
+        std::cout << jobId << " " << localAddr << " " << destAddr << " retransmit " << resentBytes << endl;
     if (currentRound != numRounds) {
-        EV_ERROR << RED << getClassAndFullPath() << "job " << jobId << " "
-                                        "address " << localAddr
-                                        << " round " << currentRound << " not finish." << ENDC;
-
+        EV_ERROR << RED << getClassAndFullPath() << "job " << jobId
+                 << " "
+                    "address "
+                 << localAddr << " round " << currentRound << " not finish." << ENDC;
     }
 }

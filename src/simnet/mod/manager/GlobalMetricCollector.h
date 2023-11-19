@@ -9,9 +9,11 @@ using namespace omnetpp;
 
 class GlobalMetricCollector final : public cSimpleModule {
 public:
-    // for group coflows
-    void reportFlowStart(int jobuid, int numWorkers, int workerId, simtime_t roundStartTime);
-    void reportFlowStop(int jobuid, int numWorkers, int workerId, simtime_t roundStopTime);
+    void registerGroupMetric(int jobuid, int numWorkers, int numRounds);
+    void registerFlowMetric(int nodeId, int numFlows);
+    // for group flows
+    void reportFlowStart(int jobuid, int workerId, simtime_t roundStartTime);
+    void reportFlowStop(int jobuid, int workerId, simtime_t roundStopTime);
     // for unicast flows
     void reportFlowStop(int nodeId, simtime_t finishTime);
     ~GlobalMetricCollector() { cancelAndDelete(stopWatch); };
@@ -34,21 +36,30 @@ private:
 
     opp_component_ptr<GlobalView> globalView;
 
-    int numFlows { 0 };
     int64_t totalFlowsNumber { 0 };
     int64_t flow_counter { 0 };
+    int64_t last_flow_counter { 0 };
+    int flow_nochange_counter { 0 };
+    bool flow_is_over { false };
+
+    int64_t totalRoundsNumber { 0 };
+    int64_t last_round_counter { 0 };
+    int64_t round_counter { 0 };
+    int round_nochange_counter { 0 };
+    bool job_is_over { false };
 
     double durationInRealTime;
     double simsecPerSecond; // ! 1 realworld second = # simsecs
+    double estimatedLeftTime { 0 };
     simtime_t lastSimTime { 0 };
     std::time_t lastRealTime { 0 };
-    int64_t last_flow_counter { 0 };
 
 private:
     struct JobRoundMetric {
         int currentRound { 0 };
         int counter { 0 };
         int numWorkers;
+        int numRounds;
         simtime_t startTime;
         simsignal_t roundFctSignal;
         void reset()
@@ -57,10 +68,7 @@ private:
             counter = 0;
         }
     };
-    struct FlowMetric {
-        int currentRound { 0 };
-    };
+
     std::map<int, JobRoundMetric*> jobRoundMetric;
-    std::map<int, FlowMetric*> flowMetric;
     cMessage* stopWatch { nullptr };
 };
