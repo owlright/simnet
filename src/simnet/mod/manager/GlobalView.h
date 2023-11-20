@@ -30,17 +30,11 @@ protected:
 private:
     cTopology* topo { nullptr };
     simnet::Graph network;
-    // Mat<double> topoDist;
-    Mat<double> costAdj;
-    std::vector<int> hostNodes;
 
+    std::vector<int> hostNodes;
     std::unordered_map<int, IntAddress> nodeId2Addr;
     std::unordered_map<IntAddress, int> addr2NodeId;
     std::unordered_map<cTopology::Node*, int> nodeID;
-    // [[deprecated]] std::unordered_map<IntAddress, cModule*> addr2mod;
-    // [[deprecated]] std::unordered_map<cModule*, IntAddress> mod2addr;
-    // [[deprecated]] std::unordered_map<cTopology::Node*, IntAddress> node2addr;
-    // [[deprecated]] std::unordered_map<IntAddress, cTopology::Node*> addr2node;
 
 private:
     void collectNodes(cTopology* topo);

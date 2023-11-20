@@ -1,24 +1,36 @@
 #pragma once
 #include "simnet/common/Defs.h"
 #include <list>
+#include <map>
+#include <utility>
 #include <vector>
 using std::list;
+using std::make_pair;
+using std::map;
+using std::pair;
 using std::vector;
+#include <graphviz/gvc.h>
 namespace simnet {
 class Graph {
-    int numVertices;
-    vector<list<int>> adjlist;
+    map<int, vector<pair<int, double>>> adj;
 
 public:
     explicit Graph() {};
-    explicit Graph(int V);
     void add_edge(int src, int dest, double weight = 1.0, bool bidirectional = false);
+    void add_node(int n);
     bool has_edge(int src, int dest);
-    void init_from(const Mat<double>& adj);
-    const Mat<double>& get_dist() const {return dist;};
+    void update_dist();
+    const vector<int>& get_nodes() const { return nodes; }
+    const Mat<double>& get_dist() const;
+    const vector<pair<int, double>>& get_out_neighbors(int src) const { return adj.at(src); }
+    int get_vertices_number() const { return adj.size(); }
+    double get_weight(int src, int dst) const;
+
+public:
+    void draw(const char* filename);
 
 private:
     Mat<double> dist;
-    Mat<double> adj;
+    std::vector<int> nodes;
 };
 }

@@ -58,45 +58,16 @@ void GlobalView::initialize(int stage)
         topo->extractByProperty("node");
         collectNodes(topo);
         int N = topo->getNumNodes();
-        costAdj.resize(N, vector<double>(N, INFINITY));
-        network.init_from(costAdj);
-        // floyd_warshall(distance);
-        // topoDist.resize(N, vector<double>(N, 0.0));
-        // for (int i = 0; i < topo->getNumNodes(); i++) {
-        //     auto u = topo->getNode(i);
-        //     topo->calculateWeightedSingleShortestPathsTo(u); // all paths v -> u
-        //     for (int j = i + 1; j < topo->getNumNodes(); j++) {
-        //         auto v = topo->getNode(j);
-        //         topoDist[j][i] = v->getDistanceToTarget();
-        //         topoDist[i][j] = topoDist[j][i];
-        //         if (v->getPath(0)->getRemoteNode() == u) { // ! if v is the adj node of u
-        //             costAdj[j][i] = 1.0;
-        //             costAdj[i][j] = 1.0;
-        //         }
-        //         // std::cout << i << " "
-        //         //           << j << " "
-        //         //           << topoDist[i][j] << endl;
-        //         // std::cout << topo->getNode(i)->getModule()->getClassAndFullPath() << " "
-        //         //           << topo->getNode(j)->getModule()->getClassAndFullPath() << " "
-        //         //           << topoDist[i][j] << endl;
-        //     }
-        // }
-        // EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
-        // auto S = vector<int>{8, 9, 10, 11};
-        // auto mstnodes = vector<int>{26, 2, 4, 7};
-        // auto tmp = primMST(S, mstnodes, topoDist);
-        // std::cout << endl;
-        // std::cout << "sources: ";
-        // for (const auto& a: S)
-        //     std::cout << nodeId2Addr[a] << " ";
-        // std::cout << endl;
-        // std::cout << nodeId2Addr[mstnodes[0]] << endl;
-        // for (const auto& [a, b]:tmp) {
-        //     std::cout << nodeId2Addr[a] << " " << nodeId2Addr[b] << endl;
-        // }
-        // std::cout << endl;
-        // auto print = [](const std::vector<double>& n) { std::cout << n << endl; };
-        // std::for_each(costAdj.cbegin(), costAdj.cend(), print);
+        for (int i = 0; i < N; i++) {
+            auto u = topo->getNode(i);
+            auto n = u->getNumOutLinks();
+            for (int j = 0; j < n; j++) {
+                auto v = u->getLinkOut(j)->getRemoteNode();
+                network.add_edge(i, nodeID[v]);
+            }
+        }
+        network.update_dist();
+        //        network.draw();
     }
 }
 
