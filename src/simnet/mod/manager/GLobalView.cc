@@ -2,7 +2,7 @@
 #include <algorithm>
 Define_Module(GlobalView);
 
-Dict<int> GlobalView::primMST(const vector<int>& S, const vector<int>& mstnodes, const Mat<double> &oddist)
+Dict<int> GlobalView::primMST(const vector<int>& S, const vector<int>& mstnodes, const Mat<double>& oddist)
 {
     auto P = Dict<int>();
     auto r = mstnodes[0]; // ! mstnodes[0] must be target
@@ -46,7 +46,6 @@ Dict<int> GlobalView::primMST(const vector<int>& S, const vector<int>& mstnodes,
                 P[s] = mstnodes[j];
             }
         }
-
     }
     return P;
 }
@@ -54,12 +53,15 @@ Dict<int> GlobalView::primMST(const vector<int>& S, const vector<int>& mstnodes,
 void GlobalView::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
-        EV << "network initialization." << endl;
+        EV_DEBUG << "network initialization." << endl;
         topo = new cTopology("topo");
         topo->extractByProperty("node");
-        // int N = topo->getNumNodes();
+        collectNodes(topo);
+        int N = topo->getNumNodes();
+        costAdj.resize(N, vector<double>(N, INFINITY));
+        network.init_from(costAdj);
+        // floyd_warshall(distance);
         // topoDist.resize(N, vector<double>(N, 0.0));
-        // costAdj.resize(N, vector<double>(N, INFINITY));
         // for (int i = 0; i < topo->getNumNodes(); i++) {
         //     auto u = topo->getNode(i);
         //     topo->calculateWeightedSingleShortestPathsTo(u); // all paths v -> u
@@ -80,7 +82,6 @@ void GlobalView::initialize(int stage)
         //     }
         // }
         // EV << "cTopology found " << topo->getNumNodes() << " nodes\n";
-        collectNodes(topo);
         // auto S = vector<int>{8, 9, 10, 11};
         // auto mstnodes = vector<int>{26, 2, 4, 7};
         // auto tmp = primMST(S, mstnodes, topoDist);
@@ -99,13 +100,13 @@ void GlobalView::initialize(int stage)
     }
 }
 
-void GlobalView::collectNodes(cTopology *topo)
+void GlobalView::collectNodes(cTopology* topo)
 {
     nodeId2Addr.reserve(topo->getNumNodes());
     std::unordered_set<IntAddress> used;
-    for (int i = 0; i < topo->getNumNodes(); i++)
-    {
+    for (int i = 0; i < topo->getNumNodes(); i++) {
         auto node = topo->getNode(i);
+        nodeID[node] = i;
         auto nodeMod = node->getModule();
         // std::cout << i << " " << nodeMod->getId() << " "
         //                       << nodeMod->getClassAndFullPath() << endl;
@@ -114,7 +115,7 @@ void GlobalView::collectNodes(cTopology *topo)
             address = nodeMod->getId();
             nodeMod->par("address") = address;
         }
-        if (used.find(address) != used.end()){
+        if (used.find(address) != used.end()) {
             throw cRuntimeError("GlobalView::collectNodes: duplicate address %" PRId64, address);
         }
         used.insert(address);
@@ -126,6 +127,6 @@ void GlobalView::collectNodes(cTopology *topo)
         addr2NodeId[address] = i;
         EV_DEBUG << "node: " << i << " address: " << address << endl;
     }
-    EV_INFO << "There are " << hostNodes.size() << " hosts and " << topo->getNumNodes() - hostNodes.size() << " switches" << endl;
+    EV_INFO << "There are " << hostNodes.size() << " hosts and " << topo->getNumNodes() - hostNodes.size()
+            << " switches" << endl;
 }
-

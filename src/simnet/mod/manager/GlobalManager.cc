@@ -8,13 +8,13 @@ IntAddress GlobalManager::getAddr(int nodeId) const
     return addr;
 }
 
-IntAddress GlobalManager::getAddr(cModule *mod) const
+IntAddress GlobalManager::getAddr(cModule* mod) const
 {
     IntAddress addr = mod->par("address");
     return addr;
 }
 
-IntAddress GlobalManager::getAddr(cTopology::Node *node) const
+IntAddress GlobalManager::getAddr(cTopology::Node* node) const
 {
     // ! only module is the same in each topo
     IntAddress addr = getAddr(node->getModule());
@@ -28,13 +28,13 @@ int GlobalManager::getNodeId(IntAddress addr) const
     return nodeId;
 }
 
-cModule *GlobalManager::getMod(IntAddress addr) const
+cModule* GlobalManager::getMod(IntAddress addr) const
 {
     int nodeId = getNodeId(addr);
     return topo->getNode(nodeId)->getModule();
 }
 
-cTopology::Node *GlobalManager::getNode(IntAddress addr) const
+cTopology::Node* GlobalManager::getNode(IntAddress addr) const
 {
     int nodeId = getNodeId(addr);
     return topo->getNode(nodeId);
@@ -46,18 +46,16 @@ void GlobalManager::initialize(int stage)
         globalView = findModuleFromTopLevel<GlobalView>("globalView", this);
         if (globalView == nullptr)
             throw cRuntimeError("Fail to get globalView");
-    }
-    else if (stage == INITSTAGE_ASSIGN) {
+    } else if (stage == INITSTAGE_ASSIGN) {
         topo = globalView->getGlobalTopo();
         hostIds = globalView->gethostIds();
         nodeId2Addr = globalView->getNodeIdAddrMap();
         addr2NodeId = globalView->getAddrNodeIdMap();
+        network = globalView->getNetwork();
         // distAdj = globalView->getDistMat();
         // costAdj.resize(distAdj.size(), vector<double>(distAdj[0].size()));
         // costAdj = globalView->getCostAdj();
-    }
-    else if (stage == INITSTAGE_LAST) {
+    } else if (stage == INITSTAGE_LAST) {
         ASSERT(topo);
     }
 }
-
