@@ -14,6 +14,11 @@ typedef uint16_t PortNumber;
 
 #define CRCPOLY_LE 0xedb88320
 using namespace omnetpp;
+template <typename T>
+using Dict = std::unordered_map<T, T>;
+
+template <typename T>
+using Mat = std::vector<std::vector<T>>;
 
 enum Stage
 {
