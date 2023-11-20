@@ -5,6 +5,18 @@
 #include<unordered_map>
 
 template<class T>
+std::ostream& operator<<(std::ostream& os, const std::vector<std::vector<T>>& matrix)
+{
+    for (const auto& row : matrix) {
+        for (const auto& element : row) {
+            os << element << " ";
+        }
+        os << std::endl;
+    }
+    return os;
+}
+
+template<class T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& array)
 {
     os << "[";
