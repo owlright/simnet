@@ -12,17 +12,23 @@ using std::vector;
 #include <graphviz/gvc.h>
 namespace simnet {
 class Graph {
-    map<int, vector<pair<int, double>>> adj;
+    using Edge = pair<int, int>;
+    using EdgeWeight = pair<int, double>;
+    map<int, vector<EdgeWeight>> adj;
+    map<int, vector<EdgeWeight>> adjreverse;
 
 public:
     explicit Graph() {};
     void add_edge(int src, int dest, double weight = 1.0, bool bidirectional = false);
     void add_node(int n);
-    bool has_edge(int src, int dest);
+    bool has_node(int n);
+    bool has_edge(const int& src, const int& dest);
+    bool has_edge(const Edge&);
     void update_dist();
     const vector<int>& get_nodes() const { return nodes; }
     const Mat<double>& get_dist() const;
-    const vector<pair<int, double>>& get_out_neighbors(int src) const { return adj.at(src); }
+    const vector<EdgeWeight>& get_out_neighbors(int src) const { return adj.at(src); }
+    const vector<EdgeWeight>& get_in_neighbors(int src) const { return adjreverse.at(src); }
     int get_vertices_number() const { return adj.size(); }
     double get_weight(int src, int dst) const;
 

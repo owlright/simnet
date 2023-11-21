@@ -14,37 +14,45 @@ bool is_in_vector(const int& x, const vector<int> vec)
 // Add edges
 void Graph::add_edge(int src, int dest, double weight, bool bidirectional)
 {
-    if (!is_in_vector(src, nodes))
+    if (!has_node(src))
         nodes.push_back(src);
-    if (!is_in_vector(dest, nodes))
+    if (!has_node(dest))
         nodes.push_back(dest);
     if (!has_edge(src, dest)) {
-        adj[src].push_back(make_pair(dest, weight));
+        adj[src].push_back(EdgeWeight(dest, weight));
+        adjreverse[dest].push_back(EdgeWeight(src, weight));
         if (bidirectional) {
-            adj[dest].push_back(make_pair(src, weight));
+            adj[dest].push_back(EdgeWeight(src, weight));
+            adjreverse[src].push_back(EdgeWeight(dest, weight));
         }
     } else {
-        auto outneighbours = adj.at(src);
-        for (auto& x : outneighbours) {
+        int pos = 0;
+        for (auto& x : adj.at(src)) {
             if (x.first == dest) {
                 x.second = weight;
+                break;
             }
+            pos += 1;
         }
+        adjreverse.at(dest).at(pos).second = weight;
     }
 }
 
-void Graph::add_node(int n) {
+void Graph::add_node(int n)
+{
     if (!is_in_vector(n, nodes)) {
         nodes.push_back(n);
     }
- }
+}
 
-bool Graph::has_edge(int src, int dest)
+bool Graph::has_node(int n) { return is_in_vector(n, nodes); }
+
+bool Graph::has_edge(const int& src, const int& dest)
 {
     if (adj.find(src) == adj.end()) {
         return false;
     } else {
-        const auto& outneighbours = adj.at(src);
+        const auto& outneighbours = get_out_neighbors(src);
         for (auto& x : outneighbours) {
             if (x.first == dest) {
                 return true;
@@ -52,6 +60,13 @@ bool Graph::has_edge(int src, int dest)
         }
     }
     return false;
+}
+
+bool Graph::has_edge(const Edge& e)
+{
+    auto& src = e.first;
+    auto& dest = e.second;
+    return has_edge(src, dest);
 }
 
 void Graph::update_dist()
@@ -78,10 +93,15 @@ const Mat<double>& Graph::get_dist() const
 
 double Graph::get_weight(int src, int dst) const
 {
-    auto& vws = adj.at(src);
-    for (auto& [v, w] : vws) {
-        if (v == dst)
-            return w;
+    if (adj.find(src) == adj.end()) {
+        throw cRuntimeError("node %d not found!", src);
+    } else {
+        auto& vws = adj.at(src);
+        for (auto& [v, w] : vws) {
+            if (v == dst)
+                return w;
+        }
+        throw cRuntimeError("edge %d->%d not found!", src, dst);
     }
 }
 
@@ -91,24 +111,35 @@ void Graph::draw(const char* filename)
     GVC_t* gvc = gvContext();
 
     // Create a simple digraph
-    Agraph_t* g = agopen("g", Agdirected, 0);
+    char gname[] = "network";
+    char shape[] = "plaintext";
+    char empty[] = "";
+    char width[] = "0.1";
+    char height[] = "0.1";
+    char margin[] = "0.01";
+    char overlap[] = "overlap";
+    char False[] = "false";
+    Agraph_t* g = agopen(gname, Agdirected, 0);
 
     for (auto& uv : adj) {
         auto& u = uv.first;
         auto& neighbours = uv.second;
         for (auto& [v, w] : neighbours) {
-            Agnode_t* n = agnode(g, const_cast<char*>(std::to_string(u).c_str()), 1);
-            Agnode_t* m = agnode(g, const_cast<char*>(std::to_string(v).c_str()), 1);
-            agsafeset(n, "shape", "box", "");
-            agsafeset(n, "width", "0.1", "");
-            agsafeset(n, "height", "0.1", "");
-            agsafeset(m, "shape", "box", "");
-            agsafeset(m, "width", "0.1", "");
-            agsafeset(m, "height", "0.1", "");
-            Agedge_t* e = agedge(g, n, m, 0, 1);
+            auto n = agnode(g, const_cast<char*>(std::to_string(u).c_str()), 1);
+            auto m = agnode(g, const_cast<char*>(std::to_string(v).c_str()), 1);
+            agsafeset(n, "shape", shape, empty);
+            agsafeset(n, "width", width, empty);
+            agsafeset(n, "height", height, empty);
+            agsafeset(n, "margin", margin, empty);
+            agsafeset(m, "shape", shape, empty);
+            agsafeset(m, "width", width, empty);
+            agsafeset(m, "height", height, empty);
+            agsafeset(m, "margin", margin, empty);
+            auto e = agedge(g, n, m, 0, 1);
+            agsafeset(e, "arrowsize", ".5", empty);
         }
     }
-    agsafeset(g, "overlap", "false", "");
+    agsafeset(g, overlap, False, empty);
     // Set an attribute - in this case one that affects the visible rendering
     // agsafeset(n, "color", "red", "");
 
