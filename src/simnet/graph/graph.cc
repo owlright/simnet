@@ -14,10 +14,8 @@ bool is_in_vector(const int& x, const vector<int> vec)
 // Add edges
 void Graph::add_edge(int src, int dest, double weight, bool bidirectional)
 {
-    if (!has_node(src))
-        nodes.push_back(src);
-    if (!has_node(dest))
-        nodes.push_back(dest);
+    add_node(src);
+    add_node(dest);
     if (!has_edge(src, dest)) {
         adj[src].push_back(EdgeWeight(dest, weight));
         adjreverse[dest].push_back(EdgeWeight(src, weight));
@@ -40,8 +38,10 @@ void Graph::add_edge(int src, int dest, double weight, bool bidirectional)
 
 void Graph::add_node(int n)
 {
-    if (!is_in_vector(n, nodes)) {
+    if (!has_node(n)) {
         nodes.push_back(n);
+        adj[n] = vector<EdgeWeight>();
+        adjreverse[n] = vector<EdgeWeight>();
     }
 }
 
