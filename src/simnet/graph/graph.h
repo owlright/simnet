@@ -30,6 +30,7 @@ public:
     double distance(int src, int dest) const;
     double weight(int src, int dst) const;
     int get_vertices_number() const { return adj.size(); }
+    int get_max_vertice() const {return max_vertice;}
 
 public:
     const vector<int>& get_nodes() const { return nodes; }
@@ -45,6 +46,7 @@ public:
 private:
     Mat<double> dist;
     std::vector<int> nodes;
+    int max_vertice {-1};
     map<int, vector<EdgeWeight>> adj;
     map<int, vector<EdgeWeight>> adjreverse;
 };

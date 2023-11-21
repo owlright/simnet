@@ -39,6 +39,8 @@ void Graph::add_edge(int src, int dest, double weight, bool bidirectional)
 void Graph::add_node(int n)
 {
     if (!has_node(n)) {
+        if (n > max_vertice)
+            max_vertice = n;
         nodes.push_back(n);
         adj[n] = vector<EdgeWeight>();
         adjreverse[n] = vector<EdgeWeight>();

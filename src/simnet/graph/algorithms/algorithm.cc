@@ -32,12 +32,17 @@ struct CompareDiPair {
 
 double dijistra(const Graph& g, int src, int dest, vector<int>* path)
 {
-    int n = g.get_vertices_number();
+    int n = g.get_max_vertice();
     priority_queue<diPair, std::deque<diPair>, CompareDiPair> pq;
     vector<double> dist(n, INFINITY);
     vector<int> prev(n, -1);
     pq.push(make_pair(0.0, src));
     dist[src] = 0;
+    if (src == dest) {
+        if (path)
+            path->push_back(src);
+        return 0;
+    }
     bool found = false;
     unordered_set<int> visited { src };
     while (!pq.empty()) {
