@@ -43,7 +43,7 @@ double dijistra(const Graph& g, int src, int dest, vector<int>* path)
     while (!pq.empty()) {
         auto u = pq.top().second;
         pq.pop();
-        for (auto& [v, weight] : g.get_out_neighbors(u)) {
+        for (auto& [v, weight] : g.out_neighbors(u)) {
             // If there is shorted path to v through u.
             if (visited.find(v) == visited.end() && dist[v] > dist[u] + weight) {
                 // Updating distance of v

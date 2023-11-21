@@ -25,16 +25,19 @@ public:
     bool has_node(int n);
     bool has_edge(const int& src, const int& dest);
     bool has_edge(const Edge&);
+
     void update_dist();
+    double distance(int src, int dest) const;
+    double weight(int src, int dst) const;
+    int get_vertices_number() const { return adj.size(); }
+
+public:
     const vector<int>& get_nodes() const { return nodes; }
     const Mat<double>& get_dist() const;
-    double distance(int src, int dest) const;
-    const vector<EdgeWeight>& get_out_neighbors(int src) const { return adj.at(src); }
-    const vector<EdgeWeight>& get_in_neighbors(int src) const { return adjreverse.at(src); }
+    const vector<EdgeWeight>& out_neighbors(int src) const { return adj.at(src); }
+    const vector<EdgeWeight>& in_neighbors(int src) const { return adjreverse.at(src); }
     int indegree(int v) const { return adjreverse.at(v).size(); }
     int outdegree(int v) const { return adj.at(v).size(); }
-    int get_vertices_number() const { return adj.size(); }
-    double get_weight(int src, int dst) const;
 
 public:
     void draw(const char* filename);

@@ -52,7 +52,7 @@ bool Graph::has_edge(const int& src, const int& dest)
     if (adj.find(src) == adj.end()) {
         return false;
     } else {
-        const auto& outneighbours = get_out_neighbors(src);
+        const auto& outneighbours = out_neighbors(src);
         for (auto& x : outneighbours) {
             if (x.first == dest) {
                 return true;
@@ -88,17 +88,16 @@ const Mat<double>& Graph::get_dist() const
     return dist;
 }
 
-double Graph::distance(int src, int dest) const {
+double Graph::distance(int src, int dest) const
+{
     if (!dist.empty()) {
         return dist[src][dest];
-    }
-    else {
+    } else {
         return algorithms::dijistra(*this, src, dest);
     }
 }
 
-
-double Graph::get_weight(int src, int dst) const
+double Graph::weight(int src, int dst) const
 {
     ASSERT(adj.find(src) != adj.end());
     auto& vws = adj.at(src);
@@ -160,4 +159,5 @@ void Graph::draw(const char* filename)
     // close output file, free context, and return number of errors
     gvFreeContext(gvc);
 }
+
 }

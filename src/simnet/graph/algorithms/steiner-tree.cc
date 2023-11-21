@@ -17,18 +17,19 @@ Graph takashami_tree(const Graph& g, vector<int> sources, int root)
         std::vector<int> path;
         dijistra(g, s, node_in_tree, &path);
         for (int i = 0; i < path.size() - 1; i++) {
-            tree.add_edge(path[i], path[i + 1], g.get_weight(path[i], path[i + 1]));
+            tree.add_edge(path[i], path[i + 1], g.weight(path[i], path[i + 1]));
         }
     }
     tree.draw("tree");
     return tree;
 }
 
-Graph extract_branch_tree(const Graph& tree, const vector<int>& sources, int root, vector<int>* branch_nodes) {
-// ! make sure tree is actually a directed tree
+Graph extract_branch_tree(const Graph& tree, const vector<int>& sources, int root, vector<int>* branch_nodes)
+{
+    // ! make sure tree is actually a directed tree
     Graph t;
     unordered_set<int> visited;
-    for (auto& s:sources) {
+    for (auto& s : sources) {
         auto node = s;
         int edge_start = s;
         while (node != root) {
@@ -44,7 +45,7 @@ Graph extract_branch_tree(const Graph& tree, const vector<int>& sources, int roo
                 t.add_edge(edge_start, node, tree.distance(edge_start, node));
                 edge_start = node;
             }
-            node = tree.get_out_neighbors(node).at(0).first;
+            node = tree.out_neighbors(node).at(0).first;
         }
         if (node == root) {
             t.add_edge(edge_start, node, tree.distance(edge_start, node));
