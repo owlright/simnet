@@ -30,7 +30,7 @@ struct CompareDiPair {
     }
 };
 
-vector<int> dijistra(const Graph& g, int src, int dest)
+double dijistra(const Graph& g, int src, int dest, vector<int>* path)
 {
     int n = g.get_vertices_number();
     priority_queue<diPair, std::deque<diPair>, CompareDiPair> pq;
@@ -61,14 +61,18 @@ vector<int> dijistra(const Graph& g, int src, int dest)
             break;
         }
     }
-    std::vector<int> path;
+
     if (found) {
-        auto u = dest;
-        while (u != -1) {
-            path.insert(path.begin(), u);
-            u = prev[u];
+        if (path) {
+            auto u = dest;
+            while (u != -1) {
+                path->insert(path->begin(), u);
+                u = prev[u];
+            }
         }
+        return dist[dest];
     }
-    return path;
+    return -1; // * unreachable
 }
+
 }

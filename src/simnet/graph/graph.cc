@@ -84,25 +84,29 @@ void Graph::update_dist()
 
 const Mat<double>& Graph::get_dist() const
 {
-    if (dist.empty()) {
-        throw cRuntimeError("must call update_dist() first!");
-    } else {
-        return dist;
+    ASSERT(!dist.empty());
+    return dist;
+}
+
+double Graph::distance(int src, int dest) const {
+    if (!dist.empty()) {
+        return dist[src][dest];
+    }
+    else {
+        return algorithms::dijistra(*this, src, dest);
     }
 }
 
+
 double Graph::get_weight(int src, int dst) const
 {
-    if (adj.find(src) == adj.end()) {
-        throw cRuntimeError("node %d not found!", src);
-    } else {
-        auto& vws = adj.at(src);
-        for (auto& [v, w] : vws) {
-            if (v == dst)
-                return w;
-        }
-        throw cRuntimeError("edge %d->%d not found!", src, dst);
+    ASSERT(adj.find(src) != adj.end());
+    auto& vws = adj.at(src);
+    for (auto& [v, w] : vws) {
+        if (v == dst)
+            return w;
     }
+    throw cRuntimeError("edge %d->%d not found!", src, dst);
 }
 
 void Graph::draw(const char* filename)
@@ -140,8 +144,6 @@ void Graph::draw(const char* filename)
         }
     }
     agsafeset(g, overlap, False, empty);
-    // Set an attribute - in this case one that affects the visible rendering
-    // agsafeset(n, "color", "red", "");
 
     // Compute a layout using layout engine from command line args
     gvLayout(gvc, g, "neato");
