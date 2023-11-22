@@ -32,7 +32,7 @@ struct CompareDiPair {
 
 double dijistra(const Graph& g, int src, int dest, vector<int>* path)
 {
-    int n = g.get_max_vertice();
+    int n = g.get_max_vertice() + 1;
     priority_queue<diPair, std::deque<diPair>, CompareDiPair> pq;
     vector<double> dist(n, INFINITY);
     vector<int> prev(n, -1);
@@ -77,7 +77,9 @@ double dijistra(const Graph& g, int src, int dest, vector<int>* path)
         }
         return dist[dest];
     }
-    return -1; // * unreachable
+    return INFINITY; // * unreachable
+}
+
 }
 
 }
