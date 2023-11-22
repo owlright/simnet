@@ -11,28 +11,60 @@ bool is_in_vector(const int& x, const vector<int> vec)
     }
     return false;
 }
+
 // Add edges
 void Graph::add_edge(int src, int dest, double weight, bool bidirectional)
 {
     add_node(src);
     add_node(dest);
     if (!has_edge(src, dest)) {
-        adj[src].push_back(EdgeWeight(dest, weight));
-        adjreverse[dest].push_back(EdgeWeight(src, weight));
+        adjout[src].push_back(EdgeWeight(dest, weight));
+        adjin[dest].push_back(EdgeWeight(src, weight));
         if (bidirectional) {
-            adj[dest].push_back(EdgeWeight(src, weight));
-            adjreverse[src].push_back(EdgeWeight(dest, weight));
+            adjout[dest].push_back(EdgeWeight(src, weight));
+            adjin[src].push_back(EdgeWeight(dest, weight));
         }
     } else {
-        int pos = 0;
-        for (auto& x : adj.at(src)) {
-            if (x.first == dest) {
-                x.second = weight;
-                break;
-            }
-            pos += 1;
+        set_weight(src, dest, weight);
+    }
+}
+
+void Graph::set_weight(int src, int dest, double weight)
+{
+    ASSERT(has_edge(src, dest));
+    ASSERT(adjout.find(src) != adjout.end());
+    ASSERT(adjin.find(dest) != adjin.end());
+    for (auto& x : adjout.at(src)) {
+        if (x.first == dest) {
+            x.second = weight;
+            break;
         }
-        adjreverse.at(dest).at(pos).second = weight;
+    }
+    for (auto& x : adjin.at(dest)) {
+        if (x.first == src) {
+            x.second = weight;
+            break;
+        }
+    }
+}
+
+void Graph::remove_edge(int src, int dest)
+{
+    ASSERT(adjin.find(src) != adjin.end());
+    ASSERT(adjout.find(dest) != adjout.end());
+    if (has_edge(src, dest)) {
+        auto remove_adj = [](vector<EdgeWeight>& vw, const int& node) {
+            int index = 0;
+            for (auto& [v, w] : vw) {
+                if (v == node) {
+                    break;
+                }
+                index++;
+            }
+            vw.erase(vw.begin() + index);
+        };
+        remove_adj(adjout[src], dest);
+        remove_adj(adjin[dest], src);
     }
 }
 
@@ -42,16 +74,31 @@ void Graph::add_node(int n)
         if (n > max_vertice)
             max_vertice = n;
         nodes.push_back(n);
-        adj[n] = vector<EdgeWeight>();
-        adjreverse[n] = vector<EdgeWeight>();
+        adjout[n] = vector<EdgeWeight>();
+        adjin[n] = vector<EdgeWeight>();
     }
 }
 
+void Graph::remove_node(int n)
+{
+    // ! delete a node also delete all its edges
+    if (has_node(n)) {
+        adjout.erase(n);
+        adjin.erase(n);
+        auto it = std::find(nodes.begin(), nodes.end(), n);
+        if (it != nodes.end())
+            nodes.erase(it);
+        if (n == max_vertice) {
+            it = std::max_element(nodes.begin(), nodes.end());
+            max_vertice = *it;
+        }
+    }
+}
 bool Graph::has_node(int n) { return is_in_vector(n, nodes); }
 
 bool Graph::has_edge(const int& src, const int& dest)
 {
-    if (adj.find(src) == adj.end()) {
+    if (adjout.find(src) == adjout.end()) {
         return false;
     } else {
         const auto& outneighbours = out_neighbors(src);
@@ -73,8 +120,8 @@ bool Graph::has_edge(const Edge& e)
 
 void Graph::update_dist()
 {
-    dist.resize(adj.size(), vector<double>(adj.size(), INFINITY));
-    for (auto& uv : adj) {
+    dist.resize(adjout.size(), vector<double>(adjout.size(), INFINITY));
+    for (auto& uv : adjout) {
         auto& u = uv.first;
         auto& neighbours = uv.second;
         for (auto& [v, w] : neighbours) {
@@ -101,8 +148,8 @@ double Graph::distance(int src, int dest) const
 
 double Graph::weight(int src, int dst) const
 {
-    ASSERT(adj.find(src) != adj.end());
-    auto& vws = adj.at(src);
+    ASSERT(adjout.find(src) != adjout.end());
+    auto& vws = adjout.at(src);
     for (auto& [v, w] : vws) {
         if (v == dst)
             return w;
@@ -126,7 +173,7 @@ void Graph::draw(const char* filename)
     char False[] = "false";
     Agraph_t* g = agopen(gname, Agdirected, 0);
 
-    for (auto& uv : adj) {
+    for (auto& uv : adjout) {
         auto& u = uv.first;
         auto& neighbours = uv.second;
         for (auto& [v, w] : neighbours) {
