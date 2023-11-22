@@ -1,5 +1,5 @@
 #include "graph.h"
-#include "algorithms/algorithm.h"
+#include "algorithms.h"
 using simnet::algorithms::floyd_warshall;
 namespace simnet {
 bool is_in_vector(const int& x, const vector<int> vec)

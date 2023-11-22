@@ -1,4 +1,4 @@
-#include "algorithm.h"
+#include "algorithms.h"
 namespace simnet::algorithms {
 Graph takashami_tree(const Graph& g, vector<int> sources, int root)
 {
@@ -51,9 +51,10 @@ Graph extract_branch_tree(const Graph& tree, const vector<int>& sources, int roo
             t.add_edge(edge_start, node, tree.distance(edge_start, node));
         }
     }
-    t.draw("extract_tree");
+//    t.draw("extract_tree");
     return t;
 }
+
 vector<int> find_equal_nodes(const Graph& g, const Graph& tree, int node)
 {
     vector<int> equal_nodes;

@@ -1,5 +1,5 @@
 #pragma once
-#include "../graph.h"
+#include "graph.h"
 
 namespace simnet::algorithms {
 using Path = vector<int>;
