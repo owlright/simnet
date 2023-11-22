@@ -54,5 +54,28 @@ Graph extract_branch_tree(const Graph& tree, const vector<int>& sources, int roo
     t.draw("extract_tree");
     return t;
 }
+vector<int> find_equal_nodes(const Graph& g, const Graph& tree, int node)
+{
+    vector<int> equal_nodes;
+    std::vector<int> children;
+    auto& dist = g.get_dist();
+    int parent = tree.out_neighbors(node).at(0).first;
+    double orig_cost = tree.out_neighbors(node).at(0).second;
+    for (auto& [v, w] : tree.in_neighbors(node)) {
+        orig_cost += w;
+        children.push_back(v);
+    }
+
+    for (auto& i : g.get_nodes()) {
+        double temp_cost = dist[i][parent];
+        for (auto& c:children) {
+            temp_cost += dist[c][i];
+        }
+        if (temp_cost == orig_cost) {
+            equal_nodes.push_back(i);
+        }
+     }
+    return equal_nodes;
+}
 
 }
