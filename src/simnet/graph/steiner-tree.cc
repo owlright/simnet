@@ -55,7 +55,7 @@ Graph extract_branch_tree(const Graph& tree, const vector<int>& sources, int roo
     return t;
 }
 
-vector<int> find_equal_nodes(const Graph& g, const Graph& tree, int node)
+vector<int> find_equal_nodes(const Graph& g, const Graph& tree, int node, double threshold)
 {
     vector<int> equal_nodes;
     std::vector<int> children;
@@ -72,7 +72,7 @@ vector<int> find_equal_nodes(const Graph& g, const Graph& tree, int node)
         for (auto& c:children) {
             temp_cost += dist[c][i];
         }
-        if (temp_cost == orig_cost) {
+        if (std::abs(temp_cost- orig_cost) < threshold) {
             equal_nodes.push_back(i);
         }
      }
