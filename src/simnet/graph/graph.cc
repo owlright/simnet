@@ -120,7 +120,16 @@ bool Graph::has_edge(const Edge& e)
 
 void Graph::update_dist()
 {
-    dist.resize(adjout.size(), vector<double>(adjout.size(), INFINITY));
+    int n = get_max_vertice() + 1;
+    dist = (double**)malloc(n * sizeof(double*));
+    for (int i = 0; i < n; i++) {
+        dist[i] = (double *)malloc(n * sizeof(double));
+    }
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            dist[i][j] = INFINITY;
+        }
+    }
     for (auto& uv : adjout) {
         auto& u = uv.first;
         auto& neighbours = uv.second;
@@ -128,18 +137,18 @@ void Graph::update_dist()
             dist[u][v] = w;
         }
     }
-    floyd_warshall(dist);
+    floyd_warshall(dist, n);
 }
 
-const Mat<double>& Graph::get_dist() const
+double** Graph::get_dist() const
 {
-    ASSERT(!dist.empty());
-    return dist;
+    ASSERT(dist!=nullptr);
+    return  dist;
 }
 
 double Graph::distance(int src, int dest) const
 {
-    if (!dist.empty()) {
+    if (dist) {
         return dist[src][dest];
     } else {
         return algorithms::dijistra(*this, src, dest);

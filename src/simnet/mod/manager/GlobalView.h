@@ -12,7 +12,7 @@ public:
     const std::vector<int>& gethostIds() const { return hostNodes; }
     const std::unordered_map<int, IntAddress>& getNodeIdAddrMap() const { return nodeId2Addr; }
     const std::unordered_map<IntAddress, int>& getAddrNodeIdMap() const { return addr2NodeId; }
-    simnet::Graph getNetwork() { return network; };
+    const simnet::Graph& getNetwork() { return network; };
     // simnet::Graph Mat<double> getDistMat() const {return topoDist;}
     //  Mat<double> getCostAdj() const {return costAdj;}
     ~GlobalView()
@@ -21,7 +21,6 @@ public:
         topo = nullptr;
     }
     Dict<int> primMST(const vector<int>& S, const vector<int>& mstnodes, const Mat<double>& oddist);
-    void floyd_warshall(Mat<double>& distance);
 
 protected:
     virtual void initialize(int stage) override;

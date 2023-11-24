@@ -1,13 +1,13 @@
 #pragma once
 #include "simnet/common/Defs.h"
 #include <algorithm>
+#include <cstdlib>
 #include <graphviz/gvc.h>
 #include <list>
 #include <map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <cstdlib>
 
 using std::list;
 using std::make_pair;
@@ -25,6 +25,26 @@ public:
 
 public:
     explicit Graph() {};
+    ~Graph()
+    {
+        if (dist) {
+            for (int i = 0; i < max_vertice + 1; i++) {
+                free(dist[i]);
+            }
+            free(dist);
+        }
+    }
+    Graph(const Graph& other)
+    {
+        if (other.get_dist()) {
+            int n = other.get_max_vertice() + 1;
+            dist = (double**)malloc(n * sizeof(double*));
+            for (int i = 0; i < n; i++) {
+                dist[i] = (double*)malloc(n * sizeof(double));
+                memcpy(dist[i], other.dist[i], n * sizeof(double));
+            }
+        }
+    }
     void add_edge(int src, int dest, double weight = 1.0, bool bidirectional = false);
     void set_weight(int src, int dest, double weight = 1.0);
     void remove_edge(int src, int dest);
@@ -42,22 +62,20 @@ public:
 
 public:
     const vector<int>& get_nodes() const { return nodes; }
-    const Mat<double>& get_dist() const;
+    double** get_dist() const;
     const vector<EdgeWeight>& out_neighbors(int src) const
     {
-        if(adjout.find(src) != adjout.end()) {
+        if (adjout.find(src) != adjout.end()) {
             return adjout.at(src);
-        }
-        else {
+        } else {
             return emptyEdge;
         }
     }
     const vector<EdgeWeight>& in_neighbors(int src) const
     {
-        if(adjin.find(src) != adjin.end()) {
+        if (adjin.find(src) != adjin.end()) {
             return adjin.at(src);
-        }
-        else {
+        } else {
             return emptyEdge;
         }
     }
@@ -68,7 +86,7 @@ public:
     void draw(const char* filename);
 
 private:
-    Mat<double> dist;
+    double** dist { nullptr };
     std::vector<int> nodes;
     int max_vertice { -1 };
     map<int, vector<EdgeWeight>> adjout;

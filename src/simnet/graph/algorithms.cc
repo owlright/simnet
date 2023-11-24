@@ -25,15 +25,28 @@ bool operator==(const std::vector<int>& vec1, const std::vector<int>& vec2)
     return true; // All elements are equal, vectors are equal
 }
 
-void floyd_warshall(Mat<double>& distance)
+void floyd_warshall(Mat<double>& distance, int n)
 {
-    int n = distance.size();
     for (int k = 0; k < n; ++k) {
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < n; ++j) {
                 // Update the distance using vertex k as an intermediate point
                 if (distance[i][k] != INFINITY && distance[k][j] != INFINITY) {
                     distance[i][j] = std::min(distance[i][j], distance[i][k] + distance[k][j]);
+                }
+            }
+        }
+    }
+}
+void floyd_warshall(double** distance, int n)
+{
+    for (int k = 0; k < n; ++k) {
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                // Update the distance using vertex k as an intermediate point
+                if (distance[i][k] != INFINITY && distance[k][j] != INFINITY) {
+                    distance[i][j] = distance[i][j] < distance[i][k] + distance[k][j] ? distance[i][j]
+                                                                                      : distance[i][k] + distance[k][j];
                 }
             }
         }
@@ -118,7 +131,7 @@ vector<double> yenksp(Graph& g, int src, int dest, int K, vector<Path>& A)
                 if (rootPath == pslice) {
                     auto u = p.at(i);
                     auto v = p.at(i + 1);
-                    if (g.has_edge(u,v)) {
+                    if (g.has_edge(u, v)) {
                         edges_to_delete.push_back({ u, v });
                         weights_to_delete.push_back(g.weight(u, v));
                         g.remove_edge(u, v);
