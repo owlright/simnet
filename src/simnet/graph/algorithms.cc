@@ -65,6 +65,7 @@ double dijistra(const Graph& g, int src, int dest, vector<int>* path)
     while (!pq.empty()) {
         auto u = pq.top().second;
         pq.pop();
+
         for (auto& [v, weight] : g.out_neighbors(u)) {
             // If there is shorted path to v through u.
             if (visited.find(v) == visited.end() && dist[v] > dist[u] + weight) {
@@ -157,12 +158,12 @@ vector<double> yenksp(Graph& g, int src, int dest, int K, vector<Path>& A)
                 if (!found) {
                     B.push_back({ spurPathCost, totalPath });
                 }
-                for (int index = 0; index < weights_to_delete.size(); index++) {
-                    g.add_edge(edges_to_delete[index].first, edges_to_delete[index].second, weights_to_delete[index]);
-                }
             } else {
                 // do nothing
                 ASSERT(spurPath.empty());
+            }
+            for (int index = 0; index < weights_to_delete.size(); index++) {
+                g.add_edge(edges_to_delete[index].first, edges_to_delete[index].second, weights_to_delete[index]);
             }
         }
         if (B.empty())
