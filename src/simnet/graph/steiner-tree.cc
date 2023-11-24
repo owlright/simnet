@@ -20,7 +20,7 @@ Graph takashami_tree(const Graph& g, vector<int> sources, int root)
             tree.add_edge(path[i], path[i + 1], g.weight(path[i], path[i + 1]));
         }
     }
-    tree.draw("tree");
+    // tree.draw("tree");
     return tree;
 }
 

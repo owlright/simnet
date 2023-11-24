@@ -45,13 +45,21 @@ public:
     const Mat<double>& get_dist() const;
     const vector<EdgeWeight>& out_neighbors(int src) const
     {
-        ASSERT(adjout.find(src) != adjout.end());
-        return adjout.at(src);
+        if(adjout.find(src) != adjout.end()) {
+            return adjout.at(src);
+        }
+        else {
+            return emptyEdge;
+        }
     }
     const vector<EdgeWeight>& in_neighbors(int src) const
     {
-        ASSERT(adjin.find(src) != adjin.end());
-        return adjin.at(src);
+        if(adjin.find(src) != adjin.end()) {
+            return adjin.at(src);
+        }
+        else {
+            return emptyEdge;
+        }
     }
     int indegree(int v) const { return adjin.at(v).size(); }
     int outdegree(int v) const { return adjout.at(v).size(); }
@@ -65,5 +73,6 @@ private:
     int max_vertice { -1 };
     map<int, vector<EdgeWeight>> adjout;
     map<int, vector<EdgeWeight>> adjin;
+    vector<EdgeWeight> emptyEdge;
 };
 }
