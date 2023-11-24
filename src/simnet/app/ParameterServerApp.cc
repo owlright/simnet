@@ -1,10 +1,9 @@
 #include "CongApp.h"
 #include "simnet/common/ModuleAccess.h"
-#include "simnet/mod/manager/GlobalGroupManager.h"
 #include "simnet/mod/AggPacket_m.h"
+#include "simnet/mod/manager/GlobalGroupManager.h"
 #include <functional>
-class ParameterServerApp : public CongApp
-{
+class ParameterServerApp : public CongApp {
 protected:
     virtual void finish() override;
 
@@ -23,7 +22,7 @@ protected:
         SeqNumber askedSeqNumber;
         Packet* pk;
         bool ecn;
-        bool success{true};
+        bool success { true };
     };
     std::map<SeqNumber, AggRecord> aggRecord;
 
@@ -31,15 +30,15 @@ private:
     AggPacket* createAckPacket(const AggPacket* pk);
 
 private:
-    int jobid{-1};
-    int numWorkers{0};
+    int jobid { -1 };
+    int numWorkers { 0 };
 
-    IntAddress groupAddr{INVALID_ADDRESS};
+    IntAddress groupAddr { INVALID_ADDRESS };
     std::set<IntAddress> workers;
 
-    B aggedBytes{0};
-    B totalAggBytes{0};
-    SeqNumber currSeq{-1}; // ! current seqNumber for aggregation
+    B aggedBytes { 0 };
+    B totalAggBytes { 0 };
+    SeqNumber currSeq { -1 }; // ! current seqNumber for aggregation
     std::map<SeqNumber, std::set<IntAddress>> oldPktWithNewAckSeq;
 };
 
@@ -49,11 +48,11 @@ void ParameterServerApp::finish()
 {
     CongApp::finish();
     if (resentBytes > 0)
-        std::cout << jobid << " PS " << destAddr << " retransmit "<< resentBytes << endl;
+        std::cout << jobid << " PS " << destAddr << " retransmit " << resentBytes << endl;
 }
 
-
-void ParameterServerApp::initialize(int stage) {
+void ParameterServerApp::initialize(int stage)
+{
     CongApp::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         jobid = par("jobId");
@@ -61,7 +60,7 @@ void ParameterServerApp::initialize(int stage) {
         groupAddr = par("groupAddress");
         destAddr = groupAddr;
         auto worker_addrs = cStringTokenizer(par("workers").stringValue(), " ").asIntVector();
-        std::for_each(worker_addrs.begin(), worker_addrs.end(), [this](int& n){workers.insert(n);});
+        std::for_each(worker_addrs.begin(), worker_addrs.end(), [this](int& n) { workers.insert(n); });
         ASSERT(workers.size() == numWorkers);
     }
 }
@@ -75,7 +74,7 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     if (round > currentRound) {
         EV_DEBUG << "Round: " << round << endl;
         if (!txBuffer.empty()) {
-            throw cRuntimeError("PS %d txBuffer not cleared yet.", round);
+            EV_WARN << "PS " << round << " txBuffer not cleared yet. Maybe roundInterval is too small" << endl;
         }
         ASSERT(aggRecord.empty());
         currentRound = round;
@@ -88,8 +87,7 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     if (aggRecord.find(seq) == aggRecord.end()) {
         // ! we see this packet for the first time(it may be aggregated or the first resend packet)
         aggRecord[seq].askedSeqNumber = arrivedAckNumber;
-    }
-    else {
+    } else {
         // ! this is for resend packets aggregation, store the smallest ackNumber
         if (arrivedAckNumber < aggRecord.at(seq).askedSeqNumber) {
             aggRecord.at(seq).askedSeqNumber = arrivedAckNumber;
@@ -112,7 +110,7 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
     auto incoming_workers = apk->getRecord();
     agged_workers.insert(incoming_workers.begin(), incoming_workers.end());
     if (agged_workers.size() == numWorkers) {
-        EV_DEBUG << GREEN << "Round " << currentRound << " Seq " << seq  << " finished. " << getNextAskedSeq() << ENDC;
+        EV_DEBUG << GREEN << "Round " << currentRound << " Seq " << seq << " finished. " << getNextAskedSeq() << ENDC;
         ASSERT(workers == agged_workers);
         aggedBytes += pk->getByteLength();
         currSeq = pk->getSeqNumber();
@@ -122,15 +120,13 @@ void ParameterServerApp::onReceivedNewPacket(Packet* pk)
             // ! send a multicast ACK
             mpk->setPacketType(MACK);
             mpk->setDestAddr(groupAddr);
-        }
-        else {
+        } else {
             mpk->setPacketType(ACK);
         }
         mpk->setAckNumber(record.askedSeqNumber);
         record.pk = mpk;
         CongApp::onReceivedNewPacket(pk); // ! we see a fully aggregation packet as received a packet
-    }
-    else {
+    } else {
         ASSERT(pk->getResend());
         currSeq = -1;
         delete pk;
@@ -163,7 +159,8 @@ void ParameterServerApp::onReceivedDuplicatedPacket(Packet* pk)
     //     // * seq 2000 and 5000 are both stuck in the network, 2000 will resend first(by broadcasting)
     //     // * if 2000ack is received by a close worker, and its askFor5000 arrived immediately(carried by bigger seqs)
     //     // * and you also sent 5000ack, and its askFor(xxxx big seq) arrived, you will clear 5000
-    //     // * then when A's askFor5000 arrive, PS won't send 5000ack anymore, because PS think all workers received this
+    //     // * then when A's askFor5000 arrive, PS won't send 5000ack anymore, because PS think all workers received
+    //     this
     //     // ! Case 2: between round and round, PS will receicevd a fake old seq help it clear it's txBuffer
     //     oldPktWithNewAckSeq[ack].insert(pk->getSrcAddr());
     //     if (oldPktWithNewAckSeq[ack] == workers) {
@@ -178,7 +175,7 @@ void ParameterServerApp::onReceivedDuplicatedPacket(Packet* pk)
 Packet* ParameterServerApp::createDataPacket()
 {
     if (currSeq != -1) {
-        ASSERT( aggRecord.find(currSeq) != aggRecord.end() );
+        ASSERT(aggRecord.find(currSeq) != aggRecord.end());
         auto& record = aggRecord.at(currSeq);
         auto pk = record.pk;
         if (!record.success)
@@ -190,7 +187,7 @@ Packet* ParameterServerApp::createDataPacket()
     return nullptr;
 }
 
-AggPacket *ParameterServerApp::createAckPacket(const AggPacket* pk)
+AggPacket* ParameterServerApp::createAckPacket(const AggPacket* pk)
 {
     auto packet = new AggPacket();
     if (aggedBytes == totalAggBytes) {
