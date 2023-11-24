@@ -10,6 +10,7 @@ parameters:
     int workerId        = default(-1);
     int numWorkers      = default(0);
     double roundInterval @unit(us) = default(0us);
+    double load = default(0.0);
     @class(WorkerApp);
 }
 

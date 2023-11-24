@@ -2,8 +2,7 @@
 #include "simnet/common/ModuleAccess.h"
 #include "simnet/common/utils.h"
 #include <functional>
-class INCWorker : public WorkerApp
-{
+class INCWorker : public WorkerApp {
 protected:
     void initialize(int stage) override;
     virtual void setField(AggPacket* pk) override;
@@ -13,13 +12,12 @@ private:
     void insertAgtrIndex(AggPacket* pk);
 
 private:
-    bool useAgtrIndex{false};
+    bool useAgtrIndex { false };
     std::unordered_set<std::size_t> usedAgtrIndex;
     std::vector<std::vector<IntAddress>> segments;
     std::vector<int> fanIndegrees;
-    int maxAgtrCount{0};
+    int maxAgtrCount { 0 };
 };
-
 
 Define_Module(INCWorker);
 
@@ -39,13 +37,12 @@ void INCWorker::initialize(int stage)
         }
         fanIndegrees = cStringTokenizer(par("fanIndegrees").stringValue()).asIntVector();
         // * easy debug
-        std::vector<IntAddress> tmp{destAddr};
+        std::vector<IntAddress> tmp { destAddr };
         segments.push_back(tmp);
         fanIndegrees.push_back(numWorkers);
         EV_TRACE << "sid: " << segments << endl;
         EV_TRACE << "indegree: " << fanIndegrees << endl;
     }
-
 }
 
 void INCWorker::setField(AggPacket* pk)
@@ -62,12 +59,11 @@ void INCWorker::setField(AggPacket* pk)
     pk->setSegmentsLeft(segments.size());
     auto sit = segments.rbegin();
     auto fit = fanIndegrees.rbegin();
-    for (auto i = 0; i < segments.size(); i++)
-    {
+    for (auto i = 0; i < segments.size(); i++) {
         if (sit->size() > 1) {
-            pk->setSegments(i, (*sit)[seqNumber % sit->size()]);// TODO: agg trees balance the computation nodes, but may cause disorder
-        }
-        else
+            pk->setSegments(i, (*sit)[seqNumber % sit->size()]); // TODO: agg trees balance the computation nodes, but
+                                                                 // may cause disorder
+        } else
             pk->setSegments(i, (*sit).at(0));
         sit++;
         pk->setFuns(i, "aggregation");

@@ -15,12 +15,18 @@ void WorkerApp::initialize(int stage)
         workerId = par("workerId");
         numWorkers = par("numWorkers");
         numRounds = par("numRounds");
-        roundInterval = par("roundInterval").doubleValueInUnit("s");
-        if (roundInterval == 0) {
+        load = par("load");
+        if (load <= 0) {
+            roundInterval = par("roundInterval").doubleValueInUnit("s");
+            if (roundInterval <= 0) {
+                throw cRuntimeError("when load <= 0, roundInterval must be specified manually.");
+            }
+        } else {
             auto bandwidth = getParentModule()->par("bandwidth").doubleValue();
             ASSERT(bandwidth > 0);
-            roundInterval = flowSize * 8 / bandwidth;
+            roundInterval = flowSize * 8 / bandwidth * load;
         }
+
         roundStartTimer = new cMessage("roundStart");
         scheduleAt(simTime(), roundStartTimer);
         ASSERT(tcpState == CLOSED);
