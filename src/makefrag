@@ -4,4 +4,4 @@
 MSGC:=$(MSGC) --msg6
 
 LDFLAGS +=`pkg-config libgvc --libs`
-CXXFLAGS += -Wno-write-strings
+CXXFLAGS += `pkg-config libgvc --cflags` -Wno-write-strings
