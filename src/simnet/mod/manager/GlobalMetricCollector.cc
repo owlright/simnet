@@ -104,6 +104,8 @@ void GlobalMetricCollector::initialize(int stage)
             lastRealTime = std::time(nullptr);
             stopWatch = new cMessage("stopWatch");
             scheduleAfter(0.001, stopWatch); // the first time is choosed at random
+            if (totalFlowsNumber == 0)
+                flow_is_over = true;
         } else
             throw cRuntimeError("Fail to get globalView");
     }

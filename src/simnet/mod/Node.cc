@@ -54,6 +54,10 @@ void HostNode::initialize(int stage)
                             ->getDatarate();
             par("bandwidth") = bandwidth; // ! apps will read this value
         }
+        metricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
+        if (!metricCollector)
+            throw cRuntimeError("Can't find metricCollector");
+        metricCollector->registerFlowMetric(address, numFlows);
     } else if (stage == INITSTAGE_ACCEPT) { // ! after jobs are assigned
         if (getSubmoduleVectorSize("workers") > 0 || getSubmoduleVectorSize("pses") > 0) {
             loadMode = false;
@@ -68,10 +72,6 @@ void HostNode::initialize(int stage)
                 throw cRuntimeError("In loadMode, you must set the tpManager");
             newFlowTimer = new cMessage("newFlow");
             scheduleAfter(exponential(flowInterval), newFlowTimer);
-            metricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
-            if (!metricCollector)
-                throw cRuntimeError("Can't find metricCollector");
-            metricCollector->registerFlowMetric(address, numFlows);
         }
     }
 }
