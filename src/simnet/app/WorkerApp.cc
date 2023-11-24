@@ -16,6 +16,11 @@ void WorkerApp::initialize(int stage)
         numWorkers = par("numWorkers");
         numRounds = par("numRounds");
         roundInterval = par("roundInterval").doubleValueInUnit("s");
+        if (roundInterval == 0) {
+            auto bandwidth = getParentModule()->par("bandwidth").doubleValue();
+            ASSERT(bandwidth > 0);
+            roundInterval = flowSize * 8 / bandwidth;
+        }
         roundStartTimer = new cMessage("roundStart");
         scheduleAt(simTime(), roundStartTimer);
         ASSERT(tcpState == CLOSED);

@@ -50,7 +50,9 @@ void HostNode::initialize(int stage)
         flowInterval = par("flowInterval");
         bandwidth = par("bandwidth");
         if (bandwidth <= 0) { // get bandwidth value automatically
-            bandwidth = check_and_cast<cDatarateChannel*>(gateHalf("port", cGate::Type::OUTPUT, 0)->getChannel())
+            ASSERT(getGateNames().size() == 1);
+            auto gateName = getGateNames()[0].c_str();
+            bandwidth = check_and_cast<cDatarateChannel*>(gateHalf(gateName, cGate::Type::OUTPUT, 0)->getChannel())
                             ->getDatarate();
             par("bandwidth") = bandwidth; // ! apps will read this value
         }
