@@ -5,17 +5,17 @@
 #include <graphviz/gvc.h>
 #include <list>
 #include <map>
+#include <stack>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
 using std::list;
 using std::make_pair;
 using std::map;
 using std::pair;
+using std::stack;
 using std::unordered_set;
 using std::vector;
-
 namespace simnet {
 
 class Graph {
@@ -50,9 +50,9 @@ public:
     void remove_edge(int src, int dest);
     void add_node(int n);
     void remove_node(int n);
-    bool has_node(int n);
-    bool has_edge(const int& src, const int& dest);
-    bool has_edge(const Edge&);
+    bool has_node(int n) const;
+    bool has_edge(const int& src, const int& dest) const;
+    bool has_edge(const Edge&) const;
 
     void update_dist();
     double distance(int src, int dest) const;
@@ -79,6 +79,7 @@ public:
             return emptyEdge;
         }
     }
+    vector<int> dfs(int root, bool directionOut=true) const;
     int indegree(int v) const { return adjin.at(v).size(); }
     int outdegree(int v) const { return adjout.at(v).size(); }
 

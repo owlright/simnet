@@ -94,9 +94,9 @@ void Graph::remove_node(int n)
         }
     }
 }
-bool Graph::has_node(int n) { return is_in_vector(n, nodes); }
+bool Graph::has_node(int n) const { return is_in_vector(n, nodes); }
 
-bool Graph::has_edge(const int& src, const int& dest)
+bool Graph::has_edge(const int& src, const int& dest) const
 {
     if (adjout.find(src) == adjout.end()) {
         return false;
@@ -111,7 +111,7 @@ bool Graph::has_edge(const int& src, const int& dest)
     return false;
 }
 
-bool Graph::has_edge(const Edge& e)
+bool Graph::has_edge(const Edge& e) const
 {
     auto& src = e.first;
     auto& dest = e.second;
@@ -123,7 +123,7 @@ void Graph::update_dist()
     int n = get_max_vertice() + 1;
     dist = (double**)malloc(n * sizeof(double*));
     for (int i = 0; i < n; i++) {
-        dist[i] = (double *)malloc(n * sizeof(double));
+        dist[i] = (double*)malloc(n * sizeof(double));
     }
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -142,8 +142,8 @@ void Graph::update_dist()
 
 double** Graph::get_dist() const
 {
-    ASSERT(dist!=nullptr);
-    return  dist;
+    ASSERT(dist != nullptr);
+    return dist;
 }
 
 double Graph::distance(int src, int dest) const
@@ -164,6 +164,33 @@ double Graph::weight(int src, int dst) const
             return w;
     }
     throw cRuntimeError("edge %d->%d not found!", src, dst);
+}
+
+vector<int> Graph::dfs(int root, bool directionOut) const
+{
+    ASSERT(has_node(root));
+    vector<int> result;
+    stack<int> st;
+    st.push(root);
+    bool visited[max_vertice + 1]; // TODO this may comsume too much memory
+    for (auto& v : visited) {
+        v = false;
+    }
+    visited[root] = true;
+    auto& adj = directionOut ? adjout : adjin;
+    while (!st.empty()) {
+        auto u = st.top();
+        st.pop();
+        if (!visited[u]) {
+            visited[u] = true;
+            result.push_back(u);
+        }
+        for (auto& [v, w] : adj.at(u)) {
+            if (!visited[v])
+                st.push(v);
+        }
+    }
+    return result;
 }
 
 void Graph::draw(const char* filename)
