@@ -233,7 +233,15 @@ void Graph::draw(const char* filename, const char* engine)
 
     // Compute a layout using layout engine from command line args
     gvLayout(gvc, g, engine);
-    gvRenderFilename(gvc, g, "png", (std::string(filename) + ".png").c_str());
+    const char* dotPos = strrchr(filename, '.');
+    if (dotPos) {
+        const char * ext = dotPos + 1;
+        gvRenderFilename(gvc, g, ext, filename);
+    }
+    else {
+        gvRenderFilename(gvc, g, "png", (std::string(filename) + ".png").c_str());
+    }
+
     // Write the graph according to -T and -o options
     gvRenderJobs(gvc, g);
 
