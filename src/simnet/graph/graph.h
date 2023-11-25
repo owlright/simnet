@@ -24,27 +24,6 @@ public:
     using EdgeWeight = pair<int, double>;
 
 public:
-    explicit Graph() {};
-    ~Graph()
-    {
-        if (dist) {
-            for (int i = 0; i < max_vertice + 1; i++) {
-                free(dist[i]);
-            }
-            free(dist);
-        }
-    }
-    Graph(const Graph& other)
-    {
-        if (other.get_dist()) {
-            int n = other.get_max_vertice() + 1;
-            dist = (double**)malloc(n * sizeof(double*));
-            for (int i = 0; i < n; i++) {
-                dist[i] = (double*)malloc(n * sizeof(double));
-                memcpy(dist[i], other.dist[i], n * sizeof(double));
-            }
-        }
-    }
     void add_edge(int src, int dest, double weight = 1.0, bool bidirectional = false);
     void set_weight(int src, int dest, double weight = 1.0);
     void remove_edge(int src, int dest);
@@ -79,12 +58,34 @@ public:
             return emptyEdge;
         }
     }
-    vector<int> dfs(int root, bool directionOut=true) const;
-    int indegree(int v) const { return adjin.at(v).size(); }
-    int outdegree(int v) const { return adjout.at(v).size(); }
+    vector<int> dfs(int root, bool directionOut = true) const;
+    int indegree(int v) const
+    {
+        ASSERT(adjin.find(v) != adjin.end());
+        return adjin.at(v).size();
+    }
+    int outdegree(int v) const
+    {
+        ASSERT(adjout.find(v) != adjout.end());
+        return adjout.at(v).size();
+    }
 
 public:
-    void draw(const char* filename, const char* engine="neato");
+    void draw(const char* filename, const char* engine = "neato");
+
+public:
+    explicit Graph();
+    ~Graph();
+    Graph(const Graph& other);
+    // assign constructor;
+    // Graph a, b
+    // a = b will call this;
+    Graph& operator=(const Graph& other);
+    // Move constructor
+    Graph(Graph&& other);
+    // Move assignment operator
+    // auto a = getNetworkCopy() will call this
+    Graph& operator=(Graph&& other);
 
 private:
     double** dist { nullptr };

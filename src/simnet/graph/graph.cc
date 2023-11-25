@@ -246,5 +246,67 @@ void Graph::draw(const char* filename, const char* engine)
     // close output file, free context, and return number of errors
     gvFreeContext(gvc);
 }
+Graph::Graph() { }
+Graph::~Graph()
+{
+    if (dist) {
+        for (int i = 0; i < max_vertice + 1; i++) {
+            free(dist[i]);
+        }
+        free(dist);
+    }
+}
+Graph::Graph(const Graph& other)
+{
+    nodes = other.nodes;
+    max_vertice = other.max_vertice;
+    adjin = other.adjin;
+    adjout = other.adjout;
+
+    if (other.get_dist()) {
+        int n = other.get_max_vertice() + 1;
+        dist = (double**)malloc(n * sizeof(double*));
+        for (int i = 0; i < n; i++) {
+            dist[i] = (double*)malloc(n * sizeof(double));
+            memcpy(dist[i], other.dist[i], n * sizeof(double));
+        }
+    }
+}
+Graph& Graph::operator=(const Graph& other)
+{
+    if (this != &other) {
+        nodes = other.nodes;
+        max_vertice = other.max_vertice;
+        adjin = other.adjin;
+        adjout = other.adjout;
+        dist = other.dist;
+    }
+    return *this;
+}
+
+Graph::Graph(Graph&& other)
+{
+    // Transfer ownership of the memory
+    dist = other.dist;
+    other.dist = nullptr;
+    nodes = std::move(other.nodes);
+    max_vertice = other.max_vertice;
+    adjin = std::move(other.adjin);
+    adjout = std::move(other.adjout);
+}
+
+Graph& Graph::operator=(Graph&& other)
+{
+    if (this != &other) {
+        // Transfer ownership of the memory
+        dist = other.dist;
+        other.dist = nullptr;
+        nodes = std::move(other.nodes);
+        max_vertice = other.max_vertice;
+        adjin = std::move(other.adjin);
+        adjout = std::move(other.adjout);
+    }
+    return *this;
+}
 
 }
