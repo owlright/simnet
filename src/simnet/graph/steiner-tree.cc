@@ -53,7 +53,8 @@ Graph extract_branch_tree(const Graph& tree, const vector<int>& sources, int roo
     return t;
 }
 
-vector<int> find_equal_nodes(const Graph& g, const Graph& tree, int node, double threshold)
+vector<int> find_equal_nodes(
+    const Graph& g, const Graph& tree, int node, const std::unordered_set<int>& forbiddens, double threshold)
 {
     vector<int> equal_nodes;
     std::vector<int> children;
@@ -66,14 +67,17 @@ vector<int> find_equal_nodes(const Graph& g, const Graph& tree, int node, double
     }
 
     for (auto& i : g.get_nodes()) {
-        double temp_cost = dist[i][parent];
-        for (auto& c:children) {
-            temp_cost += dist[c][i];
+        ASSERT(dist);
+        if (forbiddens.find(i) == forbiddens.end()) {
+            double temp_cost = dist[i][parent];
+            for (auto& c : children) {
+                temp_cost += dist[c][i];
+            }
+            if (std::abs(temp_cost - orig_cost) < threshold) {
+                equal_nodes.push_back(i);
+            }
         }
-        if (std::abs(temp_cost- orig_cost) < threshold) {
-            equal_nodes.push_back(i);
-        }
-     }
+    }
     return equal_nodes;
 }
 
