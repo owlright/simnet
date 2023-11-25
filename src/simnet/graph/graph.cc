@@ -50,8 +50,8 @@ void Graph::set_weight(int src, int dest, double weight)
 
 void Graph::remove_edge(int src, int dest)
 {
-    ASSERT(adjin.find(src) != adjin.end());
-    ASSERT(adjout.find(dest) != adjout.end());
+    ASSERT(adjin.find(dest) != adjin.end());
+    ASSERT(adjout.find(src) != adjout.end());
     if (has_edge(src, dest)) {
         auto remove_adj = [](vector<EdgeWeight>& vw, const int& node) {
             int index = 0;
