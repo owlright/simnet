@@ -20,7 +20,6 @@ Graph takashami_tree(const Graph& g, vector<int> sources, int root)
             tree.add_edge(path[i], path[i + 1], g.weight(path[i], path[i + 1]));
         }
     }
-    // tree.draw("tree");
     return tree;
 }
 
@@ -51,7 +50,6 @@ Graph extract_branch_tree(const Graph& tree, const vector<int>& sources, int roo
             t.add_edge(edge_start, node, tree.distance(edge_start, node));
         }
     }
-//    t.draw("extract_tree");
     return t;
 }
 

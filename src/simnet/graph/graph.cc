@@ -229,7 +229,7 @@ void Graph::draw(const char* filename, const char* engine)
         }
     }
     agsafeset(g, overlap, False, empty);
-    agsafeset(g, "splines", "true", "");
+    // agsafeset(g, "splines", "true", "");
 
     // Compute a layout using layout engine from command line args
     gvLayout(gvc, g, engine);
