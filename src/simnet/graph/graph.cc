@@ -194,7 +194,7 @@ vector<int> Graph::dfs(int root, bool directionOut) const
     return result;
 }
 
-void Graph::draw(const char* filename)
+void Graph::draw(const char* filename, const char* engine)
 {
     // set up a graphviz context
     GVC_t* gvc = gvContext();
@@ -229,9 +229,10 @@ void Graph::draw(const char* filename)
         }
     }
     agsafeset(g, overlap, False, empty);
+    agsafeset(g, "splines", "true", "");
 
     // Compute a layout using layout engine from command line args
-    gvLayout(gvc, g, "neato");
+    gvLayout(gvc, g, engine);
     gvRenderFilename(gvc, g, "png", (std::string(filename) + ".png").c_str());
     // Write the graph according to -T and -o options
     gvRenderJobs(gvc, g);

@@ -84,7 +84,7 @@ public:
     int outdegree(int v) const { return adjout.at(v).size(); }
 
 public:
-    void draw(const char* filename);
+    void draw(const char* filename, const char* engine="neato");
 
 private:
     double** dist { nullptr };
