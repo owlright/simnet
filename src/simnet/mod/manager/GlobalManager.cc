@@ -4,6 +4,7 @@
 IntAddress GlobalManager::getAddr(int nodeId) const
 {
     // ! nodeId must be in topo
+    ASSERT(nodeId2Addr.find(nodeId) != nodeId2Addr.end());
     IntAddress addr = nodeId2Addr.at(nodeId);
     return addr;
 }
@@ -51,10 +52,6 @@ void GlobalManager::initialize(int stage)
         hostIds = globalView->gethostIds();
         nodeId2Addr = globalView->getNodeIdAddrMap();
         addr2NodeId = globalView->getAddrNodeIdMap();
-        network = globalView->getNetwork();
-        // distAdj = globalView->getDistMat();
-        // costAdj.resize(distAdj.size(), vector<double>(distAdj[0].size()));
-        // costAdj = globalView->getCostAdj();
     } else if (stage == INITSTAGE_LAST) {
         ASSERT(topo);
     }

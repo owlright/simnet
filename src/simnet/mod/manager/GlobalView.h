@@ -12,7 +12,8 @@ public:
     const std::vector<int>& gethostIds() const { return hostNodes; }
     const std::unordered_map<int, IntAddress>& getNodeIdAddrMap() const { return nodeId2Addr; }
     const std::unordered_map<IntAddress, int>& getAddrNodeIdMap() const { return addr2NodeId; }
-    const simnet::Graph& getNetwork() { return network; };
+    const simnet::Graph& getNetwork() const { return network; }
+    simnet::Graph getNetworkCopy() const {return network;}
     // simnet::Graph Mat<double> getDistMat() const {return topoDist;}
     //  Mat<double> getCostAdj() const {return costAdj;}
     ~GlobalView()

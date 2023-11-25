@@ -28,6 +28,7 @@ void GlobalGroupManager::initialize(int stage)
         if (strcmp(aggTreeType, "") != 0)
             useInc = true;
     } else if (stage == INITSTAGE_ASSIGN) {
+        network = globalView->getNetworkCopy();
         placeJobs(placementPolicy);
         for (auto& [jobid, info] : jobInfodb) {
             EV << "job " << jobid << endl;

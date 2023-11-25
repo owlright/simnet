@@ -63,6 +63,7 @@ private:
     const char* placementPolicy;
     const char* aggTreeType;
     bool useInc { false };
+    simnet::Graph network;
 
 private:
     // for aggregation job
