@@ -176,6 +176,7 @@ vector<int> Graph::dfs(int root, bool directionOut) const
     for (auto& v : visited) {
         v = false;
     }
+    result.push_back(root);
     visited[root] = true;
     auto& adj = directionOut ? adjout : adjin;
     while (!st.empty()) {
