@@ -73,7 +73,7 @@ vector<int> find_equal_nodes(
             for (auto& c : children) {
                 temp_cost += dist[c][i];
             }
-            if (std::abs(temp_cost - orig_cost) < threshold) {
+            if (std::abs(temp_cost - orig_cost) <= threshold) {
                 equal_nodes.push_back(i);
             }
         }
