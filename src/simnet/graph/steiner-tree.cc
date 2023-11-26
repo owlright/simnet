@@ -68,7 +68,7 @@ vector<int> find_equal_nodes(
 
     for (auto& i : g.get_nodes()) {
         ASSERT(dist);
-        if (forbiddens.find(i) == forbiddens.end()) {
+        if (forbiddens.find(i) == forbiddens.end() && i != node) {
             double temp_cost = dist[i][parent];
             for (auto& c : children) {
                 temp_cost += dist[c][i];
