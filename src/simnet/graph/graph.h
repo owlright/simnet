@@ -51,6 +51,45 @@ public:
     vector<int> dfs(int root, bool directionOut = true) const;
     vector<int> bfs(int root, bool directionOut = true) const;
     bool is_tree() const;
+
+public:
+    bool operator==(const Graph& other) const
+    {
+        if (adjout.size() != other.adjout.size())
+            return false;
+        for (const auto& [src, vw1] : adjout) {
+            auto it = other.adjout.find(src);
+            if (it == other.adjout.end()) {
+                return false;
+            }
+            auto& vw2 = it->second;
+            if (vw1.size() != vw2.size()) {
+                return false;
+            }
+            std::unordered_set<int> s1;
+            std::unordered_set<int> s2;
+            for (auto i = 0; i < vw1.size(); i++) {
+                s1.insert(vw1[i].first);
+                s2.insert(vw2[i].first);
+            }
+            if (s1 != s2) {
+                return false;
+            }
+        }
+        return true;
+    };
+    struct Hash {
+        size_t operator()(const Graph& graph) const
+        {
+            size_t hash = 0;
+            for (const auto& node : graph.nodes) {
+                // 基于键和值的哈希值计算
+                hash ^= std::hash<int>()(node);
+            }
+            return hash;
+        }
+    };
+
 public:
     const vector<int>& get_nodes() const { return nodes; }
     double** get_dist() const;
