@@ -223,6 +223,15 @@ vector<int> Graph::bfs(int root, bool directionOut) const
     return result;
 }
 
+bool Graph::is_tree() const
+{
+    for (auto& n : nodes) {
+        if (outdegree(n) != 1 || outdegree(n) != 0) {
+            return false;
+        }
+    }
+    return true;
+}
 
 void Graph::draw(const char* filename, const char* engine)
 {
@@ -265,10 +274,9 @@ void Graph::draw(const char* filename, const char* engine)
     gvLayout(gvc, g, engine);
     const char* dotPos = strrchr(filename, '.');
     if (dotPos) {
-        const char * ext = dotPos + 1;
+        const char* ext = dotPos + 1;
         gvRenderFilename(gvc, g, ext, filename);
-    }
-    else {
+    } else {
         gvRenderFilename(gvc, g, "png", (std::string(filename) + ".png").c_str());
     }
 

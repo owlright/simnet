@@ -49,6 +49,8 @@ public:
      * graph algorithms
      */
     vector<int> dfs(int root, bool directionOut = true) const;
+    vector<int> bfs(int root, bool directionOut = true) const;
+    bool is_tree() const;
 public:
     const vector<int>& get_nodes() const { return nodes; }
     double** get_dist() const;
