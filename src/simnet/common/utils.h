@@ -19,3 +19,7 @@ template <class T> inline void hash_combine(std::size_t& seed, const T& v)
 }
 
 void permutation(std::vector<std::vector<int>>& mat, uint32_t seed);
+
+template <typename T> struct CompareFirst {
+    bool operator()(const T& a, const T& b) const { return a.first > b.first; }
+};

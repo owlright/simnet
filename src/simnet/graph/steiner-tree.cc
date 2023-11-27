@@ -1,4 +1,6 @@
 #include "algorithms.h"
+#include "simnet/common/utils.h"
+#include <queue>
 namespace simnet::algorithms {
 Graph takashami_tree(const Graph& g, vector<int> sources, int root)
 {
@@ -21,6 +23,56 @@ Graph takashami_tree(const Graph& g, vector<int> sources, int root)
         }
     }
     return tree;
+}
+
+vector<Graph> takashami_trees(const Graph& g, vector<int> sources, int root, const unordered_set<int>& forbiddens,
+    vector<map<int, vector<int>>>* equal_branch_nodes)
+{
+    vector<Graph> trees {};
+
+    std::unordered_set<Graph, Graph::Hash> visitedBranchTrees;
+    std::queue<Graph> waited;
+    waited.push(takashami_tree(g, sources, root));
+
+    while (!waited.empty()) {
+        auto t = waited.front();
+        waited.pop();
+        vector<int> branch_nodes;
+        auto branch_tree = extract_branch_tree(t, sources, root, &branch_nodes);
+        if (visitedBranchTrees.find(branch_tree) == visitedBranchTrees.end()) {
+            visitedBranchTrees.insert(branch_tree);
+            trees.push_back(t);
+            if (equal_branch_nodes) {
+                equal_branch_nodes->push_back(map<int, vector<int>>());
+            }
+            unordered_set<int> forbiddenmore(forbiddens.begin(), forbiddens.end());
+            for (auto& b : branch_nodes) {
+                forbiddenmore.insert(b);
+            }
+            for (auto& b : branch_nodes) {
+                vector<int> equals = find_equal_nodes(g, branch_tree, b, forbiddenmore);
+                if (equal_branch_nodes) {
+                    equal_branch_nodes->back()[b] = equals;
+                }
+                auto gcopy = g;
+                gcopy.remove_node(b);
+                for (auto n : equals) {
+                    gcopy.remove_node(n);
+                }
+                try {
+                    std::vector<int> newBranchNodes;
+                    auto newt = takashami_tree(gcopy, sources, root);
+                    auto newBranchTree = extract_branch_tree(newt, sources, root, &newBranchNodes);
+                    if (visitedBranchTrees.find(newBranchTree) == visitedBranchTrees.end()) {
+                        waited.push(newt);
+                    }
+                } catch (cRuntimeError& e) {
+                    continue;
+                }
+            }
+        }
+    }
+    return trees;
 }
 
 Graph extract_branch_tree(const Graph& tree, const vector<int>& sources, int root, vector<int>* branch_nodes)

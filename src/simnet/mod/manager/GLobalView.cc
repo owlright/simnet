@@ -67,7 +67,6 @@ void GlobalView::initialize(int stage)
             }
         }
         network.update_dist();
-        //        network.draw();
     }
 }
 
