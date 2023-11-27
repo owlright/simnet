@@ -64,6 +64,8 @@ private:
     const char* aggTreeType;
     bool useInc { false };
     simnet::Graph network;
+    vector<simnet::Graph> aggTrees;
+    vector<map<int, vector<int>>> aggNodes;
 
 private:
     // for aggregation job

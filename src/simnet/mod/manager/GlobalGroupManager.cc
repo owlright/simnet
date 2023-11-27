@@ -6,6 +6,7 @@
 #include <numeric> // std::iota
 #include <queue>
 #include <random> // std::default_random_engine
+#include <tuple>
 std::ostream& operator<<(std::ostream& os, const std::vector<cTopology::Node*>& array)
 {
     os << "[";
@@ -232,85 +233,36 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
             auto senders = group->workers;
             auto ps = group->PSes.at(0);
 
-            // ! get an aggregation tree
-            // TODO my own algorithm
-            std::vector<IntAddress> aggNodes;
-            std::unordered_map<IntAddress, vector<IntAddress>> equal_cost_aggnodes;
             vector<int> sources;
             for (auto s : senders) {
                 sources.push_back(getNodeId(s));
             }
             auto root = getNodeId(ps);
 
-            auto tree = takashami_tree(network, sources, root); //  TODO multiple PSes
-            // network.draw("network");
-            // tree.draw("sptree", "dot");
-            vector<int> branch_nodes;
-            auto branch_tree = extract_branch_tree(tree, sources, root, &branch_nodes);
-            for (auto& b : branch_nodes) {
-                aggNodes.push_back(getAddr(b));
-            }
-            // branch_tree.draw("brachtree", "dot");
             auto threshold = par("costThreshold").doubleValue();
 
-            std::unordered_set<int> forbiddens(getHostIds().begin(), getHostIds().end());
-            forbiddens.insert(branch_nodes.begin(), branch_nodes.end());
-            for (auto n : branch_nodes) {
-                auto temp = find_equal_nodes(network, branch_tree, n, forbiddens, threshold);
-                if (!temp.empty()) {
-                    vector<IntAddress> equalAddrs;
-                    for (auto& t : temp) {
-                        equalAddrs.push_back(getAddr(t));
-                    }
-                    equal_cost_aggnodes[getAddr(n)] = equalAddrs;
-                }
-            }
+            std::unordered_set<int> forbidden_hosts(getHostIds().begin(), getHostIds().end());
 
-            EV_DEBUG << "agg_nodes: " << aggNodes << endl;
-            EV_DEBUG << "equal_cost_agg_nodes: " << equal_cost_aggnodes << endl;
             // ! update graph edge's cost
             // TODO: how to decide the added cost
             // addCost(tree, 0.1, 0.1); // TODO: what about the equal cost aggnodes and their paths?
-
-            // * prepare segments
-            for (auto i = 0; i < sources.size(); i++) {
-                auto addr = senders[i];
-                vector<int> path;
-                dijistra(tree, sources[i], root, &path);
-                ASSERT(path.size() >= 3);
-                vector<int> intermediates(path.begin() + 1, path.end() - 1); // exclude the paths ends
-                // * prepare args(indegree) at each segment
-                std::vector<int> indegrees;
-                vector<vector<IntAddress>> segment_addrs;
-                for (auto& node : intermediates) {
-                    if (branch_tree.has_node(node)) {
-                        auto nodeAddr = getAddr(node);
-                        auto indegree = branch_tree.indegree(node);
-                        ASSERT(indegree >= 2);
-                        indegrees.push_back(indegree); // find the aggregation nodes
-                        vector<IntAddress> tmp { nodeAddr };
-                        if (equal_cost_aggnodes.find(node) != equal_cost_aggnodes.end()) {
-                            tmp.insert(tmp.end(), equal_cost_aggnodes[node].begin(), equal_cost_aggnodes[node].end());
-                        }
-                        segment_addrs.push_back(tmp);
-                    }
-                }
-                ASSERT(segment_addrs.size() == indegrees.size());
-                EV_TRACE << addr << endl;
-                for (auto i = 0; i < segment_addrs.size(); i++) {
-                    EV_TRACE << segment_addrs[i] << " " << indegrees[i] << endl;
-                }
-
-                segmentInfodb[jobid][addr][ps] = make_shared<JobSegmentsRoute>();
-                segmentInfodb[jobid][addr][ps]->segmentAddrs = segment_addrs;
-                segmentInfodb[jobid][addr][ps]->fanIndegrees = indegrees;
-                auto mod = getMod(senders[i]);
-                for (auto i = 0; i < mod->getSubmoduleVectorSize("workers"); i++) {
-                    auto app = mod->getSubmodule("workers", i);
-                    if (app->hasPar("segmentAddrs") && ps == app->par("destAddress").intValue()) {
-                        app->par("segmentAddrs") = vectorToString(segment_addrs);
-                        app->par("fanIndegrees") = vectorToString(indegrees);
-                    }
+            decltype(aggNodes) equal_nodes;
+            auto kTrees = takashami_trees(network, sources, root, forbidden_hosts, &equal_nodes);
+            vector<std::tuple<double, int, simnet::Graph>> sortedKTrees;
+            for (int i = 0; i < kTrees.size(); i++) {
+                sortedKTrees.push_back({ kTrees[i].get_cost(), i, kTrees[i] });
+            }
+            std::sort(sortedKTrees.begin(), sortedKTrees.end(),
+                [](const auto& a, const auto& b) { return std::get<0>(a) < std::get<0>(b); });
+            auto& [minCost, index, firstTree] = sortedKTrees[0];
+            aggTrees.push_back(firstTree);
+            for (auto i = 1; i < sortedKTrees.size(); i++) {
+                auto& [currCost, index, t] = sortedKTrees[i];
+                if (t.get_cost() - minCost <= 2 && threshold > 0) {
+                    aggTrees.push_back(t);
+                    aggNodes.push_back(equal_nodes[index]);
+                } else {
+                    break;
                 }
             }
         }
