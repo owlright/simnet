@@ -5,20 +5,20 @@
 #include <graphviz/gvc.h>
 #include <list>
 #include <map>
+#include <queue>
 #include <stack>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <queue>
 
 using std::list;
 using std::make_pair;
 using std::map;
 using std::pair;
+using std::queue;
 using std::stack;
 using std::unordered_set;
 using std::vector;
-using std::queue;
 
 namespace simnet {
 
@@ -42,6 +42,7 @@ public:
     double weight(int src, int dst) const;
     int get_vertices_number() const { return adjout.size(); }
     int get_max_vertice() const { return max_vertice; }
+    double get_cost() const;
 
 public:
     /**

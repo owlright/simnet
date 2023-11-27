@@ -166,6 +166,17 @@ double Graph::weight(int src, int dst) const
     throw cRuntimeError("edge %d->%d not found!", src, dst);
 }
 
+double Graph::get_cost() const
+{
+    double cost = 0;
+    for (auto& n : nodes) {
+        for (auto& [v, w] : adjout.at(n)) {
+            cost += w;
+        }
+    }
+    return cost;
+}
+
 vector<int> Graph::dfs(int root, bool directionOut) const
 {
     ASSERT(has_node(root));
