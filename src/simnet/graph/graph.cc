@@ -142,7 +142,7 @@ void Graph::update_dist()
 
 double** Graph::get_dist() const
 {
-    ASSERT(dist != nullptr);
+    // ASSERT(dist != nullptr); // ! let outside to check
     return dist;
 }
 
