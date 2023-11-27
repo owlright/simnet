@@ -9,6 +9,8 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <queue>
+
 using std::list;
 using std::make_pair;
 using std::map;
@@ -16,6 +18,8 @@ using std::pair;
 using std::stack;
 using std::unordered_set;
 using std::vector;
+using std::queue;
+
 namespace simnet {
 
 class Graph {
@@ -40,6 +44,11 @@ public:
     int get_max_vertice() const { return max_vertice; }
 
 public:
+    /**
+     * graph algorithms
+     */
+    vector<int> dfs(int root, bool directionOut = true) const;
+public:
     const vector<int>& get_nodes() const { return nodes; }
     double** get_dist() const;
     const vector<EdgeWeight>& out_neighbors(int src) const
@@ -58,7 +67,7 @@ public:
             return emptyEdge;
         }
     }
-    vector<int> dfs(int root, bool directionOut = true) const;
+
     int indegree(int v) const
     {
         ASSERT(adjin.find(v) != adjin.end());

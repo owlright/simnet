@@ -169,30 +169,49 @@ double Graph::weight(int src, int dst) const
 vector<int> Graph::dfs(int root, bool directionOut) const
 {
     ASSERT(has_node(root));
-    vector<int> result;
+    vector<int> result { root };
     stack<int> st;
     st.push(root);
-    bool visited[max_vertice + 1]; // TODO this may comsume too much memory
-    for (auto& v : visited) {
-        v = false;
-    }
-    result.push_back(root);
-    visited[root] = true;
+    unordered_set<int> visited { root };
     auto& adj = directionOut ? adjout : adjin;
     while (!st.empty()) {
         auto u = st.top();
         st.pop();
-        if (!visited[u]) {
-            visited[u] = true;
+        if (visited.find(u) == visited.end()) {
+            visited.insert(u);
             result.push_back(u);
         }
         for (auto& [v, w] : adj.at(u)) {
-            if (!visited[v])
+            if (visited.find(v) == visited.end())
                 st.push(v);
         }
     }
     return result;
 }
+
+vector<int> Graph::bfs(int root, bool directionOut) const
+{
+    ASSERT(has_node(root));
+    vector<int> result { root };
+    queue<int> que;
+    que.push(root);
+    unordered_set<int> visited { root };
+    auto& adj = directionOut ? adjout : adjin;
+    while (!que.empty()) {
+        auto u = que.front();
+        que.pop();
+        if (visited.find(u) == visited.end()) {
+            visited.insert(u);
+            result.push_back(u);
+        }
+        for (auto& [v, w] : adj.at(u)) {
+            if (visited.find(v) == visited.end())
+                que.push(v);
+        }
+    }
+    return result;
+}
+
 
 void Graph::draw(const char* filename, const char* engine)
 {
