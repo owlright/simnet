@@ -6,25 +6,39 @@ Graph takashami_tree(const Graph& g, vector<int> sources, int root)
 {
     Graph tree;
     tree.add_node(root);
-    auto dist = g.get_dist();
-    for (auto& s : sources) {
+    std::unordered_set<int> visited;
+    for (auto i = 0; i < sources.size(); i++) {
         double min_dist = INFINITY;
         int node_in_tree = -1;
-        for (auto& n : tree.get_nodes()) {
-            if (min_dist > dist[s][n]) {
-                min_dist = dist[s][n];
-                node_in_tree = n;
+        int min_src = -1;
+        for (auto& s : sources) {
+            if (visited.find(s) == visited.end()) {
+                for (auto& n : tree.get_nodes()) {
+                    auto curr_dist = g.distance(s, n);
+                    if (visited.find(n) == visited.end() && min_dist > curr_dist) {
+                        min_dist = curr_dist;
+                        node_in_tree = n;
+                        min_src = s;
+                    }
+                }
             }
         }
+        ASSERT(min_src != -1);
+        visited.insert(min_src);
         std::vector<int> path;
-        dijistra(g, s, node_in_tree, &path);
+        dijistra(g, min_src, node_in_tree, &path);
         if (path.size() < 2) {
-            throw std::runtime_error("graph is not connected"); // ! I don't know why can't catch cRuntimeError
+            throw cRuntimeError("graph is not connected");
         }
         for (int i = 0; i < path.size() - 1; i++) {
             tree.add_edge(path[i], path[i + 1], g.weight(path[i], path[i + 1]));
         }
     }
+
+    if (!tree.is_tree()) {
+        tree.draw("wrong.png");
+    }
+    ASSERT(tree.is_tree());
     return tree;
 }
 
