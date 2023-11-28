@@ -18,6 +18,9 @@ Graph takashami_tree(const Graph& g, vector<int> sources, int root)
         }
         std::vector<int> path;
         dijistra(g, s, node_in_tree, &path);
+        if (path.size() < 2) {
+            throw std::runtime_error("graph is not connected"); // ! I don't know why can't catch cRuntimeError
+        }
         for (int i = 0; i < path.size() - 1; i++) {
             tree.add_edge(path[i], path[i + 1], g.weight(path[i], path[i + 1]));
         }
@@ -66,7 +69,7 @@ vector<Graph> takashami_trees(const Graph& g, vector<int> sources, int root, con
                     if (visitedBranchTrees.find(newBranchTree) == visitedBranchTrees.end()) {
                         waited.push(newt);
                     }
-                } catch (cRuntimeError& e) {
+                } catch (std::runtime_error& e) { // ! I don't know why can't catch cRuntimeError
                     continue;
                 }
             }
