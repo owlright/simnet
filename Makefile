@@ -67,7 +67,7 @@ MAKEFLAGS += --no-builtin-rules
 space:= $() $()
 
 OPP_RUN_OPTIONS := -m \
---cmdenv-redirect-output=false \
+--cmdenv-redirect-output=true \
 --cmdenv-log-level=off \
 --cmdenv-performance-display=false \
 --cmdenv-event-banners=false \
@@ -100,6 +100,7 @@ cleanresults-$(1)-%:
 	simulations/$(1)/results/$$**.vec \
 	simulations/$(1)/results/$$**.vci \
 	simulations/$(1)/results/$$**.sca \
+	simulations/$(1)/results/$$**.out \
 	simulations/$(1)/results/$$**.pkl
 
 $(1)-%-plt:
