@@ -128,7 +128,7 @@ vector<int> find_equal_nodes(
 {
     vector<int> equal_nodes;
     std::vector<int> children;
-    auto dist = g.get_dist();
+    //    auto dist = g.get_dist();
     int parent = tree.out_neighbors(node).at(0).first;
     double orig_cost = tree.out_neighbors(node).at(0).second;
     for (auto& [v, w] : tree.in_neighbors(node)) {
@@ -137,11 +137,11 @@ vector<int> find_equal_nodes(
     }
 
     for (auto& i : g.get_nodes()) {
-        ASSERT(dist);
+        // ASSERT(dist);
         if (forbiddens.find(i) == forbiddens.end() && i != node) {
-            double temp_cost = dist[i][parent];
+            double temp_cost = g.distance(i, parent);
             for (auto& c : children) {
-                temp_cost += dist[c][i];
+                temp_cost += g.distance(c, i);
             }
             if (std::abs(temp_cost - orig_cost) <= threshold) {
                 equal_nodes.push_back(i);
