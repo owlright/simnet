@@ -226,7 +226,7 @@ vector<int> Graph::bfs(int root, bool directionOut) const
 bool Graph::is_tree() const
 {
     for (auto& n : nodes) {
-        if (outdegree(n) != 1 || outdegree(n) != 0) {
+        if (outdegree(n) > 1) {
             return false;
         }
     }
