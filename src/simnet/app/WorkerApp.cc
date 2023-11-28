@@ -28,7 +28,8 @@ void WorkerApp::initialize(int stage)
         }
 
         roundStartTimer = new cMessage("roundStart");
-        scheduleAt(simTime(), roundStartTimer);
+        scheduleAt(SimTime(1, SIMTIME_PS),
+            roundStartTimer); // ! sometimes I will set simtime-limit = 0s, I don't want packates insert txBuffer.
         ASSERT(tcpState == CLOSED);
         tcpState = OPEN;
         jobMetricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
