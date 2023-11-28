@@ -92,6 +92,14 @@ void Graph::remove_node(int n)
             it = std::max_element(nodes.begin(), nodes.end());
             max_vertice = *it;
         }
+        // 删除其他节点中对该节点的边
+        for (auto& entry : adjout) {
+            vector<EdgeWeight>& neighbors = entry.second;
+
+            neighbors.erase(remove_if(neighbors.begin(), neighbors.end(),
+                                [n](const pair<int, double>& edge) { return edge.first == n; }),
+                neighbors.end());
+        }
     }
 }
 bool Graph::has_node(int n) const { return is_in_vector(n, nodes); }
