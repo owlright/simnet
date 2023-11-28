@@ -51,6 +51,7 @@ public:
     vector<int> dfs(int root, bool directionOut = true) const;
     vector<int> bfs(int root, bool directionOut = true) const;
     bool is_tree() const;
+    bool is_connected() const;
 
 public:
     bool operator==(const Graph& other) const

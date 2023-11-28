@@ -200,6 +200,7 @@ vector<int> Graph::dfs(int root, bool directionOut) const
             visited.insert(u);
             result.push_back(u);
         }
+        ASSERT(adj.find(u) != adj.end());
         for (auto& [v, w] : adj.at(u)) {
             if (visited.find(v) == visited.end())
                 st.push(v);
@@ -238,6 +239,15 @@ bool Graph::is_tree() const
             return false;
         }
     }
+    return true;
+}
+
+bool Graph::is_connected() const
+{
+    auto node = nodes[0];
+    auto visited = dfs(node);
+    if (visited.size() != nodes.size())
+        return false;
     return true;
 }
 
