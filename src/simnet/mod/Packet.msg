@@ -66,10 +66,13 @@ cplusplus(IPv6Header) {{
     public:
         void setNumDestAddrs(size_t size) {destAddresses.resize(size);}
         size_t getNumDestAddrs() const {return destAddresses.size();}
-        int64_t getDestAddresses(size_t k) const {return destAddresses.at(k);}
+        int64_t getDestAddresses(size_t k) const {
+            ASSERT(destAddresses.size() > k);
+            return destAddresses.at(k);
+        }
         const std::vector<int64_t>& getAllDestAddresses() const {return destAddresses;}
         void setDestAddresses(size_t k, int64_t addr) {
-            destAddresses.at(k) = addr;
+            destAddresses[k] = addr;
         }
         void assignDestAddresses(std::set<int64_t>& addrs) {
             destAddresses.assign(addrs.begin(), addrs.end());
@@ -126,13 +129,22 @@ cplusplus(SegmentRoutingHeader) {{
 		virtual size_t getFunsArraySize() const {return funs.size();}
 		virtual size_t getArgsArraySize() const {return args.size();}
 
-		virtual int64_t getSegments(size_t k) const {return segments.at(k);}
-		virtual const opp_string& getFuns(size_t k) const {return funs.at(k);}
-		virtual const opp_string& getArgs(size_t k) const {return args.at(k);}
+		virtual int64_t getSegments(size_t k) const {
+		    ASSERT(segments.size() > k);
+		    return segments.at(k);
+		}
+		virtual const opp_string& getFuns(size_t k) const {
+		    ASSERT(funs.size() > k);
+		    return funs[k];
+		}
+		virtual const opp_string& getArgs(size_t k) const {
+		    ASSERT(args.size() > k);
+		    return args[k];
+		}
 
-		virtual void setSegments(size_t k, int64_t addr) {segments.at(k) = addr;}
-		virtual void setFuns(size_t k, const char* fun) {funs.at(k) = fun;}
-		virtual void setArgs(size_t k, const char* arg) {args.at(k) = arg;}
+		virtual void setSegments(size_t k, int64_t addr) {segments[k] = addr;}
+		virtual void setFuns(size_t k, const char* fun) {funs[k] = fun;}
+		virtual void setArgs(size_t k, const char* arg) {args[k] = arg;}
 
 		// new methods:
 		virtual void setSIDSize(size_t size) {
