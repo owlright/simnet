@@ -256,6 +256,7 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
                 [](const auto& a, const auto& b) { return std::get<0>(a) < std::get<0>(b); });
             auto& [minCost, index, firstTree] = sortedKTrees[0];
             aggTrees.push_back(firstTree);
+            aggNodes.push_back(equal_nodes[index]);
             for (auto i = 1; i < sortedKTrees.size(); i++) {
                 auto& [currCost, index, t] = sortedKTrees[i];
                 if (t.get_cost() - minCost <= 2 && threshold > 0) {
@@ -265,6 +266,7 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
                     break;
                 }
             }
+            ASSERT(aggTrees.size() == aggNodes.size());
         }
     } else if (strcmp(policyName, "edge") == 0) {
         for (auto it : jobInfodb) {
