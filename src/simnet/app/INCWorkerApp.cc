@@ -1,7 +1,10 @@
 #include "WorkerApp.h"
 #include "simnet/common/ModuleAccess.h"
 #include "simnet/common/utils.h"
+#include "simnet/graph/algorithms.h"
+#include "simnet/mod/manager/GlobalGroupManager.h"
 #include <functional>
+using namespace simnet::algorithms;
 class INCWorker : public WorkerApp {
 protected:
     void initialize(int stage) override;
@@ -15,8 +18,9 @@ private:
     bool useAgtrIndex { false };
     std::unordered_set<std::size_t> usedAgtrIndex;
     std::vector<std::vector<IntAddress>> segments;
-    std::vector<int> fanIndegrees;
+    std::vector<vector<int>> fanIndegrees;
     int maxAgtrCount { 0 };
+    opp_component_ptr<GlobalGroupManager> groupManager;
 };
 
 Define_Module(INCWorker);
@@ -24,24 +28,43 @@ Define_Module(INCWorker);
 void INCWorker::initialize(int stage)
 {
     WorkerApp::initialize(stage);
-    if (stage == INITSTAGE_LAST) {
+    if (stage == INITSTAGE_LOCAL) {
+        groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
+        ASSERT(groupManager);
         maxAgtrCount = par("maxAgtrNum");
         useAgtrIndex = maxAgtrCount > 0;
         EV_TRACE << "INCWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
         EV_TRACE << " PS(" << destAddr << ":" << destPort << ")" << endl;
-        auto segmentAddrs = cStringTokenizer(par("segmentAddrs").stringValue(), " ").asVector();
-        segments.resize(segmentAddrs.size());
-        for (auto i = 0; i < segmentAddrs.size(); i++) {
-            auto equal_agg_addrs = cStringTokenizer(segmentAddrs[i].c_str(), "[,]").asIntVector();
-            segments[i].insert(segments[i].end(), equal_agg_addrs.begin(), equal_agg_addrs.end());
+    } else if (stage == INITSTAGE_ACCEPT) {
+        auto& aggTrees = groupManager->getAggTrees();
+        auto getAddr
+            = std::bind(static_cast<IntAddress (GlobalGroupManager::*)(int) const>(&GlobalGroupManager::getAddr),
+                this->groupManager, std::placeholders::_1);
+        auto getNodeId
+            = std::bind(static_cast<int (GlobalGroupManager::*)(IntAddress) const>(&GlobalGroupManager::getNodeId),
+                this->groupManager, std::placeholders::_1);
+        for (auto i = 0; i < aggTrees.size(); i++) {
+            auto& t = aggTrees[i];
+            vector<int> p;
+            dijistra(t, getNodeId(localAddr), getNodeId(destAddr), &p);
+            vector<IntAddress> path;
+            vector<int> ind;
+            for (auto i = 1; i < p.size(); i++) {
+                if (t.indegree(p[i]) >= 2) {
+                    path.push_back(getAddr(p[i]));
+                    ind.push_back(t.indegree(p[i]));
+                }
+            }
+            path.push_back(destAddr); // no use, easy debugging
+            ind.push_back(numWorkers); // no use, easy debugging
+            segments.push_back(path);
+            fanIndegrees.push_back(ind);
         }
-        fanIndegrees = cStringTokenizer(par("fanIndegrees").stringValue()).asIntVector();
-        // * easy debug
-        std::vector<IntAddress> tmp { destAddr };
-        segments.push_back(tmp);
-        fanIndegrees.push_back(numWorkers);
-        EV_TRACE << "sid: " << segments << endl;
-        EV_TRACE << "indegree: " << fanIndegrees << endl;
+        EV_DEBUG << localAddr << endl;
+        EV_DEBUG << segments << endl;
+        EV_DEBUG << fanIndegrees << endl;
+        EV_DEBUG << endl;
+        ASSERT(segments.size() == fanIndegrees.size());
     }
 }
 
@@ -54,21 +77,20 @@ void INCWorker::setField(AggPacket* pk)
     auto seqNumber = pk->getAggSeqNumber();
     // auto jobID = pk->getJobId(); // unused-variable
     // segment routing
-    pk->setSIDSize(segments.size());
-    pk->setLastEntry(segments.size() - 1);
-    pk->setSegmentsLeft(segments.size());
-    auto sit = segments.rbegin();
-    auto fit = fanIndegrees.rbegin();
-    for (auto i = 0; i < segments.size(); i++) {
-        if (sit->size() > 1) {
-            pk->setSegments(i, (*sit)[seqNumber % sit->size()]); // TODO: agg trees balance the computation nodes, but
-                                                                 // may cause disorder
-        } else
-            pk->setSegments(i, (*sit).at(0));
-        sit++;
+    int numPaths = segments.size();
+    ASSERT(numPaths > 0);
+    auto chooseIndex = seqNumber % numPaths;
+    auto& sit = segments[chooseIndex];
+    auto& ind = fanIndegrees[chooseIndex];
+    ASSERT(sit.size() == ind.size());
+    pk->setSIDSize(sit.size());
+    pk->setLastEntry(sit.size()-1);
+    pk->setSegmentsLeft(sit.size()); // we include the ps addr
+    auto segSize = sit.size();
+    for (auto i = 0; i < segSize; i++) {
+        pk->setSegments(i, sit[segSize-i-1]);
         pk->setFuns(i, "aggregation");
-        auto indegree = std::to_string(*fit++);
-        pk->setArgs(i, indegree.c_str());
+        pk->setArgs(i, std::to_string(ind[segSize-i-1]).c_str());
     }
 }
 
