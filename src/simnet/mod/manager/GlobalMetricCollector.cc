@@ -123,10 +123,11 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
         lastSimTime = simTime();
         lastRealTime = now;
         // printNiceTime(now);
+        auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
         char flow_info[50];
         memset(flow_info, 0, sizeof(flow_info));
-        sprintf(flow_info, "flows: %ld/%ld", flow_counter, totalFlowsNumber);
-        std::cout << CYAN << std::left << std::setw(20) << flow_info;
+        sprintf(flow_info, "runID %d flows: %ld/%ld", runId, flow_counter, totalFlowsNumber);
+        std::cout << std::left << std::setw(30) << flow_info;
         auto group_num = jobRoundMetric.size() > 0 ? jobRoundMetric.size() : 1;
         char group_info[20 * group_num];
         memset(group_info, 0, sizeof(group_info));
@@ -136,7 +137,7 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
             sprintf(_tmp, "%d: %d/%d, ", jobid, met->currentRound, met->numRounds);
             strcat(group_info, _tmp);
         }
-        std::cout << CYAN << std::left << std::setw(20 * group_num) << group_info;
+        std::cout << std::left << std::setw(20 * group_num) << group_info;
 
         auto leftFlows = totalFlowsNumber - flow_counter;
         auto esplasedFlows = flow_counter - last_flow_counter;
@@ -164,7 +165,7 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
         estimatedLeftTime = .2 * estimatedLeftTime + .8 * estimated;
         last_flow_counter = flow_counter;
         last_round_counter = round_counter;
-        std::cout << "ETA: " << timeToStr(estimatedLeftTime) << ENDC;
+        std::cout << "ETA: " << timeToStr(estimatedLeftTime) << endl;
         if (!(flow_is_over && job_is_over))
             scheduleAfter(progressInterval * simsecPerSecond, stopWatch);
     }
