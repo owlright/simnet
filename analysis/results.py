@@ -5,6 +5,7 @@ import itertools
 import matplotlib.pyplot as plt
 import matplotlib
 import bisect
+
 # ! if on windows's wsl, do not use plt.show() just savefig is much faster
 matplotlib.use("Agg")
 # matplotlib.use('QtAgg') # ! this GUI is faster then others
@@ -54,18 +55,33 @@ def extract_iterationvar(iterationvar: str):
     epsion = extract_float(iterationvar, "epsion")
     return policy, load, epsion
 
-def truncate_vectime(flows:pd.DataFrame, runs: dict):
-    def _get_min_time(x:pd.DataFrame):
-        flow_time = x.loc[x['name'] == 'fct:vector', 'vectime'].values[0]
-        job_time =  x.loc[x['name'] == 'jobRCT:vector', 'vectime'].values[0]
+
+def truncate_vectime(flows: pd.DataFrame, runs: dict):
+    print_info = []
+
+    def _get_min_time(x: pd.DataFrame):
+        flow_time = x.loc[x["name"] == "fct:vector", "vectime"].values[0]  # * repetitions, just pick the first one
+        job_time = x.loc[x["name"] == "jobRCT:vector", "vectime"].values[0]
         min_time = min(flow_time[-1], job_time[-1])
+        info = []
+        runid = x["runID"].values[0]
+        for k, v in runs.items():
+            if runid in v:
+                info.append(k)
+                break
+        info.append(flow_time[-1])
+        info.append(job_time[-1])
+        print_info.append(info)
         return bisect.bisect_left(flow_time, min_time)
-    truncated_index = flows.groupby('runID').apply(_get_min_time)
-    original_index = flows.groupby('runID').apply(lambda x: len(x['vecvalue'].values[0]))
-    flows['endIndex'] = flows['runID'].map(truncated_index)
-    flows['originalIndex'] = flows['runID'].map(original_index)
-    flows['vecvalue'] = flows.apply(lambda x: x['vecvalue'][:x['endIndex']], axis=1)
-    flows.drop('endIndex', axis=1, inplace=True)
+
+    truncated_index = flows.groupby("runID").apply(_get_min_time)
+    original_index = flows.groupby("runID").apply(lambda x: len(x["vecvalue"].values[0]))
+    flows["endIndex"] = flows["runID"].map(truncated_index)
+    flows["originalIndex"] = flows["runID"].map(original_index)
+    flows["vecvalue"] = flows.apply(lambda x: x["vecvalue"][: x["endIndex"]], axis=1)
+    flows.drop("endIndex", axis=1, inplace=True)
+    print(pd.DataFrame(print_info, columns=["runID", "flowFinishTime", "jobFinishTime"]).sort_values(by=["runID"]))
+
 
 def get_flows_slowdown(flows: pd.DataFrame, runs: dict):
     # * a little hack to transpose the columns
