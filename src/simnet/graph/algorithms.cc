@@ -63,7 +63,7 @@ struct CompareDiPair {
 double dijistra(const Graph& g, int src, int dest, vector<int>* path)
 {
     int n = g.get_max_vertice() + 1;
-    priority_queue<diPair, std::deque<diPair>, CompareDiPair> pq;
+    priority_queue<diPair, std::vector<diPair>, CompareDiPair> pq;
     vector<double> dist(n, INFINITY);
     vector<int> prev(n, -1);
     pq.push(make_pair(0.0, src));
