@@ -36,7 +36,7 @@ void INCWorker::initialize(int stage)
         EV_TRACE << "INCWorker(" << localAddr << ":" << localPort << ") accept job " << jobId;
         EV_TRACE << " PS(" << destAddr << ":" << destPort << ")" << endl;
     } else if (stage == INITSTAGE_ACCEPT) {
-        auto& aggTrees = groupManager->getAggTrees();
+        auto& aggTrees = groupManager->getAggTrees(jobId);
         auto getAddr
             = std::bind(static_cast<IntAddress (GlobalGroupManager::*)(int) const>(&GlobalGroupManager::getAddr),
                 this->groupManager, std::placeholders::_1);

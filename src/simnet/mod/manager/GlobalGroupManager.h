@@ -40,8 +40,8 @@ struct JobSegmentsRoute // ! for segment routing aggregation
 class GlobalGroupManager : public GlobalManager {
 public:
     const std::vector<IntAddress>& getUnicastHosts() const { return unicastHosts; }
-    const std::vector<simnet::Graph>& getAggTrees() const {return aggTrees;}
-    const vector<map<int, vector<int>>>& getAggNodes() const {return aggNodes;}
+    const auto& getAggTrees(int jobId) const {return aggTrees[jobId-1];}
+    const auto& getAggNodes(int jobId) const {return aggNodes[jobId-1];}
 
 protected:
     virtual void initialize(int stage) override;
@@ -66,8 +66,8 @@ private:
     const char* aggTreeType;
     bool useInc { false };
     simnet::Graph network;
-    vector<simnet::Graph> aggTrees;
-    vector<map<int, vector<int>>> aggNodes;
+    vector<vector<simnet::Graph>> aggTrees;
+    vector<vector<map<int, vector<int>>>> aggNodes;
 
 private:
     // for aggregation job

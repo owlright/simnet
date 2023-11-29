@@ -246,8 +246,9 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
             // ! update graph edge's cost
             // TODO: how to decide the added cost
             // addCost(tree, 0.1, 0.1); // TODO: what about the equal cost aggnodes and their paths?
-            decltype(aggNodes) equal_nodes;
-            auto kTrees = takashami_trees(network, sources, root, forbidden_hosts, &equal_nodes);
+            decltype(aggTrees)::value_type jobTrees;
+            decltype(aggNodes)::value_type jobEqualNodes, tmpJobEqualNodes;
+            auto kTrees = takashami_trees(network, sources, root, forbidden_hosts, &tmpJobEqualNodes);
             vector<std::tuple<double, int, simnet::Graph>> sortedKTrees;
             for (int i = 0; i < kTrees.size(); i++) {
                 sortedKTrees.push_back({ kTrees[i].get_cost(), i, kTrees[i] });
@@ -255,18 +256,27 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
             std::sort(sortedKTrees.begin(), sortedKTrees.end(),
                 [](const auto& a, const auto& b) { return std::get<0>(a) < std::get<0>(b); });
             auto& [minCost, index, firstTree] = sortedKTrees[0];
-            aggTrees.push_back(firstTree);
-            aggNodes.push_back(equal_nodes[index]);
+            // firstTree.draw("firstTree.png");
+            jobTrees.push_back(firstTree);
+            jobEqualNodes.push_back(tmpJobEqualNodes[index]);
             for (auto i = 1; i < sortedKTrees.size(); i++) {
                 auto& [currCost, index, t] = sortedKTrees[i];
+                // t.draw((std::string("tree")+std::to_string(i)).c_str());
+                // ASSERT(t.is_tree());
                 if (t.get_cost() - minCost <= 2 && threshold > 0) {
-                    aggTrees.push_back(t);
-                    aggNodes.push_back(equal_nodes[index]);
+                    for (auto s:sources) {
+                        ASSERT(t.has_node(s));
+                    }
+                    jobTrees.push_back(t);
+                    jobEqualNodes.push_back(tmpJobEqualNodes[index]);
                 } else {
                     break;
                 }
             }
-            ASSERT(aggTrees.size() == aggNodes.size());
+            ASSERT(jobTrees.size() == jobEqualNodes.size());
+            std::cout << "job " << jobid << " " << jobTrees.size() <<" trees prepared." << std::endl;
+            aggTrees.push_back(jobTrees);
+            aggNodes.push_back(jobEqualNodes);
         }
     } else if (strcmp(policyName, "edge") == 0) {
         for (auto it : jobInfodb) {
