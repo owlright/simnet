@@ -62,7 +62,8 @@ void GlobalMetricCollector::reportFlowStop(int jobid, int workerId, simtime_t ro
         roundMeter->reset();
         round_counter += 1;
         if (round_counter == totalRoundsNumber) {
-            std::cout << GREEN << "job is over" << ENDC;
+            auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
+            std::cout << GREEN << "runID " << runId << " job is over" << ENDC;
             job_is_over = true;
         }
     }
@@ -102,6 +103,7 @@ void GlobalMetricCollector::initialize(int stage)
             // ! prepare for progress display
             lastSimTime = simTime();
             lastRealTime = std::time(nullptr);
+            simStartRealTime = std::time(nullptr);
             stopWatch = new cMessage("stopWatch");
             scheduleAfter(0.001, stopWatch); // the first time is choosed at random
             if (totalFlowsNumber == 0)
@@ -165,9 +167,11 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
         estimatedLeftTime = .2 * estimatedLeftTime + .8 * estimated;
         last_flow_counter = flow_counter;
         last_round_counter = round_counter;
+        std::cout << "Elapsed " << timeToStr(now - simStartRealTime) << " ";
         std::cout << "ETA: " << timeToStr(estimatedLeftTime) << endl;
-        if (!(flow_is_over && job_is_over))
+        if (!flow_is_over || !job_is_over) {
             scheduleAfter(progressInterval * simsecPerSecond, stopWatch);
+        }
     }
 }
 

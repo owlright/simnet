@@ -54,6 +54,7 @@ private:
     simtime_t lastSimTime { 0 };
     std::time_t lastRealTime { 0 };
 
+    std::time_t simStartRealTime { 0 };
 private:
     struct JobRoundMetric {
         int currentRound { 0 };

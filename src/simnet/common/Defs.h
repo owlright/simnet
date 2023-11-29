@@ -23,10 +23,10 @@ using Mat = std::vector<std::vector<T>>;
 enum Stage
 {
     INITSTAGE_LOCAL,
-    INITSTAGE_REPORT, // host report info to manager
-    INITSTAGE_COLLECT, // manager collect info from host
     INITSTAGE_ASSIGN, // manager assign something to host or switch
     INITSTAGE_ACCEPT, // all parameters must be set by now
+    INITSTAGE_REPORT, // host report info to manager
+    INITSTAGE_COLLECT, // manager collect info from host
     INITSTAGE_LAST, // maybe delete this module? print info
     NUM_INIT_STAGES
 };

@@ -73,6 +73,11 @@ void HostNode::initialize(int stage)
                 throw cRuntimeError("In loadMode, you must set the tpManager");
             newFlowTimer = new cMessage("newFlow");
             scheduleAfter(exponential(flowInterval), newFlowTimer);
+
+        }
+    }
+    else if (stage == INITSTAGE_REPORT) {
+        if (loadMode) {
             metricCollector->registerFlowMetric(address, numFlows);
         }
     }

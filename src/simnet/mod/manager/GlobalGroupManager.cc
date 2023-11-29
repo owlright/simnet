@@ -226,6 +226,7 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
         // TODO manually set segments for each host
     } else if (strcmp(policyName, "sptree") == 0) // TODO my own algorithms
     {
+        auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
         for (auto it : jobInfodb) {
             auto jobid = it.first;
             EV_TRACE << "job " << jobid << endl;
@@ -274,7 +275,7 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
                 }
             }
             ASSERT(jobTrees.size() == jobEqualNodes.size());
-            std::cout << "job " << jobid << " " << jobTrees.size() <<" trees prepared." << std::endl;
+            std::cout << "runID " << runId << " job " << jobid << " " << jobTrees.size() <<" trees prepared." << std::endl;
             aggTrees.push_back(jobTrees);
             aggNodes.push_back(jobEqualNodes);
         }
