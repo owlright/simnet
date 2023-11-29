@@ -66,7 +66,7 @@ void GlobalView::initialize(int stage)
                 network.add_edge(i, nodeID[v]);
             }
         }
-        network.update_dist();
+        // network.update_dist();
     }
 }
 
