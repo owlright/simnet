@@ -139,7 +139,7 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
             sprintf(_tmp, "%d: %d/%d, ", jobid, met->currentRound, met->numRounds);
             strcat(group_info, _tmp);
         }
-        std::cout << std::left << std::setw(20 * group_num) << group_info;
+        std::cout << std::left << std::setw(10 * group_num) << group_info;
 
         auto leftFlows = totalFlowsNumber - flow_counter;
         auto esplasedFlows = flow_counter - last_flow_counter;
