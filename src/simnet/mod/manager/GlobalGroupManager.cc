@@ -221,12 +221,13 @@ void GlobalGroupManager::createJobApps(int jobId)
 void GlobalGroupManager::calcAggTree(const char* policyName)
 {
     using namespace simnet::algorithms;
+    using simnet::Graph;
+    auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
     if (strcmp(policyName, "manual") == 0) {
         // readSwitchConfig(par("groupSwitchFile").stringValue());
         // TODO manually set segments for each host
     } else if (strcmp(policyName, "sptree") == 0) // TODO my own algorithms
     {
-        auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
         for (auto it : jobInfodb) {
             auto jobid = it.first;
             EV_TRACE << "job " << jobid << endl;
@@ -265,7 +266,7 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
                 // t.draw((std::string("tree")+std::to_string(i)).c_str());
                 // ASSERT(t.is_tree());
                 if (t.get_cost() - minCost <= 2 && threshold > 0) {
-                    for (auto s:sources) {
+                    for (auto s : sources) {
                         ASSERT(t.has_node(s));
                     }
                     jobTrees.push_back(t);
@@ -275,80 +276,51 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
                 }
             }
             ASSERT(jobTrees.size() == jobEqualNodes.size());
-            std::cout << "runID " << runId << " job " << jobid << " " << jobTrees.size() <<" trees prepared." << std::endl;
+            std::cout << "runID " << runId << " job " << jobid << " " << jobTrees.size() << " trees prepared."
+                      << std::endl;
             aggTrees.push_back(jobTrees);
             aggNodes.push_back(jobEqualNodes);
         }
     } else if (strcmp(policyName, "edge") == 0) {
         for (auto it : jobInfodb) {
-            EV_DEBUG << "job " << it.first << endl;
+            auto jobid = it.first;
+            EV_TRACE << "job " << jobid << endl;
             auto group = it.second;
             auto senders = group->workers;
             auto ps = group->PSes.at(0);
-            auto psNode = getNode(ps);
-            // EV_TRACE << senders << " " << ps << endl;
-            std::vector<cTopology::Node*> senderNodes;
-            for (auto& s : senders) {
-                senderNodes.push_back(getNode(s));
-            }
-            // ! if only do aggregation at edge, the indegree calculation is a litte harder
-            std::unordered_map<IntAddress, int> indegrees;
-            std::unordered_map<IntAddress, std::vector<IntAddress>> addrSegments;
-            for (auto& s : senders) {
-                auto srcNode = getNode(s);
-                auto edge0Switch = srcNode->getLinkOut(0)->getRemoteNode();
-                auto edge1Switch = psNode->getLinkIn(0)->getRemoteNode();
-                // * prepare segments
-                std::vector<IntAddress> segments;
-                segments.push_back(getAddr(edge0Switch->getModule()));
-                if (edge1Switch != edge0Switch)
-                    segments.push_back(getAddr(edge1Switch->getModule()));
-                addrSegments[s] = segments;
-                EV_TRACE << segments << endl;
-                // std::cout << segments << endl;
-                for (int i = segments.size() - 1; i >= 0; i--) {
-                    auto seg = segments[i];
-                    if (indegrees.find(seg) == indegrees.end()) {
-                        indegrees[seg] = 1;
-                    } else {
-                        if ((i == 0) || (i == 1 && indegrees.find(segments[i - 1]) == indegrees.end())) {
-                            // * this is still a new flow
-                            indegrees[seg] += 1;
-                        }
-                    }
-                }
 
-                // for (auto i = 0; i < srcMod->getSubmoduleVectorSize("workers"); i++) {
-                //     auto app = srcMod->getSubmodule("workers", i);
-                //     if (app->hasPar("segmentAddrs") && ps == app->par("destAddress").intValue()) {
-                //         app->par("segmentAddrs") = vectorToString(segments);
-                //         std::vector<int> tmp;
-                //         for (auto s:segments) {
-                //             tmp.push_back(indegrees.at(s));
-                //         }
-                //         app->par("fanIndegrees") = vectorToString(tmp);
-                //     }
-                // }
+            vector<int> sources;
+            for (auto s : senders) {
+                sources.push_back(getNodeId(s));
             }
-            for (auto& s : senders) {
-                auto srcMod = getMod(s);
-                auto segments = addrSegments[s];
-                for (auto i = 0; i < srcMod->getSubmoduleVectorSize("workers"); i++) {
-                    auto app = srcMod->getSubmodule("workers", i);
-                    if (app->hasPar("segmentAddrs") && ps == app->par("destAddress").intValue()) {
-                        app->par("segmentAddrs") = vectorToString(segments);
-                        std::vector<int> tmp;
-                        for (auto s : segments) {
-                            tmp.push_back(indegrees.at(s));
-                        }
-                        app->par("fanIndegrees") = vectorToString(tmp);
+            auto root = getNodeId(ps);
+            ASSERT(network.outdegree(root) == 1);
+            auto root_switch = network.in_neighbors(root)[0].first;
+            Graph t;
+            t.add_edge(root_switch, root);
+            map<int, vector<int>> indegree_;
+            vector<int> edge_switches;
+            for (auto& s : sources) {
+                ASSERT(network.outdegree(s) == 1);
+                for (auto& [v, w] : network.out_neighbors(s)) {
+                    t.add_edge(s, v);
+                    if (indegree_.find(v) == indegree_.end()) {
+                        indegree_[v] = { 1 };
+                    } else {
+                        indegree_[v][0] += 1;
                     }
+                    if (v != root_switch)
+                        t.add_edge(v, root_switch);
                 }
             }
-            // for (auto& it:indegrees) {
-            //     std::cout << it.first << " " << it.second << endl;
-            // }
-            // std::cout << endl;
+            decltype(indegree_) equalNodes;
+            for (auto& [v, i] : indegree_) {
+                if (i[0] > 1)
+                    equalNodes[v] = {};
+            }
+
+            aggTrees.push_back({ t });
+            aggNodes.push_back({ equalNodes });
         }
     } else if (strcmp(policyName, "") == 0) {
         EV_WARN << "You may forget to set the aggTreeType. No AggTree will be built!" << endl;

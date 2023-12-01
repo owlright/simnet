@@ -107,7 +107,6 @@ void GlobalMetricCollector::initialize(int stage)
             simStartRealTime = std::time(nullptr);
             stopWatch = new cMessage("stopWatch");
             scheduleAfter(0.001, stopWatch); // the first time is choosed at random
-            std::cout << totalFlowsNumber << std::endl;
             if (totalFlowsNumber == 0)
                 flow_is_over = true;
         } else
