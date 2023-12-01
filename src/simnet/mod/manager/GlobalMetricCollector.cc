@@ -87,7 +87,8 @@ void GlobalMetricCollector::reportFlowStop(int nodeId, simtime_t finishTime)
     flow_counter += 1;
     allFlowsFinishedTime = finishTime;
     if (totalFlowsNumber == flow_counter) {
-        std::cout << GREEN << "flow is over" << ENDC;
+        auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
+        std::cout << GREEN << "runID " << runId << " flow is over" << ENDC;
         flow_is_over = true;
     }
 }
@@ -106,6 +107,7 @@ void GlobalMetricCollector::initialize(int stage)
             simStartRealTime = std::time(nullptr);
             stopWatch = new cMessage("stopWatch");
             scheduleAfter(0.001, stopWatch); // the first time is choosed at random
+            std::cout << totalFlowsNumber << std::endl;
             if (totalFlowsNumber == 0)
                 flow_is_over = true;
         } else
