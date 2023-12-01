@@ -1,10 +1,30 @@
 import bisect
 from analysis import *
+import argparse
 
-output_name = "epsion_fsd.png"
-
+parser = argparse.ArgumentParser(description="draw flow slowdown with various load")
+parser.add_argument(
+    "-c",
+    "--config",
+    dest="config",
+    help="experiment configure name",
+    type=str,
+    metavar="config_name",
+    required=True,
+)
+parser.add_argument(
+    "-o",
+    "--output",
+    dest="output_name",
+    help="output file name",
+    type=str,
+    metavar="output_name",
+    default="epsion_fsd.png",
+)
+args = parser.parse_args()
+output_name = args.output_name
 print("-" * 10, "reading data", "-" * 10)
-sheet = read_csv("simulations", "exp", "fatTreeK10LoadbalancePermutation", True)
+sheet = read_csv("simulations", "exp", args.config, False)
 _kept_rows = ["flowSize:vector", "fct:vector", "idealFct:vector", "jobRCT:vector"]
 flows = get_vectors(
     sheet,
@@ -31,9 +51,9 @@ for step, epsion in enumerate(epsions):
     for load in loads:
         print(epsion, load)
         current_epsion = current_load[current_load["load"] == load]
-        fsd_mean.append(current_epsion['slowdown'].values[0].mean())
+        fsd_mean.append(current_epsion["slowdown"].values[0].mean())
 
-    bp = ax.bar(_pos + step*_bar_width, fsd_mean, _bar_width, hatch=HATCHES[step])
+    bp = ax.bar(_pos + step * _bar_width, fsd_mean, _bar_width, hatch=HATCHES[step])
     bps.append(bp)
 
 ax.set_xticks(_pos, loads)

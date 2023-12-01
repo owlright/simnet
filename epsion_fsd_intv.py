@@ -1,10 +1,30 @@
 import bisect
 from analysis import *
+import argparse
 
-output_name = "epsion_sd.png"
+parser = argparse.ArgumentParser(description="draw flow slowdown with various load")
+parser.add_argument(
+    "-c",
+    "--config",
+    dest="config",
+    help="experiment configure name",
+    type=str,
+    metavar="config_name",
+    required=True,
+)
+parser.add_argument(
+    "-o",
+    "--output",
+    dest="output_name",
+    help="output file name",
+    type=str,
+    metavar="output_name",
+    default="epsion_fsd_intv.png",
+)
+output_name = args.output_name
 percentile_lowerbound = 0.00
 print("-" * 10, "reading data", "-" * 10)
-sheet = read_csv("simulations", "exp", "fatTreeK10LoadbalancePermutation", True)
+sheet = read_csv("simulations", "exp", args.config, True)
 _kept_rows = ["flowSize:vector", "fct:vector", "idealFct:vector", "jobRCT:vector"]
 flows = get_vectors(
     sheet,
