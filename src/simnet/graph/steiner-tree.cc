@@ -78,6 +78,7 @@ vector<Graph> takashami_trees(const Graph& g, vector<int> sources, int root, con
                     gcopy.remove_node(n);
                 }
                 if (gcopy.is_connected()) {
+                    gcopy.update_dist();
                     std::vector<int> newBranchNodes;
                     auto newt = takashami_tree(gcopy, sources, root);
                     auto newBranchTree = extract_branch_tree(newt, sources, root, &newBranchNodes);
