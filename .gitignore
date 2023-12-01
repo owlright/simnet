@@ -26,3 +26,4 @@ py11/
 .pydevproject
 **.out.*
 **.dot
+*.log
