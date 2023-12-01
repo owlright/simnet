@@ -40,8 +40,20 @@ struct JobSegmentsRoute // ! for segment routing aggregation
 class GlobalGroupManager : public GlobalManager {
 public:
     const std::vector<IntAddress>& getUnicastHosts() const { return unicastHosts; }
-    const auto& getAggTrees(int jobId) const {return aggTrees[jobId-1];}
-    const auto& getAggNodes(int jobId) const {return aggNodes[jobId-1];}
+    const auto& getAggTrees(int jobId) const
+    {
+        if (aggTrees.empty()) {
+            throw cRuntimeError("aggTrees is empty!");
+        }
+        return aggTrees[jobId - 1];
+    }
+    const auto& getAggNodes(int jobId) const
+    {
+        if (aggNodes.empty()) {
+            throw cRuntimeError("aggNodes is empty");
+        }
+        return aggNodes[jobId - 1];
+    }
 
 protected:
     virtual void initialize(int stage) override;
