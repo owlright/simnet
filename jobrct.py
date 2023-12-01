@@ -2,7 +2,7 @@ import bisect
 from analysis import *
 import argparse
 
-parser = argparse.ArgumentParser(description="draw flow slowdown with various load")
+parser = argparse.ArgumentParser(description="draw flow slowdown in each interval under various load")
 parser.add_argument(
     "-c",
     "--config",
@@ -10,19 +10,34 @@ parser.add_argument(
     help="experiment configure name",
     type=str,
     metavar="config_name",
-    required=True,
+    default="fatTreePolicy"
 )
+
 parser.add_argument(
-    "-o",
-    "--output",
-    dest="output_name",
-    help="output file name",
+    "-l",
+    "--legend",
+    dest="legendname",
+    help="which legends to plot",
+    choices = ["epsion", "policy"],
     type=str,
-    metavar="output_name",
-    default="epsion_jobrct.png",
+    metavar="legend_name",
+    default="epsion"
 )
+
+parser.add_argument(
+    "-p",
+    "--percentile",
+    dest="percentile",
+    type=float,
+    metavar="percentile",
+    default=0.95
+)
+
 args = parser.parse_args()
-output_name = args.output_name
+output_name = "jobrct_" + args.legendname + ".png"
+percentile_lowerbound = args.percentile
+
+
 print("-" * 10, "reading data", "-" * 10)
 sheet = read_csv("simulations", "exp", args.config, False)
 _kept_rows = ["jobRCT:vector"]
@@ -45,18 +60,24 @@ for itervar, repetition_ids in runs.items():
     df.loc[len(df.index)] = [load, policy, epsion, jct]   # pyright: ignore reportGeneralTypeIssues
 
 jobs = df
+policies = sorted(list(set([extract_str(x, 'aggPolicy') for x in runs.keys()])))
 epsions = sorted(list(set([extract_float(x, "epsion") for x in runs.keys()])))
 loads = sorted(list(set([extract_float(x, "load") for x in runs.keys()])))
 fig, ax = plt.subplots()
 _pos = np.arange(len(loads))
 _bar_width = 0.2
 bps = []
+legends = []
+if args.legendname == "epsion":
+    legends = epsions
+elif args.legendname == "policy":
+    legends = policies
 
-for step, epsion in enumerate(epsions):
-    current_load = jobs[jobs["epsion"] == epsion]
+for step, legend in enumerate(legends):
+    current_load = jobs[jobs[args.legendname] == legend]
     jct_mean = []
     for load in loads:
-        print(epsion, load)
+        print(legend, load)
         current_epsion = current_load[current_load["load"] == load]
         jct_mean.append(current_epsion['jct'].values[0].mean())
 
@@ -64,10 +85,10 @@ for step, epsion in enumerate(epsions):
     bps.append(bp)
 
 ax.set_xticks(_pos, loads)
-ax.legend([b[0] for b in bps], epsions)
-ax.set_xlabel(f"load")
+ax.legend([b[0] for b in bps], [f'{args.legendname}={legend}' for legend in legends])
+ax.set_xlabel(f"Load")
 ax.set_ylabel("job mean round completion time")
-fig.subplots_adjust(left=0.05, bottom=0.15, right=0.95, top=0.95)
-fig.subplots_adjust(wspace=0.1)
+# fig.subplots_adjust(left=0.05, bottom=0.15, right=0.95, top=0.95)
+# fig.subplots_adjust(wspace=0.1)
 fig.savefig(output_name)
 print(f"output {output_name}")
