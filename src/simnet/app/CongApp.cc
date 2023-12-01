@@ -138,7 +138,9 @@ void CongApp::resetState()
 void CongApp::finish() {
     if (destAddr == INVALID_ADDRESS)
         return;
-    EV << localAddr << " retransmit bytes: " << resentBytes << endl;
+    if (resentBytes > 0) {
+        EV_WARN << localAddr << " retransmit bytes: " << resentBytes << endl;
+    }
     ASSERT(txBuffer.empty());
     ASSERT(rxBuffer.empty());
 }
