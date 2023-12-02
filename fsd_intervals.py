@@ -70,7 +70,7 @@ elif args.legendname == "policy":
 plt.rcParams['font.family'] = "Serif"
 fig, ax = plt.subplots(1, len(loads), figsize=(50 / 2.54, 10 / 2.54))
 _pos = np.arange(1, 11) * (len(epsions) + 1)
-_bar_width = 1
+_bar_width = 0.5
 
 print("-" * 10, "flows count in each interval", "-" * 10)
 dist = "./src/distribution/data/WebSearch_10percentile.csv"
@@ -120,7 +120,7 @@ for col_index, load in enumerate(loads):
         # )
 
     # * xticks set only once each ax
-    ax[col_index].set_xticks(_pos, distper["xtick"])
+    ax[col_index].set_xticks(_pos+_bar_width/2, distper["xtick"])
     # ax[col_index].legend([b["boxes"][0] for b in bps], epsions)
     ax[col_index].legend([b[0] for b in bps], [f'{args.legendname}={legend}' for legend in legends])
     ax[col_index].set_xlabel(f"Load={load}")
