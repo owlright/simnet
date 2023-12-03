@@ -39,7 +39,7 @@ percentile_lowerbound = args.percentile
 
 
 print("-" * 10, "reading data", "-" * 10)
-sheet = read_csv("simulations", "exp", args.config, False)
+sheet = read_csv("simulations", "exp", args.config, True)
 _kept_rows = ["jobRCT:vector"]
 jobs = get_vectors(
     sheet,
