@@ -81,10 +81,10 @@ for step, legend in enumerate(legends):
         current_epsion = current_load[current_load["load"] == load]
         jct_mean.append(current_epsion['jct'].values[0].mean())
 
-    bp = ax.bar(_pos + step*_bar_width, jct_mean, _bar_width, hatch=HATCHES[step])
+    bp = ax.bar(_pos + step*_bar_width, jct_mean, _bar_width, hatch=HATCHES[step],  color=COLORS[step], ec="black")
     bps.append(bp)
 
-ax.set_xticks(_pos, loads)
+ax.set_xticks(_pos+_bar_width/2, loads)
 ax.legend([b[0] for b in bps], [f'{args.legendname}={legend}' for legend in legends])
 ax.set_xlabel(f"Load")
 ax.set_ylabel("job mean round completion time")

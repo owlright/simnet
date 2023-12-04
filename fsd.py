@@ -33,7 +33,7 @@ parser.add_argument(
     "-t",
     "--thresholdsmall",
     dest="threshold",
-    type=int,
+    type=float,
     help="threshold(MB) to determine small flows",
     default=10,
 )
