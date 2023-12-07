@@ -84,6 +84,25 @@ OPP_RUN_DBG_OPTIONS := -m \
 define SIM_template
 $(eval SIM_INI_FILE := simulations/$(1)/omnetpp.ini)
 
+$(1): $(PROJECT_TARGET) cleanresults-$(1)-%
+	opp_runall -j $(CPU_COUNT) \
+	opp_run $(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_OPTIONS)
+
+	$(MAKE) export-$(1)-$$*
+
+export-$(1):
+	opp_scavetool export -o simulations/$(1)/results/$$*.csv -F CSV-R --type vs --allow-nonmatching \
+	simulations/$(1)/results/$$**.vec \
+	simulations/$(1)/results/$$**.sca
+
+cleanresults-$(1):
+	$(RM) \
+	simulations/$(1)/results/$$**.vec \
+	simulations/$(1)/results/$$**.vci \
+	simulations/$(1)/results/$$**.sca \
+	simulations/$(1)/results/$$**.out \
+	simulations/$(1)/results/$$**.pkl
+
 $(1)-%: $(PROJECT_TARGET) cleanresults-$(1)-%
 	opp_runall -j $(CPU_COUNT) \
 	opp_run $(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_OPTIONS)
