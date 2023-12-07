@@ -8,7 +8,7 @@ void Routing::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         myAddress = par("address");
         ecmpFlow = par("ecmpFlow").boolValue();
-        ecmpPacket = par("ecmpFlow").boolValue();
+        ecmpPacket = par("ecmpPacket").boolValue();
         if (ecmpFlow && ecmpPacket) {
             throw cRuntimeError("only perFlow or perPacket can be true, not both.");
         }
