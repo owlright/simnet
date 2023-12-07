@@ -129,9 +129,11 @@ bool Graph::has_edge(const Edge& e) const
 void Graph::update_dist()
 {
     int n = get_max_vertice() + 1;
-    dist = (double**)malloc(n * sizeof(double*));
-    for (int i = 0; i < n; i++) {
-        dist[i] = (double*)malloc(n * sizeof(double));
+    if (get_dist() == nullptr) {
+        dist = (double**)malloc(n * sizeof(double*));
+        for (int i = 0; i < n; i++) {
+            dist[i] = (double*)malloc(n * sizeof(double));
+        }
     }
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
