@@ -91,7 +91,7 @@ void L2Queue::initialize()
     // txBytesSignal = registerSignal("txBytes");
     // rxBytesSignal = registerSignal("rxBytes");
     // congestionSignal = registerSignal("congestion");
-    emit(qlenSignal, getQueueBytes());
+//    emit(qlenSignal, getQueueBytes());
     // emit(busySignal, false);
     isBusy = false;
 }

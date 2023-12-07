@@ -72,6 +72,7 @@ private:
     [[deprecated]] int position{-1};
 
     bool ecmpFlow = false;
+    bool ecmpPacket = false;
     double collectionPeriod;
     // TODO improve the code
     [[deprecated]] std::string aggPolicy;
@@ -108,7 +109,7 @@ private:
 
     // Ask global routeManager for the first seen destAddr
     // and store it in rtable for next time search
-    int getRouteGateIndex(int srcAddr, int destAddr);
+    int getRouteGateIndex(int64_t srcAddr, int64_t destAddr, int64_t seq);
     [[deprecated]] bool isGroupAddr(IntAddress addr) const { return (GROUPADDR_START <= addr && addr < GROUPADDR_END);};
     [[deprecated]] bool isUnicastAddr(IntAddress addr) const {return !isGroupAddr(addr);};
 

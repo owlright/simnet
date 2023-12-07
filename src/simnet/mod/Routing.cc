@@ -8,6 +8,10 @@ void Routing::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         myAddress = par("address");
         ecmpFlow = par("ecmpFlow").boolValue();
+        ecmpPacket = par("ecmpFlow").boolValue();
+        if (ecmpFlow && ecmpPacket) {
+            throw cRuntimeError("only perFlow or perPacket can be true, not both.");
+        }
         isSwitch = (getParentModule()->getProperties()->get("switch") != nullptr);
         myAddress = getParentModule()->par("address");
         routeManager = findModuleFromTopLevel<GlobalRouteManager>("routeManager", this);
@@ -135,15 +139,19 @@ void Routing::tryReleaseAgtr(const AggPacket* apk)
 
 }
 
-int Routing::getRouteGateIndex(int srcAddr, int destAddr) {
+int Routing::getRouteGateIndex(int64_t srcAddr, int64_t destAddr, int64_t seq) {
     // srcAddr is only used for ecmp the flow
     RoutingTable::iterator it = rtable.find(destAddr);
     if (it != rtable.end()) {
         auto outGateIndexes = it->second;
-        if (ecmpFlow) {
+        if (ecmpFlow) { // FIXME: 这里应该使用数据包的源目的端口而不是交换机的地址
             auto N = srcAddr + destAddr + myAddress; // HACK a too simple hash function
             return outGateIndexes.at(N % outGateIndexes.size());
-        } else {
+        } else if (ecmpPacket) {
+            auto N = srcAddr + destAddr + myAddress + seq;
+            return outGateIndexes.at(N % outGateIndexes.size());
+        }
+        else {
             return outGateIndexes.at(0);
         }
     }
@@ -151,7 +159,7 @@ int Routing::getRouteGateIndex(int srcAddr, int destAddr) {
         int address = destAddr;
         auto outGateIndexes = routeManager->getRoutes(myAddress, address); // ! pass switchAddress not srcAddress
         rtable[destAddr] = outGateIndexes;
-        return getRouteGateIndex(srcAddr, destAddr); // ! recursion find outgate index
+        return getRouteGateIndex(srcAddr, destAddr, seq); // ! recursion find outgate index
     }
 }
 
@@ -277,7 +285,7 @@ void Routing::forwardIncoming(Packet *pk)
     if (numSegments <= 1) {
         // unicast DATA, ACK etc. packets
         auto srcAddr = pk->getSrcAddr();
-        outGateIndex = getRouteGateIndex(srcAddr, destAddr);
+        outGateIndex = getRouteGateIndex(srcAddr, destAddr, pk->getSeqNumber());
     }
     // * Step 3. AggPacket
     else {
@@ -292,10 +300,10 @@ void Routing::forwardIncoming(Packet *pk)
         auto srcAddr = myAddress + destAddr;
         // ! get the output gate index
         if (currSegment == myAddress) {
-            outGateIndex = getRouteGateIndex(srcAddr, nextSegment); // ! next segment
+            outGateIndex = getRouteGateIndex(srcAddr, nextSegment, pk->getSeqNumber()); // ! next segment
         }
         else {
-            outGateIndex = getRouteGateIndex(srcAddr, currSegment); // ! current segment
+            outGateIndex = getRouteGateIndex(srcAddr, currSegment, pk->getSeqNumber()); // ! current segment
         }
     }
 
