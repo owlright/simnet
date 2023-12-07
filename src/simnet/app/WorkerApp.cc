@@ -149,7 +149,7 @@ void WorkerApp::finish()
     if (resentBytes > 0)
         std::cout << jobId << " " << localAddr << " " << destAddr << " retransmit " << resentBytes << endl;
     if (currentRound != numRounds) {
-        EV_ERROR << RED << getClassAndFullPath() << "job " << jobId
+        EV_WARN << RED << getClassAndFullPath() << "job " << jobId
                  << " "
                     "address "
                  << localAddr << " round " << currentRound << " not finish." << ENDC;
