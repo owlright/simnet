@@ -82,7 +82,7 @@ OPP_RUN_DBG_OPTIONS := -m \
 -n $(PROJECT_SRC) -l $(PROJECT_TARGET)
 
 define SIM_template
-$(eval SIM_INI_FILE := simulations/$(1)/omnetpp.ini)
+$(eval SIM_INI_FILE := simulations/omnetpp.ini)
 
 $(1): $(PROJECT_TARGET) cleanresults-$(1)
 	opp_runall -j $(CPU_COUNT) \
@@ -134,7 +134,7 @@ $(1)-%-dbg: $(PROJECT_TARGET_DBG)
 
 .PHONY: $(1)-% $(1)-%-plt $(1)-%-qt $(1)-%-dbg
 endef
-
-$(foreach p, $(shell find simulations/* -maxdepth 0 -type d ! -name __pycache__ -exec basename {} \;), \
+# read config names from simulations/omnetpp.ini
+$(foreach p, $(shell sed -n 's/^include \(.*\)\.ini/\1/p' simulations/omnetpp.ini), \
   $(eval $(call SIM_template,$(p))) \
 )
