@@ -91,36 +91,36 @@ $(1): $(PROJECT_TARGET) cleanresults-$(1)
 	$(MAKE) export-$(1)
 
 export-$(1):
-	opp_scavetool export -o simulations/$(1)/results/$(1).csv -F CSV-R --type vs --allow-nonmatching \
-	simulations/$(1)/results/$(1)*.vec \
-	simulations/$(1)/results/$(1)*.sca
+	opp_scavetool export -o results/$(1)/$(1).csv -F CSV-R --type vs --allow-nonmatching \
+	results/$(1)/$(1)*.vec \
+	results/$(1)/$(1)*.sca
 
 cleanresults-$(1):
 	$(RM) \
-	simulations/$(1)/results/$$**.vec \
-	simulations/$(1)/results/$$**.vci \
-	simulations/$(1)/results/$$**.sca \
-	simulations/$(1)/results/$$**.out \
-	simulations/$(1)/results/$$**.pkl
+	results/$(1)/*.vec \
+	results/$(1)/*.vci \
+	results/$(1)/*.sca \
+	results/$(1)/*.out \
+	results/$(1)/*.pkl
 
-$(1)-%: $(PROJECT_TARGET) cleanresults-$(1)-%
-	opp_runall -j $(CPU_COUNT) \
-	opp_run $(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_OPTIONS)
+# $(1)-%: $(PROJECT_TARGET) cleanresults-$(1)-%
+# 	opp_runall -j $(CPU_COUNT) \
+# 	opp_run $(SIM_INI_FILE) -c $$* -u Cmdenv $(OPP_RUN_OPTIONS)
 
-	$(MAKE) export-$(1)-$$*
+# 	$(MAKE) export-$(1)-$$*
 
-export-$(1)-%:
-	opp_scavetool export -o simulations/$(1)/results/$$*.csv -F CSV-R --type vs --allow-nonmatching \
-	simulations/$(1)/results/$$**.vec \
-	simulations/$(1)/results/$$**.sca
+# export-$(1)-%:
+# 	opp_scavetool export -o simulations/$(1)/results/$$*.csv -F CSV-R --type vs --allow-nonmatching \
+# 	simulations/$(1)/results/$$**.vec \
+# 	simulations/$(1)/results/$$**.sca
 
-cleanresults-$(1)-%:
-	$(RM) \
-	simulations/$(1)/results/$$**.vec \
-	simulations/$(1)/results/$$**.vci \
-	simulations/$(1)/results/$$**.sca \
-	simulations/$(1)/results/$$**.out \
-	simulations/$(1)/results/$$**.pkl
+# cleanresults-$(1)-%:
+# 	$(RM) \
+# 	simulations/$(1)/results/$$**.vec \
+# 	simulations/$(1)/results/$$**.vci \
+# 	simulations/$(1)/results/$$**.sca \
+# 	simulations/$(1)/results/$$**.out \
+# 	simulations/$(1)/results/$$**.pkl
 
 $(1)-%-plt:
 	python3 simulations/$(1)/plot.py $$*

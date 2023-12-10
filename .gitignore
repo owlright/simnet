@@ -27,3 +27,4 @@ py11/
 **.out.*
 **.dot
 *.log
+results
