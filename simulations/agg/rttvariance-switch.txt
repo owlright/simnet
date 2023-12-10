@@ -1,3 +1,0 @@
-# groupAddr    treeIndex    switch    bufferSize(MB) fanIndegree
-#10000          0            1         10             4
-10001          0            1         10             4
