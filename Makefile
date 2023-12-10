@@ -88,7 +88,7 @@ $(1): $(PROJECT_TARGET) cleanresults-$(1)
 	opp_runall -j $(CPU_COUNT) \
 	opp_run $(SIM_INI_FILE) -c $(1) -u Cmdenv $(OPP_RUN_OPTIONS)
 
-	$(MAKE) export-$(1)-$$*
+	$(MAKE) export-$(1)
 
 export-$(1):
 	opp_scavetool export -o simulations/$(1)/results/$(1).csv -F CSV-R --type vs --allow-nonmatching \
