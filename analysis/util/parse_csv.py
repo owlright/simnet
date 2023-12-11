@@ -9,6 +9,12 @@ def print_error(mesg: str):
     print(Fore.RED + mesg + Style.RESET_ALL)
 
 
+def print_info(mesg: str):
+    from colorama import Fore, Back, Style
+
+    print(Fore.GREEN + mesg + Style.RESET_ALL)
+
+
 _SCALAR_COLUMN_NAMES = ["value"]
 _STATISTIC_COLUMN_NAMES = ["count", "sumweights", "mean", "stddev", "min", "max"]
 _HISTOGRAM_COLUMN_NAMES = ["underflows", "overflows", "binedges", "binvalues"]
@@ -16,7 +22,25 @@ _VECTOR_COLUMN_NAMES = ["vectime", "vecvalue"]
 _PARAMETER_COLUMN_NAMES = ["value"]
 
 
-def read_csv(sim_dirname, exp_name, config_name, use_cached=False) -> pd.DataFrame:
+def _format_bytes(byte_size: float) -> tuple[float, str]:
+    if byte_size < 1024.0:
+        return byte_size, "B"
+    else:
+        for unit in ["B", "KB", "MB", "GB"]:
+            byte_size /= 1024.0
+            if byte_size < 1024.0:
+                return byte_size, unit
+    raise NotImplementedError(f"{_format_bytes.__name__} not implement units bigger than GB")
+
+
+def read_csv(csv_path: str = "", use_cached=False) -> pd.DataFrame:
+    if len(csv_path) == 0:
+        raise ValueError("csv_path can't be empty")
+    csv_name, csv_ext = os.path.splitext(os.path.basename(csv_path))
+    if csv_ext != ".csv":
+        raise ValueError("only accept .csv file.")
+    csv_dir = os.path.dirname(csv_path)
+
     def _parse_int(s):
         return int(s) if s else np.nan
 
@@ -43,14 +67,36 @@ def read_csv(sim_dirname, exp_name, config_name, use_cached=False) -> pd.DataFra
             row["attrvalue"] = row["attrvalue"].replace('"', "")
         return row
 
-    file_prefix = os.path.join(sim_dirname, exp_name, "results", f"{config_name}")
-    new_file = file_prefix + ".csv"
-    cached_file = file_prefix + ".pkl"
+    new_file = csv_path
+    cached_file = os.path.join(csv_dir, csv_name + ".pkl")
     if os.path.exists(cached_file) and use_cached:
+        csv_size, unit = _format_bytes(os.path.getsize(cached_file))
+        print_info(f"Read cached file: {cached_file} size: {csv_size: .2f} {unit}")
+        if unit == "GB":
+            import ray
+
+            ray.init(_temp_dir="/mnt/sdb/tmp", dashboard_host="0.0.0.0")
+            import modin.pandas as pd
+            import modin.config as modin_cfg
+
+            modin_cfg.Engine.put("ray")
+        else:
+            import pandas as pd
         sheet = pd.read_pickle(cached_file)
         return sheet
-
     elif os.path.exists(new_file):
+        csv_size, unit = _format_bytes(os.path.getsize(new_file))
+        print_info(f"Read file: {new_file} size: {csv_size: .2f} {unit}")
+        if unit == "GB":
+            import ray
+
+            ray.init(_temp_dir="/mnt/sdb/tmp", dashboard_host="0.0.0.0")
+            import modin.pandas as pd
+            import modin.config as modin_cfg
+
+            modin_cfg.Engine.put("ray")
+        else:
+            import pandas as pd
         sheet = pd.read_csv(
             new_file,
             converters={
@@ -85,6 +131,7 @@ def get_vectors(sheet: pd.DataFrame, module=None, names=None):
         & (True if names is None else sheet["name"].isin(names))
     ].copy()
     return result
+
 
 def get_runIDs(sheet: pd.DataFrame, by: str = "") -> dict[str, str] | str:
     if by == "":  # * no iterationvars

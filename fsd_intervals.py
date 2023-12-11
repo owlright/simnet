@@ -5,12 +5,12 @@ import argparse
 parser = argparse.ArgumentParser(description="draw flow slowdown in each interval under various load")
 parser.add_argument(
     "-c",
-    "--config",
-    dest="config",
+    "--csv",
+    dest="csv",
     help="experiment configure name",
     type=str,
-    metavar="config_name",
-    default="fatTreePolicy"
+    metavar="csv_path",
+    required=True,
 )
 
 parser.add_argument(
@@ -38,7 +38,7 @@ output_name = "fsd_intervals_" + args.legendname + ".png"
 percentile_lowerbound = args.percentile
 
 print("-" * 10, "reading data", "-" * 10)
-sheet = read_csv("simulations", "exp", args.config, True)
+sheet = read_csv(args.csv, True)
 _kept_rows = ["flowSize:vector", "fct:vector", "idealFct:vector", "jobRCT:vector"]
 flows = get_vectors(
     sheet,
