@@ -17,8 +17,7 @@ module Routing
     parameters:
         // ! these parameters are set in Node.ned
         int address @mutable = default(-1);
-        bool ecmpFlow = default(false);
-        bool ecmpPacket = default(false);
+        string ecmp = default("flow");
         string aggPolicy = default("Count");
         int agtrSize @unit(B) = default(1kB);
         int maxAgtrNum = default(0);
