@@ -124,7 +124,6 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
         simsecPerSecond = (simTime() - lastSimTime).dbl() / durationInRealTime;
         lastSimTime = simTime();
         lastRealTime = now;
-        std::cout << std::fixed << std::setprecision(6) << std::left << std::setw(8) << simTime();
         auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
         char flow_info[50];
         memset(flow_info, 0, sizeof(flow_info));
@@ -168,7 +167,8 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
         last_flow_counter = flow_counter;
         last_round_counter = round_counter;
         std::cout << "Elapsed " << timeToStr(now - simStartRealTime) << " ";
-        std::cout << "ETA: " << timeToStr(estimatedLeftTime) << endl;
+        std::cout << "ETA: " << timeToStr(estimatedLeftTime) << " ";
+        std::cout << " t="<< simTime() << "s"<< endl;
         if (!flow_is_over || !job_is_over) {
             scheduleAfter(progressInterval * simsecPerSecond, stopWatch);
         }
