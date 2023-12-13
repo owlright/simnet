@@ -49,7 +49,6 @@ def extract_float(iterationvars: str, name: str) -> float:
 
 
 def extract_iterationvar(iterationvar: str):
-    _float_number_regex = r"[+-]?(\d*\.)?\d+"
     policy = extract_str(iterationvar, "aggPolicy")
     load = extract_float(iterationvar, "load")
     epsion = extract_float(iterationvar, "epsion")

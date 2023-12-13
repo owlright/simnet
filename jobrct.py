@@ -1,3 +1,4 @@
+#!./py11/bin/python
 from analysis import *
 import argparse
 
@@ -17,10 +18,10 @@ parser.add_argument(
     "--legend",
     dest="legendname",
     help="which legends to plot",
-    choices = ["epsion", "policy"],
+    choices=["epsion", "policy"],
     type=str,
     metavar="legend_name",
-    default="epsion"
+    default="epsion",
 )
 
 parser.add_argument(
@@ -29,7 +30,7 @@ parser.add_argument(
     dest="percentile",
     type=float,
     metavar="percentile",
-    default=0.95
+    default=0.95,
 )
 
 args = parser.parse_args()
@@ -45,6 +46,7 @@ jobs = get_vectors(
     names=_kept_rows,
     module="FatTree",
 )
+
 runs = get_runIDs(sheet, by="iterationvars")
 assert isinstance(runs, dict)
 # * a little hack to transpose the columns
@@ -56,10 +58,10 @@ for itervar, repetition_ids in runs.items():
     print(load, policy, epsion)
     jobreps = jobs.loc[repetition_ids]
     jct = np.concatenate(jobreps["jobRCT:vector"].values)
-    df.loc[len(df.index)] = [load, policy, epsion, jct]   # pyright: ignore reportGeneralTypeIssues
+    df.loc[len(df.index)] = [load, policy, epsion, jct]  # pyright: ignore reportGeneralTypeIssues
 
 jobs = df
-policies = sorted(list(set([extract_str(x, 'aggPolicy') for x in runs.keys()])))
+policies = sorted(list(set([extract_str(x, "aggPolicy") for x in runs.keys()])))
 epsions = sorted(list(set([extract_float(x, "epsion") for x in runs.keys()])))
 loads = sorted(list(set([extract_float(x, "load") for x in runs.keys()])))
 fig, ax = plt.subplots()
@@ -78,13 +80,13 @@ for step, legend in enumerate(legends):
     for load in loads:
         print(legend, load)
         current_epsion = current_load[current_load["load"] == load]
-        jct_mean.append(current_epsion['jct'].values[0].mean())
+        jct_mean.append(current_epsion["jct"].values[0].mean())
 
-    bp = ax.bar(_pos + step*_bar_width, jct_mean, _bar_width, hatch=HATCHES[step],  color=COLORS[step], ec="black")
+    bp = ax.bar(_pos + step * _bar_width, jct_mean, _bar_width, hatch=HATCHES[step], color=COLORS[step], ec="black")
     bps.append(bp)
 
-ax.set_xticks(_pos+_bar_width/2, loads)
-ax.legend([b[0] for b in bps], [f'{args.legendname}={legend}' for legend in legends])
+ax.set_xticks(_pos + _bar_width / 2, loads)
+ax.legend([b[0] for b in bps], [f"{args.legendname}={legend}" for legend in legends])
 ax.set_xlabel(f"Load")
 ax.set_ylabel("job mean round completion time")
 # fig.subplots_adjust(left=0.05, bottom=0.15, right=0.95, top=0.95)
