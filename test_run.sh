@@ -15,7 +15,7 @@ else
     echo "Exit because make failed"
 fi
 
-# opp_run simulations/fatTreeFbEps/omnetpp.ini -c fatTreeFbEps -u Cmdenv -m --cmdenv-redirect-output=false --cmdenv-log-level=off --cmdenv-performance-display=true --cmdenv-event-banners=false -n simulations -n src/simnet -l src/simnet -r 35
+# opp_run simulations/omnetpp.ini -c test -u Cmdenv -m --cmdenv-redirect-output=false --cmdenv-log-level=off --cmdenv-performance-display=false --cmdenv-event-banners=false -n simulations -n src/simnet -l src/simnet -r 0
 
 # 查询Run和config对应关系
 # opp_run simulations/fatTreeFbEps/omnetpp.ini -c fatTreeFbEps -q runs

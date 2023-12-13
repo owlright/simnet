@@ -1,5 +1,5 @@
 #include "GlobalMetricCollector.h"
-#define EVRUN getStream() << getEnvir()->getConfigEx()->getActiveRunNumber() << "runID " << runId << " "
+#define EVRUN std::cout << GREEN << "run " << getEnvir()->getConfigEx()->getActiveRunNumber() << " "
 
 Define_Module(GlobalMetricCollector);
 simsignal_t GlobalMetricCollector::jobRCT = registerSignal("jobRCT");
@@ -63,7 +63,6 @@ void GlobalMetricCollector::reportFlowStop(int jobid, int workerId, simtime_t ro
         roundMeter->reset();
         round_counter += 1;
         if (round_counter == totalRoundsNumber) {
-            auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
             EVRUN << "job " << jobid << " is over at " << allJobsFinishedTime << ENDC;
             job_is_over = true;
         }
@@ -88,8 +87,7 @@ void GlobalMetricCollector::reportFlowStop(int nodeId, simtime_t finishTime)
     flow_counter += 1;
     allFlowsFinishedTime = finishTime;
     if (totalFlowsNumber == flow_counter) {
-        auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
-        std::cout << GREEN << "runID " << runId << " flow is over at " << allFlowsFinishedTime << ENDC;
+        EVRUN << "flow is over at " << allFlowsFinishedTime << ENDC;
         flow_is_over = true;
     }
 }
@@ -126,11 +124,11 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
         simsecPerSecond = (simTime() - lastSimTime).dbl() / durationInRealTime;
         lastSimTime = simTime();
         lastRealTime = now;
-        // printNiceTime(now);
+        std::cout << std::fixed << std::setprecision(6) << std::left << std::setw(8) << simTime();
         auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
         char flow_info[50];
         memset(flow_info, 0, sizeof(flow_info));
-        sprintf(flow_info, "runID %d flows: %ld/%ld", runId, flow_counter, totalFlowsNumber);
+        sprintf(flow_info, "run %d flows: %ld/%ld", runId, flow_counter, totalFlowsNumber);
         std::cout << std::left << std::setw(30) << flow_info;
         auto group_num = jobRoundMetric.size() > 0 ? jobRoundMetric.size() : 1;
         char group_info[20 * group_num];
@@ -179,15 +177,14 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
 
 void GlobalMetricCollector::finish()
 {
-    auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
     // * help to set the sim-time-limit value so that progress percentile can be displayed correctly
     if (flow_counter != totalFlowsNumber) {
-        std::cout << RED << "runID " << runId <<  flow_counter << "/" << totalFlowsNumber << " flows completed." << ENDC;
+        EVRUN << flow_counter << "/" << totalFlowsNumber << " flows completed." << ENDC;
     }
     // else {
     //     std::cout << GREEN << totalFlowsNumber << " flows stop at " << allFlowsFinishedTime << ENDC;
     // }
-    std::cout << GREEN << "runID " << runId << " all jobs  stop at " << allJobsFinishedTime << ENDC;
+    EVRUN << "all jobs stop at " << allJobsFinishedTime << ENDC;
 }
 
 simsignal_t GlobalMetricCollector::createSignalForGroup(int jobid)
