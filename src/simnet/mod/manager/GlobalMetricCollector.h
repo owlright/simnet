@@ -17,6 +17,7 @@ public:
     // for unicast flows
     void reportFlowStop(int nodeId, simtime_t finishTime);
     ~GlobalMetricCollector() { cancelAndDelete(stopWatch); };
+    static std::ostream& getStream() { return stream; }
 
 protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
@@ -27,6 +28,7 @@ protected:
 private:
     double progressInterval { 10 };
     bool showProgressInfo { false };
+    static std::ostream stream; // this singleton is used to avoid allocating a new stream each time a log statement executes
 
 private:
     simsignal_t createSignalForGroup(int jobuid);
@@ -55,6 +57,7 @@ private:
     std::time_t lastRealTime { 0 };
 
     std::time_t simStartRealTime { 0 };
+
 private:
     struct JobRoundMetric {
         int currentRound { 0 };

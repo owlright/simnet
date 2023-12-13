@@ -1,4 +1,5 @@
 #include "GlobalMetricCollector.h"
+#define EVRUN getStream() << getEnvir()->getConfigEx()->getActiveRunNumber() << "runID " << runId << " "
 
 Define_Module(GlobalMetricCollector);
 simsignal_t GlobalMetricCollector::jobRCT = registerSignal("jobRCT");
@@ -63,7 +64,7 @@ void GlobalMetricCollector::reportFlowStop(int jobid, int workerId, simtime_t ro
         round_counter += 1;
         if (round_counter == totalRoundsNumber) {
             auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
-            std::cout << GREEN << "runID " << runId << " job is over" << ENDC;
+            EVRUN << "job " << jobid << " is over at " << allJobsFinishedTime << ENDC;
             job_is_over = true;
         }
     }
@@ -88,7 +89,7 @@ void GlobalMetricCollector::reportFlowStop(int nodeId, simtime_t finishTime)
     allFlowsFinishedTime = finishTime;
     if (totalFlowsNumber == flow_counter) {
         auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
-        std::cout << GREEN << "runID " << runId << " flow is over" << ENDC;
+        std::cout << GREEN << "runID " << runId << " flow is over at " << allFlowsFinishedTime << ENDC;
         flow_is_over = true;
     }
 }
@@ -178,13 +179,15 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
 
 void GlobalMetricCollector::finish()
 {
+    auto runId = getEnvir()->getConfigEx()->getActiveRunNumber();
     // * help to set the sim-time-limit value so that progress percentile can be displayed correctly
     if (flow_counter != totalFlowsNumber) {
-        std::cout << RED << flow_counter << "/" << totalFlowsNumber << " flows completed." << ENDC;
-    } else {
-        std::cout << GREEN << totalFlowsNumber << " flows stop at " << allFlowsFinishedTime << ENDC;
+        std::cout << RED << "runID " << runId <<  flow_counter << "/" << totalFlowsNumber << " flows completed." << ENDC;
     }
-    std::cout << GREEN << "All jobs  stop at " << allJobsFinishedTime << ENDC;
+    // else {
+    //     std::cout << GREEN << totalFlowsNumber << " flows stop at " << allFlowsFinishedTime << ENDC;
+    // }
+    std::cout << GREEN << "runID " << runId << " all jobs  stop at " << allJobsFinishedTime << ENDC;
 }
 
 simsignal_t GlobalMetricCollector::createSignalForGroup(int jobid)
