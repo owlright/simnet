@@ -67,7 +67,8 @@ MAKEFLAGS += --no-builtin-rules
 space:= $() $()
 
 OPP_RUN_OPTIONS := -m -s\
---cmdenv-redirect-output=true \
+--cmdenv-redirect-output=false \
+--cmdenv-status-frequency=1h \
 --cmdenv-log-level=off \
 --cmdenv-performance-display=false \
 --cmdenv-event-banners=false \
