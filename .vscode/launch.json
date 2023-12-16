@@ -21,6 +21,16 @@
             "args": ["-c", "${workspaceFolder}/results/fatTreeFbEps/fatTreeFbEpsJobRCT.csv"],
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "fsd",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/fsd.py",
+            "cwd":"${workspaceFolder}",
+            "args": ["-c", "${workspaceFolder}/results/LoadBalance/LoadBalance.csv", "-l", "epsion", "-p", "0.9", "-t", "0.05"],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
