@@ -26,7 +26,7 @@ def _format_bytes(byte_size: float) -> tuple[float, str]:
     if byte_size < 1024.0:
         return byte_size, "B"
     else:
-        for unit in ["B", "KB", "MB", "GB"]:
+        for unit in ["KB", "MB", "GB"]:
             byte_size /= 1024.0
             if byte_size < 1024.0:
                 return byte_size, unit
