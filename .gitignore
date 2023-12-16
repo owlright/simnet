@@ -28,3 +28,5 @@ py11/
 **.dot
 *.log
 results
+*.pkl
+*.pdf
