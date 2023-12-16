@@ -1,6 +1,7 @@
 import bisect
 from analysis import *
 import argparse
+import matplotlib
 
 parser = argparse.ArgumentParser(description="draw flow slowdown in each interval under various load")
 parser.add_argument(
@@ -34,7 +35,7 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
-output_name = "fsd_intervals_" + args.legendname + ".png"
+output_name = "fsd_intervals_" + args.legendname + ".pdf"
 percentile_lowerbound = args.percentile
 
 print("-" * 10, "reading data", "-" * 10)
@@ -68,9 +69,9 @@ elif args.legendname == "policy":
     legends = policies
 
 plt.rcParams['font.family'] = "Serif"
-fig, ax = plt.subplots(1, len(loads), figsize=(50 / 2.54, 10 / 2.54))
+fig, ax = plt.subplots(1, len(loads), figsize=(60 / 2.54, 10 / 2.54))
 _pos = np.arange(1, 11) * (len(epsions) + 1)
-_bar_width = 0.5
+_bar_width = 0.8
 
 print("-" * 10, "flows count in each interval", "-" * 10)
 dist = "./src/distribution/data/WebSearch_10percentile.csv"
@@ -108,7 +109,6 @@ for col_index, load in enumerate(loads):
         print(flct)
         # bp = ax[col_index].plot(_pos, flsd_intv, color=COLORS[step], marker=MARKERS[step])
         bp = ax[col_index].bar(_pos + step*_bar_width, flsd_intv, _bar_width, color=COLORS[step], ec="black")
-        bps.append(bp)
         # bp = ax[col_index].boxplot(
         #     flsd_intv_data,
         #     False,
@@ -118,14 +118,18 @@ for col_index, load in enumerate(loads):
         #     positions=_pos + step,
         #     boxprops=dict(facecolor=COLORS[step]),
         # )
+        bps.append(bp)
 
     # * xticks set only once each ax
     ax[col_index].set_xticks(_pos+_bar_width/2, distper["xtick"])
     # ax[col_index].legend([b["boxes"][0] for b in bps], epsions)
-    ax[col_index].legend([b[0] for b in bps], [f'{args.legendname}={legend}' for legend in legends])
+    if args.legendname == "epsion":
+        ax[col_index].legend([b[0] for b in bps], [f"K={0 if legend == 0.0 else 10}" for legend in legends], frameon=False)
+    elif args.legendname == "policy":
+        ax[col_index].legend([b[0] for b in bps], [f"{legend}" for legend in legends], frameon=False)
     ax[col_index].set_xlabel(f"Load={load}")
 ax[0].set_ylabel("FCT slow down")
-fig.subplots_adjust(left=0.05, bottom=0.15, right=0.95, top=0.95)
-fig.subplots_adjust(wspace=0.1)
-fig.savefig(output_name)
+fig.subplots_adjust(left=0.02, bottom=0.11, right=0.99, top=0.99)
+fig.subplots_adjust(wspace=0.12)
+fig.savefig(output_name, dpi=600)
 print(f"output {output_name}")

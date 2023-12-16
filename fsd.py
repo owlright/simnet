@@ -121,9 +121,13 @@ for col_index, load in enumerate(loads):
     # * xticks set only once each ax
     ax[col_index].set_xticks(_pos+_bar_width/2, [f"flowsize <= {args.threshold} MB", f"flowsize > {args.threshold} MB"])
     # ax[col_index].legend([b["boxes"][0] for b in bps], epsions)
-    ax[col_index].legend([b[0] for b in bps], [f"{args.legendname}={legend}" for legend in legends])
+    if args.legendname == "epsion":
+        ax[col_index].legend([b[0] for b in bps], [f"K={0 if legend == 0.0 else 10}" for legend in legends])
+    elif args.legendname == "policy":
+        ax[col_index].legend([b[0] for b in bps], [f"{args.legendname}={legend}" for legend in legends])
     ax[col_index].set_xlabel(f"Load={load}")
 ax[0].set_ylabel("FCT slow down")
+
 fig.subplots_adjust(left=0.05, bottom=0.15, right=0.95, top=0.95)
 fig.subplots_adjust(wspace=0.1)
 fig.savefig(output_name)
