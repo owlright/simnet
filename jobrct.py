@@ -1,4 +1,3 @@
-#!./py11/bin/python
 from analysis import *
 import argparse
 
@@ -24,18 +23,8 @@ parser.add_argument(
     default="epsion",
 )
 
-parser.add_argument(
-    "-p",
-    "--percentile",
-    dest="percentile",
-    type=float,
-    metavar="percentile",
-    default=0.95,
-)
-
 args = parser.parse_args()
 output_name = "jobrct_" + args.legendname + ".png"
-percentile_lowerbound = args.percentile
 
 
 print("-" * 10, "reading data", "-" * 10)
@@ -85,8 +74,10 @@ for step, legend in enumerate(legends):
     bp = ax.bar(_pos + step * _bar_width, jct_mean, _bar_width, hatch=HATCHES[step], color=COLORS[step], ec="black")
     bps.append(bp)
 
+ax.tick_params(top=True, right=True, direction="in")
+
 ax.set_xticks(_pos + _bar_width / 2, loads)
-ax.legend([b[0] for b in bps], [f"{args.legendname}={legend}" for legend in legends])
+ax.legend([b[0] for b in bps], [f"{args.legendname}={legend}" for legend in legends], frameon=True)
 ax.set_xlabel(f"Load")
 ax.set_ylabel("job mean round completion time")
 # fig.subplots_adjust(left=0.05, bottom=0.15, right=0.95, top=0.95)
