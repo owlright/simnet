@@ -2,7 +2,19 @@ import bisect
 from analysis import *
 import argparse
 import matplotlib
+from matplotlib import rcParams
 
+rcParams.update(
+    {
+        "font.family": "serif",
+        "mathtext.fontset": "stix",
+        "font.serif": ["SimSun"],
+        "axes.unicode_minus": False,
+    }
+)
+ticklabel_style = {
+    "fontname": "Times New Roman",
+}
 parser = argparse.ArgumentParser(description="draw flow slowdown in each interval under various load")
 parser.add_argument(
     "-c",
@@ -19,10 +31,10 @@ parser.add_argument(
     "--legend",
     dest="legendname",
     help="which legends to plot",
-    choices = ["epsion", "policy"],
+    choices=["epsion", "policy"],
     type=str,
     metavar="legend_name",
-    default="epsion"
+    default="epsion",
 )
 
 parser.add_argument(
@@ -31,7 +43,7 @@ parser.add_argument(
     dest="percentile",
     type=float,
     metavar="percentile",
-    default=0.95
+    default=0.95,
 )
 
 args = parser.parse_args()
@@ -50,8 +62,7 @@ runs = get_runIDs(sheet, by="iterationvars")
 assert isinstance(runs, dict)
 
 
-print("-" * 10, "align flow and job finish time",
-      "-" * 10)
+print("-" * 10, "align flow and job finish time", "-" * 10)
 truncate_vectime(flows, runs)
 
 
@@ -59,7 +70,7 @@ print("-" * 10, "calc slowdown", "-" * 10)
 df = get_flows_slowdown(flows, runs)
 
 
-policies = sorted(list(set([extract_str(x, 'aggPolicy') for x in runs.keys()])))
+policies = sorted(list(set([extract_str(x, "aggPolicy") for x in runs.keys()])))
 epsions = sorted(list(set([extract_float(x, "epsion") for x in runs.keys()])))
 loads = sorted(list(set([extract_float(x, "load") for x in runs.keys()])))
 legends = []
@@ -67,19 +78,19 @@ if args.legendname == "epsion":
     legends = epsions
 elif args.legendname == "policy":
     legends = policies
-
-plt.rcParams['font.family'] = "Serif"
-fig, ax = plt.subplots(1, len(loads), figsize=(60 / 2.54, 10 / 2.54))
+loads = [0.1, 0.5, 0.9]
+plt.rcParams["font.family"] = "Serif"
+fig, ax = plt.subplots(1, len(loads), figsize=(36 / 2.54, 7 / 2.54))
 _pos = np.arange(1, 11) * (len(epsions) + 1)
 _bar_width = 0.8
 
 print("-" * 10, "flows count in each interval", "-" * 10)
-dist = "./src/distribution/data/WebSearch_10percentile.csv"
+dist = "./src/distribution/data/FbHdp_10percentile.csv"
 distper = pd.read_csv(dist)
 print(distper["xtick"].values)
 
-
-for col_index, load in enumerate(loads):
+col_index = 0
+for load in loads:
     current_load = df[(df["load"] == load)]
     bps = []
     for step, legend in enumerate(legends):
@@ -108,7 +119,9 @@ for col_index, load in enumerate(loads):
             flct.append(len(data))
         print(flct)
         # bp = ax[col_index].plot(_pos, flsd_intv, color=COLORS[step], marker=MARKERS[step])
-        bp = ax[col_index].bar(_pos + step*_bar_width, flsd_intv, _bar_width, color=COLORS[step], ec="black")
+        bp = ax[col_index].bar(
+            _pos + step * _bar_width, flsd_intv, _bar_width, hatch=HATCHES[step], color=COLORS[step], ec="black"
+        )
         # bp = ax[col_index].boxplot(
         #     flsd_intv_data,
         #     False,
@@ -121,15 +134,29 @@ for col_index, load in enumerate(loads):
         bps.append(bp)
 
     # * xticks set only once each ax
-    ax[col_index].set_xticks(_pos+_bar_width/2, distper["xtick"])
+    ax[col_index].set_xticks(_pos + _bar_width / 2, distper["xtick"])
     # ax[col_index].legend([b["boxes"][0] for b in bps], epsions)
     if args.legendname == "epsion":
-        ax[col_index].legend([b[0] for b in bps], [f"K={0 if legend == 0.0 else 10}" for legend in legends], frameon=False)
+        ax[col_index].legend(
+            [b[0] for b in bps],
+            [f"K={0 if legend == 0.0 else 10}" for legend in legends],
+            frameon=False,
+            prop={"family": "Times New Roman"},
+        )
     elif args.legendname == "policy":
-        ax[col_index].legend([b[0] for b in bps], [f"{legend}" for legend in legends], frameon=False)
-    ax[col_index].set_xlabel(f"Load={load}")
-ax[0].set_ylabel("FCT slow down")
-fig.subplots_adjust(left=0.02, bottom=0.11, right=0.99, top=0.99)
+        ax[col_index].legend([b[0] for b in bps], ["ATP", "ATSR"], frameon=False, prop={"family": "Times New Roman"})
+    ax[col_index].set_xlabel(f"流长度（ 负载{load} ）")
+    ax[col_index].set_axisbelow(True)
+    ax[col_index].yaxis.grid(color="gray", linestyle="dashed", alpha=0.4)
+    ax[col_index].xaxis.grid(color="gray", linestyle="dashed", alpha=0.4)
+    col_index += 1
+
+ax[0].set_ylabel("95百分位流slowdown")
+fig.subplots_adjust(left=0.03, bottom=0.15, right=0.99, top=0.99)
 fig.subplots_adjust(wspace=0.12)
 fig.savefig(output_name, dpi=600)
 print(f"output {output_name}")
+import os
+
+paper_path = os.path.join(os.getcwd(), f"../Documents/dissertation/figures/chapter4/{output_name}")
+fig.savefig(paper_path, dpi=600)
