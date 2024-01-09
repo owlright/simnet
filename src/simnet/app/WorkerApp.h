@@ -35,4 +35,5 @@ protected:
     B flowSize { 0 };
     B leftData { 0 };
     opp_component_ptr<GlobalMetricCollector> jobMetricCollector;
+    simtime_t roundStartTime;
 };

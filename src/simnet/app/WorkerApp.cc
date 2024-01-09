@@ -128,8 +128,11 @@ void WorkerApp::onRoundStart()
     ASSERT(tcpState == OPEN);
     EV_INFO << "current round:" << currentRound << " flowSize:" << flowSize << endl;
     leftData = flowSize;
-    if (jobMetricCollector)
-        jobMetricCollector->reportFlowStart(jobId, workerId, simTime());
+    if (jobMetricCollector) {
+        roundStartTime = simTime();
+        jobMetricCollector->reportFlowStart(jobId, workerId, roundStartTime);
+    }
+
 }
 
 void WorkerApp::onRoundStop()
@@ -139,8 +142,15 @@ void WorkerApp::onRoundStop()
         scheduleAfter(roundInterval, roundStartTimer);
         // nextAggSeq = 0; // TODO is this necessary ?
     }
-    if (jobMetricCollector)
+    auto bandwidth = getParentModule()->par("bandwidth").doubleValue();
+    auto roundIntervalLB = (flowSize*8) / bandwidth;
+    if (jobMetricCollector) {
         jobMetricCollector->reportFlowStop(jobId, workerId, simTime());
+        if ((simTime() - roundStartTime) < roundIntervalLB) {
+            throw cRuntimeError("Job %d Worker %d Round %d", jobId, workerId, currentRound);
+        }
+    }
+
 }
 
 void WorkerApp::finish()

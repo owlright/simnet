@@ -38,6 +38,7 @@ void GlobalMetricCollector::reportFlowStart(int jobid, int workerId, simtime_t r
     if (jobRoundMetric.find(jobid) == jobRoundMetric.end()) {
         throw cRuntimeError("job not register");
     }
+    // 其实没必要，最早启动的一定是汇报最早的，也就是说只要接收一次就够了
     if (roundStartTime < jobRoundMetric[jobid]->startTime) {
         jobRoundMetric[jobid]->startTime = roundStartTime;
     }
@@ -55,15 +56,14 @@ void GlobalMetricCollector::reportFlowStop(int jobid, int workerId, simtime_t ro
     auto roundMeter = it->second;
     roundMeter->counter++;
 
-    // * wait for all workers to finish its round
     if (roundMeter->counter == jobRoundMetric[jobid]->numWorkers) {
         emit(roundMeter->roundFctSignal, simTime() - roundMeter->startTime);
         emit(jobRCT, simTime() - roundMeter->startTime);
         roundMeter->currentRound++;
         roundMeter->reset();
         round_counter += 1;
-        if (round_counter == totalRoundsNumber) {
-            EVRUN << "job " << jobid << " is over at " << allJobsFinishedTime << ENDC;
+        if (round_counter == totalRoundsNumber) { // * wait for all workers to finish its round
+            EVRUN << "Last job " << jobid << " is over at " << allJobsFinishedTime << ENDC;
             job_is_over = true;
         }
     }
