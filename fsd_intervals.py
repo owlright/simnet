@@ -80,7 +80,7 @@ elif args.legendname == "policy":
     legends = policies
 loads = [0.1, 0.5, 0.9]
 plt.rcParams["font.family"] = "Serif"
-fig, ax = plt.subplots(1, len(loads), figsize=(36 / 2.54, 7 / 2.54))
+fig, ax = plt.subplots(len(loads), 1, figsize=(12 / 2.54, 21 / 2.54))
 _pos = np.arange(1, 11) * (len(epsions) + 1)
 _bar_width = 0.8
 
@@ -89,7 +89,7 @@ dist = "./src/distribution/data/FbHdp_10percentile.csv"
 distper = pd.read_csv(dist)
 print(distper["xtick"].values)
 
-col_index = 0
+row_index = 0
 for load in loads:
     current_load = df[(df["load"] == load)]
     bps = []
@@ -119,7 +119,7 @@ for load in loads:
             flct.append(len(data))
         print(flct)
         # bp = ax[col_index].plot(_pos, flsd_intv, color=COLORS[step], marker=MARKERS[step])
-        bp = ax[col_index].bar(
+        bp = ax[row_index].bar(
             _pos + step * _bar_width, flsd_intv, _bar_width, hatch=HATCHES[step], color=COLORS[step], ec="black"
         )
         # bp = ax[col_index].boxplot(
@@ -134,29 +134,30 @@ for load in loads:
         bps.append(bp)
 
     # * xticks set only once each ax
-    ax[col_index].set_xticks(_pos + _bar_width / 2, distper["xtick"])
+    ax[row_index].set_xticks(_pos + _bar_width / 2, distper["xtick"])
     # ax[col_index].legend([b["boxes"][0] for b in bps], epsions)
     if args.legendname == "epsion":
-        ax[col_index].legend(
+        ax[row_index].legend(
             [b[0] for b in bps],
             [f"K={0 if legend == 0.0 else 10}" for legend in legends],
             frameon=False,
             prop={"family": "Times New Roman"},
         )
     elif args.legendname == "policy":
-        ax[col_index].legend([b[0] for b in bps], ["ATP", "ATSR"], frameon=False, prop={"family": "Times New Roman"})
-    ax[col_index].set_xlabel(f"流长度（ 负载{load} ）")
-    ax[col_index].set_axisbelow(True)
-    ax[col_index].yaxis.grid(color="gray", linestyle="dashed", alpha=0.4)
-    ax[col_index].xaxis.grid(color="gray", linestyle="dashed", alpha=0.4)
-    col_index += 1
+        ax[row_index].legend([b[0] for b in bps], ["ATP", "ATSR"], frameon=False, prop={"family": "Times New Roman"})
+    ax[row_index].set_xlabel(f"流长度（ 负载{load} ）")
+    ax[row_index].set_ylabel("95百分位流slowdown")
+    ax[row_index].set_axisbelow(True)
+    ax[row_index].yaxis.grid(color="gray", linestyle="dashed", alpha=0.4)
+    ax[row_index].xaxis.grid(color="gray", linestyle="dashed", alpha=0.4)
+    row_index += 1
 
-ax[0].set_ylabel("95百分位流slowdown")
-fig.subplots_adjust(left=0.03, bottom=0.15, right=0.99, top=0.99)
-fig.subplots_adjust(wspace=0.12)
+# ax[0].set_ylabel("95百分位流slowdown")
+fig.subplots_adjust(left=0.1, bottom=0.05, right=0.99, top=0.99)
+# fig.subplots_adjust(hspace=0.3)
 fig.savefig(output_name, dpi=600)
 print(f"output {output_name}")
 import os
 
-paper_path = os.path.join(os.getcwd(), f"../Documents/dissertation/figures/chapter4/{output_name}")
+paper_path = os.path.join(os.getcwd(), f"./{output_name}")
 fig.savefig(paper_path, dpi=600)
