@@ -13,6 +13,7 @@ module GlobalGroupManager
 
         string aggTreeType = default("sptree"); // ATP, sptree
         double costThreshold = default(-1); // No equal agg nodes
+        int numECTrees = default(-1); // use as many as can be found
         @class(GlobalGroupManager);
         @display("i=block/cogwheel");
 }

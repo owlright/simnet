@@ -242,7 +242,8 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
             auto root = getNodeId(ps);
 
             auto threshold = par("costThreshold").doubleValue();
-
+            bool allowedKTree = threshold > 0;
+            int numNCTrees = par("numECTrees").intValue();
             std::unordered_set<int> forbidden_hosts(getHostIds().begin(), getHostIds().end());
 
             // ! update graph edge's cost
@@ -250,32 +251,49 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
             // addCost(tree, 0.1, 0.1); // TODO: what about the equal cost aggnodes and their paths?
             decltype(aggTrees)::value_type jobTrees;
             decltype(aggNodes)::value_type jobEqualNodes, tmpJobEqualNodes;
-            auto kTrees = takashami_trees(network, sources, root, forbidden_hosts, &tmpJobEqualNodes);
-            vector<std::tuple<double, int, simnet::Graph>> sortedKTrees;
-            for (int i = 0; i < kTrees.size(); i++) {
-                sortedKTrees.push_back({ kTrees[i].get_cost(), i, kTrees[i] });
-            }
-            std::sort(sortedKTrees.begin(), sortedKTrees.end(),
-                [](const auto& a, const auto& b) { return std::get<0>(a) < std::get<0>(b); });
-            auto& [minCost, index, firstTree] = sortedKTrees[0];
-            // firstTree.draw("firstTree.png");
-            jobTrees.push_back(firstTree);
-            jobEqualNodes.push_back(tmpJobEqualNodes[index]);
-            for (auto i = 1; i < sortedKTrees.size(); i++) {
-                auto& [currCost, index, t] = sortedKTrees[i];
-                // t.draw((std::string("tree")+std::to_string(i)).c_str());
-                // ASSERT(t.is_tree());
-                if (t.get_cost() - minCost <= 2 && threshold > 0) {
-                    for (auto s : sources) {
-                        ASSERT(t.has_node(s));
-                    }
-                    jobTrees.push_back(t);
-                    jobEqualNodes.push_back(tmpJobEqualNodes[index]);
-                } else {
-                    break;
+            if (allowedKTree) {
+                // ! I don't know which trees are better, so all of them should be calculated at first
+                auto kTrees = takashami_trees(network, sources, root, forbidden_hosts, &tmpJobEqualNodes);
+                vector<std::tuple<double, int, simnet::Graph>> sortedKTrees;
+                for (int i = 0; i < kTrees.size(); i++) {
+                    sortedKTrees.push_back({ kTrees[i].get_cost(), i, kTrees[i] });
                 }
+                std::sort(sortedKTrees.begin(), sortedKTrees.end(),
+                    [](const auto& a, const auto& b) { return std::get<0>(a) < std::get<0>(b); });
+                auto& [minCost, index, firstTree] = sortedKTrees[0];
+                // firstTree.draw("firstTree.png");
+                jobTrees.push_back(firstTree);
+                jobEqualNodes.push_back(tmpJobEqualNodes[index]);
+                numNCTrees = std::min(numNCTrees, int(sortedKTrees.size()));
+                for (auto i = 1; i < numNCTrees; i++) {
+                    auto& [currCost, index, t] = sortedKTrees[i];
+                    // t.draw((std::string("tree")+std::to_string(i)).c_str());
+                    // ASSERT(t.is_tree());
+                    // ! 允许等价树超过一些代价，但也不能超过太多，否则会出现故意绕远路的现象，2是目前的经验值
+                    if (t.get_cost() - minCost <= 2) {
+                        for (auto s : sources) {
+                            ASSERT(t.has_node(s));
+                        }
+                        jobTrees.push_back(t);
+                        jobEqualNodes.push_back(tmpJobEqualNodes[index]);
+                    } else {
+                        break;
+                    }
+                }
+                ASSERT(jobTrees.size() == jobEqualNodes.size());
             }
-            ASSERT(jobTrees.size() == jobEqualNodes.size());
+            else {
+                auto tree = takashami_tree(network, sources, root);
+                jobTrees.push_back(tree);
+                vector<int> branch_nodes;
+                auto branch_tree = extract_branch_tree(tree, sources, root, &branch_nodes);
+                map<int, vector<int>> equalNodes;
+                for (auto b: branch_nodes) {
+                    equalNodes[b] = find_equal_nodes(network, tree, b);
+                }
+                jobEqualNodes.push_back(equalNodes);
+            }
+
             std::cout << "runID " << runId << " job " << jobid << " " << jobTrees.size() << " trees prepared."
                       << std::endl;
             aggTrees.push_back(jobTrees);
