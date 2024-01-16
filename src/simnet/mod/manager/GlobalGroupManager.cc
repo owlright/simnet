@@ -244,6 +244,7 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
             auto threshold = par("costThreshold").doubleValue();
             bool allowedKTree = threshold > 0;
             int numNCTrees = par("numECTrees").intValue();
+            bool removeEqualBranchNodes = par("removeEqualBranchNodes").intValue() > 0;
             std::unordered_set<int> forbidden_hosts(getHostIds().begin(), getHostIds().end());
 
             // ! update graph edge's cost
@@ -253,7 +254,7 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
             decltype(aggNodes)::value_type jobEqualNodes, tmpJobEqualNodes;
             if (allowedKTree) {
                 // ! I don't know which trees are better, so all of them should be calculated at first
-                auto kTrees = takashami_trees(network, sources, root, forbidden_hosts, &tmpJobEqualNodes);
+                auto kTrees = takashami_trees(network, sources, root, forbidden_hosts, &tmpJobEqualNodes, removeEqualBranchNodes);
                 vector<std::tuple<double, int, simnet::Graph>> sortedKTrees;
                 for (int i = 0; i < kTrees.size(); i++) {
                     sortedKTrees.push_back({ kTrees[i].get_cost(), i, kTrees[i] });

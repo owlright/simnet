@@ -43,13 +43,13 @@ Graph takashami_tree(const Graph& g, vector<int> sources, int root)
 }
 
 vector<Graph> takashami_trees(const Graph& g, vector<int> sources, int root, const unordered_set<int>& forbiddens,
-    vector<map<int, vector<int>>>* equal_branch_nodes)
+    vector<map<int, vector<int>>>* equal_branch_nodes, bool removeEqualBranchNodes)
 {
     vector<Graph> trees {};
-
+    // 我们根据branchtree判断是否树是否重复，但是返回的trees仍然返回的是完整的树
     std::unordered_set<Graph, Graph::Hash> visitedBranchTrees;
     std::queue<Graph> waited;
-    waited.push(takashami_tree(g, sources, root));
+    waited.push(takashami_tree(g, sources, root)); // randomly find a tree
     ASSERT(g.is_connected());
     while (!waited.empty()) {
         auto t = waited.front();
@@ -66,6 +66,7 @@ vector<Graph> takashami_trees(const Graph& g, vector<int> sources, int root, con
             for (auto& b : branch_nodes) {
                 forbiddenmore.insert(b);
             }
+            // 为branchTree上所有的branch nodes找到其等价节点
             for (auto& b : branch_nodes) {
                 vector<int> equals = find_equal_nodes(g, branch_tree, b, forbiddenmore);
                 if (equal_branch_nodes) {
@@ -74,8 +75,10 @@ vector<Graph> takashami_trees(const Graph& g, vector<int> sources, int root, con
 
                 auto gcopy = g;
                 gcopy.remove_node(b);
-                for (auto n : equals) {
-                    gcopy.remove_node(n);
+                if (removeEqualBranchNodes) {
+                    for (auto n : equals) { // ! 优化策略，删掉某个branch node，同时删除其等价节点，否则会有很多边发生重叠
+                        gcopy.remove_node(n);
+                    }
                 }
                 if (gcopy.is_connected()) {
                     // gcopy.update_dist();

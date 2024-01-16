@@ -11,9 +11,10 @@ module GlobalGroupManager
         int numWorkers @mutable = default(6);
         int numPSes @mutable = default(1);
 
-        string aggTreeType = default("sptree"); // ATP, sptree
+        string aggTreeType = default("sptree"); // edge, sptree
         double costThreshold = default(-1); // No equal agg nodes
         int numECTrees = default(-1); // use as many as can be found
+        int removeEqualBranchNodes = default(1);
         @class(GlobalGroupManager);
         @display("i=block/cogwheel");
 }
