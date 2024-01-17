@@ -22,12 +22,14 @@ protected:
         Connection* connection{nullptr};
         SeqNumber nextSeq{0};
         SeqNumber nextAckNumber{0};
+        SeqNumber recvBytes{0};
         SeqNumber totalBytes{0};
         bool isOpen{true};
     public:
         void resetState() {
             nextSeq = 0;
             nextAckNumber = 0;
+            recvBytes = 0;
             totalBytes = 0;
             isOpen = true;
         }

@@ -43,7 +43,10 @@ void EchoApp::connectionDataArrived(Connection *connection, Packet* pk)
     auto seqNumber = pk->getSeqNumber();
     auto srcAddr = pk->getSrcAddr();
     auto& flow = flows.at(connId);
-    if (pk->getPacketType() == ACK) {
+    if (pk->getPacketType() == DATA) {
+        flow.recvBytes += pk->getByteLength();
+    }
+    else if (pk->getPacketType() == ACK) {
         delete pk;
         return;
     }
@@ -64,7 +67,7 @@ void EchoApp::connectionDataArrived(Connection *connection, Packet* pk)
 
     auto packet = createAckPacket(pk);
 
-    if (flow.nextAckNumber == flow.totalBytes) {
+    if (flow.recvBytes == flow.totalBytes) {
         packet->setFIN(true);
         flow.isOpen = false;
     }
