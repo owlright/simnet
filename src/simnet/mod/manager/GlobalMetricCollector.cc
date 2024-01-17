@@ -169,6 +169,8 @@ void GlobalMetricCollector::handleMessage(cMessage* msg)
         std::cout << "Elapsed " << timeToStr(now - simStartRealTime) << " ";
         std::cout << "ETA: " << timeToStr(estimatedLeftTime) << " ";
         std::cout << " t="<< simTime() << "s"<< endl;
+        if (jobRoundMetric.size() == 0)
+            job_is_over = true;
         if (!flow_is_over || !job_is_over) {
             scheduleAfter(progressInterval * simsecPerSecond, stopWatch);
         }
