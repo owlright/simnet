@@ -24,12 +24,11 @@ void WorkerApp::initialize(int stage)
         } else {
             auto bandwidth = getParentModule()->par("bandwidth").doubleValue();
             ASSERT(bandwidth > 0);
-            roundInterval = flowSize * 8 / bandwidth * load;
+            roundInterval = (flowSize * 8) / (bandwidth * load);
         }
 
         roundStartTimer = new cMessage("roundStart");
-        scheduleAt(SimTime(1, SIMTIME_PS),
-            roundStartTimer); // ! sometimes I will set simtime-limit = 0s, I don't want packates insert txBuffer.
+        scheduleAt(SimTime(1, SIMTIME_PS), roundStartTimer); // 为了使用simtime-limit=0时，整个网路是干净的
         ASSERT(tcpState == CLOSED);
         tcpState = OPEN;
         jobMetricCollector = findModuleFromTopLevel<GlobalMetricCollector>("metricCollector", this);
@@ -132,7 +131,6 @@ void WorkerApp::onRoundStart()
         roundStartTime = simTime();
         jobMetricCollector->reportFlowStart(jobId, workerId, roundStartTime);
     }
-
 }
 
 void WorkerApp::onRoundStop()
@@ -150,7 +148,6 @@ void WorkerApp::onRoundStop()
             throw cRuntimeError("Job %d Worker %d Round %d", jobId, workerId, currentRound);
         }
     }
-
 }
 
 void WorkerApp::finish()
@@ -160,8 +157,8 @@ void WorkerApp::finish()
         std::cout << jobId << " " << localAddr << " " << destAddr << " retransmit " << resentBytes << endl;
     if (currentRound != numRounds) {
         EV_WARN << RED << getClassAndFullPath() << "job " << jobId
-                 << " "
-                    "address "
-                 << localAddr << " round " << currentRound << " not finish." << ENDC;
+                << " "
+                   "address "
+                << localAddr << " round " << currentRound << " not finish." << ENDC;
     }
 }
