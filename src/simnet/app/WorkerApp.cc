@@ -43,8 +43,16 @@ void WorkerApp::initialize(int stage)
 void WorkerApp::handleMessage(cMessage* msg)
 {
     if (msg == roundStartTimer) { // new flow
-        onRoundStart();
-        sendPendingData();
+        if (currentRound < numRounds) { // ! note it's '<' here
+            if (!isInTransmission) {
+                onRoundStart();
+                sendPendingData();
+                scheduleAfter(roundInterval, roundStartTimer);
+            } else { // ! transmission is not over, wait for a short time then check again
+                scheduleAfter(SimTime(1, SIMTIME_US), roundStartTimer);
+            }
+        }
+
         if (!getEnvir()->isExpressMode()) {
             char mesg[20];
             sprintf(mesg, "Round %d", currentRound);
@@ -110,7 +118,7 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
                 auto fakeOldSeq = getNextSentSeq() - 1; // * make it old
                 echoACK(fakeOldSeq);
             }
-            if (!roundStartTimer->isScheduled()) // TODO WHY?
+//            if (!roundStartTimer->isScheduled()) // TODO WHY?
                 onRoundStop();
         } else {
             // ! it could happen when new ackNumber carry old seq, for example, disorder
@@ -122,6 +130,7 @@ void WorkerApp::onReceivedNewPacket(Packet* pk)
 
 void WorkerApp::onRoundStart()
 {
+    isInTransmission = true;
     currentRound += 1;
     roundStartSeq = getNextSentSeq();
     ASSERT(tcpState == OPEN);
@@ -136,12 +145,13 @@ void WorkerApp::onRoundStart()
 void WorkerApp::onRoundStop()
 {
     cong->reset(); // ! reuse connection but cong must be reset.
-    if (currentRound < numRounds) { // note it's '<' here
-        scheduleAfter(roundInterval, roundStartTimer);
-        // nextAggSeq = 0; // TODO is this necessary ?
-    }
+    // if (currentRound < numRounds) { // note it's '<' here
+    //     scheduleAfter(roundInterval, roundStartTimer); // ! roundStartTimer shouldn't be set here
+    //     // nextAggSeq = 0; // TODO is this necessary ?
+    // }
+    isInTransmission = false;
     auto bandwidth = getParentModule()->par("bandwidth").doubleValue();
-    auto roundIntervalLB = (flowSize*8) / bandwidth;
+    auto roundIntervalLB = (flowSize * 8) / bandwidth;
     if (jobMetricCollector) {
         jobMetricCollector->reportFlowStop(jobId, workerId, simTime());
         if ((simTime() - roundStartTime) < roundIntervalLB) {

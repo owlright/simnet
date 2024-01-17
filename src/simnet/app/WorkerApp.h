@@ -36,4 +36,7 @@ protected:
     B leftData { 0 };
     opp_component_ptr<GlobalMetricCollector> jobMetricCollector;
     simtime_t roundStartTime;
+
+private:
+    bool isInTransmission { false };
 };
