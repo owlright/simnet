@@ -47,6 +47,10 @@ def extract_float(iterationvars: str, name: str) -> float:
     assert value is not None
     return float(value.group(1))
 
+def extract_int(iterationvars: str, name: str) -> int:
+    value = re.search(r"\$" + name + r"=(\d+)", iterationvars)
+    assert value is not None
+    return int(value.group(1))
 
 def extract_iterationvar(iterationvar: str):
     policy = extract_str(iterationvar, "aggPolicy")
