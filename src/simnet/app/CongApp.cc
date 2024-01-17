@@ -333,6 +333,9 @@ void CongApp::confirmSeqNumber(const Packet* pk)
             case FIN_WAIT_1:
                 tcpState = FIN_WAIT_2;
                 break;
+            case CLOSING: // disorder may cause FIN arrived before ACK
+                tcpState = TIME_WAIT;
+                break;
             case OPEN: // keep OPEN
             case FIN_WAIT_2:
                 // ! case 1: we receieved ack but not server's FIN
@@ -357,6 +360,8 @@ void CongApp::confirmSeqNumber(const Packet* pk)
                 break;
 
             case FIN_WAIT_1:
+                tcpState = CLOSING;
+                break;
             case CLOSE_WAIT: // server sent out FIN and received a FIN(duplicate)
             case CLOSED:
                 break;
