@@ -30,3 +30,4 @@ py11/
 results
 *.pkl
 *.pdf
+simulations/test.ini
