@@ -56,7 +56,8 @@ def extract_iterationvar(iterationvar: str):
     policy = extract_str(iterationvar, "aggPolicy")
     load = extract_float(iterationvar, "load")
     epsion = extract_float(iterationvar, "epsion")
-    return policy, load, epsion
+    Ks = extract_int(iterationvar, "numECTrees")
+    return policy, load, epsion, Ks
 
 
 def truncate_vectime(flows: pd.DataFrame, runs: dict):
@@ -91,13 +92,13 @@ def get_flows_slowdown(flows: pd.DataFrame, runs: dict):
     flows_vec = flows.set_index(["runID", "name"], drop=True)["vecvalue"].unstack()  # pivot the name column
     flows_vec["slowdown"] = flows_vec.apply(lambda x: x["fct:vector"] / x["idealFct:vector"], axis=1)  # rowwise
 
-    df = pd.DataFrame(columns=["load", "policy", "epsion", "flowsize", "slowdown"])
+    df = pd.DataFrame(columns=["load", "policy", "epsion","numECTrees" , "flowsize", "slowdown"])
     assert isinstance(runs, dict)
     for itervar, repetition_ids in runs.items():
-        policy, load, epsion = extract_iterationvar(itervar)
+        policy, load, epsion, Ks = extract_iterationvar(itervar)
         print(load, policy, epsion)
         flowreps = flows_vec.loc[repetition_ids]
         flowsize = np.concatenate(flowreps["flowSize:vector"].values)
         fsd = np.concatenate(flowreps["slowdown"].values)
-        df.loc[len(df.index)] = [load, policy, epsion, flowsize, fsd]  # pyright: ignore reportGeneralTypeIssues
+        df.loc[len(df.index)] = [load, policy, epsion, Ks, flowsize, fsd]  # pyright: ignore reportGeneralTypeIssues
     return df
