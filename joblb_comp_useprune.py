@@ -125,7 +125,7 @@ ax.xaxis.grid(color="gray", linestyle="dashed", alpha=0.5)
 fig.subplots_adjust(left=0.12, bottom=0.15, right=0.99, top=0.98)
 # fig.subplots_adjust(wspace=0.1)
 
-output_name = "jobrct_prune.pdf"
+output_name = "jobrct_useprune.png"
 fig.savefig(output_name, dpi=600)
 print(f"output {output_name}")
 import os

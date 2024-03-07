@@ -109,6 +109,6 @@ fig.subplots_adjust(left=0.12, bottom=0.15, right=0.99, top=0.99)
 # fig.subplots_adjust(wspace=0.1)
 fig.savefig(output_name, dpi=600)
 print(f"output {output_name}")
-import os
-paper_path = os.path.join(os.getcwd(), f"../Documents/dissertation/figures/chapter4/{output_name}")
-fig.savefig(paper_path, dpi=600)
+# import os
+# paper_path = os.path.join(os.getcwd(), f"../Documents/dissertation/figures/chapter4/{output_name}")
+# fig.savefig(paper_path, dpi=600)
