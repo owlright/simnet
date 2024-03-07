@@ -105,15 +105,16 @@ ax.set_xticks(_pos + _bar_width / 2, loads)
 
 ax.legend(
     [b[0] for b in bps],
-    [f"useprune={legend}" for legend in compare_parm],
+    ["不使用改进策略","使用改进策略"],
+    # [f"useprune={legend}" for legend in compare_parm],
     frameon=False,
-    prop={"family": "Times New Roman"},
+    prop={"family": "SimSun"},
     ncol=2,
     columnspacing=0.8,
     loc="upper right",
     bbox_to_anchor=(1, 1.04),
 )
-ax.set_ylim(ymin=0, ymax=0.085)
+ax.set_ylim(ymin=0, ymax=0.035)
 
 ax.set_xlabel("负载")
 ax.set_ylabel("汇聚组平均每轮完成时间/s")
@@ -121,10 +122,10 @@ ax.set_axisbelow(True)
 ax.yaxis.grid(color="gray", linestyle="dashed", alpha=0.5)
 ax.xaxis.grid(color="gray", linestyle="dashed", alpha=0.5)
 
-fig.subplots_adjust(left=0.12, bottom=0.15, right=0.99, top=0.99)
+fig.subplots_adjust(left=0.12, bottom=0.15, right=0.99, top=0.98)
 # fig.subplots_adjust(wspace=0.1)
 
-output_name = "jobrct_" + args.legendname + ".png"
+output_name = "jobrct_prune.pdf"
 fig.savefig(output_name, dpi=600)
 print(f"output {output_name}")
 import os
