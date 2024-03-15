@@ -63,8 +63,10 @@ void TrafficPatternManager::initialize(int stage)
         for (auto& addr:idleHosts) {
             host2odIndex[addr] = index++;
         }
-        odMatrix.resize(idleHosts.size(), std::vector<int>(idleHosts.size()));
-        permutation(odMatrix, intrand(1234));
+        if (trafficPattern == "permutation") {
+            odMatrix.resize(idleHosts.size(), std::vector<int>(idleHosts.size()));
+            permutation(odMatrix, intrand(1234));
+        }
 
         EV_INFO << idleHosts.size() << " hosts for unicast flows." << endl;
     }
