@@ -3,23 +3,24 @@
 #include <cstdlib>
 #include <random>
 #include <unordered_set>
+bool sendToItself(const std::vector<int>& p)
+{
+    for (auto i = 0; i < p.size(); i++) {
+        if (i == p[i]) {
+            return true;
+        }
+    }
+    return false;
+}
 void permutation(std::vector<std::vector<int>>& mat, uint32_t seed)
 {
     auto n = mat.size();
     std::vector<int> permutation(n);
     for (auto i = 0; i < n; i++)
         permutation[i] = i;
-    std::unordered_set<int> not_used(permutation.begin(), permutation.end());
-    std::srand(seed);
-    for (int i = 0; i < n; i++) {
-        int j = -1;
-        do {
-            auto it = std::begin(not_used);
-            std::advance(it, std::rand() % not_used.size());
-            j = *it;
-        } while (i == j); // avoid send to oneself
-        permutation[i] = j;
-        not_used.erase(j);
+    uint32_t _tmp = 0;
+    while (sendToItself(permutation)) {
+        std::shuffle(permutation.begin(), permutation.end(), std::default_random_engine(seed+ _tmp++));
     }
 
     for (auto i = 0; i < n; i++) {
