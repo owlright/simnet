@@ -11,12 +11,14 @@ class TrafficPatternManager : public GlobalManager {
 public:
     IntAddress getDestAddr(IntAddress srcAddr) const;
     std::vector<IntAddress> getDestAddrs(IntAddress srcAddr, int n = 1) const;
+    bool isIdleHost(IntAddress addr) const { return std::find(idleHosts.cbegin(), idleHosts.cend(), addr) != idleHosts.cend(); }
 
 protected:
     void initialize(int stage) override;
 
 protected:
     std::string trafficPattern;
+    int idleHostsNumber{-1};
     std::vector<IntAddress> idleHosts;
     opp_component_ptr<GlobalGroupManager> groupManager;
 

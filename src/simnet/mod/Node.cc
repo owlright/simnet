@@ -71,9 +71,12 @@ void HostNode::initialize(int stage)
                 = findModuleFromTopLevel<TrafficPatternManager>("tpManager", this); // we only need this in load mode
             if (tpManager == nullptr)
                 throw cRuntimeError("In loadMode, you must set the tpManager");
-            newFlowTimer = new cMessage("newFlow");
-            scheduleAfter(exponential(flowInterval), newFlowTimer);
-
+            if (tpManager->isIdleHost(address)) {
+                newFlowTimer = new cMessage("newFlow");
+                scheduleAfter(exponential(flowInterval), newFlowTimer);
+            } else {
+                loadMode = false;
+            }
         }
     }
     else if (stage == INITSTAGE_REPORT) {

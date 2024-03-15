@@ -1,5 +1,6 @@
 #include "TrafficPatternManager.h"
 #include "simnet/common/utils.h"
+#include <random>
 Define_Module(TrafficPatternManager);
 
 IntAddress TrafficPatternManager::getDestAddr(IntAddress srcAddr) const
@@ -50,6 +51,7 @@ void TrafficPatternManager::initialize(int stage)
     GlobalManager::initialize(stage);
     if (stage == INITSTAGE_ACCEPT) {
         trafficPattern = par("trafficPattern").stdstringValue();
+        idleHostsNumber = par("idleHostsNumber").intValue();
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
         if (groupManager == nullptr) { // * no aggregation jobs, we can use all hosts
             auto& hostIds = getHostIds();
@@ -59,6 +61,18 @@ void TrafficPatternManager::initialize(int stage)
         } else { // * use the left hosts after jobs use
             idleHosts = groupManager->getUnicastHosts();
         }
+        std::cout << "idleHosts.size() = " << idleHosts.size() << std::endl;
+        std::shuffle(idleHosts.begin(), idleHosts.end(), std::default_random_engine(intrand(1234)));
+        int keepHostNum = (int)idleHosts.size();
+        if (idleHostsNumber > 0 && idleHostsNumber < keepHostNum) {
+            keepHostNum = idleHostsNumber;
+        }
+        if (keepHostNum < 2) {
+            throw cRuntimeError("At least 2 hosts are required for traffic pattern.");
+        }
+        idleHosts.resize(keepHostNum);
+        std::cout << "idleHosts.size() = " << idleHosts.size() << std::endl;
+        // ! You can only change the idleHosts before storing host2odIndex
         int index = 0;
         for (auto& addr:idleHosts) {
             host2odIndex[addr] = index++;
