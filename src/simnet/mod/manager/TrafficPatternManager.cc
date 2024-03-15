@@ -61,7 +61,7 @@ void TrafficPatternManager::initialize(int stage)
         } else { // * use the left hosts after jobs use
             idleHosts = groupManager->getUnicastHosts();
         }
-        std::cout << "idleHosts.size() = " << idleHosts.size() << std::endl;
+        // std::cout << "idleHosts.size() = " << idleHosts.size() << std::endl;
         std::shuffle(idleHosts.begin(), idleHosts.end(), std::default_random_engine(intrand(1234)));
         int keepHostNum = (int)idleHosts.size();
         if (idleHostsNumber > 0 && idleHostsNumber < keepHostNum) {
@@ -71,7 +71,7 @@ void TrafficPatternManager::initialize(int stage)
             throw cRuntimeError("At least 2 hosts are required for traffic pattern.");
         }
         idleHosts.resize(keepHostNum);
-        std::cout << "idleHosts.size() = " << idleHosts.size() << std::endl;
+        // std::cout << "idleHosts.size() = " << idleHosts.size() << std::endl;
         // ! You can only change the idleHosts before storing host2odIndex
         int index = 0;
         for (auto& addr:idleHosts) {
