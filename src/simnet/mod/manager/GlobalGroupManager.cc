@@ -244,6 +244,9 @@ void GlobalGroupManager::calcAggTree(const char* policyName)
             auto threshold = par("costThreshold").doubleValue();
             bool allowedKTree = threshold > 0;
             int numNCTrees = par("numECTrees").intValue();
+            if (numNCTrees == 1) {
+                allowedKTree = false;
+            }
             bool removeEqualBranchNodes = par("removeEqualBranchNodes").intValue() > 0;
             std::unordered_set<int> forbidden_hosts(getHostIds().begin(), getHostIds().end());
 
