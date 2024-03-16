@@ -52,6 +52,10 @@ void TrafficPatternManager::initialize(int stage)
     if (stage == INITSTAGE_ACCEPT) {
         trafficPattern = par("trafficPattern").stdstringValue();
         idleHostsNumber = par("idleHostsNumber").intValue();
+        if (idleHostsNumber <= 0) {
+            EV_DEBUG << "All idle hosts are disabled!" << endl;
+            return;
+        }
         groupManager = findModuleFromTopLevel<GlobalGroupManager>("groupManager", this);
         if (groupManager == nullptr) { // * no aggregation jobs, we can use all hosts
             auto& hostIds = getHostIds();
@@ -61,17 +65,18 @@ void TrafficPatternManager::initialize(int stage)
         } else { // * use the left hosts after jobs use
             idleHosts = groupManager->getUnicastHosts();
         }
-        // std::cout << "idleHosts.size() = " << idleHosts.size() << std::endl;
-        std::shuffle(idleHosts.begin(), idleHosts.end(), std::default_random_engine(intrand(1234)));
-        int keepHostNum = (int)idleHosts.size();
-        if (idleHostsNumber > 0 && idleHostsNumber < keepHostNum) {
-            keepHostNum = idleHostsNumber;
+
+        if (idleHosts.size() < 2) {
+            throw cRuntimeError("At least 2 idle hosts are required for traffic pattern.");
         }
-        if (keepHostNum < 2) {
-            throw cRuntimeError("At least 2 hosts are required for traffic pattern.");
+
+        // ! 有时候我们希望只使用部分空闲主机
+        ASSERT(idleHostsNumber > 0 && idleHosts.size() >= 2);
+        if (idleHostsNumber < idleHosts.size()) {
+            std::shuffle(idleHosts.begin(), idleHosts.end(), std::default_random_engine(intrand(1234)));
+            idleHosts.resize(idleHostsNumber);
         }
-        idleHosts.resize(keepHostNum);
-        // std::cout << "idleHosts.size() = " << idleHosts.size() << std::endl;
+
         // ! You can only change the idleHosts before storing host2odIndex
         int index = 0;
         for (auto& addr:idleHosts) {
