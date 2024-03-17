@@ -22,8 +22,9 @@ using Mat = std::vector<std::vector<T>>;
 
 enum Stage
 {
-    INITSTAGE_LOCAL,
+    INITSTAGE_LOCAL, // read params from config.ini
     INITSTAGE_ASSIGN, // manager assign something to host or switch
+    INITSTAGE_ASSIGNMAN, // FIXME: traffic manager needs to wait for group manager
     INITSTAGE_ACCEPT, // all parameters must be set by now
     INITSTAGE_REPORT, // host report info to manager
     INITSTAGE_COLLECT, // manager collect info from host

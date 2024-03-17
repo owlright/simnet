@@ -49,7 +49,7 @@ std::vector<IntAddress> TrafficPatternManager::getDestAddrs(IntAddress srcAddr, 
 void TrafficPatternManager::initialize(int stage)
 {
     GlobalManager::initialize(stage);
-    if (stage == INITSTAGE_ACCEPT) {
+    if (stage == INITSTAGE_ASSIGNMAN) {
         trafficPattern = par("trafficPattern").stdstringValue();
         idleHostsNumber = par("idleHostsNumber").intValue();
         if (idleHostsNumber <= 0) {
